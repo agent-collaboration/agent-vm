@@ -483,6 +483,7 @@ unchanged; produces K5 and K6's shapes and structural fixtures. Their real produ
 <summary><strong>B2</strong> sign-in Node host</summary>
 <ex-markdown id="ticket-b2-text"><script type="text/markdown">
 the `sign-in-host-node` package: an HTTP listener, `better-sqlite3` through Drizzle, OTLP logs through `@logtape/otel`; the local journeys run the sign-in service on it.
+  - **Proving Node through the existing management suites (31 October):** today's Gateway suites reach sign-in management through a named Worker RPC binding, which can't target Node. A fixture-only Worker bridge forwards those same RPC methods to a test-only route on the real Node listener. That route runs the real core management, the better-sqlite3 store and the production atomic runner. Each call carries an invocation ID that the Node test host records, so every assertion is traced to Node. This proves the Node implementation; it claims no deployable Worker-to-Node management protocol. The bridge is never exported from a product package.
 </script></ex-markdown>
 </details>
 <details id="ticket-b5">
@@ -595,6 +596,7 @@ the `sign-in-host-node` package: an HTTP listener, `better-sqlite3` through Driz
 <summary><strong>F2a</strong> organization authority core (split from F2) · waits on F1</summary>
 <ex-markdown id="ticket-f2a-text"><script type="text/markdown">
 - **Covers:** R5 (people's admission at central), R7 (the session registry), R13 (admin commands and the owner guard; the operator check through the sign-in service, built and enabled at PROD2), R14 (lookups for people, sessions, workspaces' allowed machines and machines), R34 (organization-scoped rows; cross-organization references answer as unknown), R35; organizations and their owner; machine allowances. Runs the real-output check for K5 and K6 against B4a's real producer if it merges after B4a.
+- **Allocation (31 October):** F2a introduces the organization authority itself: its address and kind, its own migrations and runtime, and minimal routing on both hosts. F2b changes only the Fleet object's addressing and adopts today's storage. F2a owns the owner guard's policy, token parsing and the admin handlers, with typed injected ports at the sign-in confirmation and Fleet boundaries; its both-host scenarios use contract fixtures there, which don't earn real C7 authentication. F3a supplies the real verifier and key fetching, and F2b the per-organization Fleet routing. Existing Access routes stay until the named cutover. Its migration SQL goes to the owner before any commit uses it.
 - **Earns (its SO4 scenarios):** U21's command and guard cases; U27's central half for people, machines and sessions.
 - **Focused proof:**
   - **Wrong behaviors caught:** an admin command applied without the current owner; a reference to another organization answering differently from a missing one.
@@ -618,6 +620,7 @@ the `sign-in-host-node` package: an HTTP listener, `better-sqlite3` through Driz
 <summary><strong>F3a</strong> central receivers and service caller (split from F3) · waits on F2a</summary>
 <ex-markdown id="ticket-f3a-text"><script type="text/markdown">
 - **Covers:** R27 (central side): the C7 service caller, central's receivers checking each service token's audience, scope and operation, and the person admission and standing decisions (K3's person half).
+- **Owns, from F2a's allocation (31 October):** the real cryptography behind F2a's person-token port: verifying the person token's signature against the sign-in service's keys, fetching and caching those keys, and the C7 caller adapters. It also mounts the new bearer admin and operator routes on both hosts. A new signature verifier is a new central capability (today's host seam is RSA-only).
 - **Earns:** SO7 for the person admission and standing edges; U15's framework.
 - **Focused proof:**
   - **Wrong behavior caught:** an operation picked from the body, not the audience and scope.
