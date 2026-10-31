@@ -515,6 +515,18 @@ the `sign-in-host-node` package: an HTTP listener, `better-sqlite3` through Driz
 - **Stop if:** at 1.7.11 the token handler can't be registered for the device-code grant type, `issueTokens` won't issue under a client other than the one that polled, or `referenceId` raises a consent requirement for a machine client. Then take the fallback, our own device endpoints through `issueTokens` with the same reference and client, proven by the same rows.
 </script></ex-markdown>
 </details>
+<details id="ticket-b6a">
+<summary><strong>B6a</strong> Turnstile on sign-in (pulled forward from B6, owner 31 October) · waits on B1</summary>
+<ex-markdown id="ticket-b6a-text"><script type="text/markdown">
+- **Covers:** R52's Turnstile part, ahead of the rest of B6, because the widget exists now: site key `0x4AAAAAAFuShwu-Blz4yy7L`, created through Cloudflare's Turnstile Spin on `agent-collaboration.com` (`localhost` and `127.0.0.1` added automatically). It follows Cloudflare's existing-widget flow (developers.cloudflare.com/turnstile/spin/prompt.md) inside this design:
+  - Better Auth's `captcha` plugin with provider `cloudflare-turnstile` on `/sign-in/social` and `/passkey/generate-authenticate-options`. The plugin itself calls siteverify server-side, with the client address, `expectedAction` and `allowedHostnames`: the same checks as Spin's canonical handler. No hand-written siteverify.
+  - The sign-in page renders the widget with its site key and one stable `data-action` per protected request (`sign_in_social`, `passkey_sign_in`), and sends the token as `x-captcha-response`. Tokens are single-use: the widget resets after each attempt.
+  - `allowedHostnames` is per deployment: the sign-in page's own hostname. A production or private-stack value never includes `localhost` or `127.0.0.1`; only the local configuration does.
+  - The site key lives in the Worker configuration (public). The secret is the Worker secret `TURNSTILE_SECRET_KEY`, read from the owner's 1Password item at deploy time through standard input (`op read … | wrangler secret put`), never in chat, files or arguments. Local tests use Cloudflare's published test keys and `siteVerifyURLOverride` pointed at a stand-in.
+- **Proof:** sign-in and passkey sign-in refused without a token, with a reused token, with a wrong action or hostname, and with siteverify unreachable (fail closed). Each refusal leaves a `captcha-refused` observation. Both hosts. The real-token check (one success, then replay refused) runs at JC1 on the private stack, with the real secret.
+- **Not:** the rest of B6 (the rate limits and the limiter), which still waits on B5.
+</script></ex-markdown>
+</details>
 <details id="ticket-b6">
 <summary><strong>B6</strong> flood limits at sign-in (new) · waits on B5</summary>
 <ex-markdown id="ticket-b6-text"><script type="text/markdown">
@@ -525,7 +537,7 @@ the `sign-in-host-node` package: an HTTP listener, `better-sqlite3` through Driz
   - each host setting that header from its trusted source after removing any incoming copy: `cf-connecting-ip` on Cloudflare; the socket's peer, or a configured trusted proxy, on Node;
   - the Cloudflare host's two rate-limit bindings, `SIGN_IN_ATTEMPTS` and `AUTH_REQUESTS`, in the Worker config; the Node host's limiter counting in process, because the service's own pages never reach Better Auth's limiter;
   - confirming at 1.7.11 that the device-code redemption on the OAuth token endpoint keeps the grant's `slow_down`;
-  - **Turnstile:** Better Auth's `captcha` plugin with provider `cloudflare-turnstile` on `/sign-in/social` and `/passkey/generate-authenticate-options` (before the challenge is stored), the widget on the sign-in page sending `x-captcha-response` on those requests itself, `allowedHostnames` and `expectedAction` set, the secret key a Worker secret, and `siteVerifyURLOverride` pointed at a local stand-in in tests;
+  - **Turnstile:** delivered earlier by B6a. What follows is the design B6a builds: Better Auth's `captcha` plugin with provider `cloudflare-turnstile` on `/sign-in/social` and `/passkey/generate-authenticate-options` (before the challenge is stored), the widget on the sign-in page sending `x-captcha-response` on those requests itself, `allowedHostnames` and `expectedAction` set, the secret key a Worker secret, and `siteVerifyURLOverride` pointed at a local stand-in in tests;
   - a `limited` or `captcha-refused` observation for each refused request.
 - **Writes:** `sign-in-core` (`src/request-limits/`, `src/better-auth/`, the sign-in page), `sign-in-host-cloudflare`, `sign-in-host-node`, `wrangler.example.jsonc`.
 - **Earns:** SO2's flood cases on both hosts (U42).
