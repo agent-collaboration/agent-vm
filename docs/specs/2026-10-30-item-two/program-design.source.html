@@ -895,7 +895,7 @@ The fallback for the first mint is our own device endpoints minting through `iss
 - `encryptedStore`: the store's data key is read (the Keychain on macOS; on Linux, the systemd encrypted credential in the service's `$CREDENTIALS_DIRECTORY`). The refresh credential is the store's only long-lived credential of the new login.
 - `memoryOnly`: the machine has no store for the Router: on Linux, no credentials directory or no credential in it; on any platform without a backend. The credential lives only in the host process. A restart loses it, and the Router asks for a new device code before it connects.
 
-The store's existing results are classified, not lumped together (`encrypted_credential_store.rs:83–103`; `keychain_data_key.rs:220–249`):
+The store's results must be classified, not lumped together. Today they're lumped: the public opener folds a missing backend, a denied Keychain and an invalid key or marker into one `KeyUnavailable`, and it can create store metadata before reading the key (`encrypted_credential_store.rs:34–44, 99–119`; `keychain_data_key.rs:73–77, 207–227`; found by F11). So the secret-store crate, which owns this knowledge, gains a read-only classified open. It reads the key and the metadata without creating, repairing or migrating anything, and answers `usable | absent | unusable { cause }`. The existing opener and its callers stay as they are. The host maps the answer:
 - **Absent, meaning no store:** `memoryOnly`.
 - **Present but unusable:** the Keychain denies access, the key or its metadata is invalid, or a migration is incomplete. This is an error. The host refuses to log in with a clear message, never falls back to memory, and never overwrites or migrates the store's contents.
 
