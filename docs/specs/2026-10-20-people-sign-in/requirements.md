@@ -81,4 +81,4 @@ Priority: `U1`, `U2`, `U4`, `U6`, `U7` and `U9` first (private apps). `U3` (publ
 | `SD5` | How people who already own OAuth account grants under their Cloudflare Access identity move to their new identity | owner | they keep working through today's controller until moved; no automatic mapping |
 | `SD6` | Workers Free or Paid | owner, after measurement | Free, if measured CPU fits |
 | `SD7` | Whether a new person may register with a passkey first, or must first sign in with Google or GitHub | owner | Google or GitHub first, then add passkeys (Lead proposal; Better Auth supports either) |
-| `SD8` | How old a privileged decision's confirmation that the person is still active may be when the decision takes effect | owner, with D5 | 5 seconds (Lead proposal) |
+| `SD8` | How old a privileged decision's confirmation that the person is still active may be when the decision takes effect | owner, with D5 | **Decided (owner, 31 October): 5 seconds**, measured on the deciding service's own clock from receiving the confirmation to applying the decision |
