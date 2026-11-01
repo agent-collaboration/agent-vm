@@ -675,6 +675,7 @@ the `sign-in-host-node` package: an HTTP listener, `better-sqlite3` through Driz
 <details id="ticket-f3a">
 <summary><strong>F3a</strong> token checks and central's routes (shrunk 1 November; PR #203) · waits on F2a; merges only after F18</summary>
 <ex-markdown id="ticket-f3a-text"><script type="text/markdown">
+- **Added 1 November (delivery allocation):** the published-key read (key source, cache, resolution, contract; Tokio and Cloudflare sources) is F18's to produce. F3a keeps the verifier that uses those keys and the person routes, consumes F18's key read from `main`, and deletes its own copies. It takes `HttpsUrl` and `ResourceUri` from `fleet-identity-protocol`.
 - **Covers:** R27 at central and the person side of R13:
   - verifying the person token's signature against the sign-in service's published keys (cached, one refetch on an unknown key ID), and the Ed25519 leaf capability;
   - mounting central's `public/admin` routes (the person token plus the sign-in service's own attached confirmation, correlated to the token's person, session and organization) and the `internal/` decision routes for person admission and standing (K3's person half), each operation picked by its route before its body is parsed.
@@ -697,6 +698,11 @@ the `sign-in-host-node` package: an HTTP listener, `better-sqlite3` through Driz
   - In that mode, central's one published-key read points at the native sign-in host's published keys (F3a's issuer key source), configured at deploy, never at central's own origin.
   - In the access-enrollment mode (step 1), today's native HTTP listener, self-hosted issuer and its own key self-fetch run unchanged until F17 removes them, as on Cloudflare, where central's public routes go only at step 2.
   - Proof adds: in machine-tokens mode, central opens no network listener and never fetches its own keys.
+- **Added 1 November (delivery allocation, F3a's plan-defect):** F18 owns central's one outbound request, the published-key read, and so produces its code.
+  - **The parts:** core's `IssuerKeySource`, the key cache, key resolution and the key-source contract (`RawJwks`, `KeyFetchFailure`), plus the Tokio `TokioIssuerKeySource` and the Cloudflare equivalent.
+  - **Ported from F3a's branch:** those files and their tests only, at `2f9ada64`, never the whole branch.
+  - **F3a after F18 merges:** consumes them from `main` and deletes its copies.
+  - **`HttpsUrl` and `ResourceUri`:** live in `fleet-identity-protocol` (PD `a2c79618`). Whichever of F11 and F18 merges first carries F11's verified scalar commit unchanged, and the other rebases onto it, so there is one constructor.
 - **Not:** the sign-in side of the link (B5's), the person checks (F3a's).
 - **Earns:** SO7's link negatives on both hosts: a direct request to central finds no route; a request reaching another organization's object is refused with nothing changed; central's outbound requests are only the published-key read. With B5: the public-edge negatives.
 - **Focused proof:**
