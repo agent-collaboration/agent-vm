@@ -143,6 +143,19 @@ pub struct InitializeOrganization { pub organization_id: OrganizationId, pub own
 pub enum OrganizationInitialization { Initialized {}, AlreadyInitialized {}, NotThisCentral {} }
 ```
 
+**The scalars, exactly.** One accepted set each, written once as the JSON Schema `pattern` plus `x-maxUtf8Bytes` (F1's rule). The Rust constructor and the sign-in service's generated Zod enforce that same pattern; nothing is parsed by a wider library.
+- **`HttpsUrl` and `ResourceUri`** share one lexical rule; the two names say what each address is for.
+  - ASCII only, with no whitespace or control characters, and at most 2,048 bytes.
+  - The scheme is `https`. `http` is allowed only when the host is `localhost`, `127.0.0.1` or `[::1]`, for local test deployments.
+  - The host is a lowercase DNS name in ASCII (an IDN as its `xn--` punycode, labels of 1–63 characters from `a–z 0–9 -`, never starting or ending with `-`), or one of those two loopback forms.
+  - An optional port, 1–65535.
+  - The path is empty, or starts with `/` followed by RFC 3986 path characters, percent-encoding included.
+  - No user info, no query, no fragment.
+  - Bytes are kept exactly as written and compared byte for byte, with no normalization; deploy settings spell each address canonically.
+- **`VerifiedEmail`** keeps the people sign-in design's existing rule: a provider-verified email, stored and compared lower-cased. Its syntax is the pinned Zod version's own `z.email()` pattern, copied verbatim as the schema `pattern`, ASCII only, at most 254 bytes. Whether an email was verified is provenance, not syntax: it comes from the provider sign-in or the operator's command, never from the string.
+- `ReceiverId` and `PeerId` keep their existing owners and rules.
+- Anything outside these sets is refused, and operators bear that limit.
+
 **A lost or unreadable answer is never a result.** A transport failure, a timeout, or an answer that doesn't decode leaves the step unknown. The directory then gives the sign-in service no decision (`centralClient` reports `unavailable`), and the next resend repeats the same steps with the same request ID. It's never turned into `Refused`. A refusal that reaches the sign-in service is either the central's own `DeviceLoginRefusal` or the directory's `machineInAnotherOrganization`. `NotReserved` at activation (the reservation lapsed or was cancelled) is handled like an unknown step: the next resend authorizes again under the same request ID. Once the device code expires, the sign-in service stops resending.
 
 **The device approval crosses deployments.** Today the Registry reaches an organization authority with an object call inside one deployment. The directory reaches it over the network, with the requests above, idempotent on the request ID. A lost reply is resent until the device code expires, as before. The directory keeps no sequence state of its own beyond its claim. The sign-in service resends `DecideDeviceLogin` until the code expires, and the directory re-runs the sequence: check, authorize, claim, activate, each idempotent on the request ID. So a lost reply or a directory restart mid-sequence finishes on the next resend. **No way around it:** a central accepts the approval steps only from the directory's own client, on their own addresses. The sign-in service's tokens can't reach them, so nothing can activate an enrollment without the directory's claim.
