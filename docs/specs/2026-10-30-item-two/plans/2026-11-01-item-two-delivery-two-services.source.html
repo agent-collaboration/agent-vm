@@ -289,7 +289,7 @@ There is no move ticket: the Switchboard and sign-in already stand alone in `age
 <ex-markdown id="item2--how-a-contract-s-real-output-is-checked-text"><script type="text/markdown">
 Every cross-repository contract has one home, which publishes the shape its consumer builds and tests against from the start.
 - **In codex-router:** F1 generates the schemas and structural fixtures for the Rust-owned contracts (K3, K8, K9, K11, K12): the shapes on the machine's connection in the new `fleet-identity-protocol` crate, and central-only shapes in `collaboration-central-core/src/identity_contract.rs`.
-- **In the switchboard repository:** K5, K6, K7 and K10 live in `sign-in-core` and `tool-access/contracts`.
+- **In the switchboard repository:** K5, K6 and K10 live in `sign-in-core` and `tool-access/contracts`.
 
 The check that a consumer parses the **real** producer's output runs in whichever of the producer's and the consumer's tickets merges second, and must pass before the contract's cut. So no ticket waits on another's runtime output.
 
@@ -619,7 +619,7 @@ the `sign-in-host-node` package: an HTTP listener, `better-sqlite3` through Driz
 - **Covers:** R26, plus every shape the deliverables need, and each contract's schema and structural fixtures (not real output; see "How a contract's real output is checked"):
   - the machine-login shapes: `MachineTokenClaims` and a `MachinePrincipal` kept outside the actor `Principal`, `DecideDeviceLogin`, `DeviceLoginDecision`, `DecideMachineToken`, `MachineTokenDecision` (with `decided_at`), `AdmitMachineConnection`, `MachineConnectionAdmission`, `MachineEnrollment` (tagged `state`: enrolled, revoked, expired; the internal reserved and approved stay in central's own row type, F2a's), `AdmissionId`/`AdmissionRef`; the four admin lookups and their results (`IdentityLookup`, `WorkspaceLookup`, `MachineLookup`, `CommandStatus`);
   - the remote-start shapes: `RequestRemoteStart`, `RemoteLaunch`, `RemoteStartAdmission`, `StartRequestedSession`, `ReportRemoteStart`, `RemoteStartAnswer`, `RemoteStartResult`, `RemoteStartStatus`, `ListWorkspaceMachines`, and the `remoteSession` starter;
-  - the machine client: `client_id` in `DecideMachineToken` and `AdmitMachineConnection`, `wrongClient` in both answers, `machineClientId` on `MachineEnrollment`, and `DisableMachineClient` (K11);
+  - the machine client: `client_id` in `DecideMachineToken` and `AdmitMachineConnection`, `wrongClient` in both answers, `machineClientId` on `MachineEnrollment`, and `DisableMachineClient` (as F1 published it; superseded by F10's `EndedMachineClient`, the live K11, which F10 publishes with its fixtures);
   - the view's shapes (K12): `Heartbeat` with its closed `MachineCapability` list (empty until DR), `ReportSessionActivity` with `sequence`, `SessionActivityEntry` and its result (`Accepted`, `Superseded`, `Refused`), `ReadMachinePresence` and `MachinePresenceAnswer`, `WhoIsLoggedIn` and its result rows.
 - **Writes:** the new `fleet-identity-protocol` crate (the shapes on the machine's connection, which the Router's crates and central's core both depend on; `serde`, `chrono`, `schemars` and `message-board`, whose `SessionRef` it carries. The Router converts its `collaboration-protocol` `SessionRef` and `ProviderRequestedPolicy` to this crate's `SessionRef` and `RemoteLaunchPolicy` with exhaustive matches and round-trip tests; stop and return if either can't convert without loss. The isolation shapes are the Program Design's `AgentIsolation`, `MachineEnvironment` and `LaunchContext`), `collaboration-central-core/src/identity_contract.rs` (central-only shapes), generated schema.
 - **Earns:** SO6's Rust half; U1's focused parse cases.
@@ -673,12 +673,13 @@ the `sign-in-host-node` package: an HTTP listener, `better-sqlite3` through Driz
 </script></ex-markdown>
 </details>
 <details id="ticket-f3a">
-<summary><strong>F3a</strong> token checks and central's routes (shrunk 1 November; PR #203) · waits on F2a</summary>
+<summary><strong>F3a</strong> token checks and central's routes (shrunk 1 November; PR #203) · waits on F2a; merges only after F18</summary>
 <ex-markdown id="ticket-f3a-text"><script type="text/markdown">
 - **Covers:** R27 at central and the person side of R13:
   - verifying the person token's signature against the sign-in service's published keys (cached, one refetch on an unknown key ID), and the Ed25519 leaf capability;
   - mounting central's `public/admin` and `public/operator` routes (the person token plus the sign-in service's own attached confirmation, correlated to the token's person, session and organization) and the `internal/` decision routes for person admission and standing (K3's person half), each operation picked by its route before its body is parsed.
 - **Rewrites PR #203 (the removal page's rows 6–10 and 15):** deletes `DirectoryServiceClient`, `PrivateKeyJwtClient` with its assertion builder and the host signer, the service HTTP transport and client-credential forms, `PersonIntrospectionClient`, the service-token receiver policy (keeping route dispatch, strict body and organization checks, and the machine-grant deadline functions in the time module), and the probes for those mechanisms. Keeps the issuer key cache, key resolution and signature verifier.
+- **Merge boundary (replacement before removal):** F3a may be built in parallel with F18, but its deletion of the service authentication merges only once F18's link is in place on both hosts (the Cloudflare binding and Tokio's Unix socket), so no build of central ever trusts a route that the internet can still reach. Until then its link-dependent proof is named unverified.
 - **Earns:** SO7 for the person admission and standing routes and the admin route; U15's central half (with F18).
 - **Focused proof:**
   - **Wrong behaviors caught:** an operation picked from the body, not the route; an admin command accepted without the sign-in service's confirmation, or with a confirmation for another session; a person token from another issuer accepted.
@@ -702,7 +703,7 @@ the `sign-in-host-node` package: an HTTP listener, `better-sqlite3` through Driz
 </script></ex-markdown>
 </details>
 <details id="ticket-f10">
-<summary><strong>F10</strong> machine enrollment, the machine token check, and revocation (new) · waits on F2a, F2c, F3a</summary>
+<summary><strong>F10</strong> machine enrollment, the machine token check, and revocation (new) · waits on F2a, F2b, F2c, F3a, F18</summary>
 <ex-markdown id="ticket-f10-text"><script type="text/markdown">
 - **Changed 1 November (two services, OD23):** the machine claim and the authorize, claim, then activate or cancel run at F2c's Organization Registry, by object calls. `AdmitMachineConnection` goes to the organization authority the token names. A machine token's `aud` is Fleet central's one machine address. Supersession at an enrollment's first `Grant`, and `RevokeMachineEnrollment`, name the ended enrollment and client (`EndedMachineClient`) in their answers; the sign-in service disables that client (B5); central keeps only the close outbox.
 - **Covers:** R39, R40, R42 (central side), C9, and R19's local part for machines:
@@ -768,6 +769,7 @@ the `sign-in-host-node` package: an HTTP listener, `better-sqlite3` through Driz
 **The second machine's approval** needs a fresh second factor (R53), so that step runs through B7's real confirmation. F14 is written alongside B7, and that step stays named unverified until B7 merges.
 `verify-codex-router` `fleet-machine-login`, with registered sessions (F4a), including a Router host started with no encrypted store and restarted, and one with a damaged store. The old connection left open after a re-login is checked with a registration, refused and the connection closed, against a positive control on the new connection; the remote-start case joins in F16, and the session-token case once F3b exists (D3).
 - **Messaging across machines:** after both Routers log in by device code, a session on each exchanges a message and a reply, each recorded with its sending session (SO8 step 8). The same step runs at JC1 and at PROD2.
+- **The sign-in service's outage (U45):** stop the sign-in service with both machines connected; central is unreachable meanwhile; on restart both Routers reconnect by themselves, and central's storage reads back unchanged.
 - **Earns:** U33/U31 (consumer side), U17/U33/U35 on macOS, R40's idle expiry end to end (SO8 step 9), U14's renewal case, revocation removing sessions, and today's messaging between machines kept on the new login (U34).
 </script></ex-markdown>
 </details>
@@ -889,7 +891,7 @@ SO13: SO8's and SO2's runs (and SO12's once V4 exists) export to a local OTLP co
 <details id="ticket-jt1">
 <summary><strong>JT1</strong> logs and traces on the private stack (new) · waits on T1–T3 merged, with their local runs passing; JC1; OD17 for the export check only</summary>
 <ex-markdown id="ticket-jt1-text"><script type="text/markdown">
-- **Covers:** DT on the private stack: the account-level destinations, created through Cloudflare's API with the `cf` CLI; both Workers (sign-in and Fleet central) deployed with `observability` on; the central, directory and sign-in builds carrying T1 and T2.
+- **Covers:** DT on the private stack: the account-level destinations, created through Cloudflare's API with the `cf` CLI; both Workers (sign-in and Fleet central) deployed with `observability` on; the central and sign-in builds carrying T1 and T2.
 - **Earns:** SO13's JT1 check: a login, a refusal and a Google sign-in with canary values in their URLs; every record Cloudflare keeps for either Worker, read back through Cloudflare's API and searched for the canaries and the run's secrets; then at your destination once you name it (OD17). Until then the export leg is named unverified. Also the intermediate combination: telemetry central and sign-in serving D1's Routers unchanged.
 - **Follows** the orchestration's cutover procedure: freeze, deploy, read back builds, prove, resume.
 </script></ex-markdown>
@@ -986,7 +988,7 @@ What it does:
 - **Covers:** C12's page, and R49 at the sign-in service.
   - **Where:** a page and refresh route beside the device-code approval page.
   - **Who:** only for a signed-in person.
-  - **Calling central:** the server mints that person's token for the organization's central's admin address (from `FindCentral`) and calls `WhoIsLoggedIn` every sixth of OD14.
+  - **Calling central:** the server mints that person's token for central's admin address, attaches its own session confirmation, and calls `WhoIsLoggedIn` on central's `public/admin` route every sixth of OD14.
   - **Freshness:** an answer arriving more than one refresh interval after its request is discarded. A failure, or OD14 without a snapshot, shows unavailable.
   - **Refusals:** a refusal shows nothing.
   - **The token stays on the server.**
@@ -1172,7 +1174,10 @@ It goes live after the view: central first, then the Routers. Until a machine ru
 | U22 | D1 | B1 contributes; B5 closes | SO2 on both databases | B5 |
 | U23 | D1 | B1 contributes; B2 closes, with B5's rule in the core | SO2 on both hosts | the later of B2 and B5 |
 | U24, U25 | D1 | B1 contributes; B5 closes | SO2 readback; Hegel families | B5 |
-| U27 (people, machines, sessions) | D1 | F2a | SO4 | F2a |
+| U27 (people, machines, sessions) | D1 | F2a, F2b | SO4 (F2b: real storage separation across a restart) | F2a; F2b |
+| U3, U17 (R2, R24) | D1 | F4a, F10, F11 | SO1, SO8; a structural search for machine keys | F8a; F14 |
+| U16 (R26, R27) | D1 | F18, F2a, F10, B2, B5 | SO4 (Tokio + local workerd, through the link), SO2 (Cloudflare + Node) | F18; B5 |
+| U26 (R5, R35) | D1 | F2a, F4a, B4a | SO2; SO4 | the later of B4a and F2a |
 | U45 (two services, storage per organization) | D1 | F18, F2b, F2c, F10, F11, B5 | SO4 (two organizations on one central, through the link), SO7, SO8 | F18; F2b; F2c; F14 |
 | U30 (people's requests) | D1 | B4a | SO2 | B4a |
 | U33, U31 (the machine client, replay, revoke and wrong-client cases included) | D1 | F10, F11, B5 | SO8; SO2; SO4 | B5; F10; F14 |
@@ -1189,7 +1194,7 @@ It goes live after the view: central first, then the Routers. Until a machine ru
 | U40, U32, U21: R49 | DV | V1, V3 | SO12 steps 7–8; SO7 for the lookup's route | V4; V1; JV1 |
 | U40: R50 | DC | V5c and V5s (people); bots carried to steps 3–5 | SO12 step 9 | after V5c and V5s (partial); the bots half later |
 
-The rows for D2–D7 (U2, U3, U4/U5, U7/U8/U28, U10–U13, U16, U26/U36, U29, U37, and the rest of U9, U14, U27, U30 and U34) stay scheduled in the 2026-10-27 plan.
+The rows for D2–D7 (U2, U4/U5, U7/U8/U28, U10–U13, U36, U29, U37, and the rest of U9, U14, U27, U30 and U34) stay scheduled in the 2026-10-27 plan. U3/U17 (R2, R24), U16 (R26, R27) and U26 (R5, R35) are item two's and are scheduled above.
 </script></ex-markdown>
 <h2 id="item2--existing-tests-these-tickets-touch">Existing tests these tickets touch</h2>
 <ex-markdown id="item2--existing-tests-these-tickets-touch-text"><script type="text/markdown">
