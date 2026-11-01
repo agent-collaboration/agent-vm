@@ -724,6 +724,7 @@ the `sign-in-host-node` package: an HTTP listener, `better-sqlite3` through Driz
 <summary><strong>F4a</strong> Router registrar and binding (split from F4) · waits on F2a, F11</summary>
 <ex-markdown id="ticket-f4a-text"><script type="text/markdown">
 - **Changed 1 November (one central per organization, R55):** No longer waits on F2b, which was dropped.
+- **Added 1 November (R8's named project on every creating entry):** `project_id` on collaboration-client's and the provider's create requests, the Codex `StartThread`/`ForkThread` entry, native delivery and automation (Fresh, Fork), and CLI `create` and `prompt --new/--fork` (`--project`). Load and resume reuse the saved registration. In the Host's new mode a creating entry without a project, including a saved destination that lacks one, is refused `projectRequired` before any provider create. In step 1's `AccessEnrollment` mode, creates behave as today. F17 makes the field required and deletes that branch, so the cutover is at the switch.
 - **Added 1 November (R8's pre-create check):**
   - **Now, before F2a:** publish `CheckSessionStart` and its closed answer in `fleet-identity-protocol` (additive; the next crate version, released by the codex-router Lead), so F2a builds its handler against the published shape.
   - **The registrar's use of it** (sent before the provider creates the conversation) is built against a stand-in honoring the drawn shape, named unverified. It integrates only once F2a's handler and F11's connection land, as this card's dependencies say.
@@ -762,6 +763,7 @@ Real sessions on each harness path start and restore on a Router logged in by de
 <details id="ticket-f17">
 <summary><strong>F17</strong> remove today's machine login (new) · waits on F10, F14 (SO8 passing on the new login)</summary>
 <ex-markdown id="ticket-f17-text"><script type="text/markdown">
+- **Added 1 November:** with the old login, F17 also removes the Router's step-1 branches: the `AccessEnrollment` gate mode (F11) and the optional `project_id` on creating entries (F4a). `project_id` becomes required in the types, and nothing behaves as step 1 any more.
 - **Covers:** R43 step 2's removals, before JC1, so that JC1 tests the exact builds PROD2 promotes (Advisor, IP1).
   - The enrollment credential check, the Access-client match, the Access-derived machine identity, and `EnrollMachine` with its operator-token preparation are deleted.
   - So is the `accessEnrollment` branch of `machineLogin`.
