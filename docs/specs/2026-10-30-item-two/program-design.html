@@ -74,7 +74,7 @@ flowchart TB
 
 **Your organization's central is today's deployment.** It keeps its Worker name, so its Durable Objects and storage carry over, including the Fleet object your organization adopts (OD8). The directory is the one new deployment.
 
-**What leaves today's Registry: only what spans organizations.** The organization list (F2a's `organizations` and `registry_organization_record`) and the machine claim (F10's `fleet_machines`) become the directory's own tables, with the same SQL. Everything today's Registry already does inside a deployment stays in each central's Registry: machine enrollments until step 2, leases and their incarnations, notice marks, peer lookup, mail and forwards.
+**What leaves today's Registry: only what spans organizations.** The organization list (what F2a had drawn as `organizations` and `registry_organization_record`) and the machine claim (F10's `fleet_machines`) become the directory's own tables. The organization row now keeps the central's whole `CentralRecord`, so F2c brings their SQL to you before code uses it. Everything today's Registry already does inside a deployment stays in each central's Registry: machine enrollments until step 2, leases and their incarnations, notice marks, peer lookup, mail and forwards.
 
 **How the parts reach each other:**
 
@@ -109,6 +109,21 @@ pub struct CentralAddresses {                // all public; from the central's d
     pub machine_token_address: ResourceUri,  // DecideMachineToken
     pub receiver: ReceiverId,                // the deployment's authoritative receiver, as today
     pub relay: PeerId,                       // the deployment's relay peer, as today
+}
+// The directory's own row for each organization: what FindCentral answers, plus the addresses only the directory calls.
+// CreateOrganization takes it whole (the runbook's step 3 supplies it from the central's deploy settings); FindCentral
+// never returns `directory_calls`.
+#[serde(rename_all = "camelCase")]
+pub struct CentralRecord {
+    pub addresses: CentralAddresses,
+    pub directory_calls: DirectoryCallAddresses,
+}
+#[serde(rename_all = "camelCase")]
+pub struct DirectoryCallAddresses {
+    pub approval_authorize_address: ResourceUri, // AuthorizeDeviceApproval
+    pub approval_activate_address: ResourceUri,  // SettleDeviceApproval, to activate
+    pub approval_cancel_address: ResourceUri,    // SettleDeviceApproval, to cancel
+    pub initialization_address: ResourceUri,     // InitializeOrganization
 }
 
 // Directory → the organization's central: three approval steps and initialization, each its own audience and scope.
@@ -151,7 +166,7 @@ pub enum OrganizationInitialization { Initialized {}, AlreadyInitialized {}, Not
 **Deploying another organization, by hand.** You, as the fleet operator:
 1. **Deploy its central:** the central build under the organization's own Worker name. Its settings name its organization ID, its relay ID and its trust configuration (the sign-in service pinned as issuer). Its own client key goes in as a secret, and it gets an address.
 2. **Register it at the sign-in service:** its pinned client (public key only) and its addresses, in the sign-in service's deploy configuration.
-3. **Create the organization:** run `CreateOrganization` at the directory, with the organization ID, the owner's email and the central's addresses. The directory writes it as `creating`, sends `InitializeOrganization` to that central, and marks it `active` once acknowledged.
+3. **Create the organization:** run `CreateOrganization` at the directory, with the organization ID, the owner's email and the central's whole `CentralRecord`: its public addresses, and the four addresses only the directory calls. The directory writes it as `creating`, sends `InitializeOrganization` to that central, and marks it `active` once acknowledged.
 4. **The new owner signs in** with Google or GitHub. Until step 3, its machines also need an Access application and service tokens, as yours do today.
 
 These steps are a runbook, not code. A later provisioner would run the same steps.
@@ -372,7 +387,7 @@ flowchart TB
 | E22 Machine token | The sign-in service | `sign-in-core` (from `packages/auth`) | `identity_contract.rs`: `MachineTokenClaims` (new, the contract home; the sign-in service's Zod schema is generated from it) | JWT claims, below | derived (signed, never stored) | Rust serde, Zod derived |
 | E15 Machine allowance | Organization authority | `organization_authority` (new) | `identity_contract.rs`: `MachineAllowance` (new) | admin API `{ installationId, workspaceId }`; `DecideDeviceLogin` carries the workspaces chosen at log-in | persisted | Rust |
 | E24 Machine connection | The Connection object: the open connection, its silence deadline and its presence, judged on its own clock | Connection object (existing, `ObjectAddress::Connection(installation)`; modified: heartbeat, silence deadline, presence answer); its own store keeps the open connection, its attach sequence, when it opened, when it was last heard and when the last one closed | `identity_contract.rs`: `ReadMachinePresence` and `MachinePresenceAnswer { Open { connectionId, attachSequence, openForMs, silentForMs } \| NotConnected { closedAgoMs: Option } }` (new); `ConnectionId` (existing, `fleet_sync_protocol`) | `Heartbeat` on `/v1/session`; `ReadMachinePresence` (organization authority → Connection object, at each lookup); the lookup's `connection` variant | persisted in the Connection object's store | Rust tagged enum |
-| E26 Fleet central | Its deployment: the operator, by the runbook | each organization's own Worker (Cloudflare) or process (Tokio), built from `collaboration-central-core`; its deploy settings name its organization | `identity_contract.rs`: `CentralAddresses` (new) | the directory row's `central_address`; `FindCentral`'s `found`; the Router's `fleet_central`; the sign-in service's `central_route` row | deployed; addresses persisted in the directory | Rust serde, Zod derived (K14) |
+| E26 Fleet central | Its deployment: the operator, by the runbook | each organization's own Worker (Cloudflare) or process (Tokio), built from `collaboration-central-core`; its deploy settings name its organization | `identity_contract.rs`: `CentralAddresses` (new) | the directory row's `central_record`; `FindCentral`'s `found`; the Router's `fleet_central`; the sign-in service's `central_route` row | deployed; addresses persisted in the directory | Rust serde, Zod derived (K14) |
 | E27 Fleet directory | The directory itself | `collaboration-central-core` `fleet_directory` (new), its own Worker with one `DirectoryObject`, or its own Tokio process | `identity_contract.rs`: `FindCentral`, `CentralLookup`, the approval steps, `InitializeOrganization` (new) | C7 requests above | persisted (its own tables) | Rust serde, Zod derived (K14) |
 | E7 Fleet harness session | Organization authority | `organization_authority` session registry (new), with its start time set when the organization authority registers it; `session_activity` table (new: one row per session, replaced by each report) | on the wire, `message-board`'s `SessionRef` (existing; the Router converts from its `endpoint_identity.rs` `SessionRef`) plus `identity_contract.rs` `FleetSessionRecord` (new, with `startedAt`) and, in `fleet-identity-protocol`, `SessionActivity { session, connectionId, activity: Working \| Idle, reportedAt }` (new) | `principal.session_ref` object in tokens; `session` in registration; `ReportSessionActivity` over the connection; the lookup's `state`: `working \| idle \| unknown` | persisted (with retention); an activity row counts only while its connection holds the machine's lease | existing `SessionRef` plus Rust |
 | E8 Membership (of a session) | Organization authority | `organization_authority` session registry (new): a session's membership is its registration | `identity_contract.rs`: `FleetSessionRecord` names its workspace; it counts while its machine has an active enrollment here | registration; admin lookup | persisted | Rust; people's and bots' memberships come in step 3 |
@@ -483,7 +498,7 @@ erDiagram
   organizations {
     text organization_id PK
     text state "creating or active"
-    text central_address "its central's directory-call and service addresses"
+    text central_record "its CentralRecord: public addresses and directory-call addresses"
   }
   fleet_machines {
     text service_id PK "the installation"
@@ -1248,7 +1263,7 @@ pub enum CommandStatusResult {
 
 Service tokens from the issuer get a 5-minute lifetime from the issuer's resource policy for those audiences, and every receiver also refuses one whose `exp − iat` exceeds that. All edges run over TLS, including Cloudflare service bindings, which carry the same tokens. Bodies are not signed: a receiver checks that each body is well-formed and within the caller's scope (its organization and workspace exist here and the caller may act for them), not that the body is the one the caller first wrote. **Trust configuration** is pinned at deploy: each receiver's issuer URL, published-key URL and the client ID expected per operation. **Rotation:** central publishes its client key set at a fixed address the issuer reads; it adds a new key, waits one refresh, then signs with it. The issuer rotates its signing keys the existing way; receivers refetch the key set once on an unknown key ID.
 | A central → sign-in: disable a machine's client | a service token from the issuer by client credentials with that central's own `private_key_jwt` client: `aud` = the sign-in service's machine-client address, `scope` = `machine-client-disable` | issuer key; audience; scope; the caller is a central's pinned client; its registered organization equals the body's `organizationId` and the target client's metadata organization; the client's metadata names the enrollment | `AlreadyDisabled` |
-| Fleet directory → an organization's central: authorize, activate or cancel a device approval | a service token from the issuer by client credentials with the directory's own `private_key_jwt` client: three operations, each with its own audience and scope: `aud` = that central's approval-authorize, approval-activate or approval-cancel address, `scope` = `device-approval-authorize`, `device-approval-activate` or `device-approval-cancel`; lifetime ≤ 5 min | issuer key; the directory's client; audience and scope; the body is one step for an organization this central serves | each step is idempotent on the request ID |
+| Fleet directory → an organization's central: authorize, activate or cancel a device approval | a service token from the issuer by client credentials with the directory's own `private_key_jwt` client: three operations, each with its own audience and scope: `aud` = that central's approval-authorize, approval-activate or approval-cancel address (from its `CentralRecord.directory_calls`), `scope` = `device-approval-authorize`, `device-approval-activate` or `device-approval-cancel`; lifetime ≤ 5 min | issuer key; the directory's client; audience and scope; the body is one step for an organization this central serves | each step is idempotent on the request ID |
 | Fleet directory → an organization's central: initialize a new organization | as above, `aud` = that central's initialization address, `scope` = `initialize-organization` | as above; the body's organization is the one this central's deploy settings name | a repeat for an initialized organization changes nothing |
 </script></ex-markdown>
 

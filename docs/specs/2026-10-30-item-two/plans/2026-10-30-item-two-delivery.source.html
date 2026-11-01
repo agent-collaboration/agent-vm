@@ -405,7 +405,7 @@ Then production switches (PROD2): central accepts only machines logged in this w
 
 | Building block | Why D1 needs it | Tickets |
 |---|---|---|
-| Your sign-in and the organization core | you approve each machine as the organization's owner, and Fleet central holds the organization, its machines and their workspaces | B1, B3, B4a · F1, F2a, F2b, F3a |
+| Your sign-in and the organization core | you approve each machine as the organization's owner, and the organization's own central holds the organization, its machines and their workspaces | B1, B3, B4a · F1, F2a, F2c, F3a |
 | Machine login | Fleet central must know which organization a machine belongs to and that its login is current; each machine has its own client | B2, B5 · F10, F11, F14, F17 |
 | Session registration | Fleet central must know each session and the machine that vouches for it | F4a, F8a |
 | Flood limits | the sign-in service is public, and R42 asks for code entry to be limited | B6 |
@@ -618,7 +618,7 @@ the `sign-in-host-node` package: an HTTP listener, `better-sqlite3` through Driz
 <details id="ticket-f2a">
 <summary><strong>F2a</strong> organization authority core (split from F2) · waits on F1</summary>
 <ex-markdown id="ticket-f2a-text"><script type="text/markdown">
-- **Changed 1 November (one central per organization, R55):** Its two Registry tables (`organizations`, `registry_organization_record`) move to F2c's directory, with the same SQL. `CreateOrganization` and its outbox move to F2c. F2a keeps the organization authority and its tables, now in each organization's own central.
+- **Changed 1 November (one central per organization, R55):** Its two Registry tables (`organizations`, `registry_organization_record`) move to F2c's directory, where the organization row keeps the central's whole `CentralRecord`; F2c brings their SQL to you. F2a's own SQL approval covers its nine organization-authority tables. `CreateOrganization` and its outbox move to F2c. F2a keeps the organization authority and its tables, now in each organization's own central.
 - **Covers:** R5 (people's admission at central), R7 (the session registry), R13 (admin commands and the owner guard; the operator check through the sign-in service, built and enabled at PROD2), R14 (lookups for people, sessions, workspaces' allowed machines and machines), R34 (organization-scoped rows; cross-organization references answer as unknown), R35; organizations and their owner; machine allowances. Runs the real-output check for K5 and K6 against B4a's real producer if it merges after B4a.
 - **Allocation (31 October):** F2a introduces the organization authority itself: its address and kind, its own migrations and runtime, and minimal routing on both hosts. (F2b, which was to re-address the Fleet object, was dropped on 1 November: each central keeps its one Fleet object.) F2a owns the owner guard's policy, token parsing and the admin handlers, with typed injected ports at the sign-in confirmation and Fleet boundaries; its both-host scenarios use contract fixtures there, which don't earn real C7 authentication. F3a supplies the real verifier and key fetching; the Fleet port reaches the central's own single Fleet object. Existing Access routes stay until the named cutover. Its migration SQL goes to the owner before any commit uses it.
 - **Earns (its SO4 scenarios):** U21's command and guard cases; U27's central half for people, machines and sessions.
@@ -646,7 +646,7 @@ the `sign-in-host-node` package: an HTTP listener, `better-sqlite3` through Driz
 <summary><strong>F2c</strong> Fleet directory (new, 1 November) · waits on F2a</summary>
 <ex-markdown id="ticket-f2c-text"><script type="text/markdown">
 - **Covers:** R55's directory:
-  - `collaboration-central-core` `fleet_directory`: the `organizations` table and its record (F2a's two Registry tables, same SQL, moved to the directory's own migrations), `CreateOrganization` (the fleet operator's), the `InitializeOrganization` outbox step to the named central, and `FindCentral`;
+  - `collaboration-central-core` `fleet_directory`: the `organizations` table (keeping each organization's `CentralRecord`) and its record table, in the directory's own migrations, their SQL to you before code uses it, `CreateOrganization` (the fleet operator's), the `InitializeOrganization` outbox step to the named central, and `FindCentral`;
   - hosted on both hosts: a second Worker entry and deploy template with one `DirectoryObject`, and a Tokio directory mode in its own process with its own SQLite database;
   - each central's deploy setting naming its one organization, and refusing every other.
 - **Not:** the machine claim and the approval orchestration (F10's, at the directory); the directory's and centrals' receivers and the directory's pinned client (F3a's).
