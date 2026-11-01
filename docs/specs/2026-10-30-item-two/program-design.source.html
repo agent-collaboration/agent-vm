@@ -163,6 +163,9 @@ pub enum OrganizationInitialization { Initialized {}, AlreadyInitialized {}, Not
 - **The resource:** the device request names the organization, and the sign-in service sets the token's resource to that organization's central machine address, from the directory. A Router can't choose a central.
 - **The token answer** adds `fleet_central` (C8): the central's session endpoint, its machine address, and the receiver and relay IDs the connection uses.
 - **Where it's kept:** the Router saves the sign-in address, organization, enrollment and `fleet_central` in one row of a new `fleet_login` table in its state database (`codex-router-state`, SQLite). The refresh credential stays in the encrypted store or in memory (R41). Until step 3 the Access reference stays configured, as today.
+- **The discovery document** is closed: `/.well-known/fleet-login` answers `{ "client_id": "<the public Router device-login client>" }`, and the Router refuses unknown fields. B5 serves it.
+- **Adopting a learned route:** the Host's login owner lives for the Host's lifetime and watches the confirmed `fleet_login` row. When a route first appears, or changes, the Host rebuilds its collaboration runtime in-process (pump, writers, mail), using the existing lifecycle teardown and reassembly. Board admission stays closed until the rebuilt runtime has adopted the route. Local MCP and API clients reconnect by their usual path, and an uncertain write stays uncertain, with no replay. A Host that starts with a saved route assembles with it directly. Nothing restarts the Host or Router process, and no routing ID is ever invented.
+- **The Access reference until step 3** is the one already in `fleet/enrollment.json`. Only its Access part is read; the retired machine credential beside it never is.
 - This replaces F11's hand-written `login-config.json` and its login metadata file.
 
 **Deploying another organization, by hand.** You, as the fleet operator:

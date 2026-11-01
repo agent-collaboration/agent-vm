@@ -511,7 +511,7 @@ the `sign-in-host-node` package: an HTTP listener, `better-sqlite3` through Driz
 <details id="ticket-b5">
 <summary><strong>B5</strong> device-code login (new) · waits on B4a, B2; F1's contract fixtures</summary>
 <ex-markdown id="ticket-b5-text"><script type="text/markdown">
-- **Changed 1 November (one central per organization, R55):** Our device-code token handler sets and authorizes the resource itself, from the directory's entry for the code's organization (the provider's `issueTokens` doesn't re-check it). It adds `fleet_central` to the first token answer, and contributes `device_authorization_endpoint` to the provider's metadata. It serves `/.well-known/fleet-login`.
+- **Changed 1 November (one central per organization, R55):** Our device-code token handler sets and authorizes the resource itself, from the directory's entry for the code's organization (the provider's `issueTokens` doesn't re-check it). It adds `fleet_central` to the first token answer, and contributes `device_authorization_endpoint` to the provider's metadata. It serves `/.well-known/fleet-login` as the closed `{ "client_id": "…" }`.
 - **Covers:** R42, R40 (issuer side), R31 (single use):
   - the Router device-login client, which only starts device logins and polls;
   - **one public machine client per enrollment**, its `client_id` equal to the enrollment ID, created by our device-code token handler at the first mint (after `redeemDeviceCode`, before `issueTokens`) through `createMachineClient`; metadata `{ kind: machineEnrollment, organizationId, enrollmentId }`; allowed only refresh and central's machine address; `machine_client_id` in the token response;
