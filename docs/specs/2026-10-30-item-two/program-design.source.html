@@ -672,7 +672,7 @@ erDiagram
   
   The tests include multibyte boundaries. For `ModelName`, 128 `é` (256 bytes) is accepted and 256 `é` (512 bytes) is refused, by serde and by the schema alike.
 - **Numbers:** times are Unix seconds, except the who-is-logged-in view's (K12: `asOf`, `since`, `lastHeardAt`, `lastSeenAt`, `startedAt`, `approvedAt`) and the admin lookups' (`startedAt`, `approvedAt`), which are Unix milliseconds, typed `UnixMillis`, because the view compares them with its millisecond durations. Durations are milliseconds. The `u64` counters (`sequence`, `attachSequence`) stay below 2^53, one per report or attach; their schemas say so, so a JavaScript reader reads them exactly.
-- **Clock model:** any two service clocks differ by at most D = 60 seconds. No receiver adds leeway to `grant_expires_at`; checks of `exp`, `iat` and service-token lifetimes allow D. Retention (below) is computed from D, so a clock difference can refuse a token early but never let a covered one pass after its notice is dropped.
+- **Clock model:** any two service clocks differ by at most D = 60 seconds. No receiver adds leeway to `grant_expires_at` (`now < grant_expires_at`). D applies only where an issuer timestamp meets the receiver's clock: `now < exp + D` and `iat ≤ now + D`. A token's lifetime, `exp − iat`, is measured between two of the issuer's own timestamps, so it gets no leeway: at most 300 s for service tokens (301 refused), and at most 60 s for the issuer's self-signed decision tokens. Retention (below) is computed from D, so a clock difference can refuse a token early but never let a covered one pass after its notice is dropped.
 </script></ex-markdown>
 
 <h3 id="program-design--machine-token-claims-e22-c9">Machine token claims (E22, C9)</h3>
