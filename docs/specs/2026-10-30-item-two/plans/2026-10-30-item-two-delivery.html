@@ -464,7 +464,14 @@ D1's first use is from your Mac to Sunclaw, both macOS. F12 (the Linux secret st
 <details id="ticket-b3">
 <summary><strong>B3</strong> design-thread fixes</summary>
 <ex-markdown id="ticket-b3-text"><script type="text/markdown">
-unchanged; produces K5 and K6's shapes and structural fixtures. Their real producer completes in B4a, which stores the session's organization and current standing that the confirmation and the person token carry, so the real-output check runs in the later of B4a and F2a.
+- **Covers (made concrete 31 October; the "nine #237 threads" were historical pointers to these):** the people sign-in design's R1–R20 as revised, identity R5:
+  1. **Linking never binds:** a second Google or GitHub login is linked only by an explicit step while signed in, never because the emails match (people sign-in R8).
+  2. **Introspection by client authentication:** the introspection endpoint answers only a caller that authenticates as a registered client.
+  3. **`checkedAt` from the first session read:** the confirmation's time is taken when the session is first read, not after later awaited reads (today's `sign-in-response-release.ts` stamps it late).
+  
+  Where today's code already satisfies one of these, B3 adds the test that proves it and changes nothing else.
+- **Produces K5 and K6's shapes (the Implementer's option A):** structural schemas and generated fixtures for the session confirmation and the organization-scoped person token, in `sign-in-core` `src/contracts/`, staged. The live person-token check (`tool-access` `person-proof.ts`) and today's producer stay unchanged, so `main` keeps working. B4a replaces them in one hard cutover, when it adds `session.organizationId` and standing, and removes the staged copy's duplication then. F2a builds against the staged fixtures. Their real producer completes in B4a, and the real-output check runs in the later of B4a and F2a.
+- **Not:** any stored schema change, `session.organizationId`, or adopting the organization-required token. Those are B4a's.
 </script></ex-markdown>
 </details>
 <details id="ticket-b4a">
