@@ -1461,6 +1461,12 @@ The session on B is an ordinary member session of W from its registration on, vo
 <ex-markdown id="program-design--how-a-collaboration-call-is-attributed-text"><script type="text/markdown">
 In item two, a session's collaboration call is **attributed** to the session it actually came from. Whether a workspace may message another is still today's rule until step 4 checks it per workspace.
 
+**The owner-only Unix transport (the CLI and SDK)** carries no per-session binding: it always reaches the Router's unbound `/mcp` path. So a CLI call sends the caller's current `SessionRef` as call context. The Router host resolves it to that session's active registration, and applies the same sender-mismatch check as the bound path.
+- **New mode:** a session mutation with missing or inactive context is refused. A call made as the operator stays an operator action.
+- **Step 1 (`AccessEnrollment`):** unchanged until F17.
+- **What it relies on:** the trusted-machine model. This proves nothing about the caller: any process of the same user can name any local session, which is the shared-bucket limit (E14) the binding already accepts.
+- **Nothing new is exported:** no capability, URI or lookup tool.
+
 ```mermaid
 sequenceDiagram
   autonumber
