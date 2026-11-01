@@ -693,6 +693,10 @@ the `sign-in-host-node` package: an HTTP listener, `better-sqlite3` through Driz
 - **Covers:** R55's "reached only through the sign-in service" and R27's "over the link", on central's side:
   - **Cloudflare:** central's Worker with no route, no custom domain and `workers.dev` off, keeping `previewUrls` off; central's `public/` and `internal/` namespaces at its entry; every object named by organization (`getByName(organizationId)`, `organizationId:installation` for Connection objects) and refusing a mismatch;
   - **Tokio:** central listening only on a Unix socket in a 0700 directory owned by the deployment's user, never on a network address; the object slots named the same way (`organization-<id>`, `connection-<id>:<installation>`).
+- **Added 1 November (allocation, F3a's plan-defect):** on Tokio, the socket-only listener belongs to the machine-tokens login mode (`machineLogin = machineTokens`).
+  - In that mode, central's one published-key read points at the native sign-in host's published keys (F3a's issuer key source), configured at deploy, never at central's own origin.
+  - In the access-enrollment mode (step 1), today's native HTTP listener, self-hosted issuer and its own key self-fetch run unchanged until F17 removes them, as on Cloudflare, where central's public routes go only at step 2.
+  - Proof adds: in machine-tokens mode, central opens no network listener and never fetches its own keys.
 - **Not:** the sign-in side of the link (B5's), the person checks (F3a's).
 - **Earns:** SO7's link negatives on both hosts: a direct request to central finds no route; a request reaching another organization's object is refused with nothing changed; central's outbound requests are only the published-key read. With B5: the public-edge negatives.
 - **Focused proof:**
@@ -799,8 +803,9 @@ Real sessions on each harness path start and restore on a Router logged in by de
 - **Covers:** R43 step 2's removals, before JC1, so that JC1 tests the exact builds PROD2 promotes (Advisor, IP1).
   - The enrollment credential check, the Access-client match, the Access-derived machine identity, and `EnrollMachine` with its operator-token preparation are deleted.
   - So is the `accessEnrollment` branch of `machineLogin`.
+  - **Added 1 November (allocation, F3a's plan-defect):** on native central, the step-1 machinery goes too: the self-hosted issuer (`SelfHostedIssuer`), `central mint`, the saved self-origin key URL and Access policy in the central configuration, central's own published-key route, the network HTTP listener, and the legacy `fetch_access_keys` path. From F17, native central runs only F18's socket-only mode.
   - The migration that drops `machine_enrollments` is added.
-- **Writes:** `machine_enrollment.rs`, `access_rules.rs`, `enrollment_prepare.rs`, the Registry migrations, and `central_router.rs` `/v1/session`.
+- **Writes:** `machine_enrollment.rs`, `access_rules.rs`, `enrollment_prepare.rs`, the Registry migrations, `central_router.rs` `/v1/session`; and on native, `self_hosted_issuer.rs`, the CLI `central_command/` serve, mint and configuration, `native_server.rs`'s HTTP listener and JWKS route, and `platform.rs`'s legacy key fetch.
 - **Holds production:** from F17 merging until PROD2, production central isn't deployed from `main`. Production keeps its installed build. A production fix in between goes through the orchestration's repair branch.
 - **Earns:** SO4's entry negatives on the final build: the old enrollment credential is refused even with a valid Access token, and the answer is the same whatever the Access identity. JC1 then runs SO10 step 2 on this build.
 - **Focused proof:**
