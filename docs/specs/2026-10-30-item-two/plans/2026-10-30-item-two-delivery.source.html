@@ -795,7 +795,7 @@ Real sessions on each harness path start and restore on a Router logged in by de
 </details>
 <h2 id="item2--dt-logs-and-traces">DT Logs and traces</h2>
 <ex-markdown id="item2--dt-logs-and-traces-text"><script type="text/markdown">
-**You'll see:** every login, refusal, connection, registration and outbox step in Cloudflare's Workers Logs for both Workers (with central's traces), and in your OpenTelemetry tool once you name it (OD17). Each record says what happened, why, and to which organization, machine, connection or session. No token, code, secret, cookie or email is ever in one. Locally, the Node, Tokio and Router hosts send the same records to the shared OpenTelemetry stack.
+**You'll see:** every login, refusal, connection, registration and outbox step in Cloudflare's Workers Logs for every Worker (with the centrals' and the directory's traces), and in your OpenTelemetry tool once you name it (OD17). Each record says what happened, why, and to which organization, machine, connection or session. No token, code, secret, cookie or email is ever in one. Locally, the Node, Tokio and Router hosts send the same records to the shared OpenTelemetry stack.
 
 **How it works** (the Program Design's [telemetry](../program-design.html#program-design--telemetry-logs-and-traces-r51)): the records are D1's own, written through the cores' observation seams as each ticket builds its decisions. DT turns on what Cloudflare gives and adds the exporters.
 
@@ -949,7 +949,7 @@ What it does:
 - **Covers:** C12's page, and R49 at the sign-in service.
   - **Where:** a page and refresh route beside the device-code approval page.
   - **Who:** only for a signed-in person.
-  - **Calling central:** the server mints that person's token for central's admin address and calls `WhoIsLoggedIn` every sixth of OD14.
+  - **Calling central:** the server mints that person's token for the organization's central's admin address (from `FindCentral`) and calls `WhoIsLoggedIn` every sixth of OD14.
   - **Freshness:** an answer arriving more than one refresh interval after its request is discarded. A failure, or OD14 without a snapshot, shows unavailable.
   - **Refusals:** a refusal shows nothing.
   - **The token stays on the server.**
