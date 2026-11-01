@@ -109,6 +109,9 @@ flowchart TB
 - **The token answer** adds `fleet_central: { receiver, relay }`: central's authoritative receiver and relay peer IDs, from the sign-in service's configuration. They're public, and the connection needs them.
 - **Where it's kept:** the Router saves the sign-in address, organization, enrollment, machine environment, receiver and relay in one row of a new `fleet_login` table in its fleet database (`fleet.sqlite`, owned by the new `codex-router-fleet-state` crate; never the proxy's `state.sqlite`). The refresh credential stays in the encrypted store or in memory (R41). Until step 3 the Access reference stays configured, as today.
 - **Connecting:** the Router connects at `<sign-in address>/fleet/v1/session`, which the sign-in service forwards to central's public namespace (below).
+  - The sign-in address is the issuer identifier, which may carry a path (for example `https://host/api/auth`).
+  - The `/fleet/` routes, and `/.well-known/fleet-login`, sit at that address's **origin**: `https://host/fleet/v1/session`. The issuer's path and any trailing slash never change them. Only the authorization-server metadata uses the issuer path, as RFC 8414 inserts it.
+  - So `<sign-in address>/fleet/…` throughout this design means `<origin of the sign-in address>/fleet/…`.
 
 **Two namespaces at central, and what the public edge may reach.** Every request arrives over the same link, so central can't tell from the link alone whether the sign-in service started a request or passed one on. The namespaces make that difference:
 - **`public/`: what the sign-in service passes on from the internet,** and only this: `/fleet/v1/session` (a machine's connection, checked by its machine token) and `/fleet/admin/…` (a person's request, checked by the person token plus the sign-in service's own attached confirmation; any confirmation the caller sent is dropped). Every other path under `/fleet/` is refused at the sign-in service and never forwarded.
