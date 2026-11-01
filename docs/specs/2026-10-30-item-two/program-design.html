@@ -899,11 +899,11 @@ pub enum MachineTokenDecision {
     Grant { installation: InstallationId, enrollment_id: EnrollmentId, decided_at: UnixSeconds, grant_expires_at: UnixSeconds,
             #[serde(default, skip_serializing_if = "Option::is_none")]
             superseded: Option<EndedMachineClient> }, // only on the first Grant of a newer enrollment: the one it ended
-// Names a machine client whose enrollment just ended, so the sign-in service can disable it. Also carried by RevokeMachineEnrollment's answer.
-#[serde(rename_all = "camelCase")]
-pub struct EndedMachineClient { pub enrollment_id: EnrollmentId, pub client_id: ClientId },
     Refuse { reason: MachineTokenRefusal },    // enrollmentNotActive | superseded | wrongClient | idleExpired (30 days without a Grant)
 }
+// Names a machine client whose enrollment just ended, so the sign-in service can disable it. Also carried by RevokeMachineEnrollment's answer.
+#[serde(rename_all = "camelCase")]
+pub struct EndedMachineClient { pub enrollment_id: EnrollmentId, pub client_id: ClientId }
 
 // Fleet central: its connection entry → its organization authority, for every new connection and renewal.
 #[serde(rename_all = "camelCase")]
@@ -1892,8 +1892,10 @@ export type DeviceLoginAnswer =
 	| { readonly kind: 'second-factor-required'; readonly withinSeconds: number } // R53: the page asks for a passkey or app code, then retries
 	| CentralUnknown; // the approval is refused; the code stays pending until it expires
 
+export type EndedMachineClient = { readonly enrollmentId: EnrollmentId; readonly clientId: ClientId }; // decoded from Rust's EndedMachineClient
+
 export type MachineTokenAnswer =
-	| { readonly kind: 'grant'; readonly installationId: InstallationId; readonly enrollmentId: EnrollmentId; readonly decidedAt: UnixSeconds; readonly grantExpiresAt: UnixSeconds } // the issuer mints only within 60 s of decidedAt (the redemption window)
+	| { readonly kind: 'grant'; readonly installationId: InstallationId; readonly enrollmentId: EnrollmentId; readonly decidedAt: UnixSeconds; readonly grantExpiresAt: UnixSeconds; readonly superseded?: EndedMachineClient } // the issuer mints only within 60 s of decidedAt (the redemption window); superseded only on a newer enrollment's first grant, absent otherwise, and the sign-in core disables that client
 	| { readonly kind: 'refuse'; readonly reason: 'enrollment-not-active' | 'superseded' | 'wrong-client' | 'idle-expired' }
 	| CentralUnknown; // nothing is minted
 
