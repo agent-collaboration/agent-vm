@@ -43,7 +43,7 @@ And, from your review of the design (30 October): "split the login as one delvie
 
 Five deliverables carry it. Each works end to end before the next goes live:
 1. **D1 Login, end to end.** Your sign-in, the organization core, machine login by device code, sessions registered through their machine, and flood limits at sign-in. It goes live at your production switch (PROD2), where central accepts only logged-in machines.
-2. **DT Logs and traces.** Cloudflare's Workers Logs on both Workers and traces on Fleet central, exported over OpenTelemetry, and the same from the Node and Tokio hosts. Live right after the switch (PRODT).
+2. **DT Logs and traces.** Cloudflare's Workers Logs on every Worker (the sign-in service, each central, the directory) and traces on the centrals and the directory, exported over OpenTelemetry, and the same from the Node and Tokio hosts. Live right after the switch (PRODT).
 3. **DV Who is logged in** (B+). Live after that (PRODV), with no machine logging in again.
 4. **DR Starting a session on another machine.** Live after the view (PRODR).
 5. **DC People in the view** (stage C). Its bot rows need bots, which come with steps 3–5, so they're planned there.
@@ -82,7 +82,7 @@ SO8 (F14): two Routers log in by device code to a local Fleet central, and their
 | Deliverable | What you'll see working | Workstreams | Waits on |
 |---|---|---|---|
 | **D1 Login, end to end** | You sign in, and approve your Mac and Sunclaw by device code. Their sessions register through their machine, and sessions on the two keep messaging each other on the new login. A revoked machine stops. Hammering the sign-in page or code entry from one address is refused and changes nothing. Then production switches: central accepts only machines logged in this way (still behind Access). | sign-in; Fleet central; Router | your go; OD4; the Fleet release F0 |
-| **DT Logs and traces** | Every login, refusal, connection and registration leaves a record with its reason, in Cloudflare's Workers Logs (with central's traces) and in your OpenTelemetry tool, with nothing secret in it. | sign-in; Fleet central | D1's B2, B5, F10; OD17 only for the export check |
+| **DT Logs and traces** | Every login, refusal, connection and registration leaves a record with its reason, in Cloudflare's Workers Logs (with the centrals' and the directory's traces) and in your OpenTelemetry tool, with nothing secret in it. | sign-in; Fleet central | D1's B2, B5, F10; OD17 only for the export check |
 | **DV See who is logged in** | You open a page beside the device-code approval page. It shows each machine you've logged in (approval, workspaces, connected or not, last seen) and each session on it (harness, project, workspace, start time, and working, idle or unknown). A machine whose network is cut shows as not connected within 30 seconds. Anyone else is refused; if central can't answer, the page says unavailable. | Fleet central; Router; sign-in | D1's F1, F2a, F4a, F10, F11, B4a; OD14 (decided: 30 s) |
 | **DR Start a session on another machine** | A session on your Mac lists the machines that serve its workspace and starts a helper on Sunclaw. Each start gives started, refused (nothing created) or unknown (read the outcome later). An offline machine is refused, never queued. | Fleet central; Router | D1's F2a, F4a, F10, F11, F14 |
 | **DC Stage C: people** | The view also shows each person admitted to your organization: their name, signed in now or not, and their last sign-in. | sign-in; Fleet central | DV |
@@ -289,6 +289,7 @@ The check that a consumer parses the **real** producer's output runs in whicheve
 | K10 (machine tokens as minted, under each machine's client) | B5 | F10 | the later of B5 and F10 | JC1 |
 | K11 (disabling a machine's client) | F10 | B5 | the later of F10 and B5 | JC1 |
 | K12 (`WhoIsLoggedIn` and its rows) | V1 | V3 | the later of V1 and V3 | JV1 |
+| K14 (`FindCentral` and `CentralLookup`, with `CentralAddresses`) | F2c | B4a | the later of F2c and B4a | JC1 |
 
 **How a Rust contract reaches the Switchboard:** each consuming ticket copies the producer's generated schemas and fixtures from a pinned codex-router commit into `sign-in-core`'s `src/contracts/generated/`, with that commit and the generating test's name recorded beside the copy. The consumer's Zod schemas parse those fixtures, keyed by shape name, so two shapes with the same fields can't be swapped. A copy can go stale; the real-output check in the later-merging ticket is what catches it.
 **What F1's fixtures are:** serializer output from Rust values, written by a test and checked in, with a freshness test on the existing pattern (`collaboration-mcp`'s `inspect_snapshot_tests.rs`). Every fixture validates against its generated schema, and the hand-written negative literals (wrong tag, wrong casing, unknown field) are refused by both serde and the schema.
@@ -301,7 +302,7 @@ The check that a consumer parses the **real** producer's output runs in whicheve
 
 **In scope:**
 - the sign-in service's people sign-in, issuer core and device-code machine login, with one client per machine, and its flood limits;
-- logs and traces from both Workers and every host;
+- logs and traces from every Worker (the sign-in service, each central, the directory) and every host;
 - Fleet central's organization core, machine enrollment and token check, session registration and remote start;
 - the Router's machine login, registrar and binding, heartbeat and session activity reporter;
 - the who-is-logged-in view, B+ and stage C's people rows;
@@ -490,6 +491,7 @@ D1's first use is from your Mac to Sunclaw, both macOS. F12 (the Linux secret st
 <summary><strong>B4a</strong> issuer core (split from B4) · waits on B3; F1's contract fixtures; the Lead's `sign_in_audit` writer mapping in the Program Design</summary>
 <ex-markdown id="ticket-b4a-text"><script type="text/markdown">
 - **Changed 1 November (one central per organization, R55):** The issuer reaches each organization's central: `FindCentral` at the directory, kept per organization and asked again when a call fails, with every C7 call addressed to that central. Device-login decisions go to the directory.
+- **Changed 1 November, also:** the sign-in service's `central_route` table (one row per organization: its central's addresses and when fetched), whose SQL comes to you with B4a's; kept routes survive restarts and a directory outage (CPO3).
 - **Covers:** R26, R27 (issuer side), R38 (no workspace, collaboration or machine token for a person; people do get their admin and operator tokens), people sign-in asking central for admission (K3's person half), person confirmation and the person token as real producers (K5, K6: the session now stores its organization), and with it the cut of today's local admission: `person-admission-store`'s decisions move to central, and B4a's migration drops `allowed_email` and `deployment_owner`. Its generated SQL comes to you before the first commit that uses it. B4a also owns `sign_in_audit`'s move to its drawn shape: the migration, all six writers remapped (the agent-path writers that live on until B4b included), and readback proof that each writer's records are preserved and that a failed write changes nothing. The Lead writes each writer's mapping into the Program Design before B4a starts; the closed token-kind dispatch and its refused combinations; one-operation service tokens (K7).
 - **Keeps today's agent path until B4b:** the agent client-credentials row, the provider configuration's registration metadata, resource links and workspace policy, and the post-mint release checks. So the Switchboard keeps working, unchanged, between the cuts.
 - **Earns:** SO2's people sign-in through central's admission and a person's tool-token request refused; SO7's issuer side for D1's edges.
@@ -673,7 +675,7 @@ the `sign-in-host-node` package: an HTTP listener, `better-sqlite3` through Driz
 - **Changed 1 November (one central per organization, R55):** The machine claim (`fleet_machines`) and the authorize, claim, then activate or cancel orchestration run at the directory, calling the organization's central over F3a's edges. `AdmitMachineConnection` asks only the central's own organization authority, with no Registry or directory call. Each central checks `aud` against its own machine address.
 - **Covers:** R39, R40, R42 (central side), C9, and R19's local part for machines:
   - enrollments in the organization authority;
-  - the Registry's `fleet_machines` index and the authorize, claim, then activate or cancel sequence, idempotent on the request ID;
+  - the directory's `fleet_machines` claim and the authorize, claim, then activate or cancel sequence it runs against the organization's central, idempotent on the request ID (its SQL comes to you before code uses it);
   - reserved and approved enrollments, and supersession at an enrollment's first token;
   - the active-enrollment check on every decision;
   - `DecideDeviceLogin`, `DecideMachineToken`, `AdmitMachineConnection`, with their receivers (K8) on F3a's service edges;
@@ -685,7 +687,7 @@ the `sign-in-host-node` package: an HTTP listener, `better-sqlite3` through Driz
   - R53 at central: `DeviceLoginRefusal::SecondFactorRequired` unless `approver_second_factor_at` is within the window or the organization has never had an enrollment;
   - `RenewMachineToken`, and closing expired and superseded connections;
   - the single-valued `machineLogin` setting, until F17 removes the `accessEnrollment` branch;
-- **Writes:** `organization_authority`, the Registry object, new `machine_token_check`, `central_router.rs` `/v1/session`, both hosts' entries.
+- **Writes:** `organization_authority`, `fleet_directory` (the claim and the sequence), new `machine_token_check`, `central_router.rs` `/v1/session`, both hosts' entries.
 - **Earns (its SO4 scenarios):** U31, U33's central half, and revocation's local effects; SO7 for the decision edges.
 - **Focused proof:**
   - **Wrong behaviors caught:**
@@ -852,15 +854,15 @@ SO13: SO8's and SO2's runs (and SO12's once V4 exists) export to a local OTLP co
 <details id="ticket-jt1">
 <summary><strong>JT1</strong> logs and traces on the private stack (new) · waits on T1–T3 merged, with their local runs passing; JC1; OD17 for the export check only</summary>
 <ex-markdown id="ticket-jt1-text"><script type="text/markdown">
-- **Covers:** DT on the private stack: the account-level destinations, created through Cloudflare's API with the `cf` CLI; both Workers deployed with `observability` on; central and sign-in builds carrying T1 and T2.
-- **Earns:** SO13's JT1 check: a login, a refusal and a Google sign-in with canary values in their URLs; every record Cloudflare keeps for both Workers read back through Cloudflare's API and searched for the canaries and the run's secrets; then at your destination once you name it (OD17). Until then the export leg is named unverified. Also the intermediate combination: telemetry central and sign-in serving D1's Routers unchanged.
+- **Covers:** DT on the private stack: the account-level destinations, created through Cloudflare's API with the `cf` CLI; every Worker (sign-in, your central, the directory) deployed with `observability` on; the central, directory and sign-in builds carrying T1 and T2.
+- **Earns:** SO13's JT1 check: a login, a refusal and a Google sign-in with canary values in their URLs; every record Cloudflare keeps for every Worker, the directory included, read back through Cloudflare's API and searched for the canaries and the run's secrets; then at your destination once you name it (OD17). Until then the export leg is named unverified. Also the intermediate combination: telemetry central and sign-in serving D1's Routers unchanged.
 - **Follows** the orchestration's cutover procedure: freeze, deploy, read back builds, prove, resume.
 </script></ex-markdown>
 </details>
 <details id="ticket-prodt">
 <summary><strong>PRODT</strong> logs and traces in production (new; you run it) · waits on JT1; PROD2; your go</summary>
 <ex-markdown id="ticket-prodt-text"><script type="text/markdown">
-- **Covers:** DT in production: both Workers with `observability` on, and the production destinations once named. No answer changes, and no machine logs in again.
+- **Covers:** DT in production: every Worker (sign-in, your central, the directory) with `observability` on, and the production destinations once named. No answer changes, and no machine logs in again.
 - **Earns:** you read your next real login's records.
 </script></ex-markdown>
 </details>
