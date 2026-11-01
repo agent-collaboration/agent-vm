@@ -724,6 +724,7 @@ the `sign-in-host-node` package: an HTTP listener, `better-sqlite3` through Driz
 <summary><strong>F4a</strong> Router registrar and binding (split from F4) · waits on F2a, F11</summary>
 <ex-markdown id="ticket-f4a-text"><script type="text/markdown">
 - **Changed 1 November (one central per organization, R55):** No longer waits on F2b, which was dropped.
+- **Added 1 November (R8's pre-create check):** `CheckSessionStart` and its closed answer, added to `fleet-identity-protocol` (additive; the next crate version, released by the codex-router Lead). The Router's registrar sends it before the provider creates the conversation. The organization authority's handler is F2a's; until it lands, a stand-in honors the drawn shape, named unverified.
 - **Covers:** R3, R7, R8, R23, R24, and E7's start time (`startedAt`, set from the organization authority's clock at first registration). Registration goes to the machine's organization authority, which looks the project up in its own Fleet object, and checks that the connection's enrollment is the active one. The session binding attributes every collaboration call to the session it came from.
 - **Contributes (in SO1, with F8a):** U19 whole; U6/U32's registration and start-refusal cases; U18's isolation record and bucket. The token portions of U6 and U18 close at D3's F8b, once session tokens exist.
 </script></ex-markdown>

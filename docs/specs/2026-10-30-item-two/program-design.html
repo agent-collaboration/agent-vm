@@ -712,6 +712,21 @@ pub enum RegisterFleetSessionResult {
     Refused { reason: SessionRefusal }, // projectUnknown | machineNotAllowed | alreadyEnded
 }
 
+// Asked before the provider creates the conversation (R8; added 1 November). Writes nothing: the organization
+// authority answers from its live state, and registration checks again afterwards, because an allowance can
+// change in between. Sent over the same connection; a transport failure or timeout is no answer, and the
+// Router refuses the start (R25).
+#[serde(rename_all = "camelCase")]
+pub struct CheckSessionStart {
+    pub project_id: ProjectId,                  // the named project; never taken from the working directory
+    pub started_by: StartedBy,                  // as in RegisterFleetSession
+}
+#[serde(tag = "result", rename_all = "camelCase", rename_all_fields = "camelCase")]
+pub enum SessionStartCheck {
+    Allowed { workspace_id: WorkspaceId },
+    Refused { reason: SessionStartRefusal },    // projectUnknown | machineNotAllowed | differentWorkspace (a session's helper outside its own workspace) | starterNotActive
+}
+
 // The isolation record (E13): asserted by what launched the session, recorded at launch, never changed, never enforced (R23).
 #[serde(rename_all = "camelCase")]
 pub struct AgentIsolation {
@@ -765,7 +780,7 @@ The Router may only name sessions on its own installation; central refuses any o
 
 **Bindings at start and restore:** before a create, the registrar mints a binding and hands it over with the create command: for Codex, in the native `StartThread` or `ForkThread` config wherever it is built (today the client bridge's creation, `session_creation.rs:313–330`, for helper starts, and the native preparation for delivery), and the same address again at `thread/resume`; for Claude and Cursor, the session's own MCP list on the ACP create, load or resume request. Today's create and restore commands carry no session context, so they gain the binding. The binding becomes active only for the conversation the provider returns, once `Registered` arrives; a pending, failed or ambiguous creation activates nothing, so its binding admits no effect. Before a restore, it looks up the session's persisted binding and lifecycle state and reuses that binding and address; a retired or abandoned binding is never restored. The registrar persists the registration's immutable input, the binding ID and address, and the result. A provider that doesn't advertise HTTP MCP support can't carry a binding, so its start is refused rather than run without one. The address must not move: the Router refuses to register sessions while its configured listener port is zero, or when its configured origin differs from the one recorded with a registration. The listener itself is already fixed by configuration (`127.0.0.1:8788` in production, `host_command/mod.rs:374–391`).
 
-**Order and late outcomes:** the Router checks the start first (it names its project; a session starts sessions only in its own workspace, R8); then the provider creates the conversation; then the Router registers it, and sends its first prompt only after `Registered`. Starting needs no sign-in: the machine's workspaces were chosen when it was enrolled. Refused by the Router's check: nothing is created. Created, then registration refused (for example, an allowance withdrawn in between): the conversation exists, its binding never activates, and it is never prompted. A lost create reply: the binding stays prepared until the registrar learns the outcome. Nothing replays a create or deletes a conversation automatically; such a conversation is idle and acts as no member. Resending the identical registration returns the original `Registered`.
+**Order and late outcomes:** the Router checks the start first: it names its project, and asks its organization authority `CheckSessionStart` (the allowance, and that a session starts helpers only in its own workspace, R8). Then the provider creates the conversation; then the Router registers it, and sends its first prompt only after `Registered`. Starting needs no sign-in: the machine's workspaces were chosen when it was enrolled. Refused by the Router's check: nothing is created. Created, then registration refused (for example, an allowance withdrawn in between): the conversation exists, its binding never activates, and it is never prompted. A lost create reply: the binding stays prepared until the registrar learns the outcome. Nothing replays a create or deletes a conversation automatically; such a conversation is idle and acts as no member. Resending the identical registration returns the original `Registered`.
 
 **Personas** aren't part of item two. Step 3 adds them to registration and remote starts, as new optional fields, when sessions get Switchboard tokens.
 
