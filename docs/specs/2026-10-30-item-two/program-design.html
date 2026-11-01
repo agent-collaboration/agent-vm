@@ -143,12 +143,12 @@ pub struct InitializeOrganization { pub organization_id: OrganizationId, pub own
 pub enum OrganizationInitialization { Initialized {}, AlreadyInitialized {}, NotThisCentral {} }
 ```
 
-**The scalars, exactly.** One accepted set each, written once as the JSON Schema `pattern` plus `x-maxUtf8Bytes` (F1's rule). The Rust constructor and the sign-in service's generated Zod enforce that same pattern; nothing is parsed by a wider library.
+**The scalars, exactly.** One accepted set each, written once as the JSON Schema `pattern` plus `x-maxUtf8Bytes` (F1's rule). The sign-in service's generated Zod enforces that pattern. The Rust constructor enforces the same accepted set with linear-time matching: the workspace's pinned `regex` crate, with any lookahead in the pattern written as an explicit check. No backtracking regex engine enters the runtime-free core, and no wider URL or email library decides acceptance. A three-way probe (Rust, the JSON Schema, JavaScript) proves the sets equal.
 - **`HttpsUrl` and `ResourceUri`** share one lexical rule; the two names say what each address is for.
   - ASCII only, with no whitespace or control characters, and at most 2,048 bytes.
   - The scheme is `https`. `http` is allowed only when the host is `localhost`, `127.0.0.1` or `[::1]`, for local test deployments.
   - The host is a lowercase DNS name in ASCII (an IDN as its `xn--` punycode, labels of 1–63 characters from `a–z 0–9 -`, never starting or ending with `-`), or one of those two loopback forms.
-  - An optional port, 1–65535.
+  - An optional port, 1–65535, written without leading zeros (so `:443` is valid and `:0443` is refused).
   - The path is empty, or starts with `/` followed by RFC 3986 path characters, percent-encoding included.
   - No user info, no query, no fragment.
   - Bytes are kept exactly as written and compared byte for byte, with no normalization; deploy settings spell each address canonically.
