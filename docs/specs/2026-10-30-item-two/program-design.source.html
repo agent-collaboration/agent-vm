@@ -356,7 +356,7 @@ Each machine's Connection object also keeps its own small store: its open connec
 
 <h4 id="program-design--sign-in-service">Sign-in service</h4>
 <ex-markdown id="program-design--sign-in-service-text"><script type="text/markdown">
-D1, or `better-sqlite3` on Node (OD4). Better Auth's tables as its CLI generates them, plus our additions. Also generated and not drawn: `verification`, `jwks`, `oauthConsent`, `oauthClientAssertion`, `oauthResource`. Our `sign_in_audit` (`id` primary key, `organization_id`, `request_id`, `kind`, `actor`, `outcome`, `recorded_at_ms`; unique `request_id` and `kind`) stands alone. So does `central_route` (new with B4a, 1 November; its SQL comes to you): `organization_id` primary key, the central's addresses, `fetched_at_ms`. It is routing only, never authority (see [one central per organization](#program-design--two-services-one-way-in)).
+D1, or `better-sqlite3` on Node (OD4). Better Auth's tables as its CLI generates them, plus our additions. Also generated and not drawn: `verification`, `jwks`, `oauthConsent`, `oauthClientAssertion`, `oauthResource`. Our `sign_in_audit` (`id` primary key, `organization_id`, `request_id`, `kind`, `actor`, `outcome`, `recorded_at_ms`; unique `request_id` and `kind`) stands alone.
 
 People, and their admission to organizations:
 
