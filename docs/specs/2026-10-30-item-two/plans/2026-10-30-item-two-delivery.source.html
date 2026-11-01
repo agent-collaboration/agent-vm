@@ -57,6 +57,17 @@ This plan **replaces the 2026-10-27 plan for D1**. That plan still records D2–
 SO8 (F14): two Routers log in by device code to a local Fleet central, and their sessions message each other. SO13 (T3): every record of those runs, in a local OpenTelemetry collector. SO12 (V4): the who-is-logged-in page against two local Routers, one of them cut off. SO11 (F16): one Router starting a helper on the other. All run before anything touches the private stack.
 </script></ex-markdown>
 </ex-callout>
+<h2 id="item2--one-central-per-organization">One central per organization: what changed (1 November)</h2>
+<ex-markdown id="item2--one-central-per-organization-text"><script type="text/markdown">
+**You decided:** each organization runs on its own Fleet central, and new organizations are deployed by hand for now. Provisioning stays open with you (OD22). The Lead chose the rest, recorded in the Program Design: a small Fleet directory as its own Worker, and the Router learning its central at login, saved in its SQLite state.
+
+**What it changes in this plan:**
+- **F2c Fleet directory** (new, wave 3, waits on F2a): the organization list, `CreateOrganization`, `FindCentral`, and the directory's deployment on both hosts.
+- **F2b dropped:** each central's one Fleet object is its organization's, so there is nothing to re-address or migrate.
+- **Changed:** F2a (its Registry tables move to the directory), F3a (the directory's edges), F10 (the claim and approval at the directory; the connection check stays inside each central), F11 (the learned central and `fleet_login`), B4a (finding each organization's central), B5 (the resource set by the issuer, `fleet_central`, discovery), JC1 (deploys the directory and runs the runbook once on the test deployment). Each card says how.
+- **Held until the design review passes:** F2a's Registry paths, F10, F11's settings source, and B4a and B5's routing. Everything else continues.
+</script></ex-markdown>
+
 <h2 id="item2--how-to-read-this-plan">How to read this plan</h2>
 <ex-markdown id="item2--how-to-read-this-plan-text"><script type="text/markdown">
 - **A deliverable** is something you can see working end to end. It cuts through every part it needs: Fleet central, the Router and the sign-in service.
@@ -117,8 +128,8 @@ Each lane is one deliverable, top to bottom in the order it goes live. A lane's 
 |---|---|---|---|---|
 | **1** | B0 latest oxc, then B1 storage and core packages | F1 contracts and the shared crate · F12 Linux secret store | — | your go; F0 (v0.1.118, published) |
 | **2** | B2 Node host · B3 design fixes | F2a organization core · F11 Router machine login | — | B1; F1 |
-| **3** | B4a issuer core | F2b Fleet data per organization · F3a receivers | — | B3 and F1's fixtures; F2a |
-| **4** | B5 device-code login | F10 enrollment and token check · F4a registrar and binding | V3 the view's page | B4a and B2; F2a, F3a, F2b, F11 |
+| **3** | B4a issuer core | F2c Fleet directory · F3a receivers | — | B3 and F1's fixtures; F2a |
+| **4** | B5 device-code login | F10 enrollment and token check · F4a registrar and binding | V3 the view's page | B4a and B2; F2a, F2c, F3a, F11 |
 | **5** | B6 flood limits · B7 second factors | F14 SO8 login journey | T1, T2 telemetry · V1 presence and lookup · V2 heartbeat | B5; F10, F11, F4a and B5 |
 | **6** | — | F8a SO1 journey · F17 remove the old login | T3, V4 journeys · F15 remote start (queued until a Fleet slot frees: five are eligible, four run) | F14; V1 and V2 |
 | **7** | — | — | F16 remote-start journey | F15 |
@@ -141,7 +152,7 @@ flowchart TB
   subgraph W3["Wave 3"]
     direction LR
     W3S["Sign-in lane<br/>B4a issuer core"]
-    W3F["Fleet lane<br/>F2b Fleet data<br/>F3a receivers"]
+    W3F["Fleet lane<br/>F2c Fleet directory<br/>F3a receivers"]
     W3S ~~~ W3F
   end
   subgraph W4["Wave 4"]
@@ -210,11 +221,12 @@ Each row is one wave. Inside a row, the lanes run at once: the sign-in lane besi
 |---|---|---|
 | F1 identity contracts, and the `fleet-identity-protocol` crate | D1, DV, DR | F0 (v0.1.118); your go |
 | F2a organization authority core | D1 | F1 |
-| F2b Fleet data per organization | D1 | F2a |
+| F2c Fleet directory | D1 | F2a |
+| ~~F2b Fleet data per organization~~ (dropped 1 November: each central's one Fleet object is its organization's) | — | — |
 | F3a central receivers and service caller | D1 | F2a |
-| F10 machine enrollment, the token check, the machine client, revocation | D1 | F2a, F3a |
+| F10 machine enrollment, the token check, the machine client, revocation | D1 | F2a, F2c, F3a |
 | F11 Router machine login | D1 | F1; B5 for the real flow |
-| F4a Router registrar and binding | D1 | F2a, F2b, F11 |
+| F4a Router registrar and binding | D1 | F2a, F11 |
 | F14 SO8 machine login journey, with messaging between machines | D1 | F10, F11, F4a, B5 |
 | F8a SO1 journey: sessions and binding | D1 | F4a, F14 |
 | F12 Router secret store, Linux backend | D1, off the first-use path | your go |
@@ -477,6 +489,7 @@ D1's first use is from your Mac to Sunclaw, both macOS. F12 (the Linux secret st
 <details id="ticket-b4a">
 <summary><strong>B4a</strong> issuer core (split from B4) · waits on B3; F1's contract fixtures; the Lead's `sign_in_audit` writer mapping in the Program Design</summary>
 <ex-markdown id="ticket-b4a-text"><script type="text/markdown">
+- **Changed 1 November (one central per organization, R55):** The issuer reaches each organization's central: `FindCentral` at the directory, kept per organization and asked again when a call fails, with every C7 call addressed to that central. Device-login decisions go to the directory.
 - **Covers:** R26, R27 (issuer side), R38 (no workspace, collaboration or machine token for a person; people do get their admin and operator tokens), people sign-in asking central for admission (K3's person half), person confirmation and the person token as real producers (K5, K6: the session now stores its organization), and with it the cut of today's local admission: `person-admission-store`'s decisions move to central, and B4a's migration drops `allowed_email` and `deployment_owner`. Its generated SQL comes to you before the first commit that uses it. B4a also owns `sign_in_audit`'s move to its drawn shape: the migration, all six writers remapped (the agent-path writers that live on until B4b included), and readback proof that each writer's records are preserved and that a failed write changes nothing. The Lead writes each writer's mapping into the Program Design before B4a starts; the closed token-kind dispatch and its refused combinations; one-operation service tokens (K7).
 - **Keeps today's agent path until B4b:** the agent client-credentials row, the provider configuration's registration metadata, resource links and workspace policy, and the post-mint release checks. So the Switchboard keeps working, unchanged, between the cuts.
 - **Earns:** SO2's people sign-in through central's admission and a person's tool-token request refused; SO7's issuer side for D1's edges.
@@ -496,6 +509,7 @@ the `sign-in-host-node` package: an HTTP listener, `better-sqlite3` through Driz
 <details id="ticket-b5">
 <summary><strong>B5</strong> device-code login (new) · waits on B4a, B2; F1's contract fixtures</summary>
 <ex-markdown id="ticket-b5-text"><script type="text/markdown">
+- **Changed 1 November (one central per organization, R55):** Our device-code token handler sets and authorizes the resource itself, from the directory's entry for the code's organization (the provider's `issueTokens` doesn't re-check it). It adds `fleet_central` to the first token answer, and contributes `device_authorization_endpoint` to the provider's metadata. It serves `/.well-known/fleet-login`.
 - **Covers:** R42, R40 (issuer side), R31 (single use):
   - the Router device-login client, which only starts device logins and polls;
   - **one public machine client per enrollment**, its `client_id` equal to the enrollment ID, created by our device-code token handler at the first mint (after `redeemDeviceCode`, before `issueTokens`) through `createMachineClient`; metadata `{ kind: machineEnrollment, organizationId, enrollmentId }`; allowed only refresh and central's machine address; `machine_client_id` in the token response;
@@ -602,8 +616,9 @@ the `sign-in-host-node` package: an HTTP listener, `better-sqlite3` through Driz
 <details id="ticket-f2a">
 <summary><strong>F2a</strong> organization authority core (split from F2) · waits on F1</summary>
 <ex-markdown id="ticket-f2a-text"><script type="text/markdown">
+- **Changed 1 November (one central per organization, R55):** Its two Registry tables (`organizations`, `registry_organization_record`) move to F2c's directory, with the same SQL. `CreateOrganization` and its outbox move to F2c. F2a keeps the organization authority and its tables, now in each organization's own central.
 - **Covers:** R5 (people's admission at central), R7 (the session registry), R13 (admin commands and the owner guard; the operator check through the sign-in service, built and enabled at PROD2), R14 (lookups for people, sessions, workspaces' allowed machines and machines), R34 (organization-scoped rows; cross-organization references answer as unknown), R35; organizations and their owner; machine allowances. Runs the real-output check for K5 and K6 against B4a's real producer if it merges after B4a.
-- **Allocation (31 October):** F2a introduces the organization authority itself: its address and kind, its own migrations and runtime, and minimal routing on both hosts. F2b changes only the Fleet object's addressing and adopts today's storage. F2a owns the owner guard's policy, token parsing and the admin handlers, with typed injected ports at the sign-in confirmation and Fleet boundaries; its both-host scenarios use contract fixtures there, which don't earn real C7 authentication. F3a supplies the real verifier and key fetching, and F2b the per-organization Fleet routing. Existing Access routes stay until the named cutover. Its migration SQL goes to the owner before any commit uses it.
+- **Allocation (31 October):** F2a introduces the organization authority itself: its address and kind, its own migrations and runtime, and minimal routing on both hosts. (F2b, which was to re-address the Fleet object, was dropped on 1 November: each central keeps its one Fleet object.) F2a owns the owner guard's policy, token parsing and the admin handlers, with typed injected ports at the sign-in confirmation and Fleet boundaries; its both-host scenarios use contract fixtures there, which don't earn real C7 authentication. F3a supplies the real verifier and key fetching; the Fleet port reaches the central's own single Fleet object. Existing Access routes stay until the named cutover. Its migration SQL goes to the owner before any commit uses it.
 - **Earns (its SO4 scenarios):** U21's command and guard cases; U27's central half for people, machines and sessions.
 - **Focused proof:**
   - **Wrong behaviors caught:** an admin command applied without the current owner; a reference to another organization answering differently from a missing one.
@@ -612,8 +627,10 @@ the `sign-in-host-node` package: an HTTP listener, `better-sqlite3` through Driz
 </script></ex-markdown>
 </details>
 <details id="ticket-f2b">
-<summary><strong>F2b</strong> Fleet data per organization (new) · waits on F2a</summary>
+<summary><strong>F2b</strong> Fleet data per organization · <strong>dropped 1 November</strong></summary>
 <ex-markdown id="ticket-f2b-text"><script type="text/markdown">
+**Dropped (1 November).** With one organization per central (R55), each central's existing Fleet object is its organization's, and your central keeps today's unchanged. There is nothing to re-address or migrate. What the card covered, as it was:
+
 - **Covers:** R34's storage separation (OD8): the Fleet object addressed by organization, the first organization adopting today's storage through a fixed mapping on both hosts, and refusing the old address.
 - **Writes:** `core_contract.rs` addresses, `call_graph.rs`, both hosts' object routing.
 - **Earns:** SO4 "one Fleet object per organization, read back after a restart".
@@ -623,9 +640,25 @@ the `sign-in-host-node` package: an HTTP listener, `better-sqlite3` through Driz
   - **Oracle:** today's rows.
 </script></ex-markdown>
 </details>
+<details id="ticket-f2c">
+<summary><strong>F2c</strong> Fleet directory (new, 1 November) · waits on F2a</summary>
+<ex-markdown id="ticket-f2c-text"><script type="text/markdown">
+- **Covers:** R55's directory:
+  - `collaboration-central-core` `fleet_directory`: the `organizations` table and its record (F2a's two Registry tables, same SQL, moved to the directory's own migrations), `CreateOrganization` (the fleet operator's), the `InitializeOrganization` outbox step to the named central, and `FindCentral`;
+  - hosted on both hosts: a second Worker entry and deploy template with one `DirectoryObject`, and a Tokio directory mode in its own process with its own SQLite database;
+  - each central's deploy setting naming its one organization, and refusing every other.
+- **Not:** the machine claim and the approval orchestration (F10's, at the directory); the directory's and centrals' receivers and the directory's pinned client (F3a's).
+- **Earns:** SO4 "two centrals and the directory": create two organizations at the directory, each initialized at its own central; an interrupted creation resumes; `FindCentral` answers each.
+- **Focused proof:**
+  - **Wrong behaviors caught:** an organization initialized at the wrong central; a central accepting a second organization; a `creating` organization answering anything.
+  - **Layer:** `cargo test -p collaboration-central-core fleet_directory`, then SO4 on both hosts.
+  - **Oracle:** R55; the Program Design's [one central per organization](../program-design.html#program-design--one-central-per-organization).
+</script></ex-markdown>
+</details>
 <details id="ticket-f3a">
 <summary><strong>F3a</strong> central receivers and service caller (split from F3) · waits on F2a</summary>
 <ex-markdown id="ticket-f3a-text"><script type="text/markdown">
+- **Changed 1 November (one central per organization, R55):** Also: the directory's receivers (`FindCentral`, device-login decisions), each central's directory-call receivers (approval steps, `InitializeOrganization`), and the directory's own pinned client and service caller. Every receiver checks it serves the organization named.
 - **Covers:** R27 (central side): the C7 service caller, central's receivers checking each service token's audience, scope and operation, and the person admission and standing decisions (K3's person half).
 - **Owns, from F2a's allocation (31 October):** the real cryptography behind F2a's person-token port: verifying the person token's signature against the sign-in service's keys, fetching and caching those keys, and the C7 caller adapters. It also mounts the new bearer admin and operator routes on both hosts. A new signature verifier is a new central capability (today's host seam is RSA-only).
 - **Earns:** SO7 for the person admission and standing edges; U15's framework.
@@ -635,8 +668,9 @@ the `sign-in-host-node` package: an HTTP listener, `better-sqlite3` through Driz
 </script></ex-markdown>
 </details>
 <details id="ticket-f10">
-<summary><strong>F10</strong> machine enrollment, the machine token check, and revocation (new) · waits on F2a, F3a</summary>
+<summary><strong>F10</strong> machine enrollment, the machine token check, and revocation (new) · waits on F2a, F2c, F3a</summary>
 <ex-markdown id="ticket-f10-text"><script type="text/markdown">
+- **Changed 1 November (one central per organization, R55):** The machine claim (`fleet_machines`) and the authorize, claim, then activate or cancel orchestration run at the directory, calling the organization's central over F3a's edges. `AdmitMachineConnection` asks only the central's own organization authority, with no Registry or directory call. Each central checks `aud` against its own machine address.
 - **Covers:** R39, R40, R42 (central side), C9, and R19's local part for machines:
   - enrollments in the organization authority;
   - the Registry's `fleet_machines` index and the authorize, claim, then activate or cancel sequence, idempotent on the request ID;
@@ -669,6 +703,7 @@ the `sign-in-host-node` package: an HTTP listener, `better-sqlite3` through Driz
 <details id="ticket-f11">
 <summary><strong>F11</strong> Router machine login (new) · waits on F1; B5 for the real flow (stand-in: a device-code server honoring C8 in tests, named unverified until SO8)</summary>
 <ex-markdown id="ticket-f11-text"><script type="text/markdown">
+- **Changed 1 November (one central per organization, R55):** The Router learns its central at login: `fleet login --sign-in <address> --organization <id> --label <label>`; discovery through the issuer's metadata and `/.well-known/fleet-login`; no resource in the device request; `fleet_central` read from the first token answer. All saved in a new `fleet_login` row in `codex-router-state` SQLite, replacing `login-config.json` and the login metadata file.
 - **Covers:** R40, R41 (Router side):
   - the device-code flow run in the Router host, with `fleet login` asking the host and printing the code;
   - `RefreshCredentialKeeping` (`encryptedStore`, `memoryOnly`), chosen at host start from the store's classified result and reported at login; a denied or damaged store refuses login and is left untouched;
@@ -684,8 +719,9 @@ the `sign-in-host-node` package: an HTTP listener, `better-sqlite3` through Driz
 </script></ex-markdown>
 </details>
 <details id="ticket-f4a">
-<summary><strong>F4a</strong> Router registrar and binding (split from F4) · waits on F2a, F2b, F11</summary>
+<summary><strong>F4a</strong> Router registrar and binding (split from F4) · waits on F2a, F11</summary>
 <ex-markdown id="ticket-f4a-text"><script type="text/markdown">
+- **Changed 1 November (one central per organization, R55):** No longer waits on F2b, which was dropped.
 - **Covers:** R3, R7, R8, R23, R24, and E7's start time (`startedAt`, set from the organization authority's clock at first registration). Registration goes to the machine's organization authority, which looks the project up in its own Fleet object, and checks that the connection's enrollment is the active one. The session binding attributes every collaboration call to the session it came from.
 - **Contributes (in SO1, with F8a):** U19 whole; U6/U32's registration and start-refusal cases; U18's isolation record and bucket. The token portions of U6 and U18 close at D3's F8b, once session tokens exist.
 </script></ex-markdown>
@@ -735,10 +771,11 @@ Real sessions on each harness path start and restore on a Router logged in by de
 </script></ex-markdown>
 </details>
 <details id="ticket-jc1">
-<summary><strong>JC1</strong> first joint cut, private stack · waits on D1's tickets merged: B0, B1, B2, B3, B4a, B5, B6, B7, F1, F2a, F2b, F3a, F4a, F10, F11, F17, and the proof tickets F14 and F8a, with their local runs passing</summary>
+<summary><strong>JC1</strong> first joint cut, private stack · waits on D1's tickets merged: B0, B1, B2, B3, B4a, B5, B6, B7, F1, F2a, F2c, F3a, F4a, F10, F11, F17, and the proof tickets F14 and F8a, with their local runs passing</summary>
 <ex-markdown id="ticket-jc1-text"><script type="text/markdown">
+- **Changed 1 November (one central per organization, R55):** Deploys the directory (new) and registers it, and your organization's central as today's deployment, keeping its storage. Writes and runs the by-hand runbook for another organization once, on the test deployment only.
 - **Before it:** the cut inventory: every serving component instance (sign-in Worker and Node host, Fleet central, the Switchboard Worker and Node host, which this cut leaves untouched), every caller cohort (test Routers, test bot), each audience and the Fleet central each sign-in service asks.
-- **Covers:** D1 live together on the private stack: the sign-in service with B0–B7 (second factors included, with K6's and K8's real-output checks) and Fleet central with F1, F2a, F2b, F3a, F4a, F10, F11 and F17 (today's login already removed, and the `machine_enrollments` drop migration run), behind the test Access application. These are the builds PROD2 promotes; their build IDs are recorded here. The test Routers log in by device code. Every contract D1 changes goes live whole: K3's person half, K5–K11.
+- **Covers:** D1 live together on the private stack: the sign-in service with B0–B7 (second factors included, with K6's and K8's real-output checks) and Fleet central with F1, F2a, F2c, F3a, F4a, F10, F11 and F17, plus the directory (today's login already removed, and the `machine_enrollments` drop migration run), behind the test Access application. These are the builds PROD2 promotes; their build IDs are recorded here. The test Routers log in by device code. Every contract D1 changes goes live whole: K3's person half, K5–K11.
 - **Earns:** SO8 against the private stack, its messaging step included; JP4 (your admin command through the sign-in service); SO10 step 2 on the private stack; U34's step-2 row; and the **legacy-path control**: a legacy agent client gets a fresh token from the new issuer and makes one allowed Switchboard call at the unchanged Switchboard, on the Worker and the Node host, while a forbidden call is still refused. The control reruns at every deploy until JC2.
 - **Turnstile:** the private stack's widget is created through Cloudflare's API with the `cf` CLI, and one real sign-in passes Turnstile's real siteverify.
 - **Real browser sign-in:** the private-stack sign-ins (Google, then a passkey and an app code) use your test Google account, driven by a Codex agent with computer use and Brave browser control. That's your grant of 31 October; the address is in the agent's brief, not in this plan.
@@ -750,7 +787,7 @@ Real sessions on each harness path start and restore on a Router logged in by de
 <ex-markdown id="ticket-prod2-text"><script type="text/markdown">
 - **Before it:** the production cut inventory, naming the sign-in deployment that serves your production fleet and the production Fleet central it asks, and every caller cohort.
 - **Covers:** R43 step 2 in production:
-  - Fleet central and the sign-in service promote JC1's recorded builds, unchanged: today's login is already gone from the code (F17), the `machine_enrollments` drop migration runs at this deploy, the first organization is created for you adopting today's Fleet storage (F2b), and operator commands go through the sign-in service;
+  - Fleet central and the sign-in service promote JC1's recorded builds, unchanged: today's login is already gone from the code (F17), the `machine_enrollments` drop migration runs at this deploy, the directory is deployed and your organization is created there, with today's central as its central and its Fleet storage unchanged, and operator commands go through the sign-in service;
   - you run the new Router build and log every machine in again by device code.
 - **Earns:** U34's production line on your real machines: each machine connects with machine tokens; the old credential is refused (one spot check); your sessions, allowances and board relationships are still attached; a session on your Mac and one on Sunclaw exchange a message and a reply.
 - **If it breaks:** fix forward. There is no revert to the old login, because a machine revoked after the switch could regain access through it. Access still guards central meanwhile.
@@ -1054,7 +1091,7 @@ It goes live after the view: central first, then the Routers. Until a machine ru
 <h2 id="item2--dependency-edges-that-matter">Dependency edges that matter</h2>
 <ex-markdown id="item2--dependency-edges-that-matter-text"><script type="text/markdown">
 - **Contracts:** each contract's home publishes its shape before every consumer: F1 for the Rust-owned ones, including K11 and K12. Each real-output check runs in the later of its producer's and consumer's tickets.
-- **Inside D1:** storage before registration (F2b before F4a), machine login before sessions (F11 before F4a), and the device grant before its limits (B5 before B6).
+- **Inside D1:** the directory before enrollment (F2c before F10), machine login before sessions (F11 before F4a), and the device grant before its limits (B5 before B6).
 - **D1 before the rest:**
   - DT: T1 needs the Node host and the device grant (B2, B5); T2 needs central's machine-login observations (F10);
   - DV: V1 reads enrollments (F10), the session registry and its start times (F4a), and the owner guard (F2a); V2 extends the Router's machine connection (F11) and reads the registrar's sessions (F4a); V3 needs the person token for central's admin address (B4a);
@@ -1098,7 +1135,8 @@ It goes live after the view: central first, then the Routers. Until a machine ru
 | U22 | D1 | B1 contributes; B5 closes | SO2 on both databases | B5 |
 | U23 | D1 | B1 contributes; B2 closes, with B5's rule in the core | SO2 on both hosts | the later of B2 and B5 |
 | U24, U25 | D1 | B1 contributes; B5 closes | SO2 readback; Hegel families | B5 |
-| U27 (people, machines, sessions) | D1 | F2a, F2b | SO4 | F2a; F2b |
+| U27 (people, machines, sessions) | D1 | F2a | SO4 | F2a |
+| U45 (one central per organization) | D1 | F2c, F3a, F10, F11, B4a, B5 | SO4, SO8 | F2c; F10; F14 |
 | U30 (people's requests) | D1 | B4a | SO2 | B4a |
 | U33, U31 (the machine client, replay, revoke and wrong-client cases included) | D1 | F10, F11, B5 | SO8; SO2; SO4 | B5; F10; F14 |
 | U17, U33, U35 (R41) | D1 | F11, F12 | SO8; SO9 | F14; F12 |

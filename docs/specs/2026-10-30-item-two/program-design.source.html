@@ -45,17 +45,77 @@ flowchart TB
   YOU["You<br/>a browser"]
   R["Router, on each machine: macOS or Linux<br/>machine login · heartbeat · session registrar<br/>session binding · activity reporter · remote start"]
   AUTH["Sign-in service<br/>people sign-in · device-code login · token issuer<br/>approval page · who-is-logged-in page"]
-  C["Fleet central: the truth<br/>machine token check · Registry · Connection objects<br/>organization authorities · Fleet objects · admin"]
+  C["Fleet central, one per organization: the truth<br/>machine token check · Connection objects · its own Registry<br/>the organization's authority · its Fleet object · admin"]
+  D["Fleet directory, one<br/>the list of organizations · which organization each machine is in"]
   YOU -->|"sign in, approve machines, open the view"| AUTH
   R -->|"device code, renewal"| AUTH
   R -->|"connect, heartbeat, register, report, start elsewhere"| C
   AUTH <-->|"decisions; confirmations; the view's lookup"| C
+  AUTH -->|"device-code approvals; find a central"| D
+  D -->|"authorize, activate, set up"| C
 ```
 
-- **Fleet central holds the truth.** Inside it, the **Registry** keeps the list of organizations and which organization each machine belongs to. Each organization's **organization authority** decides: who is admitted, which machines are logged in and what they may serve, which sessions exist, remote starts, and the view's snapshot. Its **Fleet object** keeps its workspaces and projects. Each machine has one **Connection object**, holding its open connection and judging its presence.
-- **The sign-in service** proves people, runs the device-code login, and mints every token, each only after central's decision.
+- **Each organization has its own Fleet central, and it holds that organization's truth** ([one central per organization](#program-design--one-central-per-organization)). Its **organization authority** decides: who is admitted, which machines are logged in and what they may serve, which sessions exist, remote starts, and the view's snapshot. Its **Fleet object** keeps its workspaces and projects. Each machine has one **Connection object**, holding its open connection and judging its presence.
+- **The Fleet directory** is the one piece shared across organizations. It keeps the list of organizations, each with its central, and which organization each machine belongs to.
+- **The sign-in service** proves people, runs the device-code login, and mints every token, each only after the organization's central has decided.
 - **The Router** logs its machine in, registers and binds its sessions, sends heartbeats, reports activity, and carries remote starts.
 - **No component calls Fleet central to check a token it already holds,** and central holds no secret of the sign-in service's.
+</script></ex-markdown>
+
+<h2 id="program-design--one-central-per-organization">One central per organization</h2>
+<ex-markdown id="program-design--one-central-per-organization-text"><script type="text/markdown">
+**Decided 1 November (you):** each organization runs on its own Fleet central. It's the same build, deployed under the organization's own Worker name, so Cloudflare gives it its own Durable Objects and storage. On Tokio it's its own process with its own databases. New organizations are deployed by hand for now. Provisioning is still open with you, so nothing here locks it in.
+
+| Part | How many | Owns |
+|---|---|---|
+| **Fleet directory** (new) | one | The list of organizations, each with its central's addresses and its state (`creating`, `active`). Which organization each machine's installation and peer belong to, claimed once. Creating an organization. Running a device approval's authorize, claim, then activate or cancel. |
+| **Fleet central** | one per organization | That organization's authority, Fleet object and Connection objects. Its own Registry, for everything today's Registry does inside one deployment (below). |
+| **Sign-in service** | one | As before, plus finding each organization's central through the directory. |
+
+**One organization per central in item two.** A central's deploy settings name its organization. It refuses any command, decision or token naming another (R34, R55): it has no authority and no rows for any other.
+
+**Your organization's central is today's deployment.** It keeps its Worker name, so its Durable Objects and storage carry over, including the Fleet object your organization adopts (OD8). The directory is the one new deployment.
+
+**What leaves today's Registry: only what spans organizations.** The organization list (F2a's `organizations` and `registry_organization_record`) and the machine claim (F10's `fleet_machines`) become the directory's own tables, with the same SQL. Everything today's Registry already does inside a deployment stays in each central's Registry: machine enrollments until step 2, leases and their incarnations, notice marks, peer lookup, mail and forwards.
+
+**How the parts reach each other:**
+
+| From → to | What | Credential |
+|---|---|---|
+| Router → its organization's central | connect, heartbeat, register, report, renew, remote start | the machine token (C9), whose `aud` is that central's machine address |
+| Router → sign-in service | discovery, device login, refresh | unchanged |
+| Sign-in service → directory | `DecideDeviceLogin`; `FindCentral { organizationId }`, which answers that central's addresses or `unknownOrganization` | service tokens (C7), one audience and scope each: device-login decisions as before, and `central-lookup` (new) |
+| Sign-in service → the organization's central | `AdmitSignIn`, `Standing`, `DecideMachineToken`, the view's lookup | the same service tokens, addressed to that central's own addresses |
+| Directory → the organization's central | a device approval's authorize, activate and cancel; `InitializeOrganization` | **new:** service tokens the issuer mints for the directory's own pinned client (`private_key_jwt`). Each names one of the central's directory-call addresses and one operation. |
+| Central → sign-in service | confirm a person's session; disable a machine's client | unchanged; each central has its own pinned client |
+
+**The device approval crosses deployments.** Today the Registry reaches an organization authority with an object call inside one deployment. The directory reaches it over the network, with the same requests, idempotent on the request ID. A lost reply is resent until the device code expires, as before.
+
+**The connection check stays inside the central.** `AdmitMachineConnection` goes from the central's entry straight to its organization authority, which answers from the enrollment it holds. It no longer asks the Registry. The cross-organization claim was checked when the machine was approved, and a token for another central fails on its audience first. So the directory is off the everyday path.
+
+**How the sign-in service finds a central.** It asks the directory (`FindCentral`) and keeps the answer per organization. It asks again when a call to the kept address fails. A central's addresses change only when it's redeployed somewhere else. A lookup that fails or answers `unknownOrganization` routes nothing: the request is refused (R25). If the directory is down, the sign-in service keeps working only for organizations it has already looked up.
+
+**How a Router finds its central: it learns it at login** (R41 unchanged):
+- **The first login:** `fleet login --sign-in <address> --organization <id> --label <label>`. Later logins reuse the saved address. Nothing deployment-specific is in the repository.
+- **The endpoints:** the Router reads the sign-in service's OAuth authorization-server metadata for its device and token endpoints. A small public document beside it, `/.well-known/fleet-login`, names the public Router device-login client.
+- **The resource:** the device request names the organization, and the sign-in service sets the token's resource to that organization's central machine address, from the directory. A Router can't choose a central.
+- **The token answer** adds `fleet_central` (C8): the central's session endpoint, its machine address, and the receiver and relay IDs the connection uses.
+- **Where it's kept:** the Router saves the sign-in address, organization, enrollment and `fleet_central` in one row of a new `fleet_login` table in its state database (`codex-router-state`, SQLite). The refresh credential stays in the encrypted store or in memory (R41). Until step 3 the Access reference stays configured, as today.
+- This replaces F11's hand-written `login-config.json` and its login metadata file.
+
+**Deploying another organization, by hand.** You, as the fleet operator:
+1. **Deploy its central:** the central build under the organization's own Worker name. Its settings name its organization ID, its relay ID and its trust configuration (the sign-in service pinned as issuer). Its own client key goes in as a secret, and it gets an address.
+2. **Register it at the sign-in service:** its pinned client (public key only) and its addresses, in the sign-in service's deploy configuration.
+3. **Create the organization:** run `CreateOrganization` at the directory, with the organization ID, the owner's email and the central's addresses. The directory writes it as `creating`, sends `InitializeOrganization` to that central, and marks it `active` once acknowledged.
+4. **The new owner signs in** with Google or GitHub. Until step 3, its machines also need an Access application and service tokens, as yours do today.
+
+These steps are a runbook, not code. A later provisioner would run the same steps.
+
+**What it costs, and who pays:**
+- **One more deployment** (the directory), one more pinned client, and its receivers. That's operations.
+- **A device approval crosses deployments,** directory ↔ central, instead of staying inside one.
+- **If the directory is down:** no device approvals, no new organizations, and no lookups the sign-in service hasn't already made. Every connected machine keeps working. Renewals go on for every organization already looked up, since they go sign-in service → central.
+- **The sign-in service and the directory still span organizations.** Separate centrals isolate Fleet data, not identity.
 </script></ex-markdown>
 
 <h2 id="program-design--the-parts-in-code">The parts in code</h2>
@@ -131,17 +191,19 @@ flowchart TB
   - `machine_token_check` (new): machine tokens at the entry and on renewal (C9)
   - `identity_contract.rs` (new): central-only shapes: commands, lookups, C7 requests, `MachineTokenClaims`
   - `session_runtime.rs` (modified): presence in each Connection object
-  - the Registry's modules (modified): the organization list and the machine index
-  - `central_router.rs`, `access_rules.rs` (modified): the admin surface and central's receivers
+  - `fleet_directory/` (new): the organization list, the machine claim, `CreateOrganization`, `FindCentral`, and running a device approval's authorize, claim, then activate or cancel against an organization's central
+  - the Registry's modules (unchanged in role): what the Registry does inside one central today
+  - `central_router.rs`, `access_rules.rs` (modified): the admin surface, central's receivers, and the directory-call receivers
   - `platform_capabilities.rs`, `access_observation.rs` (modified): the service caller, the new observations
-- `collaboration-central-cloudflare/` (modified): the `OrganizationObject` class; presence alarms in `object_shell.rs`; records as JSON lines in `platform.rs`; `observability` in `cloudflare.config.ts`
-- `collaboration-central-tokio/` (modified): SQLite per organization; the receive deadline in `native_objects.rs`; an OTLP exporter beside `native_logging.rs`
+- `collaboration-central-cloudflare/` (modified): the `OrganizationObject` class; presence alarms in `object_shell.rs`; records as JSON lines in `platform.rs`; `observability` in `cloudflare.config.ts`; a second Worker entry and deploy template for the directory (its own `DirectoryObject`, one instance)
+- `collaboration-central-tokio/` (modified): SQLite per organization; the receive deadline in `native_objects.rs`; an OTLP exporter beside `native_logging.rs`; a directory mode, run as its own process with its own SQLite database
 - `collaboration-central-conformance/` (modified): SO4's new scenarios on both hosts
 </script></ex-tree>
 <h3 id="program-design--the-router-s-crates">The Router's crates</h3>
 <ex-tree id="program-design--router-folders" title="agent-collaboration: the Router" icon="folder"><script type="text/markdown">
-- `codex-router-cli/`: the `fleet login` command (modified); `telemetry.rs` already exports OTLP (unchanged)
-- `codex-router-host/`: `fleet_machine_login` (new): the device code, renewal, where the refresh credential lives; the heartbeat in `collaboration_runtime/board_composition/machine_session.rs` (modified)
+- `codex-router-cli/`: the `fleet login` command (modified), taking the sign-in address once, the organization and the label; `telemetry.rs` already exports OTLP (unchanged)
+- `codex-router-host/`: `fleet_machine_login` (new): discovery, the device code, renewal, where the refresh credential lives; the heartbeat in `collaboration_runtime/board_composition/machine_session.rs` (modified)
+- `codex-router-state/`: the `fleet_login` table (new, one row): the sign-in address, organization, enrollment and the learned central
 - `collaboration-service/`: `fleet_session_registrar`, `fleet_session_activity`, `remote_session_start` (new)
 - `collaboration-mcp/`: each call's session binding (modified)
 - `collaboration-client/`: a create that names another machine (modified)
@@ -153,19 +215,21 @@ flowchart TB
 ```mermaid
 flowchart TB
   subgraph CORE["collaboration-central-core (runtime-free)"]
-    RULES["organization authority · machine token check<br/>Registry · Connection presence · admin surface"]
+    RULES["organization authority · machine token check<br/>Registry · Connection presence · admin surface<br/>Fleet directory"]
     CAPS["CentralPlatform: object calls · time · UUIDv7 ids · wakes<br/>key fetch · RS256 · service caller (new) · observe"]
     RULES --> CAPS
   end
   subgraph CF["Cloudflare host"]
-    DO["one Durable Object per organization authority,<br/>Connection, Registry and Fleet object<br/>SQLite storage · alarms · records to Workers Logs"]
+    DO["each organization's central: one Worker, with<br/>Durable Objects for its authority, Connections, Registry and Fleet object<br/>the directory: its own Worker, one DirectoryObject<br/>SQLite storage · alarms · records to Workers Logs"]
   end
   subgraph TK["Tokio host"]
-    SQ["SQLite per organization · receive deadlines<br/>records through tracing to OTLP"]
+    SQ["each organization's central: its own process, SQLite per object kind<br/>the directory: its own process and SQLite database<br/>receive deadlines · records through tracing to OTLP"]
   end
   DO -->|"supplies"| CAPS
   SQ -->|"supplies"| CAPS
 ```
+
+One core builds both the centrals and the directory. Each deployment serves only its own role: a central's settings name its organization, and the directory's name it as the directory.
 
 The sign-in service has the same shape, drawn in [its storage, core and hosts](#program-design--the-sign-in-service-storage-core-and-hosts).
 </script></ex-markdown>
@@ -218,12 +282,14 @@ Every place a real choice existed, what was chosen, what wasn't, and why. "Reope
 | Who owns a machine's enrollment | **The machine's organization authority**, with the Registry keeping only an index from installation and peer to organization, written once | Keep enrollments in the Registry with an organization column | A revocation and its grant fence are one transaction, so the revocation fan-out disappears; the owner's approval is read where it lives | Each new log-in touches the Registry once, then the organization authority | A machine must move between organizations (Fleet Q-B11) |
 | How the device-code login is built | Better Auth's OAuth device grant, extended with the machine's fields, and the existing extension claim contributor asking Fleet central before each machine token | Our own device-code endpoints minting through `issueTokens` (the fallback, the surface the fleet-session grant uses) | Single use, polling (`slow_down`) and refresh come from the library, and its rate limiter, set explicitly, limits guesses ([flood limits](#program-design--flood-limits-at-sign-in-r42-r52)); the decision stays with Fleet central | The machine token's `sub` is the approving owner's account (the provider owns `sub`), so consumers read only `principal`; deleting that account ends the machine's renewals | The extension can't add fields or the contributor can't refuse a device-code mint at 1.7.11 (then the fallback) |
 | Linux secret store | The store's data key comes from a **systemd encrypted credential** read through the existing `KeychainAccess` seam. It is created once, at install, by `systemd-creds encrypt` run as root, and delivered to the Router service with `LoadCredentialEncrypted=`. The Linux adapter only reads it. Without it, and on any machine without the Keychain or systemd, the Router keeps the refresh credential only in memory (OD9). The login runs inside the Router host, where the key, or the memory, is. | A data-key file beside the store; the desktop Secret Service (needs a desktop session) | Works for a Router run as a systemd service, inside a VM guest with systemd too; the data key never changes, so a read-only credential is enough | Protection: with a TPM2, a copied disk can't decrypt; with only the host key, root on that host can. Neither protects from processes running as the Router's own user, the same as the macOS Keychain (the shared bucket). A machine without either keeps its refresh credential in memory and is approved again after each restart (OD9). | Restarts without systemd become frequent enough that re-approving costs too much |
-| How separate organizations' Fleet data is kept | **One Fleet object per organization**. The first organization adopts today's storage through a fixed mapping on both hosts: the Cloudflare object named `fleet`, and the Tokio singleton key. | One Fleet object with an organization column on every row | Separation by address: a machine reaches only its organization's object, so a forgotten filter can't leak; workspace names stay unique per organization; no rows rewritten | A storage cutover all the same: the address type, every caller, restart and wake recovery, each connection's feed, and refusing the old address all change; one more object per organization | — |
+| How separate organizations' Fleet data is kept | **One Fleet object per central, and one central per organization** (R55). Each central keeps its single Fleet object (the Cloudflare object named `fleet`, the Tokio singleton key); your central's is today's, unchanged. | One Fleet object with an organization column on every row | Separation by address: a machine reaches only its organization's object, so a forgotten filter can't leak; workspace names stay unique per organization; no rows rewritten | A storage cutover all the same: the address type, every caller, restart and wake recovery, each connection's feed, and refusing the old address all change; one more object per organization | — |
 | How the cutover flips | One deploy-time setting, `machineLogin`, with exactly one value per deployment: today's login before step 2, machine tokens from step 2. Step 2 fixes forward; there is no revert to the old login. | Accept either login during a transition; keep the old login restorable as a revert | You ruled out "either". Restoring the old login after step 2 could readmit a machine revoked after the switch | Step 2 needs every machine logged in again; a broken step 2 leaves machines offline, still behind Access, until a fix lands | — |
 | How a session starts on another machine | A start request carried over the requesting machine's connection to its organization authority, which checks it and delivers it through the target machine's connection; the target Router runs its usual start check and create, then reports the outcome the same way | Relax the client's same-Router check (the target can't verify a remote creator); a new kind of fleet mail (mail is queued and delivered later, which a start must never be) | Central already knows both machines, the requester's membership and the target's allowance, and both connections are authenticated; nothing waits in a queue | Two new requests on each connection, one delivered frame each way, and one remote-start record; a start to a disconnected machine is refused, not delivered later | Starts must wait for a machine that is offline |
-| Organization isolation | One organization authority per organization (a Durable Object on Cloudflare; its own SQLite database on Tokio) | One shared store keyed by organization | D2's "segregated by durable objects", any host (U16) | One object per organization to operate | — |
-| Where an admin change is recorded | In the same transaction as the change, at the owner of the state it changes: the organization authority, the Fleet object or the Registry | Every record in the organization authority (it would have to own workspaces and machines too) | One owner per truth, and a change and its record still commit together | Records live in up to three places; an organization's audit view is assembled from them when read | A compliance need for one audit store |
-| Who keeps the list of organizations | The Registry: each organization and its state (`creating`, `active`), and the index of which organization each machine belongs to | The Fleet object | The Registry may call organization authorities in rank order; the Fleet object may not | The Registry gains two tables | — |
+| Organization isolation | **One Fleet central per organization** (you, 1 November): the same build deployed under each organization's own Worker name, with its own Durable Objects; on Tokio, its own process and databases. Inside it, one organization authority. | One central with one organization authority object per organization (the earlier design) | Isolation by deployment: a routing bug, a bad deploy or an outage reaches one organization; each organization's secrets are its own (U45) | One deployment per organization to operate and upgrade; new organizations are deployed by hand for now, and provisioning stays open with you | A provisioning design you accept, or a need to host several organizations in one central |
+| Where the organization list and the machine claim live | **A small Fleet directory**, its own Worker built from central's core (one instance; its own process on Tokio) | Inside the sign-in service's database | Fleet's records stay in Fleet's code on both hosts, and the approval's authorize, claim, then activate stays as designed | One more deployment, and a device approval crosses deployments | The directory's operating cost outweighs keeping Fleet truth out of the sign-in service |
+| How a Router finds its central | **Learned at login and saved in the Router's SQLite state** (`fleet_login`): it is given the sign-in address once, reads the issuer's metadata, and gets its central back with its first token | A hand-written `login-config.json` on every machine | Nobody writes a file per machine or per organization; the sign-in service, not the Router, picks the central | C8's token answer gains `fleet_central`; one new Router table | A Router must reach a central before it can log in |
+| Where an admin change is recorded | In the same transaction as the change, at the owner of the state it changes: the organization authority, the Fleet object or the directory | Every record in the organization authority (it would have to own workspaces and machines too) | One owner per truth, and a change and its record still commit together | Records live in up to three places; an organization's audit view is assembled from them when read | A compliance need for one audit store |
+| Who keeps the list of organizations | The Fleet directory: each organization, its central's addresses and its state (`creating`, `active`), and the claim of which organization each machine belongs to | The Fleet object; the sign-in service | It spans organizations, so it can't live in any one central; it may call an organization's central to authorize and activate | The directory's tables | — |
 | How one machine's replayed refresh token is kept from ending another's (R40) | **One public client per enrollment**, created by the device-code token handler at the machine's first mint; every token of that machine is issued under it. The shared Router device-login client only starts logins. | Accept the provider's teardown (one replay stops every machine the owner approved, which breaks R40). A before-hook that handles stale replays itself (the provider rereads its clock after awaited work, so any check before it can be overtaken). Machine refresh credentials kept outside the provider (a new table, a new grant, and our own rotation and lost-reply window). | The provider ends refresh families by client and person, never by reference (`token.ts:537–567`). A client per enrollment makes that key unique per machine on the refresh path, so isolation holds at the delete itself, with no timing. The revoke endpoint keys its teardown by the requesting client before checking ownership (`revoke.ts:217–225`), so it is closed to machine clients and their tokens, by facts that never change. The provider keeps its own rotation and lost-reply window. | One client row per enrollment; a client created at first mint and disabled when the enrollment ends; the Router keeps its client ID; central checks the token's client against the one its enrollment recorded. | The provider gains per-reference teardown |
 | How central learns a machine is gone (R48) | The Router sends an application **heartbeat** over its open connection every sixth of OD14 (5 seconds at the decided 30). The **Connection object owns the machine's presence** and judges it on its own clock: it closes a connection it hasn't heard from for three heartbeats (15 seconds), and a clean close ends it at once. At each lookup the organization authority asks each machine's Connection object, with a deadline of half a refresh interval on its own clock; the answer is in durations ("open, silent for 2 s"), never in timestamps. | Rely on the platform to notice a dead socket. Use WebSocket ping and pong. A lease at the organization authority, renewed by forwarded heartbeats: timed from processing, a late report buys a fresh lease; timed from the frame's arrival, it compares two objects' clocks, whose difference nothing bounds (IT5). | Today both hosts and the Router discard ping and pong without recording them, so nothing bounds when a silent drop is noticed. Every interval here is measured on one clock: silence on the Connection object's, the read deadline on the organization authority's, the refresh and answer deadline on the browser's. So no clock difference enters the budget. In sixths of OD14: a cut just after a frame shows by the silence limit (3) plus one refresh (1) plus the page's answer deadline (1), so 25 seconds, leaving one sixth for rendering. | One small frame from the Router every 5 seconds per connected machine, to its Connection object only. One read per machine per refresh while the page is open. On Cloudflare each heartbeat and each read wakes the Connection object, which costs object duration. The fleet pays. | An organization with enough machines that a read per machine per refresh becomes a load problem, or OD14 changes |
 | How a session's working or idle state reaches central (R47, R48) | The Router's **session activity reporter** maps each harness's own states to working or idle. On each change, on each new connection, and after any report that wasn't answered, it sends the machine's whole state, with a sequence. The organization authority applies only a report newer than the last it applied, and the state counts only while its connection is the one its Connection object answers open. | Central asks the Router whenever the owner opens the view. Reports of one session's change each (two changes for different sessions, applied out of order, would lose one). | A change shows without waiting for a viewer, and an offline machine's sessions read as unknown at once instead of timing out. | One report per turn start or end, each listing every session on the machine. A mapping per harness to keep current: Codex `active` → working; the other harnesses' `running` or `requires-action` → working; Claude busy or waiting → working; anything else → idle. | Report volume becomes a load problem |
@@ -235,10 +301,10 @@ Every place a real choice existed, what was chosen, what wasn't, and why. "Reope
 <ex-markdown id="program-design--where-each-entity-lives-text"><script type="text/markdown">
 ```mermaid
 flowchart TB
-  REG["Fleet central · Registry<br/>E1 list entry · E6 machine index entry"]
-  OA["Fleet central · Organization authority, one per organization<br/>E1 Organization · E19 Admission (people)<br/>E21 Enrollment · E15 Allowance<br/>E7 Session · E8 its membership · E13 Isolation · E14 Bucket<br/>session activity · remote starts"]
-  CO["Fleet central · Connection object, one per machine<br/>E24 the connection and its presence"]
-  FO["Fleet central · Fleet object, one per organization<br/>E2 Workspace · E16 Project"]
+  REG["Fleet directory, one<br/>E1 list entry, with its central · E6 machine claim"]
+  OA["The organization's Fleet central (E26) · its organization authority<br/>E1 Organization · E19 Admission (people)<br/>E21 Enrollment · E15 Allowance<br/>E7 Session · E8 its membership · E13 Isolation · E14 Bucket<br/>session activity · remote starts"]
+  CO["The organization's central · Connection object, one per machine<br/>E24 the connection and its presence"]
+  FO["The organization's central · Fleet object<br/>E2 Workspace · E16 Project"]
   BA["Sign-in service · Better Auth<br/>E3 Person · E23 Device-code request<br/>E22: minted, never stored"]
   REG -- "claims each machine for one" --> OA
   OA -- "asks a project's workspace" --> FO
@@ -249,12 +315,12 @@ flowchart TB
 
 | E | Semantic owner | Package or module home | Schema/type home | Shape at each boundary | Disposition | Convention |
 |---|---|---|---|---|---|---|
-| E1 Organization | Organization authority; the Registry keeps its list entry (ID, state, authority address) | `collaboration-central-core` (new module `organization_authority`); Registry `organizations` table (new) | `collaboration-central-core/src/identity_contract.rs` (new) | `organization_id`: UUIDv7 string in tokens, admin API, notices and the Router's login request | persisted | Rust newtype with fallible constructor; serde-tagged enums (`access_contract.rs:31`) |
+| E1 Organization | Organization authority, in the organization's own central; the directory keeps its list entry (ID, state, its central's addresses) | `collaboration-central-core` (new module `organization_authority`); the directory's `organizations` table (new) | `collaboration-central-core/src/identity_contract.rs` (new) | `organization_id`: UUIDv7 string in tokens, admin API, notices and the Router's login request | persisted | Rust newtype with fallible constructor; serde-tagged enums (`access_contract.rs:31`) |
 | E2 Workspace | Fleet object (existing), one per organization | `collaboration-central-core` workspaces table (existing), in the organization's Fleet object | `message-board/src/board_metadata.rs:119` `Workspace` (existing) | `workspace_id`: UUIDv7 string; the Switchboard's MCP address is derived from its organization's deployment origin plus `workspace_id` (existing `workspaceResourceIdentifier`) | persisted | existing |
 | E16 Project | Fleet object (existing) | `project_directory` (existing) | `board_metadata.rs` `ProjectDirectoryEntry` (existing) | `project_id` string in session registration and token | persisted | existing |
 | E3 Person | Better Auth (existing) | `sign-in-core` (from `packages/auth`) | Better Auth user (existing) | person ID in the person token (admin and management audiences only, never a workspace, collaboration or machine audience); central's ownership, admission and person roles key on it | persisted | existing |
 | E19 Organization admission | Organization authority | `organization_authority` (new): a person's is their sign-in allowlist entry bound to them (`AllowedSignIn`, moved from sign-in); bots' admissions come in step 3 | `identity_contract.rs`: `AdmissionId` (UUIDv7), `OrganizationAdmission { admissionId, identity: Person { personId } \| Bot { botId }, state }` (new); `AdmissionRef`, tagged `kind`: `admission { admissionId }` (a person's or bot's) \| `machine { installation }` (a session's, through its machine) | admin lookup | persisted (the entry or record); the view is derived | Rust tagged enum |
-| E6 Fleet machine | Registry: which organization an installation and its peer belong to, written once; its organization authority: its enrollments and so its state | Registry `fleet_machines` (new at step 2, when `machine_enrollments` is dropped: `service_id` primary key, `peer_id` unique, `organization_id`, `claimed_at`, written only after the organization authority authorized the log-in); the Router's saved state keeps the installation and peer IDs (existing) | `machine_enrollment.rs` `AdmittedMachine` (existing, modified: gains `organizationId`, `enrollmentId`; loses the Access client) | installation `service_id`; the session reference's installation | persisted | existing |
+| E6 Fleet machine | The directory: which organization an installation and its peer belong to, claimed once across every central; its organization authority: its enrollments and so its state | the directory's `fleet_machines` (new, in the directory's own database; today's `machine_enrollments` in your central's Registry is dropped at step 2: `service_id` primary key, `peer_id` unique, `organization_id`, `claimed_at`, written only after the organization authority authorized the log-in); the Router's saved state keeps the installation and peer IDs (existing) | `machine_enrollment.rs` `AdmittedMachine` (existing, modified: gains `organizationId`, `enrollmentId`; loses the Access client) | installation `service_id`; the session reference's installation | persisted | existing |
 | E21 Machine enrollment | Organization authority | `organization_authority` `machine_enrollment` table (new) | `identity_contract.rs`: `EnrollmentId` (UUIDv7), `MachineEnrollment`, tagged `state` (new): `enrolled { enrollmentId, installation, authorizedBy: DeviceCodeApproval { personId, requestId }, machineClientId, endsAt? }` \| `revoked { the same fields, reason }` (reason tagged `kind`: `owner` \| `superseded`) \| `expired { the same fields }`. Every observable state carries its machine client, recorded at the first grant. The internal `reserved` and `approved` exist only in the organization authority's own row type: they admit nothing, show in no lookup and never cross a boundary | the machine token claims and the token family's `referenceId` (`<organizationId>:<enrollmentId>`); `AdmittedMachine`; admin lookup | persisted | Rust tagged enum |
 | E23 Device-code login request | Better Auth (the device grant's record) | `sign-in-core`: the `deviceCode` table with the grant's fields plus ours (`machineInstallationId`, `machinePeerId`, `machineLabel`, `organizationId`, and `enrollmentId`, written only after central's `Approved`); the organization and enrollment then live on as the token family's `referenceId` | Better Auth `deviceCode` model (generated); `sign-in-core/device-login/machine-login-fields.ts` (new) | the Router's device-authorization request; the owner's approval page; `DecideDeviceLogin` | persisted until redeemed or expired | Zod at the boundary |
 | E22 Machine token | The sign-in service | `sign-in-core` (from `packages/auth`) | `identity_contract.rs`: `MachineTokenClaims` (new, the contract home; the sign-in service's Zod schema is generated from it) | JWT claims, below | derived (signed, never stored) | Rust serde, Zod derived |
@@ -273,9 +339,9 @@ Four stores, each with one owner. They share no database and no foreign key: the
 ```mermaid
 flowchart TB
   SI["Sign-in service: one database<br/>people, OAuth clients and tokens, device codes"]
-  REG["Fleet central · Registry: one<br/>organizations, machine claims"]
-  OA["Fleet central · organization authority: one per organization<br/>admissions, machines, sessions and their activity, remote starts"]
-  FO["Fleet central · Fleet object: one per organization<br/>workspaces, boards, projects, feed"]
+  REG["Fleet directory: one<br/>organizations and their centrals, machine claims"]
+  OA["Each organization's central · organization authority<br/>admissions, machines, sessions and their activity, remote starts"]
+  FO["Each organization's central · Fleet object<br/>workspaces, boards, projects, feed"]
   REG -->|"organization_id"| OA
   OA -->|"workspace_id, project_id"| FO
   SI -.->|"enrollment ID on device codes, clients and refresh tokens"| OA
@@ -359,9 +425,9 @@ erDiagram
 ```
 </script></ex-markdown>
 
-<h4 id="program-design--fleet-central-registry">Fleet central · Registry</h4>
+<h4 id="program-design--fleet-central-registry">Fleet directory</h4>
 <ex-markdown id="program-design--fleet-central-registry-text"><script type="text/markdown">
-One for the whole Fleet central. New at step 2; today's `machine_enrollments` is dropped in the same deploy.
+One for every organization: its own deployment (one `DirectoryObject` on Cloudflare; its own SQLite database on Tokio). Its tables are new. Each central's own Registry keeps what it does today and gains no organization tables. Today's `machine_enrollments`, in your central's Registry, is dropped at step 2.
 
 ```mermaid
 erDiagram
@@ -369,7 +435,7 @@ erDiagram
   organizations {
     text organization_id PK
     text state "creating or active"
-    text authority_address
+    text central_address "its central's directory-call and service addresses"
   }
   fleet_machines {
     text service_id PK "the installation"
@@ -380,7 +446,7 @@ erDiagram
 ```
 </script></ex-markdown>
 
-<h4 id="program-design--fleet-central-organization-authority">Fleet central · organization authority</h4>
+<h4 id="program-design--fleet-central-organization-authority">Each organization's central · organization authority</h4>
 <ex-markdown id="program-design--fleet-central-organization-authority-text"><script type="text/markdown">
 New, one per organization. Table names follow the record types in the binding table above. Not drawn: the records of changes, and the outbox that closes connections and disables machine clients.
 
@@ -467,7 +533,7 @@ erDiagram
 ```
 </script></ex-markdown>
 
-<h4 id="program-design--fleet-central-fleet-object">Fleet central · Fleet object</h4>
+<h4 id="program-design--fleet-central-fleet-object">Each organization's central · Fleet object</h4>
 <ex-markdown id="program-design--fleet-central-fleet-object-text"><script type="text/markdown">
 Existing, now one per organization. Today's tables (`core_migrations/0003_fleet_records.sql` at `f465808f`). A project also names its board, and each board belongs to one workspace. Not drawn: `fleet_feed` (`entry_id` primary key, `position` unique and contiguous, `record_id`), and the decision, request and feed-reader tables.
 
@@ -530,7 +596,7 @@ erDiagram
 
 <h3 id="program-design--machine-token-claims-e22-c9">Machine token claims (E22, C9)</h3>
 <ex-markdown id="program-design--machine-token-claims-e22-c9-text"><script type="text/markdown">
-Home: `identity_contract.rs`. Every machine token has `aud` = Fleet central's machine address, and only Fleet central accepts it. A machine is infrastructure, not an agent actor (R1): `MachinePrincipal` is its own type, never a variant of the agent `Principal` union, and the workspace and collaboration claim schemas don't parse it.
+Home: `identity_contract.rs`. Every machine token has `aud` = its organization's central's machine address, and only that central accepts it; every other central refuses it on audience. A machine is infrastructure, not an agent actor (R1): `MachinePrincipal` is its own type, never a variant of the agent `Principal` union, and the workspace and collaboration claim schemas don't parse it.
 
 ```rust
 // Minted by the sign-in service for a device-code machine. Better Auth owns iss, sub (the approving owner's
@@ -543,7 +609,7 @@ pub struct MachineTokenClaims {                // no deny_unknown_fields: the re
 }
 ```
 
-**Fleet central's check, in order (C9):** the token parses as a JWT with an allowed `alg`; `iss` is the sign-in service, whose keys are pinned in central's trust configuration, and any other `iss` is refused. The signature verifies against the sign-in service's published keys, cached at most 5 minutes and refetched once on an unknown key ID. `aud` is central's machine address. The time check is `now < grant_expires_at`, allowing D on `exp`. Then the organization authority answers `AdmitMachineConnection` from its own state, read live: the enrollment the token names is `enrolled`, belongs to the installation and peer the connection presents, and recorded the token's `client_id` as its machine client. A token naming another organization, a revoked, expired or superseded enrollment, or another installation is refused. A later issuer kind adds its own branch to this check.
+**Each central's check, in order (C9):** the token parses as a JWT with an allowed `alg`; `iss` is the sign-in service, whose keys are pinned in central's trust configuration, and any other `iss` is refused. The signature verifies against the sign-in service's published keys, cached at most 5 minutes and refetched once on an unknown key ID. `aud` is this central's own machine address. The time check is `now < grant_expires_at`, allowing D on `exp`. Then the organization authority answers `AdmitMachineConnection` from its own state, read live: the enrollment the token names is `enrolled`, belongs to the installation and peer the connection presents, and recorded the token's `client_id` as its machine client. A token naming another organization, a revoked, expired or superseded enrollment, or another installation is refused. A later issuer kind adds its own branch to this check.
 </script></ex-markdown>
 
 <h3 id="program-design--requests-over-the-machine-s-connection">Requests over the machine's connection (Router → Fleet central)</h3>
@@ -775,7 +841,8 @@ pub struct ListWorkspaceMachines { pub organization_id: OrganizationId, pub work
 <ex-markdown id="program-design--machine-login-text"><script type="text/markdown">
 **Device-code login request (Router → sign-in service).**
 - **Where it runs:** `fleet login --organization <id> --label <label>` asks the running Router host to log in, over the CLI's existing local connection to the host. The host runs the flow and the CLI only prints the user code and address it returns. The refresh credential is therefore kept where the store's data key is available: inside the systemd service on Linux, in the same host process on macOS, and in that process's memory alone on a machine with neither (OD9).
-- **The request:** the host posts the standard device-authorization request for the Router device-login client (a public client registered at deploy, allowed `offline_access`, resource = central's machine address). The extended device grant persists four added fields on the code: `machine_installation_id` and `machine_peer_id` (from the Router's saved state), `machine_label`, and `organization_id`.
+- **Discovery:** the host reads the sign-in service's OAuth authorization-server metadata for the device and token endpoints, and `/.well-known/fleet-login` for the public Router device-login client. The provider lists `device_authorization_endpoint` only through its own device extension (`device-code.ts:255`, applied at `metadata.ts:144`, at 1.7.11). Our grant uses the plugin's exported functions, so the sign-in service contributes that metadata entry itself, and B5's first slice proves it.
+- **The request:** the host posts the standard device-authorization request for the Router device-login client (a public client registered at deploy, allowed `offline_access`). The Router names no resource: the sign-in service sets it to the organization's central machine address, from the directory, when it mints. The provider's `issueTokens` doesn't re-check resources (`types/index.ts:253–264`), so our token handler authorizes that resource itself: the directory's entry for the code's organization, and nothing the Router sent. The extended device grant persists four added fields on the code: `machine_installation_id` and `machine_peer_id` (from the Router's saved state), `machine_label`, and `organization_id`.
 - **The poll:** the host polls the token endpoint with the device code.
 - **One organization:** the Router refuses to log in to an organization other than the one its saved state already names (E6).
 
@@ -812,7 +879,7 @@ pub enum MachineTokenDecision {
     Refuse { reason: MachineTokenRefusal },    // enrollmentNotActive | superseded | wrongClient | idleExpired (30 days without a Grant)
 }
 
-// Fleet central's connection entry → Registry → organization authority, for every new connection and renewal.
+// The organization's central: its connection entry → its organization authority, for every new connection and renewal.
 #[serde(rename_all = "camelCase")]
 pub struct AdmitMachineConnection {
     pub organization_id: OrganizationId,       // from the verified token
@@ -830,16 +897,16 @@ pub enum MachineConnectionAdmission {
 }
 ```
 
-**Who decides what, in rank order: authorize, then claim, then activate.** A device-code approval enters at the Registry. The Registry calls the organization authority in rank order, and nothing is written anywhere until the organization authority has authorized:
+**Who decides what, in rank order: authorize, then claim, then activate.** A device-code approval enters at the directory. The directory calls the organization authority at that organization's central, and nothing is written anywhere until the organization authority has authorized:
 
-1. **Check.** The Registry reads its machine index. An installation or peer already claimed by another organization is refused as `machineInAnotherOrganization`, and nothing changes.
-2. **Authorize and reserve.** The organization authority decides in one transaction: the approver must be the current owner, and every chosen workspace must exist. On success it writes a **reserved** enrollment, keyed by the request ID, and the decision's record. A reserved enrollment admits nothing. On refusal nothing is written, here or at the Registry.
-3. **Claim.** The Registry writes its claim for the installation and peer: once, and only for that organization. A repeat for the same organization is a no-op. If another organization's claim won a race in between, the Registry refuses.
-4. **Activate or cancel.** The Registry calls the organization authority again:
+1. **Check.** The directory reads its machine claims. An installation or peer already claimed by another organization is refused as `machineInAnotherOrganization`, and nothing changes.
+2. **Authorize and reserve.** The organization authority decides in one transaction: the approver must be the current owner, and every chosen workspace must exist. On success it writes a **reserved** enrollment, keyed by the request ID, and the decision's record. A reserved enrollment admits nothing. On refusal nothing is written, at the central or at the directory.
+3. **Claim.** The directory writes its claim for the installation and peer: once, and only for that organization, across every central. A repeat for the same organization is a no-op. If another organization's claim won a race in between, the directory refuses.
+4. **Activate or cancel.** The directory calls the organization authority again:
    - **Activate:** the reserved enrollment moves to `approved`, and its allowances are written. It becomes `enrolled`, and only then supersedes the earlier one, at its first machine token. So an approval whose code is never redeemed never displaces a working enrollment.
    - **Cancel:** the reserved enrollment is dropped.
 
-**Lost replies and restarts.** Every step is idempotent on the request ID (the device code record's ID), so the sign-in service resends the same request until the code expires. A reserved enrollment left by an interrupted attempt admits nothing, and it lapses at the device code's lifetime. The claim is written only after an authorization succeeded, so a refused attempt leaves nothing in the Registry.
+**Lost replies and restarts.** Every step is idempotent on the request ID (the device code record's ID), so the sign-in service resends the same request until the code expires. A reserved enrollment left by an interrupted attempt admits nothing, and it lapses at the device code's lifetime. The claim is written only after an authorization succeeded, so a refused attempt leaves nothing in the directory. The directory reaches the central over the network with service tokens for its own pinned client ([one central per organization](#program-design--one-central-per-organization)); a transport failure is not a decision, and the directory resends.
 
 **The device code, from approval to refresh.** The enrollment travels with the token family through the issuer's own persisted reference. Nothing the Router sends chooses it:
 
@@ -862,11 +929,12 @@ pub enum MachineConnectionAdmission {
     - any request presenting a refresh token whose stored row belongs to a machine client.
 
     Both are decided from facts that never change (the requesting client's kind, and a row's client), so no interleaving changes the answer. Routers never revoke; ending a machine's login is the owner's `RevokeMachineEnrollment` at central.
-  - **What each client is.** Its client ID is the enrollment ID. It has no secret, and is allowed only the refresh-token grant and central's machine address. Its metadata is `{ kind: machineEnrollment, organizationId, enrollmentId }`, written only by the device-code token handler, which is the sign-in service's own code.
+  - **What each client is.** Its client ID is the enrollment ID. It has no secret, and is allowed only the refresh-token grant and its organization's central machine address. Its metadata is `{ kind: machineEnrollment, organizationId, enrollmentId }`, written only by the device-code token handler, which is the sign-in service's own code.
   - **The shared Router device-login client** (public, registered at deploy) only starts device logins and polls. The provider never issues it a token.
 - **Creating and pinning the client.**
   - The token handler creates the client once per enrollment, after `redeemDeviceCode` and before `issueTokens`. `consumeOne` lets only one poll redeem a code, and the client's ID is the enrollment ID, so even a repeat can't make a second.
   - The token response adds `machine_client_id`. The Router keeps it beside its refresh credential and refreshes with it. It is an identifier, not a secret, so R41's single credential still holds.
+  - The first token response also adds `fleet_central`: `{ session_endpoint, machine_address, receiver, relay }`, taken from the directory's entry for the organization. The Router saves it in its `fleet_login` row and connects there. It's public routing information, not a secret. Its shape lives in the token-response contract beside `machine_client_id` (the sign-in service's Zod schema and the Router host's token-response type), not in `fleet-identity-protocol`, which has no login-result type.
   - The contributor sends the client ID in `DecideMachineToken`. The organization authority records it on the enrollment at its first grant, and from then on refuses a grant for any other client. Central's connection check requires the token's `client_id` to be that recorded client.
 - **When the enrollment ends.** A revocation or supersession disables its client through the existing credential-disable step (C7). Refreshes then stop at the provider as well as at `DecideMachineToken`.
 
@@ -967,11 +1035,11 @@ pub enum DisabledMachineClient { Disabled, AlreadyDisabled, NotThisEnrollment } 
 
 <h3 id="program-design--admin-commands-and-lookups">Admin commands and lookups (person → Fleet central)</h3>
 <ex-markdown id="program-design--admin-commands-and-lookups-text"><script type="text/markdown">
-Every organization command and lookup names its organization and is refused unless the owner guard below passes. Two commands are the fleet operator's instead, and use the fleet operator's authority (below) in place of the owner guard: `CreateOrganization` and `SetOrganizationOwner`, which exist before or above any organization's owner. Every machine belongs to one organization, so logging machines in, approving them and revoking them are that organization's owner's commands. Results are `Applied`, `Admitted { commandId }` (a change another store applies; `CommandStatus` shows it pending until applied), or `Refused { reason: NotOwner | NotFound | Conflict | RecordUnwritable | SecondFactorRequired { within_seconds } }`; a refused command reveals nothing, and `SecondFactorRequired` (R53) is answered only to the organization's owner, before anything else is checked or changed. **Audit (people sign-in R12):** every applied command writes its record (who, what changed, the organization, when) in the same transaction as the change, at the owner of the state it changes; if the record can't be written, that transaction fails and nothing changes. Most commands change the organization authority's own state and are recorded there. `CreateWorkspace` changes the Fleet object's workspaces, so it is handed over, as below. `CreateOrganization` commits in the Registry with its record there. An organization's audit view is assembled when read, by the admin surface, from each owner's records for that organization; nothing is copied, and an owner that can't be read is shown as unavailable.
+Every organization command and lookup names its organization and is refused unless the owner guard below passes. Two commands are the fleet operator's instead, and use the fleet operator's authority (below) in place of the owner guard: `CreateOrganization` and `SetOrganizationOwner`, which exist before or above any organization's owner. Every machine belongs to one organization, so logging machines in, approving them and revoking them are that organization's owner's commands. Results are `Applied`, `Admitted { commandId }` (a change another store applies; `CommandStatus` shows it pending until applied), or `Refused { reason: NotOwner | NotFound | Conflict | RecordUnwritable | SecondFactorRequired { within_seconds } }`; a refused command reveals nothing, and `SecondFactorRequired` (R53) is answered only to the organization's owner, before anything else is checked or changed. **Audit (people sign-in R12):** every applied command writes its record (who, what changed, the organization, when) in the same transaction as the change, at the owner of the state it changes; if the record can't be written, that transaction fails and nothing changes. Most commands change the organization authority's own state and are recorded there. `CreateWorkspace` changes the Fleet object's workspaces, so it is handed over, as below. `CreateOrganization` commits in the directory with its record there. An organization's audit view is assembled when read, by the admin surface, from each owner's records for that organization; nothing is copied, and an owner that can't be read is shown as unavailable.
 
 **A change another store applies (`CreateWorkspace`):** the organization authority checks the guard when you ask, records the command with its record in one transaction, and replies `Admitted`; its outbox has the Fleet object create the workspace once per command ID, with Fleet's own record, retrying until it does. If you stop being the owner in between, it is still created: an empty workspace. Creating a workspace is idempotent by its canonical name (the `ResourceName` value after its own trim, compared byte for byte: case-sensitive, with no Unicode normalization, as F1 publishes it): if a workspace of that name already exists, the command resolves to it and shows as applied, so two admitted requests for the same name never collide after admission. **Changing the owner** (`SetOrganizationOwner`, the fleet operator's): the owner email and binding are replaced. If the new owner already has a bound sign-in entry, it's reused; otherwise an unbound entry is seeded. The previous owner keeps their entry and admission as an ordinary member until removed. The guard holds when you ask, not at Fleet's commit. Changes that stay at the sign-in service (linked logins, passkeys) keep that design's own records.
 
-**The list of organizations:** the Registry keeps each organization's ID, its authority's address and its state (`creating`, `active`). `CreateOrganization` commits the row as `creating`, with its record. A Registry outbox step then initializes the organization authority in one transaction of the authority: its owner's verified email as an unbound owner entry and the authority's own record, and creates the organization's Fleet object (OD8). The row becomes `active` once that is acknowledged. The person is bound to the owner entry at their first Google or GitHub sign-in (`AdmitSignIn`), as in the people sign-in design. An authority's address comes from its organization ID, so nothing reads the Registry to reach it; until its initialization arrives, it refuses every command, decision and sign-in from its own state, so an interrupted creation exposes only a `creating` row the operator can see. `SetOrganizationOwner` commits in the organization authority, which holds the owner entry.
+**The list of organizations:** the directory keeps each organization's ID, its central's addresses and its state (`creating`, `active`). `CreateOrganization` (organization ID, owner's email, the central's addresses) commits the row as `creating`, with its record. A directory outbox step then sends `InitializeOrganization` to that central, which initializes the organization authority in one transaction of the authority: its owner's verified email as an unbound owner entry and the authority's own record, and creates the organization's Fleet object (OD8). The row becomes `active` once that is acknowledged. The person is bound to the owner entry at their first Google or GitHub sign-in (`AdmitSignIn`), as in the people sign-in design. The organization's central is named in the request, and the directory reaches its authority there; until its initialization arrives, it refuses every command, decision and sign-in from its own state, so an interrupted creation exposes only a `creating` row the operator can see. `SetOrganizationOwner` commits in the organization authority, which holds the owner entry.
 
 | Command | Request fields | What else it changes |
 |---|---|---|
@@ -1115,13 +1183,16 @@ pub enum CommandStatusResult {
 | Fleet central → sign-in: confirm a person's session | **client authentication, not a bearer token:** central's pinned confidential client authenticates at the sign-in service's existing introspection endpoint (`/api/auth/oauth2/introspect`) with `private_key_jwt` (RFC 7523 §2.2), the method that client is registered with. Better Auth 1.7.11's introspection accepts only client authentication matching the registered method, and only for a token the authenticating client issued or whose audience resource that client is linked to. So central's client is linked, at deploy, to the central admin audience that person tokens carry. The request is the RFC 7662 form `token=<the person's access token>`. | the client assertion: `iss` = `sub` = central's pinned client, audience the introspection endpoint or the issuer, signed by a key in central's published client key set, single-use `jti`; the authenticating client is linked to the token's audience; then the person token verified against the issuer's keys, its stored session and organization current, and `Standing` asked of central; the reply is the introspection shape the people sign-in design defines (`active`, `sub`, `sid`, `aud`, `exp`, `organization_id`, `checkedAt`), with `active:false` for an invalid, revoked, expired or unavailable session; it never binds anyone | confirms again |
 | Sign-in → Fleet central: admit a provider sign-in | a service token the sign-in service self-signs, `aud` = central's admission address, `scope` = `admit-sign-in`, lifetime ≤ 60 s | issuer and key from the pinned trust configuration; audience and scope; lifetime; the body is an `AdmitSignIn`, only with a provider-verified email | a repeat adds no binding |
 | Sign-in → Fleet central: read a person's standing | a service token the sign-in service self-signs, `aud` = central's standing address, `scope` = `person-standing`, lifetime ≤ 60 s | issuer and key from the pinned trust configuration; audience and scope; lifetime; the body is a `Standing` read | writes nothing |
-| Sign-in → Fleet central: decide a device-code approval | a service token the sign-in service self-signs, `aud` = central's device-login address, `scope` = `device-login-decisions`, lifetime ≤ 60 s | issuer and key from the pinned trust configuration; audience and scope; lifetime; the body is a `DecideDeviceLogin` whose organization is the approver's session organization | the same request ID returns the same `Approved` (every step of the authorize, claim and activate sequence is idempotent on it); the sign-in core sends nothing for a code that is not pending or has expired |
+| Sign-in → Fleet directory: find an organization's central | a service token the sign-in service self-signs, `aud` = the directory's lookup address, `scope` = `central-lookup`, lifetime ≤ 60 s | issuer and key from the directory's pinned trust configuration; audience and scope; lifetime; the body is a `FindCentral { organizationId }` | reads again; writes nothing; answers that central's addresses or `unknownOrganization` |
+| Sign-in → Fleet directory: decide a device-code approval | a service token the sign-in service self-signs, `aud` = the directory's device-login address, `scope` = `device-login-decisions`, lifetime ≤ 60 s | issuer and key from the pinned trust configuration; audience and scope; lifetime; the body is a `DecideDeviceLogin` whose organization is the approver's session organization | the same request ID returns the same `Approved` (every step of the authorize, claim and activate sequence is idempotent on it); the sign-in core sends nothing for a code that is not pending or has expired |
 | Sign-in → Fleet central: decide a machine token | a service token the sign-in service self-signs, `aud` = central's machine-token address, `scope` = `machine-token-decisions`, lifetime ≤ 60 s | issuer and key from the pinned trust configuration; audience and scope; lifetime; the body is a `DecideMachineToken` | decides again |
 
 **One credential, one operation.** Every C7 operation has its own audience and scope; no two operations share one. The receiver picks the operation from the authenticated audience and scope *before* it parses the body. It then parses the body only as that operation's type, and refuses any other body as `wrong-operation`. A `Standing` credential therefore cannot carry an `AdmitSignIn`, and a provisioning credential cannot disable.
 
 Service tokens from the issuer get a 5-minute lifetime from the issuer's resource policy for those audiences, and every receiver also refuses one whose `exp − iat` exceeds that. All edges run over TLS, including Cloudflare service bindings, which carry the same tokens. Bodies are not signed: a receiver checks that each body is well-formed and within the caller's scope (its organization and workspace exist here and the caller may act for them), not that the body is the one the caller first wrote. **Trust configuration** is pinned at deploy: each receiver's issuer URL, published-key URL and the client ID expected per operation. **Rotation:** central publishes its client key set at a fixed address the issuer reads; it adds a new key, waits one refresh, then signs with it. The issuer rotates its signing keys the existing way; receivers refetch the key set once on an unknown key ID.
 | Fleet central → sign-in: disable a machine's client | a service token from the issuer by client credentials with central's `private_key_jwt`: `aud` = the sign-in service's machine-client address, `scope` = `machine-client-disable` | issuer key; audience; scope; the body is a `DisableMachineClient` whose client's metadata names the enrollment | `AlreadyDisabled` |
+| Fleet directory → an organization's central: authorize, activate or cancel a device approval | a service token from the issuer by client credentials with the directory's own `private_key_jwt` client: `aud` = that central's device-approval address, `scope` = `device-approval-steps`, lifetime ≤ 5 min | issuer key; the directory's client; audience and scope; the body is one step for an organization this central serves | each step is idempotent on the request ID |
+| Fleet directory → an organization's central: initialize a new organization | as above, `aud` = that central's initialization address, `scope` = `initialize-organization` | as above; the body's organization is the one this central's deploy settings name | a repeat for an initialized organization changes nothing |
 </script></ex-markdown>
 
 <h2 id="program-design--how-the-issuer-tells-token-kinds-apart">How the issuer tells token kinds apart</h2>
@@ -1130,11 +1201,11 @@ Every issuance runs one closed dispatch on the **authenticated** client's regist
 
 | Client kind | Grant | Resource | Pre-mint decision | Claims | Release checks |
 |---|---|---|---|---|---|
-| Fleet's pinned client | client credentials | a configured service audience: in item two, machine-client disabling (notices, resource management and credential provisioning come in step 3), each its own address | none: each audience serves exactly one operation, so the audience fixes it | scope only; no principal | client is the pinned one; `aud` is a configured service audience; its scope is that audience's one scope; lifetime ≤ 5 min |
+| a Fleet pinned client: each central's, and the directory's | client credentials | a configured service audience: in item two, machine-client disabling (a central's client) and the device approval's steps and organization initialization at a central (the directory's client) (notices, resource management and credential provisioning come in step 3), each its own address | none: each audience serves exactly one operation, so the audience fixes it | scope only; no principal | client is the pinned one; `aud` is a configured service audience; its scope is that audience's one scope; lifetime ≤ 5 min |
 | today's agent client (until step 3) | client credentials | its linked workspace resource | today's workspace policy | today's claims | today's release checks, unchanged |
 | person (sign-in app) | authorization code (existing) | the management, admin or operator audience | `AdmitSignIn` for a provider sign-in, `Standing` for a passkey sign-in and each token | as in the people sign-in design | as there |
-| the Router device-login client (public, deploy-registered) authenticates the device-code poll; the token is issued under the enrollment's machine client, which the device-code token handler creates | device code | Fleet central's machine address | `DecideMachineToken` in the same contributor, for the enrollment the code's approval created, carrying the machine client's ID | principal (machine: installation, enrollment), organization, `grant_expires_at`; no workspace | the authenticated client is the device-login client; the issuing client's metadata names the code's enrollment; `aud` = the machine address; principal is a machine |
-| a machine client (public, one per enrollment) authenticates and is issued | refresh token | Fleet central's machine address | `DecideMachineToken`, as above | as above | the authenticated client is the refresh row's client, and its metadata names the reference's enrollment |
+| the Router device-login client (public, deploy-registered) authenticates the device-code poll; the token is issued under the enrollment's machine client, which the device-code token handler creates | device code | the organization's central machine address | `DecideMachineToken` in the same contributor, for the enrollment the code's approval created, carrying the machine client's ID | principal (machine: installation, enrollment), organization, `grant_expires_at`; no workspace | the authenticated client is the device-login client; the issuing client's metadata names the code's enrollment; `aud` = the machine address; principal is a machine |
+| a machine client (public, one per enrollment) authenticates and is issued | refresh token | its organization's central machine address | `DecideMachineToken`, as above | as above | the authenticated client is the refresh row's client, and its metadata names the reference's enrollment |
 
 **Refused combinations** include Fleet's client asking client credentials for anything but its service audiences, the Router device-login client being issued any token, a machine client asking for the device-code grant or any grant but refresh, or any audience but the machine address, any revoke request from a machine or device-login client or presenting a machine client's refresh token, and a person asking for a workspace, collaboration or machine address.
 
@@ -1156,9 +1227,10 @@ Every issuance runs one closed dispatch on the **authenticated** client's regist
 | **Organization authority** (new) | E1 (including its owner and sign-in allowlist), E19, E7, E8, E13, E15, E21; each session's latest activity; device-login, machine-token, machine-connection and remote-start decisions, and the remote-start records; the who-is-logged-in snapshot; the configured lifetime; the outbox that closes connections and disables machine clients, and the admitted-command outbox; the records of its own changes; the shared-bucket view | `collaboration-central-core` organization module, hosted as one object per organization (Cloudflare Durable Object class `OrganizationObject`; Tokio: one SQLite database per organization) | admin surface, machine token check, the Connection objects, the sign-in service (decisions) | membership, issuance or machine-login policy changes |
 | **Connection object** (existing, modified) | One machine's open connection and its presence (E24), on its own clock: the silence deadline (three heartbeats; a receive deadline on Tokio, an object alarm on Cloudflare); answering `ReadMachinePresence` in durations; keeping the capabilities its Router declared in its latest heartbeat, and delivering a remote start only when they include `RemoteStart`; passing each activity report to its organization authority | `collaboration-central-core` session runtime (`session_runtime.rs`, modified), with each host's socket loop (`collaboration-central-tokio/src/native_objects.rs`, `collaboration-central-cloudflare/src/object_shell.rs`, modified) | the organization authority (presence reads; activity) | the presence contract changes |
 | **Admin surface** (modified) | Organization-owner commands and lookups with their guard (which also checks R53's second factor for every change), including `WhoIsLoggedIn`, the fleet operator's two commands under the operator check (R13, R14), and the bearer checks of central's new receivers | `central_router.rs` admin routes and `access_rules.rs` (modified; the Access branches deleted at step 2) | the owner's CLI and console | admin commands change |
-| **Machine token check** (new, central entry) | Verifying a machine token on `/v1/session` and on `RenewMachineToken` (C9): signature against the sign-in service's keys, audience, time; then `AdmitMachineConnection` through the Registry and the organization authority | `collaboration-central-core` (new module `machine_token_check`), using the existing RS256 capability and the sign-in service's key fetch; each host's entry | the Connection object | the token contract changes, or a later issuer kind is added |
-| **Registry: organization list and machine index** (modified) | The list of organizations and their creation; which organization each installation and peer belong to, claimed once and only after the organization authority authorized; orchestrating authorize, claim, then activate or cancel | Registry object (modified): `organizations` and `fleet_machines` (`machine_enrollments` dropped at step 2) | the fleet operator, the machine token check, the sign-in service's device-login decisions | organization lifecycle or the machine claim changes |
-| **Fleet object** (existing, one per organization) | E2, E16 | existing, addressed by organization; your organization adopts today's storage through a fixed mapping on both hosts | organization authority, connections | the Fleet contract changes |
+| **Machine token check** (new, central entry) | Verifying a machine token on `/v1/session` and on `RenewMachineToken` (C9): signature against the sign-in service's keys, audience, time; then `AdmitMachineConnection` at the central's own organization authority (no directory call) | `collaboration-central-core` (new module `machine_token_check`), using the existing RS256 capability and the sign-in service's key fetch; each host's entry | the Connection object | the token contract changes, or a later issuer kind is added |
+| **Fleet directory** (new, its own deployment) | The list of organizations, each with its central's addresses, and their creation; which organization each installation and peer belong to, claimed once and only after the organization authority authorized; orchestrating authorize, claim, then activate or cancel against that organization's central; answering `FindCentral` | `collaboration-central-core` `fleet_directory` (new), hosted as one `DirectoryObject` (Cloudflare) or its own process (Tokio): `organizations` and `fleet_machines` | the fleet operator, the sign-in service's device-login decisions and lookups | organization lifecycle, the machine claim, or how centrals are reached changes |
+| **Registry** (existing, one per central) | What it does today inside one deployment: leases and their incarnations, notice marks, peer lookup, mail and forwards; today's `machine_enrollments` until step 2 | Registry object (existing; `machine_enrollments` dropped at step 2) | that central's objects | as today |
+| **Fleet object** (existing, one per central, so one per organization) | E2, E16 | existing and unchanged in address: each central's one Fleet object is its organization's, and your central keeps today's storage as it is (the earlier F2b re-addressing is dropped) | organization authority, connections | the Fleet contract changes |
 | **Session binding** (new, Router) | Which session each collaboration call came from; binding lifecycle | `collaboration-mcp`, `collaboration-service` (modified); Codex: the native `StartThread` and `ForkThread` config where it is built (`native_thread_preparation.rs`; the client bridge's `session_creation.rs` for helper starts) (modified); Claude and Cursor: `acp-client-runtime` per-session MCP list through the create and restore commands (modified) | collaboration MCP tools | harness wiring changes |
 | **Session registrar** (new, Router) | Checking each start (a named project; a session starts only in its own workspace, R8); registering each launched session exactly once and recording which project it was started for; minting, activating, persisting and retiring its binding; refusing a start that can't carry one; reporting its end | `collaboration-service` (new module `fleet_session_registrar`) | session binding, remote start | launch facts change |
 | **Session activity reporter** (new, Router) | Mapping each harness's states to working or idle; sending the machine's whole state, with a sequence, after each attach, on each transition, when a session is registered or ends, and again after a report goes unanswered | `collaboration-service` (new module `fleet_session_activity`), reading the Codex native thread status (`codex_session_inventory.rs`) and the Router's session event hub (`provider_session_event_hub.rs`) | the machine's connection | a harness's states change |
@@ -1191,7 +1263,7 @@ Every issuance runs one closed dispatch on the **authenticated** client's regist
 | Anyone but the organization's current owner → organization commands and device-code approvals; anyone but the fleet operator → `CreateOrganization`, `SetOrganizationOwner` | the owner guard, the device-login decision and the operator check: runtime |
 | A machine connecting, or a machine token minted, without an active enrollment | the machine token check and `DecideMachineToken` read the organization authority live: runtime |
 | Fleet central accepting both logins | the single-valued `machineLogin` setting, and from step 2 the old path's code deleted: build and runtime |
-| One installation in two organizations | the Registry's one-time claim: runtime |
+| One installation in two organizations | the directory's one-time claim, across every central: runtime |
 | A session started on another machine without central's check, or a remote creator accepted outside it | the target accepts a creator from another Router only on the `StartRequestedSession` path, and the organization authority accepts a `remoteSession` starter only for its own forwarded record: runtime |
 | A person token or a service token accepted as a machine token | the machine address audience, and the enrollment's own client recorded at its first grant: runtime |
 | Workspace creation outside the admin command | the Fleet write path refuses workspace create: runtime |
@@ -1209,12 +1281,14 @@ sequenceDiagram
   participant R as Router host
   participant B as Sign-in service
   participant O as Owner's browser
-  participant REG as Registry
-  participant OA as Organization authority
-  R->>B: device request with machine fields
+  participant REG as Fleet directory
+  participant OA as The organization's central (authority)
+  R->>B: discovery; device request for the organization, with machine fields
   B-->>R: user code, address, device code
   Note over R: the CLI prints the code; the host polls
   O->>B: signs in, enters the code
+  B->>REG: FindCentral(organization), kept per organization
+  B->>OA: Standing (is this person its owner?)
   B->>B: code pending? owner of its organization?
   B-->>O: label, organization, code
   O->>B: Approve, with workspaces
@@ -1225,13 +1299,15 @@ sequenceDiagram
   OA-->>REG: reserved
   REG->>REG: claim machine, once
   REG->>OA: activate
-  OA-->>B: Approved(enrollment)
+  OA-->>REG: activated
+  REG-->>B: Approved(enrollment)
   B->>B: store enrollment on the code; mark approved
   R->>B: poll: device code
   B->>B: redeem once; mint with reference = enrollment
   B->>OA: DecideMachineToken(enrollment)
   OA-->>B: Grant(grant_expires_at)
-  B-->>R: machine token, refresh credential, machine client ID
+  B-->>R: machine token, refresh credential, machine client ID, fleet_central
+  Note over R: saves the learned central in its SQLite state
   Note over R: refresh credential into the encrypted store, or memory only
   R->>OA: connect (through the token check)
 ```
@@ -1384,7 +1460,7 @@ An ambiguous creation stays prepared until the registrar learns the outcome; it 
 
 | State | Entered by | Leaves to | Guard and effect |
 |---|---|---|---|
-| reserved (internal) | an authorized log-in attempt, before the Registry's claim | approved, cancelled | admits nothing and shows in no lookup; lapses when its request can no longer be resent |
+| reserved (internal) | an authorized log-in attempt, before the directory's claim | approved, cancelled | admits nothing and shows in no lookup; lapses when its request can no longer be resent |
 | approved (internal) | activation of a device-code approval | enrolled, lapsed | admits nothing; becomes `enrolled` at its first machine token, and only then supersedes the installation's earlier enrollment; lapses at the code's lifetime if never redeemed, leaving the working enrollment untouched |
 | enrolled | its first machine token | revoked, expired | connections, renewals and grants allowed, only on connections carrying this enrollment; a newer enrollment of the same installation becoming `enrolled` ends this one (`revoked`, reason superseded) in the same transaction, without a removal notice, because the machine and its allowances stay; this one's open connections are closed |
 | revoked | `RevokeMachineEnrollment`, or superseded | — (terminal) | if not superseded: allowances withdrawn, sessions removed, connection closed, machine client disabled |
@@ -1416,7 +1492,9 @@ Every interval is measured on the Connection object's own clock and reported as 
 | Sender mismatch, stale or foreign binding | binding lookup | Refused, nothing recorded | session binding |
 | Router restarts during a start or registration | the registrar's record | Resend the identical registration; the binding stays prepared and admits nothing until `Registered` | session registrar |
 | A provider can't carry the binding | its advertised MCP support | Start refused before any conversation is created | session registrar |
-| Organization creation interrupted | Registry row `creating` | The outbox step resumes; the authority refuses everything until initialized | Registry |
+| Organization creation interrupted | directory row `creating` | The outbox step resends `InitializeOrganization`; the authority refuses everything until initialized | directory |
+| The directory is down | no answer from it | No device approval and no new organization; the sign-in service routes only organizations it has already looked up, and refuses the rest (R25). Connected machines and their renewals carry on | directory |
+| A central is down | no answer from it | That organization alone stops: no new connection, renewal or decision for it (R25). Other organizations are untouched | that central |
 | Registration refused after the conversation was created | `Refused` | The binding never activates; the conversation gets no prompt; nothing deletes it | session registrar |
 | A lost create reply | no provider answer | The binding stays prepared until the outcome is known; no automatic replay | session registrar |
 | The owner changes while a workspace creation waits | — | It still applies once: an empty workspace | Fleet object |
@@ -1426,7 +1504,7 @@ Every interval is measured on the Connection object's own clock and reported as 
 | An attempt is interrupted between authorize, claim and activate | a lost reply; a restart | The caller resends with the same request ID; every step is idempotent; a reserved enrollment admits nothing and lapses; no claim exists without a prior authorization | Registry; organization authority |
 | A superseded connection asks for a grant or effect | the connection's enrollment is not the installation's active one | Refused, and the connection is closed | organization authority |
 | Two polls redeem one approved code at once | `consumeOne` returns a row to one of them | One token set; the other gets `invalid_grant` | Better Auth |
-| An installation already claimed by another organization asks to log in | the Registry claim | `machineInAnotherOrganization`; nothing changes in either organization | Registry |
+| An installation already claimed by another organization asks to log in | the directory's claim | `machineInAnotherOrganization`; nothing changes in either organization | directory |
 | A machine token expires on an open connection | the Connection object's stored expiry | The connection closes; the Router reconnects with a fresh token | Connection object; Router |
 | A revocation's connection close is lost | outbox | The close retries; the connection ends at its token's expiry at the latest; its effects are already refused | organization authority |
 | A Router has no encrypted store (Linux without systemd, or no credential installed) | the data-key seam reports the store absent | The Router keeps the refresh credential only in memory and says so at login; after a restart it asks for a new device code; no plaintext fallback | Router machine login |
@@ -1456,7 +1534,8 @@ flowchart TB
     RT[Router: binding, registrar, login, heartbeat, activity<br/>refresh credential in its encrypted store, or memory only]
   end
   subgraph CL[Cloud - trusted services]
-    C[Fleet central<br/>truth, client key]
+    C[Each organization's Fleet central<br/>its organization's truth, its own client key]
+    D[Fleet directory<br/>organization list, machine claims, its own client key]
     I[Token issuer<br/>signing key, machine clients]
   end
   OB[Owner's browser]
@@ -1468,6 +1547,9 @@ flowchart TB
   C -->|private_key_jwt: service tokens| I
   I -->|decision requests, service token| C
   I -.->|published keys| C
+  I -->|device approvals, lookups: service token| D
+  D -->|approval steps, initialization: service token| C
+  I -.->|published keys| D
 ```
 
 | Asset | Where | Protects | If stolen |
@@ -1475,7 +1557,8 @@ flowchart TB
 | Device-code refresh credential | Router: its encrypted secret store, the data key in the macOS Keychain or a Linux systemd encrypted credential, or only in the Router host's memory where neither exists; plaintext only in debug. The machine's only long-lived credential of the new login. No new key. | Machine login | Whoever holds it is that machine, and every session on it can be impersonated, until you revoke the enrollment |
 | Machine token | Router memory | One connection | That machine's connections until the token expires (at most the organization's lifetime) |
 | Access service token (until step 3) | Router secret store | Passing the Access edge only; central reads nothing from it from step 2 | Reaching central's edge; nothing inside |
-| Central's client key | Central's host secret store | Central's service tokens | Forged service requests until rotated. The most valuable key. **Withdrawal is bounded by caches:** the issuer caches a client's key set for 5 minutes and up to 10 on fetch failure (`dist/authorize-C95F-9E1.mjs:1223–1405`), and each receiver's issuer key cache is pinned to at most 5 minutes; those bounds limit only new mints and new service requests made with the old key. Machine tokens already minted stay valid until their own expiry (at most 60 minutes), so the worst case after a compromise is the cache bound plus the remaining life of the last token minted, under the clock model. |
+| A central's client key | That central's host secret store (each central has its own) | That central's service tokens | Forged service requests from that central, until rotated; other centrals are unaffected. The most valuable key. **Withdrawal is bounded by caches:** the issuer caches a client's key set for 5 minutes and up to 10 on fetch failure (`dist/authorize-C95F-9E1.mjs:1223–1405`), and each receiver's issuer key cache is pinned to at most 5 minutes; those bounds limit only new mints and new service requests made with the old key. Machine tokens already minted stay valid until their own expiry (at most 60 minutes), so the worst case after a compromise is the cache bound plus the remaining life of the last token minted, under the clock model. |
+| The directory's client key | The directory's host secret store | The directory's service tokens to centrals | Forged approval steps or organization initialization at any central, until rotated: the approver in a step is asserted by its caller, so a forged step can approve a machine in the owner's name. Each central still refuses a step for an organization it doesn't serve. Next to the issuer's signing key, the most valuable key |
 | Issuer signing key | Better Auth (existing) | Every token, including service tokens it self-signs | Any token, until rotated |
 | Session binding | Router memory and that session's harness configuration | Attribution | Another process of the same user can act as that session: the shared-bucket limit (E14) |
 | A service token | In flight between services; lifetime at most 5 minutes (60 s for the issuer's decision token), checked by each receiver | One edge and one operation | Its holder can make that one kind of request, within its scope, until it expires. TLS protects it in transit; bodies are not signed, so the receiver checks each body's meaning (organization, workspace, shape), not its origin. |
@@ -1855,7 +1938,8 @@ No column arrives before its writer, and none is made nullable only to fit. Each
 <ex-markdown id="program-design--changes-and-cutover-text"><script type="text/markdown">
 **What changes:**
 - **Sign-in service:** the core and storage on Drizzle (R29–R33); request limits (R52); telemetry on both hosts (R51); people's admission asked of central; the token-kind dispatch, keeping today's agent path until step 3; service tokens; the Router device-login client, one machine client per enrollment, the extended device grant, its approval hook and the revoke refusal; the `DisableMachineClient` receiver; the who-is-logged-in page.
-- **Fleet central:** the Registry's organization list and machine index; one organization authority and one Fleet object per organization; the admin commands, the owner guard and lookups; central's new receivers and its service caller; the machine token check; machine enrollment, revocation and supersession; session registration; remote starts; presence in each Connection object; session activity; `WhoIsLoggedIn`; telemetry on both hosts; the `fleet-identity-protocol` crate.
+- **Fleet directory (new deployment):** the organization list, the machine claim, `CreateOrganization`, `FindCentral`, and the device approval's orchestration.
+- **Fleet central, one per organization:** your organization's central is today's deployment; its organization authority and Fleet object; the admin commands, the owner guard and lookups; central's new receivers and its service caller; the machine token check; machine enrollment, revocation and supersession; session registration; remote starts; presence in each Connection object; session activity; `WhoIsLoggedIn`; telemetry on both hosts; the `fleet-identity-protocol` crate.
 - **Router:** machine login and renewal; the Linux secret store; the session registrar and binding; the heartbeat; the activity reporter; remote start.
 
 **The steps (R43).**
@@ -1863,7 +1947,7 @@ No column arrives before its writer, and none is made nullable only to fit. Each
 | Step | Fleet central in production | Machines | Proven before the next step |
 |---|---|---|---|
 | 1. Build | Today's login, unchanged (`machineLogin = accessEnrollment`), Access in front, no organizations yet. The new login is built and run only on test deployments. | unchanged | the machine login, the organization core, registration, the flood limits and the step-2 checks, on a test deployment behind a test Access application |
-| 2. Switch, behind Access | `machineLogin = machineTokens`. The old login's code is removed and the `machine_enrollments` table is dropped in the same deploy. Your organization is created, adopting today's Fleet storage. Operator commands go through the sign-in service. | Each runs the new Router build and logs in again by device code. It keeps its installation and peer IDs, so its sessions, allowances and board relationships stay attached. The old enrollment credential is deleted once it has logged in. | — |
+| 2. Switch, behind Access | `machineLogin = machineTokens`. The old login's code is removed and the `machine_enrollments` table is dropped in the same deploy. The directory is deployed, and your organization is created there with today's central as its central, adopting today's Fleet storage. Operator commands go through the sign-in service. | Each runs the new Router build and logs in again by device code. It keeps its installation and peer IDs, so its sessions, allowances and board relationships stay attached. The old enrollment credential is deleted once it has logged in. | — |
 
 - **Step 2 fixes forward,** with no revert to the old login. Restoring it could give access back to a machine revoked after the switch, because the old table knows nothing of revocations under the new login. While a fix lands, machines are offline and Access still guards central.
 - **The test deployment exercises exactly what production gets.** The old login's code is removed before the test cut, so production's switch promotes the builds the test cut proved.
@@ -1907,10 +1991,11 @@ There's nothing to migrate: presence is new state in each Connection object, and
 | U22, U16, U33 | R31: multi-row decisions without interactive transactions; a device code consumed once | E3, E23 | `SignInStore`; Better Auth `consumeOne` | `runAtomically(statements)`; one conditional statement | the statements in "The decisions that write more than one row" | claim present/absent; code approved/used | zero-row conditional statements are correct outcomes | concurrent sign-in and cleanup, and concurrent redemption of one code, on D1 and `better-sqlite3`; Hegel families |
 | U24 | R32: no UUID but v7; secrets stay random; derived single-use keys stay derived | E3, E23 | `SignInPlatform.ids`; Better Auth `generateId` (returning `platform.ids.nextId()`) | `nextId()` | branded `Uuid7` | none: identifier minting | a client-assertion record keeps Better Auth's derived `jti`-digest key | every UUID-shaped stored identifier parsed as v7; a replayed client assertion refused |
 | U25 | R33: no wall clock in sign-in tests; Hegel | E22, E23 | sign-in test suites | controlled clock; Vitest system time for Better Auth cases on Node | test fixtures | none: test discipline | none: structural; the scan finds a wall-clock read | the test-file scan; the four Hegel families |
-| U27 | R34: one organization each; nothing across | E1, E2, E6, E7, E15 | organization authority; Registry machine index; Fleet object per organization | every command and decision names its organization; `unknownTarget` | `identity_contract.rs` | the Registry's write-once claims | a cross-organization reference answers as unknown | central integration across two organizations, each kind of request |
+| U27 | R34: one organization each; nothing across | E1, E2, E6, E7, E15 | organization authority; the directory's machine claim; Fleet object per organization | every command and decision names its organization; `unknownTarget` | `identity_contract.rs` | the directory's write-once claims | a cross-organization reference answers as unknown | central integration across two organizations, each kind of request |
+| U45 | R55: each organization on its own central; a central holds and accepts nothing of another's | E1, E6, E26, E27 | one deployment per organization; the directory; the machine token check (audience) | `FindCentral`; `InitializeOrganization`; each central's deploy settings name its organization | `identity_contract.rs`; the directory's `organizations` | `creating`, `active` | org A's token at org B's central → refused on audience; a machine claimed in A approved in B → `machineInAnotherOrganization`; the directory down → no approvals, connected machines carry on | two centrals and the directory on each host |
 | U26, U27 | R35: a session is a member only while its machine is enrolled; people admitted through their allowlist entry | E8, E19, E21 | organization authority | registration; `AllowSignIn`, `RemoveSignIn` | `FleetSessionRecord`; the allowlist entry | enrollment active; admission active, ended | not enrolled or not admitted → refused, nothing changed | central unit and admin API |
 | U30 | R38: no tool tokens for people | E3 | issuer dispatch | the dispatch's refused combinations | claims schema | none: a dispatch rule | a person's tool-token request refused before minting | sign-in integration |
-| U31, U33 | R39: only the owner's device-code approval logs a machine in; what authorized it recorded | E6, E21, E23 | organization authority; Registry claim; sign-in device-login rule | `DecideDeviceLogin`; authorize, claim, activate | `MachineEnrollment.authorizedBy`; `fleet_machines` | enrollment states, including internal reserved and approved | non-owner → refused with nothing written in either owner; interrupted attempt → resend, reserved lapses | central + sign-in integration reading both owners after each refusal |
+| U31, U33 | R39: only the owner's device-code approval logs a machine in; what authorized it recorded | E6, E21, E23 | organization authority; the directory's claim; sign-in device-login rule | `DecideDeviceLogin`; authorize, claim, activate | `MachineEnrollment.authorizedBy`; `fleet_machines` | enrollment states, including internal reserved and approved | non-owner → refused with nothing written in either owner; interrupted attempt → resend, reserved lapses | central + sign-in integration reading both owners after each refusal |
 | U33, U34 | R40: from step 2 only valid machine tokens; identity from the token and enrollment; lifetime ≤ the organization's; renewal without a person; re-login keeps the installation | E6, E21, E22 | machine token check; organization authority; Router machine login | C9 check; `DecideMachineToken` with the token family's `referenceId`; `RenewMachineToken`; the active-enrollment check on every decision | `MachineTokenClaims`; `AdmittedMachine`; `oauthRefreshToken.referenceId`; one machine client per enrollment | enrollment states; connection token expiry | expired, revoked or foreign → refused; superseded connection → refused and closed | central integration; two machines under one owner and client kept apart through refresh, restart and a replay of one's retired refresh token past its reuse window; a machine renewing past its first token's expiry; re-login keeping sessions and allowances, and re-login after revocation restoring nothing |
 | U17, U33, U35 | R41: one refresh credential on a device-code machine, in an encrypted store, or only in memory where none exists | E6, E21 | Router secret store (Keychain; systemd credential); Router machine login | `KeychainAccess` | `RefreshCredentialKeeping` | one refresh credential per machine, in its store or in memory | no store → memory only, approved again after a restart; never plaintext | per-platform runs; store inspection; a memory-only restart asking for a new code |
 | U33, U31 | R42: code and address shown; owner-only approval; single use; lifetime; guess limit; only the requesting installation, only that organization | E6, E21, E23 | sign-in device-login rule; Better Auth device grant; organization authority | the extended grant; owner hooks on verify, approve and deny; `DecideDeviceLogin`; the device-code token handler | `deviceCode` columns including `enrollmentId` | code states | denied, expired, used or wrong person viewing, approving or denying → nothing, and the code stays for the owner | sign-in integration on both hosts; concurrent redemption; guess limit; a non-owner opening and denying a code |
@@ -1932,6 +2017,7 @@ There's nothing to migrate: presence is new state in each Connection object, and
 <h2 id="program-design--open-decisions-and-design-notes">Open decisions and design notes</h2>
 <ex-markdown id="program-design--open-decisions-and-design-notes-text"><script type="text/markdown">
 **Still yours to decide:**
+- **Provisioning new organizations, open (you, 1 November):** new organizations are deployed by hand for now, by the runbook in [one central per organization](#program-design--one-central-per-organization). You aren't satisfied with that yet; a provisioning design comes back to you. The directory, the Router learning its central, and the directory as its own Worker were left to the Lead, and are recorded as its choices.
 - **OD4, approved (31 October):** the tables drawn in "The sign-in service: storage, core and hosts" above. The generated SQL still comes to you before code uses it.
 - **OD14, the view's freshness bound:** decided: 30 seconds (you, 31 October). Heartbeat, refresh and the page's answer deadline are each a sixth of it (5 seconds), and the silence limit is three heartbeats. A cut connection shows within 25 seconds. Another value scales them all; below about 5 seconds, a push stream would be needed instead of refreshes.
 - **OD2, the machine token's default lifetime:** decided: 10 minutes (you, 31 October), one setting.

@@ -89,7 +89,8 @@ Every row is your direction, or a decision already recorded in the people sign-i
 | U20 | **People sign in** with Google, GitHub or a passkey. Your organization's owner decides who may sign in. Only people reach administration. | The people sign-in rules carry over. | the people sign-in design (D2, F-64, F-78, F-82) |
 | U21 | **Only you administer.** You allow people to sign in, create workspaces, log machines in by approving their codes, choose the workspaces each machine serves, and revoke machines. Managers are a later concept. | Granting access is your call. | "owners can allow people to log in or allow auth related stuff"; "right now its just owner" |
 | U26 | **Organization first.** A person is admitted to an organization before anything else. | The organization decides who exists in it. | "you add peope bot to organzisiton. then join workspaces" |
-| U27 | **Nothing is shared or sent between organizations.** One Fleet central can serve several. A person may be in several; a machine and a workspace each belong to exactly one. | Organizations stay apart even on one service. | "i dont want cross organization any sharing stuff or comm"; "a single router only belongs to one organization" |
+| U27 | **Nothing is shared or sent between organizations.** A person may be in several; a machine and a workspace each belong to exactly one. | Organizations stay apart. | "i dont want cross organization any sharing stuff or comm"; "a single router only belongs to one organization" |
+| U45 | **Each organization runs on its own Fleet central:** the same build, deployed separately, with its own storage. Only a small directory is shared: the list of organizations and which organization each machine is in. **New organizations are deployed by hand for now;** provisioning is still open with you. Item two deploys the directory and your organization's central. | Isolation by deployment: a routing bug, a bad deploy or an outage reaches one organization. | "thats the isolation i wanted"; "image i will deploy new orgs by hand and one central per org ok. but im not happy with solution" |
 | U30 | **People never hold tool tokens.** People ask bots, which act with their own authority. | People don't call tools or log machines in. | "members cannot lkokg in anytnhing into a router, they use existin channels or bots" |
 | U9 | You can **look up** who someone is: a person's standing in your organization; a machine's organization, what authorized it and the workspaces it serves; a session's machine, project and isolation. | You must be able to answer "who is this, and where does it belong?" | "know which works ace each identy regsitered with t system belkongs to" |
 
@@ -155,7 +156,7 @@ Every row is your direction, or a decision already recorded in the people sign-i
 - messaging between sessions on different machines, which works today and must keep working on the new login.
 
 **What's missing:**
-- organizations at Fleet central, with you as owner, and people's admission checked there;
+- organizations, each on its own Fleet central, with a small shared directory, you as owner of yours, and people's admission checked there;
 - a session identity in the fleet, registered with its project's workspace, and calls attributed to it;
 - machine-to-workspace allowances;
 - the device-code machine login, its short-lived tokens and renewal, and a secret store on Linux, or memory only;
@@ -228,6 +229,7 @@ What it costs: a bounded period where the new login runs beside today's behavior
 | OD21 | Whether a passkey can also sign you in. | **Decided (you, 31 October): yes.** A passkey with fingerprint, face or PIN signs you in and counts as both factors; Google or GitHub stays for the first sign-in and for anyone without a passkey. | nothing |
 | OD20 | A person's first second factor. | **Decided (you, 31 October): the authenticator app first** (it issues the recovery codes), then a passkey. "yes setup up app is fine". | nothing |
 | OD17 | Where logs and traces go. | **Decided (you, 31 October): nowhere yet; turn on OpenTelemetry export later.** Cloudflare keeps the records meanwhile. | only JT1's export leg, which waits until you name a destination |
+| OD22 | How new organizations are provisioned. | **Open (you, 1 November):** deployed by hand for now, by the Program Design's runbook; you aren't satisfied with that yet. A provisioning design comes back to you. | nothing in item two: it deploys only your organization's central |
 
 **Inherited, not asked again:** admin actions check that your sign-in is still current, within the people sign-in design's freshness bound **SD8**, which that design still has open.
 </script></ex-markdown>
