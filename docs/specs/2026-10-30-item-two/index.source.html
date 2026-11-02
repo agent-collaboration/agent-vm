@@ -50,8 +50,9 @@
   <ex-step to="program-design.html#program-design--failure-recovery-and-concurrency" icon="bug">What happens on a crash, a slow object, a late report or a central restart.</ex-step>
   <ex-step to="verification-design.html#verification-design--shared-observations" icon="test-tube">How it's proven: SO12's journey, and SO4's offset-clock and reordering cases.</ex-step>
 </ex-presentation>
-<ex-presentation id="path-sign-in" title="Your sign-in, and the sign-in service" description="People sign in, admission is decided at Fleet central, and the service is one core on Drizzle.">
-  <ex-step to="specification.html#specification--identity-and-proof" icon="users">People sign in as the people sign-in design says, with admission decided at Fleet central (R5).</ex-step>
+<ex-presentation id="path-sign-in" title="Your sign-in, and the sign-in service" description="People sign in, their membership and roles live in the sign-in service, and the service is one core on Drizzle.">
+  <ex-step to="specification.html#specification--identity-and-proof" icon="users">People sign in as the people sign-in design says, with membership and roles in the sign-in service (R5).</ex-step>
+  <ex-step to="program-design.html#program-design--people-roles-and-permissions" icon="users">Roles and permissions: owner and member, six resources, and how central knows a person may act (U46, U47, OD25).</ex-step>
   <ex-step to="specification.html#specification--the-sign-in-service-storage-hosts-and-tests" icon="database">Drizzle only, one runtime-free core, UUIDv7, no wall clock in tests (R29–R33).</ex-step>
   <ex-step to="program-design.html#program-design--the-sign-in-service-storage-core-and-hosts" icon="stack">The core, its capabilities, its store, and the tables for your approval (OD4).</ex-step>
   <ex-step to="program-design.html#program-design--how-the-issuer-tells-token-kinds-apart" icon="key">How the issuer tells token kinds apart, and keeps today's agent path.</ex-step>
@@ -132,7 +133,7 @@ Each opens the exact sections in order. Start one from the walkthrough button.
 | **Central accepts only logged-in machines** | Your step 1: the switch, behind Access, and what stays as today until steps 3–5 |
 | **Sessions** | Registration, attribution, and starting a helper on another machine |
 | **Who is logged in** | Your step 2: what you see, how presence and activity reach it, the timing, and failures |
-| **Your sign-in, and the sign-in service** | People sign-in through Fleet central; Drizzle, one runtime-free core, and the tables for your approval |
+| **Your sign-in, and the sign-in service** | People sign-in, with membership, roles and permissions in the sign-in service; Drizzle, one runtime-free core, and the tables for your approval |
 | **How item two is proven** | Each need's proof, the journeys, and what stays unverified |
 </script></ex-markdown>
 <h2 id="item-two-built-on">What each part is built on</h2>
