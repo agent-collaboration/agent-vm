@@ -670,7 +670,7 @@ the `sign-in-host-node` package: an HTTP listener, `better-sqlite3` through Driz
 - **Why:** F1 merged the person-admission contracts and owner-named refusals that the 2 November design removes (codex-router `main`, `#198`).
 - **Covers:** R13, R14, R27, C4, C7, C8's contract shapes, as the Program Design now names them:
   - **removes:** `PersonAdmissionRequest`, `OrganizationStanding` and `StandingRole`, `IdentityLookup::Person` and its result variant, and `AdmissionId`/`AdmissionRef` if nothing else uses them, with their generated schemas, fixtures and negatives;
-  - **renames:** `CommandRefusal::NotOwner` to `NotPermitted` (`notPermitted` on the wire), `OwnerRefusal` to `AccessRefusal`, and the device-login refusal's `notOwner` to `notPermitted`;
+  - **renames:** `CommandRefusal::NotOwner` to `NotPermitted` (`notPermitted` on the wire), `OwnerRefusal` to `LookupRefusal` (its `NotOwner` variant to `NotPermitted`), and the device-login refusal's `notOwner` to `notPermitted`;
   - **adds:** `FleetPermission` (a closed serde enum, one variant per `resource:action` the routes need, refusing an unknown one), `DecideDeviceLogin.permission_checked`, and `ProvisionOrganization` with `ProvisionOrganizationResult`.
 - **Writes:** `collaboration-central-core/src/identity_contract/` and its `contracts/` schemas and fixtures, `fleet-identity-protocol` where a shape lives there, and the tests that name them.
 - **Not:** any handler. F2a, F2c, F3a and F10 consume these.

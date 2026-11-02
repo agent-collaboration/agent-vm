@@ -1092,7 +1092,7 @@ The sign-in service asks central nothing about people: no sign-in, passkey, pers
 #[serde(rename_all = "camelCase")]
 pub struct ProvisionOrganization { pub organization_id: OrganizationId } // sent after Better Auth created it; idempotent
 #[serde(tag = "result", rename_all = "camelCase")]
-pub enum ProvisionOrganizationResult { Provisioned {}, Refused { reason: ProvisionRefusal } } // no answer at all means unknown: retry
+pub enum ProvisionOrganizationResult { Provisioned {} } // the only answer: a repeat answers it again; no answer, an error or an unwritable record means unknown, and the sign-in service retries (a malformed body is refused by the route, as every operation's is)
 ```
 
 **Where the organization ID comes from:** for a device-login decision, the code's organization; for a machine token, the enrollment's; for provisioning, the organization Better Auth just created. The organization authority answers only for its own organization ID, and a request naming another organization reaches another authority, which answers from its own state.
@@ -1141,7 +1141,7 @@ pub struct WhoIsLoggedIn { pub organization_id: OrganizationId }
 pub enum WhoIsLoggedInResult {
     #[serde(rename_all = "camelCase")]
     Snapshot { as_of: UnixMillis, machines: Vec<MachineRow> },
-    Refused { reason: AccessRefusal },               // reveals nothing (R49); a lookup never answers secondFactorRequired
+    Refused { reason: LookupRefusal },               // reveals nothing (R49); a lookup never answers secondFactorRequired
 }                                                    // no answer at all, or an error, means unavailable
 #[serde(rename_all = "camelCase")]
 pub struct MachineRow {
@@ -1201,7 +1201,7 @@ pub enum IdentityLookupResult {
         started_at: UnixMillis,
     },
     Unknown {},                                       // no such subject here, or it belongs to another organization
-    Refused { reason: AccessRefusal },
+    Refused { reason: LookupRefusal },
 }
 
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -1210,7 +1210,7 @@ pub struct WorkspaceLookup { pub organization_id: OrganizationId, pub workspace_
 pub enum WorkspaceLookupResult {
     Workspace { workspace: WorkspaceRef, allowed_machines: Vec<AllowedMachineRow> }, // active allowances only
     Unknown {},
-    Refused { reason: AccessRefusal },
+    Refused { reason: LookupRefusal },
 }
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct AllowedMachineRow { pub installation: InstallationId, pub label: MachineLabel }
@@ -1229,7 +1229,7 @@ pub enum MachineLookupResult {
         shared_bucket: Vec<WorkspaceRef>,             // E14: workspaces that have had a Host-isolated session on it; shown, never enforced
     },
     Unknown {},
-    Refused { reason: AccessRefusal },
+    Refused { reason: LookupRefusal },
 }
 
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -1239,7 +1239,7 @@ pub enum CommandStatusResult {
     Pending {},                                       // admitted; the other store hasn't applied it yet (it retries until it does)
     Applied {},
     Unknown {},
-    Refused { reason: AccessRefusal },
+    Refused { reason: LookupRefusal },
 }
 ```
 
@@ -1690,7 +1690,7 @@ flowchart TD
 |---|---|
 | Second factors | Better Auth's passkey plugin, with `authenticatorSelection.userVerification: "required"` at registration. **Passkey sign-in (OD21)** uses the plugin's own endpoints. Its `authentication.afterVerification` hook runs after the signature check and before the session is created (pinned `@better-auth/passkey` `index.mjs:487`); ours refuses an assertion without user verification, so no session exists. An after-hook stamps the new session's `secondFactorAt` with method `passkey`, so a passkey sign-in counts as both factors. B7 proves the hook at 1.7.11; until it does, passkey sign-in stays off and people sign in with Google or GitHub. Better Auth's two-factor plugin, with `allowPasswordless: true` (people have no password), for authenticator-app codes (TOTP) and its backup codes as the recovery codes. Its `verify-totp` and `verify-backup-code` run on an already signed-in session (`verify-two-factor.mjs`). The plugin's own sign-in verifies with `requireUserVerification: false` (pinned source), which is why the hook is needed. `trustDevice` is never offered: it would skip codes for 30 days. The plugin's account lockout (on by default; app codes and backup codes share one counter) stays on. |
 | Confirming | Always on the person's existing Google or GitHub session, which stays the browser's session. **App or recovery code:** after-hooks on `/two-factor/verify-totp` and `/two-factor/verify-backup-code` stamp that session's `secondFactorAt` and `secondFactorMethod` from `platform.clock`. **Passkey:** the core's own confirm route. It issues a challenge, kept single-use for 5 minutes in Better Auth's existing `verification` table and bound to the session. It then verifies the assertion with SimpleWebAuthn (the plugin's own library) against the person's stored passkey, with `requireUserVerification: true`, updates the passkey's counter, and stamps the same session. No new session is ever created, so no cookie changes. The issuer copies the time and method into each person token as `second_factor_at` and `amr` (C13). |
-| Fleet central | The permission guard checks `now − second_factor_at ≤ 15 minutes` (one setting) for every R13 change, and otherwise refuses with `CommandRefusal::SecondFactorRequired { within_seconds }`, F1's published command refusal, beside `NotPermitted` (which reveals nothing) and the other command reasons. Reads don't check it: they answer `AccessRefusal`, which has no second-factor variant. People changes never reach central, so `beforeCreateInvitation`, `beforeRemoveMember` and `beforeUpdateMemberRole` apply the same 15-minute rule to the session. Denying a device code never reaches central either, so the sign-in service's deny before-hook applies the same 15-minute rule to the session itself. `DecideDeviceLogin` carries `approver_second_factor_at`; the organization authority accepts it missing only when the organization has never had an enrollment (the first-machine exception). |
+| Fleet central | The permission guard checks `now − second_factor_at ≤ 15 minutes` (one setting) for every R13 change, and otherwise refuses with `CommandRefusal::SecondFactorRequired { within_seconds }`, F1's published command refusal, beside `NotPermitted` (which reveals nothing) and the other command reasons. Reads don't check it: they answer `LookupRefusal`, which has no second-factor variant. People changes never reach central, so `beforeCreateInvitation`, `beforeRemoveMember` and `beforeUpdateMemberRole` apply the same 15-minute rule to the session. Denying a device code never reaches central either, so the sign-in service's deny before-hook applies the same 15-minute rule to the session itself. `DecideDeviceLogin` carries `approver_second_factor_at`; the organization authority accepts it missing only when the organization has never had an enrollment (the first-machine exception). |
 | Adding and replacing | The first-ever second factor is the authenticator app, because Better Auth issues backup codes only once two-factor is on (`backup-codes/index.mjs:278`, `TWO_FACTOR_NOT_ENABLED`). Enabling it returns the app's QR code and the recovery codes, shown once. A passkey is added after it. Before-hooks on passkey registration, update and delete, and on two-factor enable, disable and new backup codes, allow the change when `user.secondFactorSetAt` is empty (never had one), and otherwise only from a session confirmed in the last 15 minutes. **Never zero factors, even part-way:** the plugin's disable deletes the app secret *and* the recovery codes and rotates the session (`two-factor/index.ts:376–405` at 1.7.11). So a person with only the app adds a passkey first: they confirm with the app code or a recovery code, then register a passkey. Then they turn the app off and set it up again, and a crash or lost reply in between still leaves the passkey, so they retry. **Removals are decided by the store, not by the hooks.** The plugin's own `/two-factor/disable` and `/passkey/delete-passkey` are refused. The core's two removal operations are each one conditional unit under R31, so two confirmed sessions removing the app and the last passkey at once can't both commit; whichever lands second changes nothing. The before-hooks only refuse early. `/two-factor/get-totp-uri` is refused always: the secret is shown once at setup and never again. |
 | Recovery | Google or GitHub sign-in, then a recovery code (or the app code) confirms the session, then the person adds a new passkey or app and removes the lost one. Google or GitHub alone fails at the before-hooks. Each recovery-code use and factor change leaves a record (R51) and an audit entry. |
 | Rate | `/two-factor/verify-*` count in the `SIGN_IN_ATTEMPTS` class (R52). Better Auth's account lockout counts only sign-in challenges, not these checks on a signed-in session, so R52's limit is what bounds guessing here. |
@@ -2039,7 +2039,7 @@ There's nothing to migrate: presence is new state in each Connection object, and
 | U44 | R54: first factor from a provider sign-in with recovery codes; later changes need two factors; no resets by others | E3, E25 | sign-in second factors | the before-hooks; `verify-backup-code`, `verify-totp` | `sign-in-core/second-factors/` | `twoFactor`; session columns | provider sign-in alone → refused at the hooks | SO2's second-factor cases |
 | U40 | R47: the owner's who-is-logged-in view lists every enrolled, revoked or expired machine with its approval, allowances, connection and last seen, and each active session with harness, project, workspace, isolation, start time and state; opening it changes nothing | E6, E7, E13, E15, E16, E21, E24 | organization authority (snapshot); admin surface; who-is-logged-in page | `WhoIsLoggedIn`; the page's refresh route | `WhoIsLoggedInResult` (`MachineRow`, `ConnectionView`, `SessionRow`) in `identity_contract.rs` | presence (never connected, connected, not connected); session activity | the Fleet object unreadable → whole lookup fails → unavailable | central integration with two machines, one connected and one not, and a revoked machine; state compared before and after opening the view |
 | U40 | R48: each change shows within OD14; an unclean drop shows not connected with its last-seen time; a disconnected machine's sessions show unknown | E7, E24 | Connection object (presence, on its own clock); organization authority; session activity reporter; the page | `Heartbeat`; `ReadMachinePresence` at each lookup, with a deadline of half a refresh; `ReportSessionActivity` (the whole state, sequenced); refresh every sixth of OD14, with an answer deadline of one interval | `MachinePresenceAnswer` (durations); `SessionActivity`; `SessionActivityEntry` | presence in each Connection object (three heartbeats of silence); activity counted only on the connection answered `Open` | a crash → `NotConnected` after three heartbeats of silence; a Connection object that doesn't answer → unavailable; an unanswered or refused activity report → a fresh whole-state report; central restart → `NotConnected` until reconnect | a controlled clock at each object: a connect, a clean close, a cut connection, a session starting and stopping, all within OD14; a session on a cut machine reads unknown; the Connection object's and the organization authority's clocks offset by several seconds, with the same result |
-| U40, U32, U21 | R49: only the organization's admin; only its own machines and sessions; unavailable, never a stale picture; no operator shown | E1, E6, E7, E24 | the permission check (`organization:view`) and central's permission guard; who-is-logged-in page | `WhoIsLoggedIn` under the permission guard; the page's freshness timer | `AccessRefusal`; no operator field in any row | none: a read | anyone else → refused, nothing revealed; failure or OD14 without a snapshot → unavailable | admin route and page: owner, member, other organization's owner, bot, session and machine tokens; central stopped while the page is open |
+| U40, U32, U21 | R49: only the organization's admin; only its own machines and sessions; unavailable, never a stale picture; no operator shown | E1, E6, E7, E24 | the permission check (`organization:view`) and central's permission guard; who-is-logged-in page | `WhoIsLoggedIn` under the permission guard; the page's freshness timer | `LookupRefusal`; no operator field in any row | none: a read | anyone else → refused, nothing revealed; failure or OD14 without a snapshot → unavailable | admin route and page: owner, member, other organization's owner, bot, session and machine tokens; central stopped while the page is open |
 | U40 | R50 (stage C): each member's sign-in state and last sign-in | E3, E19 | sign-in service (members and sign-in facts, both its own) | the page reads Better Auth's `member` and `session` rows | Better Auth `member`, `session` | none: each fact read from its owner | as R49 | stage C: a person signing in and out, shown within OD14 |
 
 **Coverage:** each obligation of the [Specification](specification.html#specification--obligations) has a row. R19 here is a machine's revocation; its notices come with step 3. R50's people half is built in item two; its bot half comes when bots exist.
