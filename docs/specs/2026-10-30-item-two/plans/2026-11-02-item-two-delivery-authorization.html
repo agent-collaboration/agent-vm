@@ -566,7 +566,7 @@ the `sign-in-host-node` package: an HTTP listener, `better-sqlite3` through Driz
   - the **revoke refusal**: a before-hook on the revoke endpoint refusing any request from a machine or device-login client, and any request presenting a machine client's refresh token;
   - the grant object with the machine fields;
   - before-hooks on verify, approve and deny checking `machine:enroll` live in the code's organization (Changed 2 November: no standing read);
-  - the approve hook sending `DecideDeviceLogin` with `permission_checked: machine:enroll` and storing `enrollmentId` on the code's `machine_login_request` row (Changed 2 November: the machine's fields sit beside Better Auth's untouched `deviceCode`, not on it);
+  - the approve hook sending `DecideDeviceLogin` with `permission_checked: machine:enroll` and storing `enrollmentId` on the code;
   - our device-code token handler, redeeming with `redeemDeviceCode` and minting under the machine client with `referenceId` = `<organizationId>:<enrollmentId>`;
   - the contributor deciding device-code and refresh mints from `input.referenceId` only, sending the machine client's ID in `DecideMachineToken`, and handling `wrong-client`;
   - disabling a machine's client (K11's consumer) from `EndedMachineClient` in central's revoke answer and first `Grant`, and when central refuses a refresh for an ended enrollment, through `disableMachineClient`, with its three results;
