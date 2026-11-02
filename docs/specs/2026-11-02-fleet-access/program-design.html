@@ -1817,7 +1817,7 @@ flowchart LR
 | Code entry | the approval page's code form, which calls the grant's verify | 5 per 60 s | `SIGN_IN_ATTEMPTS` |
 | Approve and deny | `/device/approve`, `/device/deny` | 10 per 60 s | `SIGN_IN_ATTEMPTS` |
 | Device-code requests | `/device/code` | 5 per 60 s | `SIGN_IN_ATTEMPTS` |
-| Device-code redemption and refresh | the OAuth token endpoint, where our device-code token handler redeems and machines refresh | the grant's `slow_down` when polled faster than its 5-second interval (`routes.mjs:302–305`, in the shared redemption; confirmed at 1.7.11 in B1), plus 30 per 60 s | `AUTH_REQUESTS` |
+| Device-code redemption and refresh | the OAuth token endpoint, where our device-code token handler redeems and machines refresh | the grant's `slow_down` when polled faster than its 5-second interval (`routes.mjs:302–305`, in the shared redemption; confirmed at 1.7.11 in B3, with real device-grant polling; B1 proves only the outer route classes and counting), plus 30 per 60 s | `AUTH_REQUESTS` |
 | Provider callbacks and passkeys | `/callback/*`, `/passkey/*` (Better Auth's default sign-in rule covers neither) | 10 per 60 s | `SIGN_IN_ATTEMPTS` |
 | Second-factor codes | `/two-factor/verify-totp`, `/two-factor/verify-backup-code` | 5 per 60 s | `SIGN_IN_ATTEMPTS` |
 | The service's own pages | sign-in, owner bootstrap and readiness, the approval page, the who-is-logged-in page and its refresh | not Better Auth's: these never reach its router | `AUTH_REQUESTS` |
