@@ -152,11 +152,11 @@ Managers and workspace roles come later, as new mappings over the same list.
 <ex-markdown id="guarantees-text"><script type="text/markdown">
 These are behavior, not field shapes, so they live here. The exact shapes are in the item-two Program Design's "Admin commands and lookups" and "Machine login" sections.
 - **The confirmation is bound to one request:** the sign-in service's confirmation names the request, the person's session and token, the organization and the exact permission. Central refuses it for any other route, and never accepts it twice.
-- **Five seconds:** central applies the change within 5 seconds of receiving the request (SD8), measured on central's own clock.
+- **Five seconds:** central refuses a confirmation that is more than 5 seconds old when it makes its decision (SD8), measured on central's own clock. A change handed to another store, such as creating a workspace, is accepted at that point and completes afterwards. It doesn't promise every change finishes within 5 seconds.
 - **Second factor:** every change needs a passkey or app code from the last 15 minutes, except approving the very first machine.
 - **Nothing about another organization is revealed:** a refusal says the same whether the thing doesn't exist or belongs to someone else.
 - **People-change records:** an intent record is written before the change, and the change is refused if it can't be written. An outcome record is written after. If the outcome never lands, the record stays "unconfirmed" and is never guessed from today's membership.
-- **Revocation:** no new admission, renewal or token from the moment central records it; the open socket's close and the client's disabling are retried until done.
+- **Revocation:** from the moment central records it, there are no new token decisions, admissions or renewals. A token whose grant was decided just before can still be minted within its 60-second redemption window, but it's unusable, because central refuses every admission and renewal for that enrollment. The open socket's close and the client's disabling are retried until done.
 </script></ex-markdown>
 
 <h2 id="data">5. The data: every database and how they link</h2>
