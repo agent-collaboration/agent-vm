@@ -147,6 +147,18 @@ Managers and workspace roles come later, as new mappings over the same list.
 - being in an organization is not being in a workspace.
 </script></ex-markdown>
 
+<h3 id="guarantees">The guarantees every admin action keeps</h3>
+
+<ex-markdown id="guarantees-text"><script type="text/markdown">
+These are behavior, not field shapes, so they live here. The exact shapes are in the item-two Program Design's "Admin commands and lookups" and "Machine login" sections.
+- **The confirmation is bound to one request:** the sign-in service's confirmation names the request, the person's session and token, the organization and the exact permission. Central refuses it for any other route, and never accepts it twice.
+- **Five seconds:** central applies the change within 5 seconds of receiving the request (SD8), measured on central's own clock.
+- **Second factor:** every change needs a passkey or app code from the last 15 minutes, except approving the very first machine.
+- **Nothing about another organization is revealed:** a refusal says the same whether the thing doesn't exist or belongs to someone else.
+- **People-change records:** an intent record is written before the change, and the change is refused if it can't be written. An outcome record is written after. If the outcome never lands, the record stays "unconfirmed" and is never guessed from today's membership.
+- **Revocation:** no new admission, renewal or token from the moment central records it; the open socket's close and the client's disabling are retried until done.
+</script></ex-markdown>
+
 <h2 id="data">5. The data: every database and how they link</h2>
 
 <ex-markdown id="data-text"><script type="text/markdown">
@@ -156,8 +168,10 @@ Managers and workspace roles come later, as new mappings over the same list.
 | 2 | **Organization Registry** | central | the organization list; which organization each machine is in | new |
 | 2b | **Registry** (today's) | central | leases, peer lookup, mail and forwards | exists; loses `machine_enrollments` |
 | 3 | **Organization authority**, per organization | central | enrollments, allowances, sessions, activity, remote starts, change records | new |
-| 4 | **Fleet object**, per organization | central | workspaces, boards, projects, the feed | exists; split per organization (yours keeps today's data) |
+| 4 | **Fleet object**, per organization | central | the directory: workspaces, boards and projects (what exists and who holds it), and the feed. Each project's board contents live in its project copy (5c) | exists; split per organization (yours keeps today's data) |
 | 5 | **Connection object**, per machine | central | the machine's open connection and presence | exists; gains presence |
+| 5b | **Mailbox object**, per machine | central | mail waiting for that machine | exists; unchanged |
+| 5c | **Project copy object**, per project database (today called `Copy`; renamed later) | central | central's synced replica of one project's board, and its sync state | exists; unchanged in storage. The CLI's health, repair and migrate commands act here |
 | 6 | `state.sqlite` | Router | the proxy's accounts, credits, quotas, routing | unchanged |
 | 7 | `fleet-client.sqlite` | Router | `fleet_login` (this machine's login) and `fleet_session_registrations` (its sessions) | new |
 | 8 | **Secret store** | Router | the refresh credential | exists; gains Linux |
@@ -258,6 +272,8 @@ crates/codex-router-cli/              CHANGED  fleet login; CLI sign-in; fleet e
 crates/agent-collaboration/           CHANGED  central commands sign in, use project names
 ```
 
+**Also inherited at central:** the project copy and Mailbox objects (section 5), unchanged.
+
 **Untouched** (from the inventory): 23 codex-router crates, among them the proxy, quota, TUI and storage crates; and the Switchboard and OAuth broker packages.
 </script></ex-markdown>
 
@@ -313,11 +329,16 @@ sequenceDiagram
   SI->>C: relayed
   C->>C: token signed by sign-in? for this central? unexpired?
   C->>OA: enrollment active, this machine, this client?
-  OA-->>R: socket open
+  OA-->>R: socket open (until the token's deadline)
   R->>SI: refresh before expiry
-  SI->>OA: DecideMachineToken → still enrolled → fresh token
-  Note over SI,OA: you revoke (machine:revoke): central ends the enrollment
-  OA->>R: closes the socket; the next refresh is refused
+  SI->>OA: DecideMachineToken → still enrolled
+  SI-->>R: fresh token
+  R->>C: RenewMachineToken on the open socket
+  C->>OA: checked like a new connection → deadline extended
+  Note over SI,OA: you revoke (machine:revoke): central ends the enrollment at once
+  OA-->>C: every new admission, renewal and token decision is refused from that moment
+  C->>R: the open socket is closed by a retried step (it survives restarts)
+  SI->>SI: that machine's client is disabled (also retried)
 ```
 
 **D. Your CLI runs an organization admin command:**
@@ -326,15 +347,19 @@ sequenceDiagram
 sequenceDiagram
   participant CLI as agent-collaboration central
   participant SI as Sign-in
-  participant OA as Authority of O
+  participant G as Central: permission guard
+  participant OWN as Central: the object that owns the operation
   CLI->>SI: one-time sign-in in your browser
   SI-->>CLI: your person token
   CLI->>SI: central project move P → machine M
   SI->>SI: fresh member read; hasPermission(project:move)
-  SI->>OA: command + confirmation naming project:move
-  OA->>OA: checks it; applies it with its record, in one step
-  OA-->>CLI: done
+  SI->>G: command + confirmation naming project:move
+  G->>G: confirmation matches; P belongs to your organization
+  G->>OWN: hand to today's owner: the Registry for move, take over and retire; the project copy for health and repair; the Fleet object, then each copy, for migrate
+  OWN-->>CLI: done, pending or unknown (today's transfer IDs and fences kept)
 ```
+
+**What changes here:** only the way in. The person is checked and the organization fence is enforced at the guard. The operation itself runs where it runs today, with today's durable transfer steps. Where each command's admission, change, record and pending or unknown result happen is written in the CLI deliverable's document (B5), and proven there.
 
 **E. You open who-is-logged-in:**
 
@@ -344,9 +369,9 @@ sequenceDiagram
   participant SI as Sign-in (page)
   participant OA as Authority of O
   You->>SI: open the view
-  SI->>SI: hasPermission(organization:view)
   loop every 5 seconds
-    SI->>OA: WhoIsLoggedIn
+    SI->>SI: session current? hasPermission(organization:view), fresh each time
+    SI->>OA: WhoIsLoggedIn + a fresh confirmation
     OA-->>SI: machines, connected or not, last seen; sessions and what they're doing
   end
   SI-->>You: machines and sessions (members from sign-in's own rows)
@@ -383,7 +408,7 @@ From the code on each `main` (inventory, section 3):
 | **Sign-in journey** | you sign in with a second factor; invite, accept and remove a member, each with its change record; a member is refused everything; re-sending an invitation is refused; the owner can't be removed |
 | **Central rules** | every central rule, on both hosts; two organizations stay apart |
 | **The link** | nothing reaches central except through the sign-in service; a forged confirmation is dropped |
-| **Machine login** | two Routers log in by device code, their sessions message each other, a revoked machine stops at once and at renewal |
+| **Machine login** | two Routers log in by device code and connect; a revoked machine is refused at once and at renewal, and its socket closes (B3); then their sessions message each other (B4) |
 | **Sessions and binding** | a session registers through its machine and acts only in its own workspace |
 | **CLI** | the CLI signs in and moves a project; without the permission, it's refused |
 | **Cutover** | your existing workspaces, boards and sessions survive the switch |
@@ -411,10 +436,10 @@ flowchart LR
 
 | Deliverable | What you'll see working | Already built toward it |
 |---|---|---|
-| **B1 People, roles and sign-in** | sign in with a second factor; your organization; invite, accept, remove a member, with records; members refused; owner can't be removed | sign-in packages merged; roles, permission check, records groundwork (B4a branch); migration approved |
-| **B2 Central's organizations** | central sets up an organization when sign-in creates one; its authority applies admin actions under the checked permission; two organizations stay apart | contracts (F1 merged, F1c verified); F2a and F2c part-built (need rework) |
-| **B3 Machine login and the locked link** | approve a machine by device code; it connects only through the sign-in service; renewal; revocation stops it | F11 mostly built; F3a's key checking |
-| **B4 Sessions through their machine** | sessions register through their machine and keep messaging across machines | F4a mostly built |
+| **B1 People, roles and sign-in** | sign in with a second factor; your first organization (created at deploy); invite, accept, remove a member, with records; members refused; owner can't be removed. **Boundary:** the organization shows "setting up" at central until B2; B1's proof uses a central stand-in for that step and earns no credit for it | sign-in packages merged; roles, permission check, records groundwork (B4a branch); migration approved |
+| **B2 Central's organizations** | central sets up an organization when sign-in creates one ("setting up" becomes "ready", for real); its authority applies admin actions under the checked permission; two organizations stay apart | contracts (F1 merged, F1c verified); F2a and F2c part-built (need rework) |
+| **B3 Machine login and the locked link** | approve a machine by device code; it connects only through the sign-in service; renewal on the open connection; revocation refuses it at once. **Boundary:** this proves the connection only, not session messaging | F11 mostly built; F3a's key checking |
+| **B4 Sessions through their machine** | sessions register through their machine, and sessions on two machines message each other on the new login (the full machine-login journey) | F4a mostly built |
 | **B5 Authenticated CLI** | `agent-collaboration central` signs in and runs project commands under permissions | — |
 | **Your switch** | production moves to the new login; old login code removed | — |
 | **B6–B9** | logs and traces; who is logged in; remote start; members in the view | — |
