@@ -67,7 +67,7 @@ SO8 (F14): two Routers log in by device code to a local Fleet central, and their
 - six resources, all owner-only for now;
 - three deciders: the sign-in service decides people's actions, which never travel on a machine's WebSocket; central decides agents', bots' and machines' requests; the Switchboard keeps tool approvals;
 - OD25 = A: the sign-in service checks the permission live as it forwards, and central checks the permission named in its confirmation;
-- OD26, the records for people changes, is still open with you.
+- OD26, the records for people changes: decided later the same day, record first, then confirm.
 
 | Change | What it invalidates |
 |---|---|
@@ -84,7 +84,7 @@ SO8 (F14): two Routers log in by device code to a local Fleet central, and their
 - **In progress and unaffected:** F11 and F4a (`fleet.sqlite`, store accepted at `54dcf613` and `684f5faa`), F12, F18 and the test harness.
 - **Requalified:** none. Nothing completed used the removed people machinery at runtime; B1 keeps today's local admission path, as before, until B4a turns the plugin on.
 
-**Held until this plan is in force:** B4a's people parts, F2a's guard and SQL, F2c's provisioning, F3a's routes and F1c. B4a and B5's people-change records also wait on OD26.
+**Held until this plan is in force:** B4a's people parts, F2a's guard and SQL, F2c's provisioning, F3a's routes and F1c. 
 
 The 1 November changes (two services) are recorded in the [plan this one supersedes](2026-11-01-item-two-delivery-two-services.html#item2--changed-from).
 </script></ex-markdown>
@@ -343,7 +343,7 @@ The check that a consumer parses the **real** producer's output runs in whicheve
 |---|---|---|
 | Your go to build item two | everything | — |
 | OD4, the sign-in tables | B4a | **reopened (2 November):** approved on 31 October; now without the claim and guard tables, and with the organization plugin's `organization` (plus `fleetState`), `member` and `invitation` tables and the session's `activeOrganizationId`. The generated SQL comes to you before code uses it |
-| OD26, records for people changes made by Better Auth on D1 | B4a's and B5's people-change records | record first, then confirm (Better Auth's before hook writes it and refuses the change if it can't; the after hook marks it applied) |
+| OD26, records for people changes made by Better Auth on D1 | nothing: **decided (you, 2 November): record first, then confirm** | — |
 | F2a's organization-authority tables, smaller (no people, owner or admission tables) | F2a's SQL | they come back to you after F1c |
 | OD14, the view's freshness bound | nothing: decided, 30 seconds (31 October) | — |
 | OD2, the default token lifetime | nothing: decided, 10 minutes (31 October) | — |
@@ -357,7 +357,7 @@ The check that a consumer parses the **real** producer's output runs in whicheve
 <h2 id="item2--basis-and-review-history">Basis and review history</h2>
 <ex-markdown id="item2--basis-and-review-history-text"><script type="text/markdown">
 - **Originating planner:** `plan-update` (this revision, 2 November, from the authorization delta reviewed `ready` at `a96c43de`); the first plan was `plan-implementation`'s
-- **Authorization revision (2 November):** governed by the four documents at `a96c43de`; the delta was reviewed by Reviewer `01a179b3`, `needs-revision` at `8991492f` (AU1–AU3), then `ready` at `a96c43de` (`tmp/reviews/2026-11-02-item-two-authorization/findings.md`). The owner's decisions are U46, U47, OD24 (revised), OD25 and OD26 (open).
+- **Authorization revision (2 November):** governed by the four documents at `a96c43de`; the delta was reviewed by Reviewer `01a179b3`, `needs-revision` at `8991492f` (AU1–AU3), then `ready` at `a96c43de` (`tmp/reviews/2026-11-02-item-two-authorization/findings.md`). The owner's decisions are U46, U47, OD24 (revised), OD25 and OD26 (decided 2 November).
 - **Governing planning basis:** item two's own four-document design, in agent-vm `design/portal-remediation` at `e5a5da0a`:
   - [Requirements](../requirements.html)
   - [Specification](../specification.html)
@@ -529,7 +529,7 @@ D1's first use is from your Mac to Sunclaw, both macOS. F12 (the Linux secret st
   - the cut of today's local admission: `person-admission-store`'s decisions are replaced by the plugin, and B4a's migration drops `allowed_email` and `deployment_owner`;
   - `sign_in_audit`'s move to its drawn shape, as before: the migration, all six writers remapped (the agent-path writers that live on until B4b included), and readback proof that each writer's records are preserved and that a failed write changes nothing; the closed token-kind dispatch and its refused combinations.
 - **OD4 reopened:** the plugin's `organization`, `member` and `invitation` tables, `fleetState`, and the session's `activeOrganizationId`, minus the claim and guard tables. The generated SQL comes to you before the first commit that uses it.
-- **Held on OD26 (open):** the records for people changes. Until you decide, B4a builds everything else, and its people-change paths carry no record protocol of their own invention.
+- **OD26 decided (2 November): record first, then confirm.** The before hooks for inviting, accepting and removing write the intent row to `sign_in_audit` with its organization and refuse the change if they can't; the after hooks write the outcome row; a record never confirmed stays unconfirmed.
 - **Keeps today's agent path until B4b:** the agent client-credentials row, the provider configuration's registration metadata, resource links and workspace policy, and the post-mint release checks. So the Switchboard keeps working, unchanged, between the cuts.
 - **Earns:**
   - SO2's people cases: invite and accept, remove, a member's refusals, the owner's removal refused (held concurrently), the unexposed routes, and `fleetState`'s initial, interrupted and caller-input cases;
