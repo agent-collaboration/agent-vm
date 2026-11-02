@@ -20,7 +20,14 @@
   <ex-step to="proof" icon="shield-check">9. How the whole is proven.</ex-step>
   <ex-step to="deliverables" icon="rocket">10. The deliverables (the plan comes next).</ex-step>
 </ex-presentation>
-<ex-nav for="content"></ex-nav>
+<ex-nav for="content"><nav slot="pages" aria-label="Pages">
+<a href="index.html">Overview</a>
+<a href="requirements.html">Requirements</a>
+<a href="specification.html">Specification</a>
+<a href="program-design.html">Program Design</a>
+<a href="verification-design.html">Verification Design</a>
+<a href="deliverables/b1-people-roles-sign-in.html">B1 People, roles and sign-in</a>
+</nav></ex-nav>
 <ex-document id="content">
 
 <h1>Fleet access, overall design</h1>
@@ -28,8 +35,9 @@
 <ex-callout id="answer" title="What this document is" tone="tldr">
 <ex-markdown id="answer-text"><script type="text/markdown">
 - **The one overall design** for what we've been calling item two: people sign in and have roles; machines log in by device code; Fleet central sits behind the sign-in service; you can see who's logged in.
-- **It is the single home for every system rule.** Each deliverable gets its own readable document later, which zooms into its slice and links here; it never restates these rules.
-- **The detailed message shapes** (field-by-field contracts) stay where they've been reviewed: the [item-two Program Design](../2026-10-30-item-two/program-design.html), linked section by section in "Every approved rule". This document holds every rule; that one holds the exact shapes and is otherwise history.
+- **This set is the single home for every system rule.** Each deliverable gets its own readable document, which zooms into its slice and links here; it never restates these rules.
+- **This is the front door to the full design**, four documents in this set: [Requirements](requirements.html) (who needs what, and why), [Specification](specification.html) (what must be true), [Program Design](program-design.html) (every part, contract, data shape and failure case) and [Verification Design](verification-design.html) (how each requirement is proven). The old item-two documents are retired history.
+- **B1, the first deliverable**, has its own document: [B1 People, roles and sign-in](deliverables/b1-people-roles-sign-in.html).
 - **Every fact here comes from:**
   - your decisions (section 2);
   - the reviewed item-two design;
@@ -163,7 +171,7 @@ Managers and workspace roles come later, as new mappings over the same list.
 <h3 id="guarantees">The guarantees every admin action keeps</h3>
 
 <ex-markdown id="guarantees-text"><script type="text/markdown">
-These are behavior, not field shapes, so they live here. The exact shapes are in the item-two Program Design: [admin commands and lookups](../2026-10-30-item-two/program-design.html#program-design--admin-commands-and-lookups) and [machine login](../2026-10-30-item-two/program-design.html#program-design--machine-login).
+These are behavior, not field shapes, so they live here. The exact shapes are in the item-two Program Design: [admin commands and lookups](program-design.html#program-design--admin-commands-and-lookups) and [machine login](program-design.html#program-design--machine-login).
 - **The confirmation is bound to one request:** the sign-in service's confirmation names the request, the person's session and token, the organization and the exact permission. Central refuses it for any other route, and never accepts it twice.
 - **Five seconds:** central refuses a confirmation when more than 5 seconds have passed between central receiving the forwarded request and its decision (SD8), measured on central's own clock, never from the sign-in service's timestamp. A change handed to another store, such as creating a workspace, is accepted at that point and completes afterwards. It doesn't promise every change finishes within 5 seconds.
 - **Second factor:** every change needs a passkey or app code from the last 15 minutes, except approving the very first machine.
@@ -181,26 +189,26 @@ Each approved requirement from the item-two design has one home here. The exact 
 |---|---|---|
 | U1, U3 | Actors are people, bots and sessions. A machine isn't an actor: it logs in and vouches for its sessions, which never log in or hold a secret | section 4 |
 | U6, U32 | a session belongs to the workspace of its project, on one machine; anyone who operates a logged-in machine can start sessions for the workspaces it serves | flows; B4 |
-| U9 | lookups: a person's role (from sign-in), a machine's organization and approval, a session's machine, project and isolation | flow E; [lookups](../2026-10-30-item-two/program-design.html#program-design--admin-commands-and-lookups) |
+| U9 | lookups: a person's role (from sign-in), a machine's organization and approval, a session's machine, project and isolation | flow E; [lookups](program-design.html#program-design--admin-commands-and-lookups) |
 | U14 | if central can't be reached, no new machine token or connection is admitted (fail closed) | section 3 |
 | U15, U45 | central holds the Fleet truth; people live in sign-in; one way in | sections 3, 5 |
-| U16 | one versioned contract between services, on any host | section 6; [encoding rules](../2026-10-30-item-two/program-design.html#program-design--encoding-rules-for-every-boundary-below) |
-| U17, U35 | **a machine's one secret is its refresh credential.** It's kept in the encrypted secret store (Keychain on macOS, a systemd encrypted credential on Linux) when one is available, and in memory only when none exists. A store that exists but is denied or damaged is an error, left untouched, never silently treated as absent. Never plaintext in production, and never in `fleet-client.sqlite` | section 5, row 8; [machine login](../2026-10-30-item-two/program-design.html#program-design--machine-login) |
-| U18, U19 | each session records its machine and isolation kind; every collaboration call is attributed to the session it actually came from | B4; [attribution](../2026-10-30-item-two/program-design.html#program-design--how-a-collaboration-call-is-attributed) |
+| U16 | one versioned contract between services, on any host | section 6; [encoding rules](program-design.html#program-design--encoding-rules-for-every-boundary-below) |
+| U17, U35 | **a machine's one secret is its refresh credential.** It's kept in the encrypted secret store (Keychain on macOS, a systemd encrypted credential on Linux) when one is available, and in memory only when none exists. A store that exists but is denied or damaged is an error, left untouched, never silently treated as absent. Never plaintext in production, and never in `fleet-client.sqlite` | section 5, row 8; [machine login](program-design.html#program-design--machine-login) |
+| U18, U19 | each session records its machine and isolation kind; every collaboration call is attributed to the session it actually came from | B4; [attribution](program-design.html#program-design--how-a-collaboration-call-is-attributed) |
 | U20, U26, U46 | people sign in (Google, GitHub or a user-verified passkey), join by invitation, have one role per organization | sections 4, 7 |
 | U21, U31 | only the owner administers and logs machines in, by device code; a machine belongs to one organization | section 4 |
 | U22, U23 | sign-in stores everything in SQLite through Drizzle (D1 or `better-sqlite3`); one runtime-free core, hosts inject the rest | section 6 |
 | U24, U25 | closed types for every state and result; UUIDv7 only; tests never use the wall clock | section 9 |
-| U27 | nothing is shared or sent between organizations; each object is stamped with its organization and refuses a request for another | section 5; [routing check](../2026-10-30-item-two/program-design.html#program-design--two-services-one-way-in) |
+| U27 | nothing is shared or sent between organizations; each object is stamped with its organization and refuses a request for another | section 5; [routing check](program-design.html#program-design--two-services-one-way-in) |
 | U30 | people never hold tool tokens | section 4 |
 | U33, U34 | one login model for every machine; three steps, no half steps (build beside today's login, switch, then remove) | section 8 |
-| U39 | a session can start a helper on another machine of its organization | B8; [remote start](../2026-10-30-item-two/program-design.html#program-design--starting-a-session-on-another-machine) |
-| U40 | the live view, never staler than 30 seconds | flow E; [the view](../2026-10-30-item-two/program-design.html#program-design--how-the-owner-sees-who-is-logged-in) |
-| U41 | logs and traces reach an OpenTelemetry tool, with nothing secret | B6; [telemetry](../2026-10-30-item-two/program-design.html#program-design--telemetry-logs-and-traces-r51) |
-| U42 | login can't be flooded: slowed, and nothing changed | B1; [flood limits](../2026-10-30-item-two/program-design.html#program-design--flood-limits-at-sign-in-r42-r52) |
-| U43, U44 | **step-up and recovery:** a change needs a second factor from the last 15 minutes. Everyone's first second factor is the authenticator app, which issues one-use recovery codes; a passkey can be added after. Replacing a lost factor needs two factors, never Google or GitHub alone. Nobody resets anyone else's | B1; [second factors](../2026-10-30-item-two/program-design.html#program-design--second-factors-step-up-and-recovery-r53-r54) |
+| U39 | a session can start a helper on another machine of its organization | B8; [remote start](program-design.html#program-design--starting-a-session-on-another-machine) |
+| U40 | the live view, never staler than 30 seconds | flow E; [the view](program-design.html#program-design--how-the-owner-sees-who-is-logged-in) |
+| U41 | logs and traces reach an OpenTelemetry tool, with nothing secret | B6; [telemetry](program-design.html#program-design--telemetry-logs-and-traces-r51) |
+| U42 | login can't be flooded: slowed, and nothing changed | B1; [flood limits](program-design.html#program-design--flood-limits-at-sign-in-r42-r52) |
+| U43, U44 | **step-up and recovery:** a change needs a second factor from the last 15 minutes. Everyone's first second factor is the authenticator app, which issues one-use recovery codes; a passkey can be added after. Replacing a lost factor needs two factors, never Google or GitHub alone. Nobody resets anyone else's | B1; [second factors](program-design.html#program-design--second-factors-step-up-and-recovery-r53-r54) |
 | U47 | three deciders | section 4 |
-| R27, R55 | **the public door is an allowlist:** the sign-in service passes on only machine connections and people's admin requests, refusing every other `/fleet/` path. Its own decisions to central (device login, token renewal, provisioning) are built by its server only, never from a forwarded request. Any confirmation a caller sends is dropped and replaced | section 3; [service requests](../2026-10-30-item-two/program-design.html#program-design--service-requests-r27-c7) |
+| R27, R55 | **the public door is an allowlist:** the sign-in service passes on only machine connections and people's admin requests, refusing every other `/fleet/` path. Its own decisions to central (device login, token renewal, provisioning) are built by its server only, never from a forwarded request. Any confirmation a caller sends is dropped and replaced | section 3; [service requests](program-design.html#program-design--service-requests-r27-c7) |
 </script></ex-markdown>
 
 <h2 id="data">5. The data: every database and how they link</h2>
@@ -490,6 +498,24 @@ flowchart LR
 | **B6–B9** | logs and traces; who is logged in; remote start; members in the view | — |
 
 **B1 comes first.** It gets its own readable document (what you'll see, its parts, its data, its flows, its proof, its tickets and PR) after you approve this design and the plan.
+</script></ex-markdown>
+
+<h2 id="unknowns">What isn't fully known yet</h2>
+
+<ex-markdown id="unknowns-text"><script type="text/markdown">
+Named so nothing is guessed. Each has an owner and a point where it gets settled.
+
+| Not fully known | Why | Settled by |
+|---|---|---|
+| central's exact tables under the Fleet structure change, including the outbox record (identity, status, expiry) | the restructure is decided in direction, not in schema | the Fleet structure design, before B2 |
+| per-recipient ordering, expiry and cancellation for relayed mail | not designed yet | the Fleet structure design |
+| how today's Registry, Mailbox and Connection objects migrate into the organization Fleet database, and when, relative to B2–B4 | depends on the restructure's own plan | the Fleet structure design plus this design's plan |
+| who owns the Fleet structure design | the proposal came from an Advisor in `collab-improvements` | you |
+| each CLI command's exact admin route and shapes | written with the deliverable | B5's document |
+| where the CLI keeps your person token between runs | the same keeping rule as the machine credential applies; the exact home isn't picked | B5's document |
+| D1 behavior of Better Auth's plugin under load (rate limits, D1 latency) | not measured | B1's proof on D1 |
+| production idle timing and billing for a long WebSocket through the binding | measured locally only | your switch (private stack first) |
+| the Linux secret-store backend (F12) | never started | B3 |
 </script></ex-markdown>
 
 <h2 id="approve">Approve this design</h2>
