@@ -508,6 +508,8 @@ Named so nothing is guessed. Each has an owner and a point where it gets settled
 | Not fully known | Why | Settled by |
 |---|---|---|
 | central's exact tables under the Fleet structure change, including the outbox record (identity, status, expiry) | the restructure is decided in direction, not in schema | the Fleet structure design, before B2 |
+| how central's transactions, recovery, clocks and proofs change when its separate objects become one organization database (the Program Design's physical sections are superseded until then) | today's physical design was written for separate objects | the Fleet structure design, **before B2 starts**; B1 doesn't depend on it |
+| the outbox's meaning beyond its columns: same message identity with different content, the hand-off to the recipient, keeping a terminal receipt after the payload expires; remote start stays no-queue, no-redelivery | defines what a stored row means | the Fleet structure design |
 | per-recipient ordering, expiry and cancellation for relayed mail | not designed yet | the Fleet structure design |
 | how today's Registry, Mailbox and Connection objects migrate into the organization Fleet database, and when, relative to B2–B4 | depends on the restructure's own plan | the Fleet structure design plus this design's plan |
 | who owns the Fleet structure design | the proposal came from an Advisor in `collab-improvements` | you |

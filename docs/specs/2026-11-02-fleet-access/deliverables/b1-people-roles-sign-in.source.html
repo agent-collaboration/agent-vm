@@ -192,12 +192,18 @@ sequenceDiagram
 <h2 id="b1-proof">How it's proven</h2>
 
 <ex-markdown id="b1-proof-text"><script type="text/markdown">
-**The B1 journey** runs on **both builds**: local workerd with D1, and Node with SQLite. No real clock. The paired Verifier's `people` journey observes it:
+**The B1 journey** runs on **both builds**: local workerd with D1, and Node with SQLite. No real clock. The paired Verifier's `people` journey observes it.
+
+**Known limits:**
+- cases that depend on expiries Better Auth computes on its own clock run under controlled time on Node only; workerd asserts nothing that depends on that clock;
+- resetting the rate-limit binding is checked on the private stack, not locally.
 
 | Case | What is seen |
 |---|---|
 | sign in and first factor | Google or GitHub sign-in; app set up; recovery codes issued once; a change without a fresh factor is refused |
 | recovery | losing a factor and replacing it needs two factors; Google alone can't |
+| never zero factors | removing the app and the last passkey at the same moment leaves at least one; a replacement interrupted across a restart leaves the person with a working factor; an app that was never verified doesn't count as the spare (the conditional store steps, on D1 **and** `better-sqlite3`) |
+| recovery codes are single-use | a spent recovery code is refused on reuse, including two uses at once |
 | invite → accept → member | the plugin's own `invitation:create` check passes for the owner; the member exists; both records are written |
 | cancel, remove | each with intent and outcome records; the actor is you, not the target |
 | record unwritable | with `sign_in_audit` unavailable, invite and remove are refused and nothing changes |
