@@ -29,7 +29,7 @@
 <ex-markdown id="answer-text"><script type="text/markdown">
 - **The one overall design** for what we've been calling item two: people sign in and have roles; machines log in by device code; Fleet central sits behind the sign-in service; you can see who's logged in.
 - **It is the single home for every system rule.** Each deliverable gets its own readable document later, which zooms into its slice and links here; it never restates these rules.
-- **The detailed message shapes** (field-by-field contracts) stay where they've been reviewed: the item-two Program Design, cited by section. This document says *what* each part is and *why*; that one says the exact *shape*.
+- **The detailed message shapes** (field-by-field contracts) stay where they've been reviewed: the [item-two Program Design](../2026-10-30-item-two/program-design.html), linked section by section in "Every approved rule". This document holds every rule; that one holds the exact shapes and is otherwise history.
 - **Every fact here comes from:**
   - your decisions (section 2);
   - the reviewed item-two design;
@@ -44,7 +44,7 @@
 **Your words, 30 October:** "auth works and central is only exposed to systems connected to cloudflare via websocket and authenticated"; "in ui i can see who is logged in and what".
 
 **What you'll have when it's done:**
-1. **You sign in** with Google or GitHub, plus a passkey or an authenticator app for anything that changes your organization.
+1. **You sign in** with Google or GitHub, or with a passkey that needs your fingerprint, face or PIN (which counts as both factors), plus a passkey or an authenticator-app code for anything that changes your organization.
 2. **Your organization has people and roles:** you're the owner; people you invite are members, with no permissions yet.
 3. **Every machine logs in by device code** that you approve, then renews short-lived tokens by itself. Revoking a machine stops it at once.
 4. **Fleet central isn't on the internet.** Only the sign-in service can reach it, and only logged-in machines and signed-in people get through.
@@ -69,7 +69,7 @@
 | Date | Decision |
 |---|---|
 | 30 Oct | flood limits at sign-in, with Turnstile |
-| 31 Oct | step-up sign-in (a second factor within 15 minutes for every change); Google and GitHub only; machine tokens last 10 minutes; the view is never staler than 30 seconds; merge only after the Lead verifies |
+| 31 Oct | step-up sign-in (a second factor within 15 minutes for every change); providers Google and GitHub only, never Facebook or Apple relay; a passkey with user verification can also sign you in; the first second factor is the authenticator app, with recovery codes; machine tokens last 10 minutes; the view is never staler than 30 seconds; merge only after the Lead verifies |
 | 1 Nov | **two services:** only the sign-in service is public; central has storage per organization; a new organization needs no deploy; no fleet operator role |
 | 1 Nov | the Router keeps fleet records out of `state.sqlite` (proxy only); plain SQLite through sqlx |
 | 2 Nov | **people live in Better Auth's organization plugin;** roles owner and member; permissions grouped in six resources; all owner-only now |
@@ -138,8 +138,21 @@ Managers and workspace roles come later, as new mappings over the same list.
 | `workspace` | create | new workspaces |
 | `workspaceAdmin` | allow a machine, withdraw it, remove a session | inside one workspace |
 | `organization` | view (lookups, who's logged in), read the change records | seeing the organization |
-| `project` | read, repair, migrate, move, take over, retire | the CLI's organization admin commands |
+| `project` | read, repair, migrate, move, take over, retire | the CLI's organization admin commands (added by B5; see below) |
 | `bot` | register, rotate, retire | later |
+
+**The CLI's project permissions** extend the permission list central checks from nine to fifteen. B5 delivers the extension, in both the Rust contract (F1c's `FleetPermission`) and the sign-in service's statement:
+
+| CLI command | Permission | Runs at (unchanged) |
+|---|---|---|
+| `central projects` (list) | `project:read` | the Fleet object |
+| `central project health <id>` | `project:read` | that project's copy |
+| `central project takeover preview <id>` | `project:read` | the Registry |
+| `central project repair <id>` | `project:repair` | that project's copy |
+| `central projects migrate` | `project:migrate` | the Fleet object, then each copy |
+| `central project move` | `project:move` | the Registry |
+| `central project takeover confirm` | `project:takeover` | the Registry |
+| `central project retire` | `project:retire` | the Registry |
 
 **Rules that hold everywhere:**
 - one owner per organization now, and it can't be removed;
@@ -150,13 +163,44 @@ Managers and workspace roles come later, as new mappings over the same list.
 <h3 id="guarantees">The guarantees every admin action keeps</h3>
 
 <ex-markdown id="guarantees-text"><script type="text/markdown">
-These are behavior, not field shapes, so they live here. The exact shapes are in the item-two Program Design's "Admin commands and lookups" and "Machine login" sections.
+These are behavior, not field shapes, so they live here. The exact shapes are in the item-two Program Design: [admin commands and lookups](../2026-10-30-item-two/program-design.html#program-design--admin-commands-and-lookups) and [machine login](../2026-10-30-item-two/program-design.html#program-design--machine-login).
 - **The confirmation is bound to one request:** the sign-in service's confirmation names the request, the person's session and token, the organization and the exact permission. Central refuses it for any other route, and never accepts it twice.
-- **Five seconds:** central refuses a confirmation that is more than 5 seconds old when it makes its decision (SD8), measured on central's own clock. A change handed to another store, such as creating a workspace, is accepted at that point and completes afterwards. It doesn't promise every change finishes within 5 seconds.
+- **Five seconds:** central refuses a confirmation when more than 5 seconds have passed between central receiving the forwarded request and its decision (SD8), measured on central's own clock, never from the sign-in service's timestamp. A change handed to another store, such as creating a workspace, is accepted at that point and completes afterwards. It doesn't promise every change finishes within 5 seconds.
 - **Second factor:** every change needs a passkey or app code from the last 15 minutes, except approving the very first machine.
 - **Nothing about another organization is revealed:** a refusal says the same whether the thing doesn't exist or belongs to someone else.
 - **People-change records:** an intent record is written before the change, and the change is refused if it can't be written. An outcome record is written after. If the outcome never lands, the record stays "unconfirmed" and is never guessed from today's membership.
 - **Revocation:** from the moment central records it, there are no new token decisions, admissions or renewals. A token whose grant was decided just before can still be minted within its 60-second redemption window, but it's unusable, because central refuses every admission and renewal for that enrollment. The open socket's close and the client's disabling are retried until done.
+</script></ex-markdown>
+
+<h3 id="carried-rules">Every approved rule, and where it lives</h3>
+
+<ex-markdown id="carried-rules-text"><script type="text/markdown">
+Each approved requirement from the item-two design has one home here. The exact message shapes are in the item-two Program Design, linked.
+
+| Rule | In words | Lives in |
+|---|---|---|
+| U1, U3 | Actors are people, bots and sessions. A machine isn't an actor: it logs in and vouches for its sessions, which never log in or hold a secret | section 4 |
+| U6, U32 | a session belongs to the workspace of its project, on one machine; anyone who operates a logged-in machine can start sessions for the workspaces it serves | flows; B4 |
+| U9 | lookups: a person's role (from sign-in), a machine's organization and approval, a session's machine, project and isolation | flow E; [lookups](../2026-10-30-item-two/program-design.html#program-design--admin-commands-and-lookups) |
+| U14 | if central can't be reached, no new machine token or connection is admitted (fail closed) | section 3 |
+| U15, U45 | central holds the Fleet truth; people live in sign-in; one way in | sections 3, 5 |
+| U16 | one versioned contract between services, on any host | section 6; [encoding rules](../2026-10-30-item-two/program-design.html#program-design--encoding-rules-for-every-boundary-below) |
+| U17, U35 | **a machine's one secret is its refresh credential.** It's kept in the encrypted secret store (Keychain on macOS, a systemd encrypted credential on Linux) when one is available, and in memory only when none exists. A store that exists but is denied or damaged is an error, left untouched, never silently treated as absent. Never plaintext in production, and never in `fleet-client.sqlite` | section 5, row 8; [machine login](../2026-10-30-item-two/program-design.html#program-design--machine-login) |
+| U18, U19 | each session records its machine and isolation kind; every collaboration call is attributed to the session it actually came from | B4; [attribution](../2026-10-30-item-two/program-design.html#program-design--how-a-collaboration-call-is-attributed) |
+| U20, U26, U46 | people sign in (Google, GitHub or a user-verified passkey), join by invitation, have one role per organization | sections 4, 7 |
+| U21, U31 | only the owner administers and logs machines in, by device code; a machine belongs to one organization | section 4 |
+| U22, U23 | sign-in stores everything in SQLite through Drizzle (D1 or `better-sqlite3`); one runtime-free core, hosts inject the rest | section 6 |
+| U24, U25 | closed types for every state and result; UUIDv7 only; tests never use the wall clock | section 9 |
+| U27 | nothing is shared or sent between organizations; each object is stamped with its organization and refuses a request for another | section 5; [routing check](../2026-10-30-item-two/program-design.html#program-design--two-services-one-way-in) |
+| U30 | people never hold tool tokens | section 4 |
+| U33, U34 | one login model for every machine; three steps, no half steps (build beside today's login, switch, then remove) | section 8 |
+| U39 | a session can start a helper on another machine of its organization | B8; [remote start](../2026-10-30-item-two/program-design.html#program-design--starting-a-session-on-another-machine) |
+| U40 | the live view, never staler than 30 seconds | flow E; [the view](../2026-10-30-item-two/program-design.html#program-design--how-the-owner-sees-who-is-logged-in) |
+| U41 | logs and traces reach an OpenTelemetry tool, with nothing secret | B6; [telemetry](../2026-10-30-item-two/program-design.html#program-design--telemetry-logs-and-traces-r51) |
+| U42 | login can't be flooded: slowed, and nothing changed | B1; [flood limits](../2026-10-30-item-two/program-design.html#program-design--flood-limits-at-sign-in-r42-r52) |
+| U43, U44 | **step-up and recovery:** a change needs a second factor from the last 15 minutes. Everyone's first second factor is the authenticator app, which issues one-use recovery codes; a passkey can be added after. Replacing a lost factor needs two factors, never Google or GitHub alone. Nobody resets anyone else's | B1; [second factors](../2026-10-30-item-two/program-design.html#program-design--second-factors-step-up-and-recovery-r53-r54) |
+| U47 | three deciders | section 4 |
+| R27, R55 | **the public door is an allowlist:** the sign-in service passes on only machine connections and people's admin requests, refusing every other `/fleet/` path. Its own decisions to central (device login, token renewal, provisioning) are built by its server only, never from a forwarded request. Any confirmation a caller sends is dropped and replaced | section 3; [service requests](../2026-10-30-item-two/program-design.html#program-design--service-requests-r27-c7) |
 </script></ex-markdown>
 
 <h2 id="data">5. The data: every database and how they link</h2>
@@ -265,7 +309,8 @@ crates/collaboration-central-core/src/
 ├── session_runtime.rs       CHANGED  presence per connection
 ├── central_router.rs        CHANGED  private namespaces only (public/ and internal/)
 ├── access_rules.rs          CHANGED  AccessCaller::Owner removed
-└── machine_enrollment.rs    REMOVED  Access-based enrollment
+└── machine_enrollment.rs    CHANGED  Access enrollment REMOVED; AdmittedMachine (the admitted
+                                 connection's binding) kept, carrying organization and enrollment
 crates/fleet-client-storage/          NEW  fleet_login, fleet_session_registrations
 crates/collaboration-central-tokio/   CHANGED  self_hosted_issuer.rs REMOVED; TCP → Unix socket
 crates/codex-router-cli/              CHANGED  fleet login; CLI sign-in; fleet enroll REMOVED
