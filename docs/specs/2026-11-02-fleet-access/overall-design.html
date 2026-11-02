@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fleet access, overall design</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-presentation id="path-overall" title="Fleet access, start to finish" description="The whole system in one cohesive design: goal, parts, data, code, flows, removals, proof and the deliverables.">
+  <ex-step to="goal" icon="rocket">1. What we're building, and what we're not.</ex-step>
+  <ex-step to="decisions" icon="users">2. Your decisions this design rests on.</ex-step>
+  <ex-step to="system" icon="path">3. The system: four services, one way in.</ex-step>
+  <ex-step to="authority" icon="shield-check">4. Who decides what: roles and permissions.</ex-step>
+  <ex-step to="data" icon="stack">5. The data: every database and how they link.</ex-step>
+  <ex-step to="code" icon="git-branch">6. The parts in code: packages, crates, folders.</ex-step>
+  <ex-step to="flows" icon="plug">7. The flows, step by step.</ex-step>
+  <ex-step to="removed" icon="stack">8. What exists today and what happens to it.</ex-step>
+  <ex-step to="proof" icon="shield-check">9. How the whole is proven.</ex-step>
+  <ex-step to="deliverables" icon="rocket">10. The deliverables (the plan comes next).</ex-step>
+</ex-presentation>
+<ex-nav for="content"></ex-nav>
+<ex-document id="content">
+
+<h1>Fleet access, overall design</h1>
+
+<ex-callout id="answer" title="What this document is" tone="tldr">
+<ex-markdown id="answer-text"><script type="text/markdown">
+- **The one overall design** for what we've been calling item two: people sign in and have roles; machines log in by device code; Fleet central sits behind the sign-in service; you can see who's logged in.
+- **It is the single home for every system rule.** Each deliverable gets its own readable document later, which zooms into its slice and links here; it never restates these rules.
+- **The detailed message shapes** (field-by-field contracts) stay where they've been reviewed: the item-two Program Design, cited by section. This document says *what* each part is and *why*; that one says the exact *shape*.
+- **Every fact here comes from:**
+  - your decisions (section 2);
+  - the reviewed item-two design;
+  - today's code inventory (`tmp/2026-11-02-item-two-reset/inventory.md`).
+- **Status:** a draft. The Advisor and the Sol reviewer check it before you approve it. Nothing is built until you do.
+</script></ex-markdown>
+</ex-callout>
+
+<h2 id="goal">1. What we're building, and what we're not</h2>
+
+<ex-markdown id="goal-text"><script type="text/markdown">
+**Your words, 30 October:** "auth works and central is only exposed to systems connected to cloudflare via websocket and authenticated"; "in ui i can see who is logged in and what".
+
+**What you'll have when it's done:**
+1. **You sign in** with Google or GitHub, plus a passkey or an authenticator app for anything that changes your organization.
+2. **Your organization has people and roles:** you're the owner; people you invite are members, with no permissions yet.
+3. **Every machine logs in by device code** that you approve, then renews short-lived tokens by itself. Revoking a machine stops it at once.
+4. **Fleet central isn't on the internet.** Only the sign-in service can reach it, and only logged-in machines and signed-in people get through.
+5. **Your CLI signs in as you** for organization admin commands; no Cloudflare Access.
+6. **A live view** of every machine and session, then your members.
+7. **Logs and traces** for every login, refusal and connection, with nothing secret in them.
+8. **A session on one machine can start a helper on another.**
+
+| Not in this design | When |
+|---|---|
+| managers, workspace roles, workspace configuration | later; each is a new role mapping, not a redesign |
+| bots | steps 3–5 |
+| machines logging in without you (OIDC trust) | parked |
+| Switchboard changes | none; it keeps its own tool approvals |
+| removing Cloudflare Access from the remaining Switchboard path | step 3 |
+| renaming away from `codex-router`, and renaming "copy" types | a separate PR afterwards |
+</script></ex-markdown>
+
+<h2 id="decisions">2. Your decisions this design rests on</h2>
+
+<ex-markdown id="decisions-text"><script type="text/markdown">
+| Date | Decision |
+|---|---|
+| 30 Oct | flood limits at sign-in, with Turnstile |
+| 31 Oct | step-up sign-in (a second factor within 15 minutes for every change); Google and GitHub only; machine tokens last 10 minutes; the view is never staler than 30 seconds; merge only after the Lead verifies |
+| 1 Nov | **two services:** only the sign-in service is public; central has storage per organization; a new organization needs no deploy; no fleet operator role |
+| 1 Nov | the Router keeps fleet records out of `state.sqlite` (proxy only); plain SQLite through sqlx |
+| 2 Nov | **people live in Better Auth's organization plugin;** roles owner and member; permissions grouped in six resources; all owner-only now |
+| 2 Nov | **three deciders:** sign-in decides people's actions; central decides machines' and agents'; the Switchboard decides tools |
+| 2 Nov | **the permission check:** sign-in checks it live and attaches it; central checks that, then its own records |
+| 2 Nov | **people-change records:** written first, confirmed after |
+| 2 Nov | **every CLI authenticates through the sign-in service;** the operator commands become organization admin commands |
+| 2 Nov | the Router's database is `fleet-client.sqlite` in crate `fleet-client-storage`; no `codex-router` prefix on new crates |
+| 2 Nov | one overall design, then deliverables, each a whole verified PR per repository |
+</script></ex-markdown>
+
+<h2 id="system">3. The system: four services, one way in</h2>
+
+<ex-markdown id="system-text"><script type="text/markdown">
+| Service | Job | Runs as | Public? |
+|---|---|---|---|
+| **Sign-in service** | proves people and machines, holds people and roles, mints every token, serves the approval and view pages, forwards everything to central | Cloudflare Worker with D1, or Node with SQLite | **yes, the only one** |
+| **Fleet central** | holds workspaces, projects, machines' enrollments, sessions, presence; decides what machines and agents may do | Cloudflare Worker with Durable Objects (no route), or one Tokio process on a Unix socket | no |
+| **Router** | runs on each machine: logs it in, runs and registers agent sessions, heartbeats, reports activity | a process per Mac or Linux machine | no |
+| **Switchboard** | tools and tool approvals | unchanged | as today |
+
+```mermaid
+sequenceDiagram
+  participant P as You (browser or CLI)
+  participant R as Router
+  participant SI as Sign-in service
+  participant C as Fleet central
+  P->>SI: sign in; administer
+  SI->>C: your action + "P was allowed X in O"
+  R->>SI: device code; token renewal
+  SI->>C: "approve this machine?" / "renew this token?"
+  R->>SI: WebSocket upgrade + machine token
+  SI->>C: relayed unchanged
+  Note over R,C: frames flow through the link; only central reads them
+  C->>SI: reads only the published signing keys
+```
+
+**The link:**
+- **On Cloudflare:** a service binding only the sign-in Worker holds; central's Worker has no route, custom domain or `workers.dev`.
+- **On your own machines:** a Unix socket in a folder only the deployment's user can open.
+
+**Central never calls the sign-in service** except to read its public keys.
+</script></ex-markdown>
+
+<h2 id="authority">4. Who decides what: roles and permissions</h2>
+
+<ex-markdown id="authority-text"><script type="text/markdown">
+| Decider | Decides | From |
+|---|---|---|
+| Sign-in service (Better Auth) | may this **person** do this? | their role in the organization, read fresh from the database at the moment of the request |
+| Fleet central | may this **machine or agent session** do this? | its own records: enrollments, allowances, session bindings |
+| Switchboard | may this agent use this **tool**? | its own per-workspace rules |
+
+**People's actions never travel on a machine's WebSocket.** A person's role is checked by the sign-in service. Central receives the checked permission and checks only its own records.
+
+**Roles:** a person has one role per organization.
+- **owner:** every permission.
+- **member:** none yet.
+
+Managers and workspace roles come later, as new mappings over the same list.
+
+| Resource | Actions | Used by |
+|---|---|---|
+| people (Better Auth's own `member`, `invitation`) | invite, cancel an invitation, remove | sign-in only |
+| `machine` | enroll, revoke, set token lifetime | approving and revoking machines |
+| `workspace` | create | new workspaces |
+| `workspaceAdmin` | allow a machine, withdraw it, remove a session | inside one workspace |
+| `organization` | view (lookups, who's logged in), read the change records | seeing the organization |
+| `project` | read, repair, migrate, move, take over, retire | the CLI's organization admin commands |
+| `bot` | register, rotate, retire | later |
+
+**Rules that hold everywhere:**
+- one owner per organization now, and it can't be removed;
+- a member belongs but can't add anyone or log in machines;
+- being in an organization is not being in a workspace.
+</script></ex-markdown>
+
+<h2 id="data">5. The data: every database and how they link</h2>
+
+<ex-markdown id="data-text"><script type="text/markdown">
+| # | Database | Owner | Holds | State |
+|---|---|---|---|---|
+| 1 | **Sign-in database** | sign-in | people, sessions, organizations, members, invitations, OAuth clients and tokens, device codes (with the machine's fields), second factors, `sign_in_audit` | exists; organization tables **approved** |
+| 2 | **Organization Registry** | central | the organization list; which organization each machine is in | new |
+| 2b | **Registry** (today's) | central | leases, peer lookup, mail and forwards | exists; loses `machine_enrollments` |
+| 3 | **Organization authority**, per organization | central | enrollments, allowances, sessions, activity, remote starts, change records | new |
+| 4 | **Fleet object**, per organization | central | workspaces, boards, projects, the feed | exists; split per organization (yours keeps today's data) |
+| 5 | **Connection object**, per machine | central | the machine's open connection and presence | exists; gains presence |
+| 6 | `state.sqlite` | Router | the proxy's accounts, credits, quotas, routing | unchanged |
+| 7 | `fleet-client.sqlite` | Router | `fleet_login` (this machine's login) and `fleet_session_registrations` (its sessions) | new |
+| 8 | **Secret store** | Router | the refresh credential | exists; gains Linux |
+| 9 | **Switchboard store**, per workspace | Switchboard | tool approvals | unchanged |
+
+```mermaid
+sequenceDiagram
+  participant SI as 1 Sign-in
+  participant REG as 2 Registry (orgs)
+  participant OA as 3 Authority of O
+  participant FO as 4 Fleet object of O
+  participant RF as 7 fleet-client.sqlite
+  Note over SI: organization ID created here (Better Auth)
+  SI->>REG: same organization ID: "set up O"
+  REG->>OA: names O's authority by that ID
+  OA->>FO: workspace_id, project_id
+  Note over OA: enrollment ID created here, at approval
+  OA->>SI: enrollment ID, stored on the device code and machine client
+  SI->>RF: organization + enrollment, learned at login
+```
+
+**No shared database and no foreign keys across them:** they share only IDs (organization, person, installation, enrollment, workspace), and each check reads its own store.
+</script></ex-markdown>
+
+<h2 id="code">6. The parts in code</h2>
+
+<ex-markdown id="code-text"><script type="text/markdown">
+**Every service has the same shape:** a runtime-free **core** holds every rule, and a thin **host** per runtime supplies storage, time, IDs, crypto and outbound calls.
+
+**switchboard repository: the sign-in service** (packages and what depends on what):
+
+```mermaid
+flowchart TB
+  CFH["sign-in-host-cloudflare<br/>Worker · D1 · the CENTRAL binding"]
+  NH["sign-in-host-node<br/>HTTP · SQLite · Unix socket to central"]
+  PW["sign-in-platform-web<br/>clock · UUIDv7 · crypto · central client"]
+  CORE["sign-in-core (no runtime)<br/>every sign-in rule · Better Auth config · store · pages"]
+  CFH --> CORE
+  NH --> CORE
+  CFH --> PW
+  NH --> PW
+  PW -->|implements its ports| CORE
+```
+
+```text
+packages/sign-in-core/src/          (merged foundation; item two adds the marked folders)
+├── contracts/          platform ports, central client, closed results
+├── storage/            Drizzle schema and store            (+ organization tables)
+├── better-auth/        Better Auth over the core           (+ organization plugin)
+├── organizations/      NEW  roles, permissions, provisioning, people-change records
+├── device-login/       NEW  machine fields, one client per machine, revoke refusal
+├── central-link/       NEW  forwarding to central, the attached permission
+├── response-release/   token-kind dispatch, final checks
+├── second-factors/     NEW  step-up, recovery
+├── pages/              NEW  device-code approval page, who-is-logged-in page
+├── request-limits/     NEW  flood limits per route
+├── agent-clients/      today's agent path, kept until step 3
+└── security-audit/     the audit
+REMOVED from storage/: allowed_email, deployment_owner, person-admission-store,
+                       admission-claim-store, refused-sign-in-cleanup predicates
+```
+
+**codex-router repository: central and the Router:**
+
+```mermaid
+flowchart TB
+  CCF["collaboration-central-cloudflare<br/>Durable Objects · alarms"]
+  CTK["collaboration-central-tokio<br/>SQLite per object · Unix socket"]
+  CCORE["collaboration-central-core (no runtime)<br/>Registry · authority · permission guard · token check · presence"]
+  PROTO["fleet-identity-protocol<br/>shapes on the machine's connection"]
+  HOST["codex-router-host + -cli<br/>machine login · heartbeat · CLI sign-in"]
+  SVC["collaboration-service / -mcp / -client<br/>session registrar · binding · remote start"]
+  FCS["fleet-client-storage (NEW)<br/>fleet-client.sqlite"]
+  SEC["codex-router-secret-store<br/>+ Linux backend"]
+  CCF --> CCORE
+  CTK --> CCORE
+  CCORE --> PROTO
+  HOST --> SVC
+  HOST --> FCS
+  HOST --> SEC
+  SVC --> PROTO
+```
+
+```text
+crates/collaboration-central-core/src/
+├── organization_registry/   NEW  organization list, machine claims, ProvisionOrganization
+├── organization_authority/  NEW  enrollments, allowances, sessions, activity, remote starts,
+│                                 the permission guard, admin commands and lookups
+├── machine_token_check      NEW  machine tokens at connect and renewal
+├── identity_contract/       NEW (F1, corrected by F1c)  central-only shapes
+├── session_runtime.rs       CHANGED  presence per connection
+├── central_router.rs        CHANGED  private namespaces only (public/ and internal/)
+├── access_rules.rs          CHANGED  AccessCaller::Owner removed
+└── machine_enrollment.rs    REMOVED  Access-based enrollment
+crates/fleet-client-storage/          NEW  fleet_login, fleet_session_registrations
+crates/collaboration-central-tokio/   CHANGED  self_hosted_issuer.rs REMOVED; TCP → Unix socket
+crates/codex-router-cli/              CHANGED  fleet login; CLI sign-in; fleet enroll REMOVED
+crates/agent-collaboration/           CHANGED  central commands sign in, use project names
+```
+
+**Untouched** (from the inventory): 23 codex-router crates, among them the proxy, quota, TUI and storage crates; and the Switchboard and OAuth broker packages.
+</script></ex-markdown>
+
+<h2 id="flows">7. The flows, step by step</h2>
+
+<ex-markdown id="flows-text"><script type="text/markdown">
+**A. You sign in, and invite someone** (people-change records: written first, confirmed after):
+
+```mermaid
+sequenceDiagram
+  participant You
+  participant SI as Sign-in service
+  participant DB as Sign-in database
+  You->>SI: sign in with Google or GitHub (+ passkey or app code for changes)
+  SI->>DB: session; active organization = your one organization
+  You->>SI: invite alice@… as member
+  SI->>SI: second factor fresh? hasPermission(invitation:create)
+  SI->>DB: change record "intent" (refused if it can't be written)
+  SI->>DB: Better Auth writes the invitation
+  SI->>DB: change record "outcome"
+  Note over You,DB: Alice signs in with that email → accepts → member (no permissions)
+```
+
+**B. You approve a machine:**
+
+```mermaid
+sequenceDiagram
+  participant R as Router
+  participant SI as Sign-in
+  participant REG as Registry
+  participant OA as Authority of O
+  R->>SI: fleet login → device code + link
+  Note over SI: you sign in on the link
+  SI->>SI: fresh member read; hasPermission(machine:enroll)
+  SI->>REG: DecideDeviceLogin + checked permission
+  REG->>OA: reserve enrollment, with its record
+  REG->>REG: claim the machine for O, once
+  REG->>OA: activate
+  REG-->>SI: Approved, enrollment ID
+  R->>SI: poll
+  SI-->>R: machine token (its own client)
+```
+
+**C. The machine connects, renews, and is revoked:**
+
+```mermaid
+sequenceDiagram
+  participant R as Router
+  participant SI as Sign-in
+  participant C as Central
+  participant OA as Authority of O
+  R->>SI: WebSocket + machine token
+  SI->>C: relayed
+  C->>C: token signed by sign-in? for this central? unexpired?
+  C->>OA: enrollment active, this machine, this client?
+  OA-->>R: socket open
+  R->>SI: refresh before expiry
+  SI->>OA: DecideMachineToken → still enrolled → fresh token
+  Note over SI,OA: you revoke (machine:revoke): central ends the enrollment
+  OA->>R: closes the socket; the next refresh is refused
+```
+
+**D. Your CLI runs an organization admin command:**
+
+```mermaid
+sequenceDiagram
+  participant CLI as agent-collaboration central
+  participant SI as Sign-in
+  participant OA as Authority of O
+  CLI->>SI: one-time sign-in in your browser
+  SI-->>CLI: your person token
+  CLI->>SI: central project move P → machine M
+  SI->>SI: fresh member read; hasPermission(project:move)
+  SI->>OA: command + confirmation naming project:move
+  OA->>OA: checks it; applies it with its record, in one step
+  OA-->>CLI: done
+```
+
+**E. You open who-is-logged-in:**
+
+```mermaid
+sequenceDiagram
+  participant You
+  participant SI as Sign-in (page)
+  participant OA as Authority of O
+  You->>SI: open the view
+  SI->>SI: hasPermission(organization:view)
+  loop every 5 seconds
+    SI->>OA: WhoIsLoggedIn
+    OA-->>SI: machines, connected or not, last seen; sessions and what they're doing
+  end
+  SI-->>You: machines and sessions (members from sign-in's own rows)
+```
+</script></ex-markdown>
+
+<h2 id="removed">8. What exists today and what happens to it</h2>
+
+<ex-markdown id="removed-text"><script type="text/markdown">
+From the code on each `main` (inventory, section 3):
+
+| Today | Becomes | When |
+|---|---|---|
+| machines enroll with a Cloudflare Access token and an enrollment credential (`EnrollMachine`, `fleet enroll`) | device-code login and machine tokens; machines keep their installation IDs | your switch; code removed after |
+| `machine_enrollments` table and its SQL | enrollments in each organization's authority | your switch |
+| central's public routes, Access as "the owner" (`AccessCaller::Owner`) | no public address; the permission guard | your switch |
+| operator commands over `/admin/v1/` with your Access identity | the same commands, signed in through the sign-in service, under `project` permissions, with project names instead of "copy" | the CLI deliverable |
+| the native self-hosted issuer and `central mint` | the sign-in service mints every token | after the switch |
+| sign-in's own allowlist and owner (`allowed_email`, `deployment_owner`, `person-admission-store`, the claim tables) | Better Auth's organizations, members and invitations | the first deliverable (approved migration) |
+| F1's person contracts (`CreateOrganization`, standing, person lookup) | removed by F1c; organizations are created in Better Auth and set up at central | with central's organizations |
+</script></ex-markdown>
+
+<h2 id="proof">9. How the whole is proven</h2>
+
+<ex-markdown id="proof-text"><script type="text/markdown">
+**Rules for every check:**
+- It runs on **both builds** of what it touches: central on local workerd (the WebAssembly build actually running) and on Tokio; sign-in on workerd with D1 and on Node with SQLite.
+- No real clock in any test.
+- Heavy runs happen on Sunclaw.
+- The repositories' gates aren't changed without you.
+
+| End-to-end check | What is seen |
+|---|---|
+| **Sign-in journey** | you sign in with a second factor; invite, accept and remove a member, each with its change record; a member is refused everything; re-sending an invitation is refused; the owner can't be removed |
+| **Central rules** | every central rule, on both hosts; two organizations stay apart |
+| **The link** | nothing reaches central except through the sign-in service; a forged confirmation is dropped |
+| **Machine login** | two Routers log in by device code, their sessions message each other, a revoked machine stops at once and at renewal |
+| **Sessions and binding** | a session registers through its machine and acts only in its own workspace |
+| **CLI** | the CLI signs in and moves a project; without the permission, it's refused |
+| **Cutover** | your existing workspaces, boards and sessions survive the switch |
+| **Logs, the view, remote start** | as each deliverable lands |
+</script></ex-markdown>
+
+<h2 id="deliverables">10. The deliverables</h2>
+
+<ex-markdown id="deliverables-text"><script type="text/markdown">
+**Proposed cut.** The plan comes next, for your approval. Each deliverable works and is proven on its own, and lands as one PR per repository it touches:
+
+```mermaid
+flowchart LR
+  B1["B1 People, roles and sign-in<br/>(switchboard)"] --> B2["B2 Central's organizations<br/>(codex-router)"]
+  B2 --> B3["B3 Machine login and the locked link<br/>(both)"]
+  B3 --> B4["B4 Sessions through their machine<br/>(codex-router)"]
+  B3 --> B5["B5 Authenticated CLI<br/>(both)"]
+  B4 --> SW(["Your switch:<br/>every machine logs in again"])
+  B5 --> SW
+  SW --> B6["B6 Logs and traces"]
+  B6 --> B7["B7 Who is logged in"]
+  B7 --> B8["B8 Remote start"]
+  B7 --> B9["B9 Members in the view"]
+```
+
+| Deliverable | What you'll see working | Already built toward it |
+|---|---|---|
+| **B1 People, roles and sign-in** | sign in with a second factor; your organization; invite, accept, remove a member, with records; members refused; owner can't be removed | sign-in packages merged; roles, permission check, records groundwork (B4a branch); migration approved |
+| **B2 Central's organizations** | central sets up an organization when sign-in creates one; its authority applies admin actions under the checked permission; two organizations stay apart | contracts (F1 merged, F1c verified); F2a and F2c part-built (need rework) |
+| **B3 Machine login and the locked link** | approve a machine by device code; it connects only through the sign-in service; renewal; revocation stops it | F11 mostly built; F3a's key checking |
+| **B4 Sessions through their machine** | sessions register through their machine and keep messaging across machines | F4a mostly built |
+| **B5 Authenticated CLI** | `agent-collaboration central` signs in and runs project commands under permissions | — |
+| **Your switch** | production moves to the new login; old login code removed | — |
+| **B6–B9** | logs and traces; who is logged in; remote start; members in the view | — |
+
+**B1 comes first.** It gets its own readable document (what you'll see, its parts, its data, its flows, its proof, its tickets and PR) after you approve this design and the plan.
+</script></ex-markdown>
+
+</ex-document>
+</body>
+</html>
