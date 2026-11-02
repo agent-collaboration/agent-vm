@@ -81,7 +81,7 @@ SO8 (F14): two Routers log in by device code to a local Fleet central, and their
 
 **Work that keeps its evidence:**
 - **Completed:** B0, B1, B3, B6a and F1 (merged), and B2 (its Verifier gate met at `6c073482`); F1's other shapes stand, and F1c corrects only the ones listed above.
-- **In progress and unaffected:** F11 and F4a (`fleet.sqlite`, store accepted at `54dcf613` and `684f5faa`), F12, F18 and the test harness.
+- **In progress and unaffected:** F11 and F4a (`fleet-client.sqlite`, store accepted at `54dcf613` and `684f5faa`), F12, F18 and the test harness.
 - **Requalified:** none. Nothing completed used the removed people machinery at runtime; B1 keeps today's local admission path, as before, until B4a turns the plugin on.
 
 **Held until this plan is in force:** B4a's people parts, F2a's guard and SQL, F2c's provisioning, F3a's routes and F1c. 
@@ -803,7 +803,7 @@ the `sign-in-host-node` package: an HTTP listener, `better-sqlite3` through Driz
 <details id="ticket-f11">
 <summary><strong>F11</strong> Router machine login (new) · waits on F1; B5 for the real flow (stand-in: a device-code server honoring C8 in tests, named unverified until SO8)</summary>
 <ex-markdown id="ticket-f11-text"><script type="text/markdown">
-- **Changed 1 November (two services, OD23):** `fleet login --sign-in <address> --organization <id> --label <label>`; discovery through the issuer's metadata and `/.well-known/fleet-login` (the device client only); no resource in the device request; the first token answer's `fleet_central` keeps only `{ receiver, relay }`. Saved in a 6-column `fleet_login` row in `fleet.sqlite`, owned by the new `codex-router-fleet-state` crate (never the proxy's `state.sqlite`; owner 1 November) (enrollment, sign-in address, organization, machine environment, receiver, relay), replacing `login-config.json` and the login metadata file; its SQL comes back to you. The Router connects at `<sign-in>/fleet/v1/session`. The route adoption keeps first-login activation, suspend-before-replace and enrollment fencing, and loses central relocation.
+- **Changed 1 November (two services, OD23):** `fleet login --sign-in <address> --organization <id> --label <label>`; discovery through the issuer's metadata and `/.well-known/fleet-login` (the device client only); no resource in the device request; the first token answer's `fleet_central` keeps only `{ receiver, relay }`. Saved in a 6-column `fleet_login` row in `fleet-client.sqlite`, owned by the new `fleet-client-storage` crate (never the proxy's `state.sqlite`; owner 1 November) (enrollment, sign-in address, organization, machine environment, receiver, relay), replacing `login-config.json` and the login metadata file; its SQL comes back to you. The Router connects at `<sign-in>/fleet/v1/session`. The route adoption keeps first-login activation, suspend-before-replace and enrollment fencing, and loses central relocation.
 - **Covers:** R40, R41 (Router side):
   - the device-code flow run in the Router host, with `fleet login` asking the host and printing the code;
   - `RefreshCredentialKeeping` (`encryptedStore`, `memoryOnly`), chosen at host start from the store's classified result and reported at login; a denied or damaged store refuses login and is left untouched;
