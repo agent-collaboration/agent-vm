@@ -1232,9 +1232,9 @@ It goes live after the view: central first, then the Routers. Until a machine ru
 | U24, U25 | D1 | B1 contributes; B5 closes | SO2 readback; Hegel families | B5 |
 | U27 (people, machines, sessions) | D1 | F2a, F2b | SO4 (F2b: real storage separation across a restart) | F2a; F2b |
 | U3, U17 (R2, R24) | D1 | F4a, F10, F11 | SO1, SO8; a structural search for machine keys | F8a; F14 |
-| U16 (R26, R27) | D1 | F18, F2a, F10, B2, B5 | SO4 (Tokio + local workerd, through the link), SO2 (Cloudflare + Node) | F18; B5 |
-| U26 (R5, R35) | D1 | F2a, F4a, B4a | SO2; SO4 | the later of B4a and F2a |
-| U46, U47 (R13, R27) | D1 | F1c, B4a, B5, F2a, F3a | SO2; SO4; SO7; structural check of the frame types | the later of B4a, F2a and F3a |
+| U16 (R26, R27) | D1 | F18, F2a, F10, B2, B5 | SO4 (Tokio + local workerd, through the link), SO2 (Cloudflare + Node) | partial at F18, F2a, F10 and B2 (each its own cases); whole only after the later of F18, F2a, F10, B2 and B5 |
+| U26 (R5, R35) | D1 | F2a, F4a, B4a | SO2; SO4 | partial at B4a, F2a and F4a (each its own cases); whole only after the later of the three |
+| U46, U47 (R13, R27) | D1 | F1c, B4a, B5, F2a, F3a | SO2; SO4; SO7; structural check of the frame types | partial at F1c, B4a, F2a, F3a and B5 (each its own cases; B5 owns the device-code `machine:enroll` refusals); whole only after the later of all five |
 | U45 (two services, storage per organization) | D1 | F18, F2b, F2c, F10, F11, B5 | SO4 (two organizations on one central, through the link), SO7, SO8 | F18; F2b; F2c; F14 |
 | U30 (people's requests) | D1 | B4a | SO2 | B4a |
 | U33, U31 (the machine client, replay, revoke and wrong-client cases included) | D1 | F10, F11, B5 | SO8; SO2; SO4 | B5; F10; F14 |
