@@ -45,14 +45,14 @@ flowchart TB
   YOU["You<br/>a browser"]
   R["Router, on each machine: macOS or Linux<br/>machine login · heartbeat · session registrar<br/>session binding · activity reporter · remote start"]
   AUTH["Sign-in service: the only part on the internet<br/>people sign-in · device-code login · token issuer<br/>approval page · who-is-logged-in page · the link to central"]
-  C["Fleet central: not on the internet; the truth<br/>per organization: its authority and Fleet object, in its own storage<br/>per machine: its Connection object · one Organization Registry: the organization list and machine claims"]
+  C["Fleet central: not on the internet; the truth<br/>per organization: one Fleet object (the central storage reset's), with Fleet access's tables inside<br/>per project: one project object · nothing per machine"]
   YOU -->|"sign in, approve machines, open the view"| AUTH
   R -->|"device code, renewal, and its connection to central"| AUTH
   AUTH -->|"the link: every request to central, connections included"| C
   C -.->|"reads the published signing keys"| AUTH
 ```
 
-- **Fleet central holds the truth,** one deployment, reached only through the sign-in service ([two services, one way in](#program-design--two-services-one-way-in)). People, their membership of organizations and their roles live in the sign-in service, in Better Auth's organization plugin ([people, roles and permissions](#program-design--people-roles-and-permissions)). Each organization's **organization authority** decides which machines are logged in and what they may serve, which sessions exist, remote starts, and the view's snapshot. Each organization's **Fleet object** keeps its workspaces and projects. Each machine has one **Connection object**, holding its open connection and judging its presence. The **Organization Registry** is the one object that spans organizations: the list of organizations and which organization each machine belongs to.
+- **Fleet central holds the truth,** one deployment, reached only through the sign-in service ([two services, one way in](#program-design--two-services-one-way-in)). Its storage is the central storage reset's ([central's storage](#program-design--central-storage-with-the-fleet-structure-change)): **one Fleet object per organization plus one object per project, and nothing per machine.** People, their membership of organizations and their roles live in the sign-in service, in Better Auth's organization plugin ([people, roles and permissions](#program-design--people-roles-and-permissions)). In each organization's Fleet object, this design's **organization authority** is a module with its own tables (`machine_*`, `session_*`, `organization_*`). It decides which machines are logged in and what they may serve, which sessions exist, remote starts, and the view's snapshot. Beside it are the reset's directory, leases, outbox, connection handling and journal. A machine's presence is a table there, not an object of its own. There is no Organization Registry (withdrawn 3 November, no new stores). Where "a machine is in at most one organization" is enforced is your pending choice; the recommendation is a table in the sign-in database.
 - **The sign-in service** proves people, runs the device-code login, mints every token (each only after central has decided), and carries every request to central over its link.
 - **The Router** logs its machine in, registers and binds its sessions, sends heartbeats, reports activity, and carries remote starts, all through the sign-in address it was given.
 - **Central asks the sign-in service nothing.** It only reads the sign-in service's published signing keys, to check tokens.
@@ -65,7 +65,7 @@ flowchart TB
 | Part | How many | Owns | Reached from |
 |---|---|---|---|
 | **Sign-in service** | one | People's sign-in, the device-code login, every token, the approval page and the who-is-logged-in page; carrying every Fleet request to central | the internet |
-| **Fleet central** | one | Every organization's truth, each in its own storage. Per organization: its organization authority and its Fleet object, named by the organization's ID. Per machine: its Connection object, named by the organization and the installation. One **Organization Registry**, its own Durable Object, for what spans organizations: the organization list and which organization each machine is in. Today's Registry keeps its own role (leases, notice marks, peer lookup, mail and forwards) | only the sign-in service, over the link |
+| **Fleet central** | one | Every organization's truth, each in its own **Fleet object**, named by the organization's ID (the reset's Fleet object, keyed by organization at B2), plus one object per project. The organization authority, presence and session records are tables in that Fleet object. Nothing is stored per machine, and nothing spans organizations | only the sign-in service, over the link |
 
 **The link.**
 - **Cloudflare:** a service binding, `CENTRAL`, on the sign-in Worker. Central's Worker has no route and no custom domain, and `workers.dev` is off, so nothing on the internet resolves to it. The sign-in Worker forwards each Fleet request with `env.CENTRAL.fetch(request)`. Cloudflare's Workers pricing says a binding call adds no request fee; CPU time counts across both Workers.
@@ -81,11 +81,11 @@ flowchart TB
 | A person's command or lookup, including provisioning a new organization's storage and the who-is-logged-in view (`public/admin`) | confirms the person's session is current (people sign-in R9), checks live that their role holds the permission the route needs (`hasPermission`), drops any confirmation the caller sent, attaches its own, created by its server for this one request and naming that permission; forwards it with the person token | checks the person token, then the permission guard: the attached confirmation's person, organization and permission match the request and the route, plus the second factor and freshness |
 | `DecideDeviceLogin`, `DecideMachineToken`, `ProvisionOrganization` (`internal/`) | builds and sends them itself, on its own behalf; never forwards one from the internet | picks the operation from the route before parsing the body, then parses the body only as that operation's type ([service requests](#program-design--service-requests-r27-c7)) |
 
-**How the objects sit on each host.** The same Rust core runs every object; each host only stores and schedules it. On Cloudflare each is a Durable Object. On Tokio each object address is a slot in the one central process: opened on its first call with its own SQLite file (`organization-registry`, `organization-<id>`, `fleet-<id>`, `connection-<id>:<installation>`, as today's `registry`, `fleet` and `connection-…` files are), with its alarm as a timer (`native_objects.rs`, `object_keys.rs`). What serializes an object's state is its storage transaction, not a queue: calls and frames on one object may interleave between transactions, as they do today, so every rule's guards, outbox steps and unknown-outcome handling hold at transaction boundaries. A new object kind needs its address key, its factory, its alarm and restart recovery, and its place in the rank table on both hosts. The Organization Registry and each organization's authority are two new kinds in central's closed set of object addresses, called in rank order: Organization Registry, then organization authority, then Fleet object.
+**How the objects sit on each host.** The same Rust core runs every object; each host only stores and schedules it. On Cloudflare each is a Durable Object. On Tokio each object is a slot in the one central process with its own SQLite file (today's `fleet` file and project files; the reset's D1 sets the layout). The Fleet object has **one durable-steps journal, one dispatcher and one alarm**, and every task kind, this design's included, registers on it on both hosts. What serializes the Fleet object's state is its storage transaction, not a queue: calls and frames may interleave between transactions, so every rule's guards and unknown-outcome handling hold at transaction boundaries. A rule that used to cross two of today's objects (for example the authority and the directory) is now **one transaction inside one Fleet object**. That is simpler, and it is reproved at B2 rather than carried over from the old proofs.
 
-**Routing by organization, and the one check that guards it.** Central names every object from the organization in the request: `getByName(organizationId)` for the authority and the Fleet object, `organizationId:installation` for a Connection object. Each object is stamped with its organization when it's first created, and refuses, with nothing changed, any request whose organization differs (R55). So a forwarding or routing bug can't reach another organization's storage. The Organization Registry is the one object that spans organizations, and it holds only the list and the machine claims.
+**Routing by organization, and the one check that guards it.** Central names the Fleet object from the organization in the request: `Fleet { organization }`, which this design adds at the reset's two address resolvers (Cloudflare `object_location.rs`, Tokio `native_objects.rs`); your organization keeps today's `fleet` object through a fixed mapping. A machine's connection is routed by the organization in its signed token. Each Fleet object is stamped with its organization when it's first created, and refuses, with nothing changed, any request whose organization differs (R55). So a forwarding or routing bug can't reach another organization's storage.
 
-**Creating an organization** needs no deploy: an owner creates it in Better Auth through the sign-in service, which then sends `ProvisionOrganization` to the Organization Registry, retrying until it confirms; the Registry records it and has the organization's authority set itself up; that object exists from its first call (Cloudflare creates a named Durable Object on first access; Tokio creates its SQLite database). See [admin commands](#program-design--admin-commands-and-lookups).
+**Creating an organization** needs no deploy: an owner creates it in Better Auth through the sign-in service, which then sends `ProvisionOrganization` to that organization's Fleet object, retrying until it confirms. The Fleet object exists from its first call (Cloudflare creates a named Durable Object on first access; Tokio creates its SQLite file), stamps itself with the organization, and records it in one transaction. See [admin commands](#program-design--admin-commands-and-lookups).
 
 **Central asks the sign-in service nothing.** Its one outbound request is reading the sign-in service's published signing keys, cached, with one refetch on an unknown key ID. When the sign-in service learns an enrollment has ended (central's answer to `RevokeMachineEnrollment`, which names the ended enrollment and its client; the first `Grant` of a newer enrollment, which names the one it superseded; or central refusing a machine token for that enrollment), it disables that machine's client itself ([disabling a machine's client](#program-design--disabling-a-machine-s-client)).
 
@@ -196,16 +196,16 @@ flowchart TB
 <ex-tree id="program-design--central-folders" title="agent-collaboration: Fleet central" icon="folder"><script type="text/markdown">
 - `fleet-identity-protocol/` (new crate): the shapes on the machine's connection
 - `collaboration-central-core/src/`
-  - `organization_authority/` (new): commands and their permission guard, enrollments, allowances, the session registry, `machine_activity`, remote starts, the outboxes, `WhoIsLoggedIn`
+  - `organization_authority/` (new): a **module of the Fleet object**, with its tables in the Fleet store (`machine_*`, `session_*`, `organization_*`): commands and their permission guard, enrollments (the reset's `machine_enrollments`, reshaped), allowances, the session registry, `machine_activity`, remote starts, `WhoIsLoggedIn`; its follow-ups are task kinds on the Fleet's one journal
   - `machine_token_check` (new): machine tokens at the entry and on renewal (C9)
   - `identity_contract.rs` (new): central-only shapes: commands, lookups, C7 requests, `MachineTokenClaims`
-  - `session_runtime.rs` (modified): presence in each Connection object
-  - `organization_registry/` (new): the organization list and the machine claim (two tables), `ProvisionOrganization`, and the device approval's authorize, claim, then activate or cancel, by object calls to the organization authority
-  - the Registry's modules (unchanged in role): what the Registry does today; it loses `machine_enrollments` at step 2
+  - the Fleet's connection handling (the reset's; modified): presence in the `machine_presence` table of the Fleet store
+  - ~~`organization_registry/`~~ **withdrawn 3 November** (no new store). The device approval's authorize-then-activate runs inside the organization's Fleet object; where "one machine, one organization" is enforced is your pending choice
+  - today's Registry modules: absorbed into the Fleet object by the reset's D1 (leases, peer lookup); `machine_enrollments` moves there too
   - `central_router.rs`, `access_rules.rs` (modified): the admin surface and the operation routes the sign-in service calls
   - `platform_capabilities.rs`, `access_observation.rs` (modified): the new observations
-- `collaboration-central-cloudflare/` (modified): the `OrganizationObject` class; presence alarms in `object_shell.rs`; records as JSON lines in `platform.rs`; `observability` in `cloudflare.config.ts`; naming the authority, Fleet and Connection objects by organization (`getByName`); no route, no custom domain, `workers.dev` off
-- `collaboration-central-tokio/` (modified): SQLite per organization; the receive deadline in `native_objects.rs`; an OTLP exporter beside `native_logging.rs`; listening only on its Unix socket
+- `collaboration-central-cloudflare/` (modified): `Fleet { organization }` in `object_location.rs` (`getByName(organizationId)`); records as JSON lines in `platform.rs`; `observability` in `cloudflare.config.ts`; no route, no custom domain, `workers.dev` off. No new object class
+- `collaboration-central-tokio/` (modified): `Fleet { organization }` in `native_objects.rs`, one Fleet SQLite file per organization (the reset's layout); the receive deadline; an OTLP exporter beside `native_logging.rs`; listening only on its Unix socket
 - `collaboration-central-conformance/` (modified): SO4's new scenarios on both hosts
 </script></ex-tree>
 <h3 id="program-design--the-router-s-crates">The Router's crates</h3>
@@ -225,15 +225,15 @@ flowchart TB
 ```mermaid
 flowchart TB
   subgraph CORE["collaboration-central-core (runtime-free)"]
-    RULES["organization authority · machine token check<br/>Organization Registry · Connection presence · admin surface"]
+    RULES["Fleet object modules: organization authority · presence<br/>machine token check · admin surface · one journal"]
     CAPS["CentralPlatform: object calls · time · UUIDv7 ids · wakes<br/>key fetch · RS256 · observe"]
     RULES --> CAPS
   end
   subgraph CF["Cloudflare host"]
-    DO["one Worker behind the sign-in Worker's binding<br/>Durable Objects per organization (authority, Fleet), per machine (Connection), one Organization Registry<br/>SQLite storage · alarms · records to Workers Logs"]
+    DO["one Worker behind the sign-in Worker's binding<br/>Durable Objects: one Fleet per organization, one per project<br/>SQLite storage · alarms · records to Workers Logs"]
   end
   subgraph TK["Tokio host"]
-    SQ["one process on its Unix socket<br/>SQLite per organization and per object kind<br/>receive deadlines · records through tracing to OTLP"]
+    SQ["one process on its Unix socket<br/>SQLite: one Fleet file per organization, one per project<br/>receive deadlines · records through tracing to OTLP"]
   end
   DO -->|"supplies"| CAPS
   SQ -->|"supplies"| CAPS
@@ -246,6 +246,13 @@ The sign-in service has the same shape, drawn in [its storage, core and hosts](#
 
 <h2 id="program-design--what-exists-today">What exists today</h2>
 <ex-markdown id="program-design--what-exists-today-text"><script type="text/markdown">
+> **Superseded placement (3 November).** Parts of this section were written for today's separate objects: a per-machine Connection object, a separate organization authority object, the Organization Registry and today's Registry. The central storage reset replaces them with **one Fleet object per organization plus one per project, and no new store** ([current map](#program-design--central-storage-with-the-fleet-structure-change)). Read this section's rules as rules: they still hold. Read its object names as homes in the current map:
+> - the organization authority is a module with `machine_*`, `session_*` and `organization_*` tables in the Fleet object;
+> - a Connection object's presence is the `machine_presence` table there;
+> - the Registry's leases are the reset's Fleet tables;
+> - the Organization Registry is withdrawn, and its "one machine, one organization" claim waits on your choice.
+> A hand-off between two of those objects becomes one transaction in the Fleet object, reproved in B2–B4. **Don't build the objects named below.**
+
 | Area | Today | Anchor |
 |---|---|---|
 | Repositories | Fleet central and the Router are in `agent-collaboration/agent-collaboration` (codex-router). The sign-in service (`packages/auth`) and the Switchboard (`tool-*` packages) are in `agent-collaboration/switchboard`: copied from agent-vm at `2dfea38e`, stripped down to them, with the copied agent-vm type packages renamed `@agent-collaboration/*`. Paths in this document keep their names inside that repository. agent-vm is frozen and holds none of this work. | `agent-collaboration/switchboard` main `8f6be960`; agent-vm `docs/architecture/switchboard-split.md` |
@@ -289,17 +296,17 @@ Every place a real choice existed, what was chosen, what wasn't, and why. "Reope
 | How long a machine token is usable | A `grant_expires_at` claim fixed at decision time; Fleet central enforces it beside `exp`; the issuer's own `exp` is set to the 60-minute maximum | Per-call `exp` (offered by neither 1.7.8 nor 1.7.11); per-resource lifetimes at the issuer (a copy of organization settings) | Delayed or repeated minting can't extend a grant; per-organization lifetimes need no issuer copy | A machine learns the real end from the claim or a refusal, not `expires_in` | A later Better Auth offers per-issuance expiry |
 | How central knows a request is the sign-in service's | **The link**: a service binding on Cloudflare, a Unix socket on Node and Tokio; central has no other way in (R55) | Short-lived service tokens per operation over the public network (the 30 October design) | One front door; no service credentials, client keys or pinned clients to issue, rotate or bind to an organization | The sign-in service is on every path; a native deployment split across machines needs its own link | A second caller must reach central (then it needs a credential of its own) |
 | How a machine proves itself | A short-lived **machine token from the sign-in service**, on every connection, after the owner approves the machine's device code | Keep the Access service token and enrollment credential (two long-lived secrets tied to the owner's Access; you: move off Access); per-machine key files (you: no); VM creators and platforms as issuers (you: later, 2026-10-27) | One login model for every machine; the token names its issuer, so another issuer kind is added later beside it | A machine keeps one refresh credential, or, without a store, is approved again after each restart | Machines must log in without the owner approving each one (then U31's later step adds an issuer kind) |
-| Who owns a machine's enrollment | **The machine's organization authority**, with the Organization Registry keeping only an index from installation and peer to organization, written once | Keep enrollments in the Organization Registry with an organization column | A revocation and its grant fence are one transaction, so the revocation fan-out disappears; the owner's approval is read where it lives | Each new log-in touches the Organization Registry once, then the organization authority | A machine must move between organizations (Fleet Q-B11) |
+| Who owns a machine's enrollment | **The machine's organization authority**, a module of its organization's Fleet object (table `machine_enrollments`) | Keep enrollments in a cross-organization store | A revocation and its grant fence are one transaction in one store |
 | How the device-code login is built | Better Auth's OAuth device grant, extended with the machine's fields, and the existing extension claim contributor asking Fleet central before each machine token | Our own device-code endpoints minting through `issueTokens` (the fallback, the surface the fleet-session grant uses) | Single use, polling (`slow_down`) and refresh come from the library, and its rate limiter, set explicitly, limits guesses ([flood limits](#program-design--flood-limits-at-sign-in-r42-r52)); the decision stays with Fleet central | The machine token's `sub` is the approving owner's account (the provider owns `sub`), so consumers read only `principal`; deleting that account ends the machine's renewals | The extension can't add fields or the contributor can't refuse a device-code mint at 1.7.11 (then the fallback) |
 | Linux secret store | The store's data key comes from a **systemd encrypted credential** read through the existing `KeychainAccess` seam. It is created once, at install, by `systemd-creds encrypt` run as root, and delivered to the Router service with `LoadCredentialEncrypted=`. The Linux adapter only reads it. Without it, and on any machine without the Keychain or systemd, the Router keeps the refresh credential only in memory (OD9). The login runs inside the Router host, where the key, or the memory, is. | A data-key file beside the store; the desktop Secret Service (needs a desktop session) | Works for a Router run as a systemd service, inside a VM guest with systemd too; the data key never changes, so a read-only credential is enough | Protection: with a TPM2, a copied disk can't decrypt; with only the host key, root on that host can. Neither protects from processes running as the Router's own user, the same as the macOS Keychain (the shared bucket). A machine without either keeps its refresh credential in memory and is approved again after each restart (OD9). | Restarts without systemd become frequent enough that re-approving costs too much |
 | How separate organizations' Fleet data is kept | **One Fleet object per organization**, named by its ID (`getByName`). Your organization adopts today's storage through a fixed mapping on both hosts: the Cloudflare object named `fleet`, and the Tokio singleton key. | One Fleet object with an organization column on every row | Separation by address: a request reaches only its organization's object, so a forgotten filter can't leak; workspace names stay unique per organization; no rows rewritten | A storage cutover all the same: the address type, every caller, restart and wake recovery, each connection's feed, and refusing the old address all change; one more object per organization | — |
 | How the cutover flips | One deploy-time setting, `machineLogin`, with exactly one value per deployment: today's login before step 2, machine tokens from step 2. Step 2 fixes forward; there is no revert to the old login. | Accept either login during a transition; keep the old login restorable as a revert | You ruled out "either". Restoring the old login after step 2 could readmit a machine revoked after the switch | Step 2 needs every machine logged in again; a broken step 2 leaves machines offline, still behind Access, until a fix lands | — |
 | How a session starts on another machine | A start request carried over the requesting machine's connection to its organization authority, which checks it and delivers it through the target machine's connection; the target Router runs its usual start check and create, then reports the outcome the same way | Relax the client's same-Router check (the target can't verify a remote creator); a new kind of fleet mail (mail is queued and delivered later, which a start must never be) | Central already knows both machines, the requester's membership and the target's allowance, and both connections are authenticated; nothing waits in a queue | Two new requests on each connection, one delivered frame each way, and one remote-start record; a start to a disconnected machine is refused, not delivered later | Starts must wait for a machine that is offline |
 | Organization isolation | **Storage per organization in one central, behind the sign-in service** (you, 1 November, OD23, replacing that morning's central per organization) | One central deployment per organization, with a shared directory (that morning's design) | A new organization deploys nothing; no directory, no approval between Workers, no learned routes or per-central credentials | A bad release or an outage reaches every organization; the sign-in service is on every path | Per-organization deploy isolation becomes a requirement |
-| Where the organization list and the machine claim live | **The Organization Registry**, inside central | A separate directory Worker; the sign-in service's database | It's the one object that spans organizations, and the approval's authorize, claim, then activate stays object calls inside one deployment | The Organization Registry gains two tables | — |
+| Where the organization list and the machine claim live | **The list:** Better Auth's `organization` table in the sign-in service; each Fleet object knows only itself. **The machine claim (one machine, one organization):** your pending choice; recommended a `sign_in_machine_claims` table in the sign-in database (3 November, no new stores) | an Organization Registry store in central (withdrawn) | no new store; the only service that sees every organization holds the cross-organization rule |
 | How a Router reaches central | **Through the sign-in address it logs in with** (`<sign-in>/fleet/`); the first token answer adds central's receiver and relay IDs, saved in `fleet_login` | Learning a per-organization central at login (that morning's design); a hand-written `login-config.json` | One address to give a machine, and nothing per organization to learn | The sign-in service is on the connection's path; one new Router table | — |
-| Where an admin change is recorded | In the same transaction as the change, at the owner of the state it changes: the organization authority, the Fleet object or the Organization Registry | Every record in the organization authority (it would have to own workspaces and machines too) | One owner per truth, and a change and its record still commit together | Records live in up to three places; an organization's audit view is assembled from them when read | A compliance need for one audit store |
-| Who keeps the list of organizations | The Organization Registry: each organization and its state (`creating`, `active`), and the index of which organization each machine belongs to | The Fleet object | The Organization Registry may call organization authorities in rank order; the Fleet object may not | The Organization Registry gains two tables | — |
+| Where an admin change is recorded | In the same transaction as the change, in the organization's Fleet object (`organization_change_records`) | Every record in a separate store | One owner per change, one transaction |
+| Who keeps the list of organizations | Better Auth's `organization` table (with `fleetState`); central has one Fleet object per provisioned organization | an Organization Registry (withdrawn) | no second list to keep in step |
 | How one machine's replayed refresh token is kept from ending another's (R40) | **One public client per enrollment**, created by the device-code token handler at the machine's first mint; every token of that machine is issued under it. The shared Router device-login client only starts logins. | Accept the provider's teardown (one replay stops every machine the owner approved, which breaks R40). A before-hook that handles stale replays itself (the provider rereads its clock after awaited work, so any check before it can be overtaken). Machine refresh credentials kept outside the provider (a new table, a new grant, and our own rotation and lost-reply window). | The provider ends refresh families by client and person, never by reference (`token.ts:537–567`). A client per enrollment makes that key unique per machine on the refresh path, so isolation holds at the delete itself, with no timing. The revoke endpoint keys its teardown by the requesting client before checking ownership (`revoke.ts:217–225`), so it is closed to machine clients and their tokens, by facts that never change. The provider keeps its own rotation and lost-reply window. | One client row per enrollment; a client created at first mint and disabled when the enrollment ends; the Router keeps its client ID; central checks the token's client against the one its enrollment recorded. | The provider gains per-reference teardown |
 | How central learns a machine is gone (R48) | The Router sends an application **heartbeat** over its open connection every sixth of OD14 (5 seconds at the decided 30). The **Connection object owns the machine's presence** and judges it on its own clock: it closes a connection it hasn't heard from for three heartbeats (15 seconds), and a clean close ends it at once. At each lookup the organization authority asks each machine's Connection object, with a deadline of half a refresh interval on its own clock; the answer is in durations ("open, silent for 2 s"), never in timestamps. | Rely on the platform to notice a dead socket. Use WebSocket ping and pong. A lease at the organization authority, renewed by forwarded heartbeats: timed from processing, a late report buys a fresh lease; timed from the frame's arrival, it compares two objects' clocks, whose difference nothing bounds (IT5). | Today both hosts and the Router discard ping and pong without recording them, so nothing bounds when a silent drop is noticed. Every interval here is measured on one clock: silence on the Connection object's, the read deadline on the organization authority's, the refresh and answer deadline on the browser's. So no clock difference enters the budget. In sixths of OD14: a cut just after a frame shows by the silence limit (3) plus one refresh (1) plus the page's answer deadline (1), so 25 seconds, leaving one sixth for rendering. | One small frame from the Router every 5 seconds per connected machine, to its Connection object only. One read per machine per refresh while the page is open. On Cloudflare each heartbeat and each read wakes the Connection object, which costs object duration. The fleet pays. | An organization with enough machines that a read per machine per refresh becomes a load problem, or OD14 changes |
 | How a session's working or idle state reaches central (R47, R48) | The Router's **session activity reporter** maps each harness's own states to working or idle. On each change, on each new connection, and after any report that wasn't answered, it sends the machine's whole state, with a sequence. The organization authority applies only a report newer than the last it applied, and the state counts only while its connection is the one its Connection object answers open. | Central asks the Router whenever the owner opens the view. Reports of one session's change each (two changes for different sessions, applied out of order, would lose one). | A change shows without waiting for a viewer, and an offline machine's sessions read as unknown at once instead of timing out. | One report per turn start or end, each listing every session on the machine. A mapping per harness to keep current: Codex `active` → working; the other harnesses' `running` or `requires-action` → working; Claude busy or waiting → working; anything else → idle. | Report volume becomes a load problem |
@@ -309,6 +316,13 @@ Every place a real choice existed, what was chosen, what wasn't, and why. "Reope
 
 <h2 id="program-design--where-each-entity-lives">Where each entity lives</h2>
 <ex-markdown id="program-design--where-each-entity-lives-text"><script type="text/markdown">
+> **Superseded placement (3 November).** Parts of this section were written for today's separate objects: a per-machine Connection object, a separate organization authority object, the Organization Registry and today's Registry. The central storage reset replaces them with **one Fleet object per organization plus one per project, and no new store** ([current map](#program-design--central-storage-with-the-fleet-structure-change)). Read this section's rules as rules: they still hold. Read its object names as homes in the current map:
+> - the organization authority is a module with `machine_*`, `session_*` and `organization_*` tables in the Fleet object;
+> - a Connection object's presence is the `machine_presence` table there;
+> - the Registry's leases are the reset's Fleet tables;
+> - the Organization Registry is withdrawn, and its "one machine, one organization" claim waits on your choice.
+> A hand-off between two of those objects becomes one transaction in the Fleet object, reproved in B2–B4. **Don't build the objects named below.**
+
 ```mermaid
 flowchart TB
   REG["Fleet central (E26) · Organization Registry, one<br/>E1 list entry · E6 machine claim"]
@@ -375,6 +389,13 @@ flowchart TB
 
 <h3 id="program-design--the-database-map">The database map</h3>
 <ex-markdown id="program-design--the-database-map-text"><script type="text/markdown">
+> **Superseded placement (3 November).** Parts of this section were written for today's separate objects: a per-machine Connection object, a separate organization authority object, the Organization Registry and today's Registry. The central storage reset replaces them with **one Fleet object per organization plus one per project, and no new store** ([current map](#program-design--central-storage-with-the-fleet-structure-change)). Read this section's rules as rules: they still hold. Read its object names as homes in the current map:
+> - the organization authority is a module with `machine_*`, `session_*` and `organization_*` tables in the Fleet object;
+> - a Connection object's presence is the `machine_presence` table there;
+> - the Registry's leases are the reset's Fleet tables;
+> - the Organization Registry is withdrawn, and its "one machine, one organization" claim waits on your choice.
+> A hand-off between two of those objects becomes one transaction in the Fleet object, reproved in B2–B4. **Don't build the objects named below.**
+
 > **Physical layout superseded for central** by the central storage reset (section above). The sign-in tables below are current. Central's separate stores show today's objects, kept for their records and rules; at B2 they are re-placed on the reset's Fleet store as that section maps.
 
 Four stores, each with one owner. They share no database and no foreign key: they refer to each other only by identifiers, and each check reads its own store. On Cloudflare the sign-in service uses D1 and the others are Durable Objects; on Node and Tokio each is a SQLite database. Each picture below shows one store's tables, with the keys and the fields this design relies on.
@@ -478,8 +499,15 @@ erDiagram
 ```
 </script></ex-markdown>
 
-<h4 id="program-design--fleet-central-registry">Fleet central · Organization Registry</h4>
+<h4 id="program-design--fleet-central-registry">Fleet central · Organization Registry (withdrawn 3 November)</h4>
 <ex-markdown id="program-design--fleet-central-registry-text"><script type="text/markdown">
+> **Superseded placement (3 November).** Parts of this section were written for today's separate objects: a per-machine Connection object, a separate organization authority object, the Organization Registry and today's Registry. The central storage reset replaces them with **one Fleet object per organization plus one per project, and no new store** ([current map](#program-design--central-storage-with-the-fleet-structure-change)). Read this section's rules as rules: they still hold. Read its object names as homes in the current map:
+> - the organization authority is a module with `machine_*`, `session_*` and `organization_*` tables in the Fleet object;
+> - a Connection object's presence is the `machine_presence` table there;
+> - the Registry's leases are the reset's Fleet tables;
+> - the Organization Registry is withdrawn, and its "one machine, one organization" claim waits on your choice.
+> A hand-off between two of those objects becomes one transaction in the Fleet object, reproved in B2–B4. **Don't build the objects named below.**
+
 One for the whole central, its own Durable Object (`OrganizationRegistryObject`, named `organization-registry`; on Tokio its own SQLite database): the one object that holds what spans organizations. Its two tables are new at step 2, when today's `machine_enrollments` is dropped from today's Registry, which otherwise keeps its role (leases, notice marks, peer lookup, mail and forwards). An organization's authority is named by its ID, so the row keeps no address.
 
 ```mermaid
@@ -697,6 +725,13 @@ pub struct MachineTokenClaims {                // no deny_unknown_fields: the re
 
 <h3 id="program-design--requests-over-the-machine-s-connection">Requests over the machine's connection (Router → Fleet central)</h3>
 <ex-markdown id="program-design--requests-over-the-machine-s-connection-text"><script type="text/markdown">
+> **Superseded placement (3 November).** Parts of this section were written for today's separate objects: a per-machine Connection object, a separate organization authority object, the Organization Registry and today's Registry. The central storage reset replaces them with **one Fleet object per organization plus one per project, and no new store** ([current map](#program-design--central-storage-with-the-fleet-structure-change)). Read this section's rules as rules: they still hold. Read its object names as homes in the current map:
+> - the organization authority is a module with `machine_*`, `session_*` and `organization_*` tables in the Fleet object;
+> - a Connection object's presence is the `machine_presence` table there;
+> - the Registry's leases are the reset's Fleet tables;
+> - the Organization Registry is withdrawn, and its "one machine, one organization" claim waits on your choice.
+> A hand-off between two of those objects becomes one transaction in the Fleet object, reproved in B2–B4. **Don't build the objects named below.**
+
 Home: `fleet-identity-protocol` (new crate), which both the Router's crates and central's core depend on ([the parts in code](#program-design--the-parts-in-code)).
 
 ```rust
@@ -944,6 +979,13 @@ pub struct ListWorkspaceMachines { pub organization_id: OrganizationId, pub work
 
 <h3 id="program-design--machine-login">Machine login (R39–R43, C8, C9)</h3>
 <ex-markdown id="program-design--machine-login-text"><script type="text/markdown">
+> **Superseded placement (3 November).** Parts of this section were written for today's separate objects: a per-machine Connection object, a separate organization authority object, the Organization Registry and today's Registry. The central storage reset replaces them with **one Fleet object per organization plus one per project, and no new store** ([current map](#program-design--central-storage-with-the-fleet-structure-change)). Read this section's rules as rules: they still hold. Read its object names as homes in the current map:
+> - the organization authority is a module with `machine_*`, `session_*` and `organization_*` tables in the Fleet object;
+> - a Connection object's presence is the `machine_presence` table there;
+> - the Registry's leases are the reset's Fleet tables;
+> - the Organization Registry is withdrawn, and its "one machine, one organization" claim waits on your choice.
+> A hand-off between two of those objects becomes one transaction in the Fleet object, reproved in B2–B4. **Don't build the objects named below.**
+
 **Device-code login request (Router → sign-in service).**
 - **Where it runs:** `fleet login --organization <id> --label <label>` asks the running Router host to log in, over the CLI's existing local connection to the host. The host runs the flow and the CLI only prints the user code and address it returns. The refresh credential is therefore kept where the store's data key is available: inside the systemd service on Linux, in the same host process on macOS, and in that process's memory alone on a machine with neither (OD9).
 - **Discovery:** the host reads the sign-in service's OAuth authorization-server metadata for the device and token endpoints, and `/.well-known/fleet-login` for the public Router device-login client. The provider lists `device_authorization_endpoint` only through its own device extension (`device-code.ts:255`, applied at `metadata.ts:144`, at 1.7.11). Our grant uses the plugin's exported functions, so the sign-in service contributes that metadata entry itself, and B3's first slice proves it.
@@ -1147,6 +1189,13 @@ pub enum DisabledMachineClient { Disabled, AlreadyDisabled, NotThisEnrollment } 
 
 <h3 id="program-design--the-authenticated-cli">The authenticated CLI (B5; owner, 2 November)</h3>
 <ex-markdown id="program-design--the-authenticated-cli-text"><script type="text/markdown">
+> **Superseded placement (3 November).** Parts of this section were written for today's separate objects: a per-machine Connection object, a separate organization authority object, the Organization Registry and today's Registry. The central storage reset replaces them with **one Fleet object per organization plus one per project, and no new store** ([current map](#program-design--central-storage-with-the-fleet-structure-change)). Read this section's rules as rules: they still hold. Read its object names as homes in the current map:
+> - the organization authority is a module with `machine_*`, `session_*` and `organization_*` tables in the Fleet object;
+> - a Connection object's presence is the `machine_presence` table there;
+> - the Registry's leases are the reset's Fleet tables;
+> - the Organization Registry is withdrawn, and its "one machine, one organization" claim waits on your choice.
+> A hand-off between two of those objects becomes one transaction in the Fleet object, reproved in B2–B4. **Don't build the objects named below.**
+
 **Every CLI that talks to central authenticates through the sign-in service.** There's no Cloudflare Access. `agent-collaboration central` works like this:
 1. It signs you in once with the sign-in service's existing owner CLI login (authorization code with S256 in your browser). That returns your person token.
 2. Each command goes to the sign-in service's admin forwarding plugin, which checks the command's `project:*` permission live and attaches its confirmation.
@@ -1173,6 +1222,13 @@ The results stay today's: done, pending or unknown, with transfer IDs and fences
 
 <h3 id="program-design--admin-commands-and-lookups">Admin commands and lookups (person → Fleet central)</h3>
 <ex-markdown id="program-design--admin-commands-and-lookups-text"><script type="text/markdown">
+> **Superseded placement (3 November).** Parts of this section were written for today's separate objects: a per-machine Connection object, a separate organization authority object, the Organization Registry and today's Registry. The central storage reset replaces them with **one Fleet object per organization plus one per project, and no new store** ([current map](#program-design--central-storage-with-the-fleet-structure-change)). Read this section's rules as rules: they still hold. Read its object names as homes in the current map:
+> - the organization authority is a module with `machine_*`, `session_*` and `organization_*` tables in the Fleet object;
+> - a Connection object's presence is the `machine_presence` table there;
+> - the Registry's leases are the reset's Fleet tables;
+> - the Organization Registry is withdrawn, and its "one machine, one organization" claim waits on your choice.
+> A hand-off between two of those objects becomes one transaction in the Fleet object, reproved in B2–B4. **Don't build the objects named below.**
+
 Every organization command and lookup names its organization and is refused unless the permission guard below passes. There is no fleet-wide role (OD24), and central keeps no roles at all: the sign-in service decides which person holds which permission ([people, roles and permissions](#program-design--people-roles-and-permissions)). Results are `Applied`, `Admitted { commandId }` (a change another store applies; `CommandStatus` shows it pending until applied), or `Refused { reason: NotPermitted | NotFound | Conflict | RecordUnwritable | SecondFactorRequired { within_seconds } }`; a refused command reveals nothing, and `SecondFactorRequired` (R53) is answered only to a caller whose confirmation names the route's permission, before anything else is checked or changed. **Audit (people sign-in R12):** every applied command writes its record (who, what changed, the organization, when) in the same transaction as the change, at the owner of the state it changes; if the record can't be written, that transaction fails and nothing changes. Most commands change the organization authority's own state and are recorded there. `CreateWorkspace` changes the Fleet object's workspaces, so it is handed over, as below. `ProvisionOrganization` commits in the Organization Registry with its record there. People changes are recorded in the sign-in service (OD26). An organization's audit view is assembled when read, by the admin surface, from each owner's records for that organization; nothing is copied, and an owner that can't be read is shown as unavailable.
 
 **A change another store applies (`CreateWorkspace`):** the organization authority checks the guard when you ask, records the command with its record in one transaction, and replies `Admitted`; its outbox has the Fleet object create the workspace once per command ID, with Fleet's own record, retrying until it does. If your role loses `workspace:create` in between, it is still created: an empty workspace. Creating a workspace is idempotent by its canonical name (the `ResourceName` value after its own trim, compared byte for byte: case-sensitive, with no Unicode normalization, as F1 publishes it): if a workspace of that name already exists, the command resolves to it and shows as applied, so two admitted requests for the same name never collide after admission. Handing an organization over is adding another owner in Better Auth, then leaving; central is not involved. The guard holds when you ask, not at Fleet's commit. Changes that stay at the sign-in service (linked logins, passkeys) keep that design's own records.
@@ -1311,6 +1367,13 @@ pub enum CommandStatusResult {
 
 <h2 id="program-design--service-requests-r27-c7">Service requests (R27, C7)</h2>
 <ex-markdown id="program-design--service-requests-r27-c7-text"><script type="text/markdown">
+> **Superseded placement (3 November).** Parts of this section were written for today's separate objects: a per-machine Connection object, a separate organization authority object, the Organization Registry and today's Registry. The central storage reset replaces them with **one Fleet object per organization plus one per project, and no new store** ([current map](#program-design--central-storage-with-the-fleet-structure-change)). Read this section's rules as rules: they still hold. Read its object names as homes in the current map:
+> - the organization authority is a module with `machine_*`, `session_*` and `organization_*` tables in the Fleet object;
+> - a Connection object's presence is the `machine_presence` table there;
+> - the Registry's leases are the reset's Fleet tables;
+> - the Organization Registry is withdrawn, and its "one machine, one organization" claim waits on your choice.
+> A hand-off between two of those objects becomes one transaction in the Fleet object, reproved in B2–B4. **Don't build the objects named below.**
+
 | Operation (sign-in service → central, over the link) | Route at central | Central checks | Repeat |
 |---|---|---|---|
 | Provision an organization | `internal/organization-provisioning` | the body is a `ProvisionOrganization`, for an organization Better Auth created | a repeat answers `Provisioned` again |
@@ -1348,14 +1411,21 @@ Every issuance runs one closed dispatch on the **authenticated** client's regist
 
 <h2 id="program-design--components">Components</h2>
 <ex-markdown id="program-design--components-text"><script type="text/markdown">
+> **Superseded placement (3 November).** Parts of this section were written for today's separate objects: a per-machine Connection object, a separate organization authority object, the Organization Registry and today's Registry. The central storage reset replaces them with **one Fleet object per organization plus one per project, and no new store** ([current map](#program-design--central-storage-with-the-fleet-structure-change)). Read this section's rules as rules: they still hold. Read its object names as homes in the current map:
+> - the organization authority is a module with `machine_*`, `session_*` and `organization_*` tables in the Fleet object;
+> - a Connection object's presence is the `machine_presence` table there;
+> - the Registry's leases are the reset's Fleet tables;
+> - the Organization Registry is withdrawn, and its "one machine, one organization" claim waits on your choice.
+> A hand-off between two of those objects becomes one transaction in the Fleet object, reproved in B2–B4. **Don't build the objects named below.**
+
 | Component | Owns | Home | Consumers | Changes when |
 |---|---|---|---|---|
 | **Organization authority** (new) | E1 (its Fleet storage only; people stay in the sign-in service), E7, E8, E13, E15, E21; each session's latest activity; device-login, machine-token, machine-connection and remote-start decisions, and the remote-start records; the who-is-logged-in snapshot; the configured lifetime; the outbox that closes connections, and the admitted-command outbox; the records of its own changes; the shared-bucket view | `collaboration-central-core` organization module, hosted as one object per organization (Cloudflare Durable Object class `OrganizationObject`; Tokio: one SQLite database per organization) | admin surface, machine token check, the Connection objects, the sign-in service (decisions) | membership, issuance or machine-login policy changes |
-| **Connection object** (existing, modified) | One machine's open connection and its presence (E24), on its own clock: the silence deadline (three heartbeats; a receive deadline on Tokio, an object alarm on Cloudflare); answering `ReadMachinePresence` in durations; keeping the capabilities its Router declared in its latest heartbeat, and delivering a remote start only when they include `RemoteStart`; passing each activity report to its organization authority | `collaboration-central-core` session runtime (`session_runtime.rs`, modified), with each host's socket loop (`collaboration-central-tokio/src/native_objects.rs`, `collaboration-central-cloudflare/src/object_shell.rs`, modified) | the organization authority (presence reads; activity) | the presence contract changes |
+| **Presence** (new module of the Fleet object's connection handling) | One machine's open connection and its presence (E24), in the `machine_presence` table: the silence deadline (three heartbeats; a receive deadline on Tokio, the Fleet object's alarm on Cloudflare); answering the who-is-logged-in read inside the same store | the reset's connection handling in `collaboration-central-core` (modified) | organization authority | presence rules change |
 | **Admin surface** (modified) | Organization commands and lookups with the permission guard (which also checks R53's second factor for every change), including `WhoIsLoggedIn` (R13, R14), and the routes the sign-in service forwards to (person token plus its confirmation naming the checked permission) | `central_router.rs` admin routes and `access_rules.rs` (modified; the Access branches deleted at step 2) | the owner's CLI and console | admin commands change |
 | **Machine token check** (new, central entry) | Verifying a machine token on `/v1/session` and on `RenewMachineToken` (C9): signature against the sign-in service's keys, audience, time; then `AdmitMachineConnection` at the organization authority the token names | `collaboration-central-core` (new module `machine_token_check`), using the existing RS256 capability and the sign-in service's key fetch; each host's entry | the Connection object | the token contract changes, or a later issuer kind is added |
-| **Organization Registry** (new, one in central) | The list of organizations and their creation; which organization each installation and peer belong to, claimed once and only after the organization authority authorized; running a device approval's authorize, claim, then activate or cancel, by object calls to the organization authority | a dedicated Durable Object (`OrganizationRegistryObject`, one instance) or its own Tokio SQLite database; `collaboration-central-core` organization registry module | the sign-in service's `ProvisionOrganization`, the device-login decision | organization lifecycle or the machine claim changes |
-| **Registry** (existing, one in central, unchanged in role) | What it does today: leases and their incarnations, notice marks, peer lookup, mail and forwards; today's `machine_enrollments` until step 2 | Registry object (existing) | central's objects | as today |
+| ~~Organization Registry~~ | **Withdrawn 3 November** (no new stores). The machine claim's home is your pending choice | — | — | — |
+| **Registry** (existing) | Absorbed into the Fleet object by the reset's D1 | the reset | — | — |
 | **Fleet object** (existing, now one per organization) | E2, E16 | existing; now named by its organization (`getByName(organizationId)`), with your organization adopting today's object through a fixed mapping on both hosts | organization authority, connections | the Fleet contract changes |
 | **Session binding** (new, Router) | Which session each collaboration call came from; binding lifecycle | `collaboration-mcp`, `collaboration-service` (modified); Codex: the native `StartThread` and `ForkThread` config where it is built (`native_thread_preparation.rs`; the client bridge's `session_creation.rs` for helper starts) (modified); Claude and Cursor: `acp-client-runtime` per-session MCP list through the create and restore commands (modified) | collaboration MCP tools | harness wiring changes |
 | **Session registrar** (new, Router) | Checking each start (a named project; a session starts only in its own workspace, R8); registering each launched session exactly once and recording which project it was started for; minting, activating, persisting and retiring its binding; refusing a start that can't carry one; reporting its end | `collaboration-service` (new module `fleet_session_registrar`), the only writer of its durable rows, which live in the `fleet_session_registrations` table of `fleet-cache.sqlite` (`message-board-storage`; its columns approved by the owner 1 November, gaining a UUIDv7 key and timestamps under the 3 November rule if it lacks them). The proxy's `state.sqlite` holds none of them. The binding's random capability is never its row key, and is redacted from Debug and logs | session binding, remote start | launch facts change |
@@ -1404,6 +1474,13 @@ Every issuance runs one closed dispatch on the **authenticated** client's regist
 
 <h2 id="program-design--how-the-owner-logs-a-machine-in-by-device-code">How the owner logs a machine in by device code</h2>
 <ex-markdown id="program-design--how-the-owner-logs-a-machine-in-by-device-code-text"><script type="text/markdown">
+> **Superseded placement (3 November).** Parts of this section were written for today's separate objects: a per-machine Connection object, a separate organization authority object, the Organization Registry and today's Registry. The central storage reset replaces them with **one Fleet object per organization plus one per project, and no new store** ([current map](#program-design--central-storage-with-the-fleet-structure-change)). Read this section's rules as rules: they still hold. Read its object names as homes in the current map:
+> - the organization authority is a module with `machine_*`, `session_*` and `organization_*` tables in the Fleet object;
+> - a Connection object's presence is the `machine_presence` table there;
+> - the Registry's leases are the reset's Fleet tables;
+> - the Organization Registry is withdrawn, and its "one machine, one organization" claim waits on your choice.
+> A hand-off between two of those objects becomes one transaction in the Fleet object, reproved in B2–B4. **Don't build the objects named below.**
+
 ```mermaid
 sequenceDiagram
   autonumber
@@ -1519,6 +1596,13 @@ sequenceDiagram
 
 <h2 id="program-design--how-the-owner-sees-who-is-logged-in">How the owner sees who is logged in</h2>
 <ex-markdown id="program-design--how-the-owner-sees-who-is-logged-in-text"><script type="text/markdown">
+> **Superseded placement (3 November).** Parts of this section were written for today's separate objects: a per-machine Connection object, a separate organization authority object, the Organization Registry and today's Registry. The central storage reset replaces them with **one Fleet object per organization plus one per project, and no new store** ([current map](#program-design--central-storage-with-the-fleet-structure-change)). Read this section's rules as rules: they still hold. Read its object names as homes in the current map:
+> - the organization authority is a module with `machine_*`, `session_*` and `organization_*` tables in the Fleet object;
+> - a Connection object's presence is the `machine_presence` table there;
+> - the Registry's leases are the reset's Fleet tables;
+> - the Organization Registry is withdrawn, and its "one machine, one organization" claim waits on your choice.
+> A hand-off between two of those objects becomes one transaction in the Fleet object, reproved in B2–B4. **Don't build the objects named below.**
+
 Three loops meet at the organization authority. Each machine's heartbeats keep its Connection object hearing from it. Each machine reports what its sessions are doing. Every 5 seconds the owner's page asks, and the organization authority reads its own state and asks each Connection object how long its machine has been silent. The times below assume OD14 at the decided 30 seconds: heartbeat, refresh and the page's answer deadline each a sixth of it, and a silence limit of three heartbeats.
 
 ```mermaid
@@ -1569,6 +1653,13 @@ Each fact comes from its owner when the page refreshes; nothing is copied.
 
 <h2 id="program-design--state">State</h2>
 <ex-markdown id="program-design--state-text"><script type="text/markdown">
+> **Superseded placement (3 November).** Parts of this section were written for today's separate objects: a per-machine Connection object, a separate organization authority object, the Organization Registry and today's Registry. The central storage reset replaces them with **one Fleet object per organization plus one per project, and no new store** ([current map](#program-design--central-storage-with-the-fleet-structure-change)). Read this section's rules as rules: they still hold. Read its object names as homes in the current map:
+> - the organization authority is a module with `machine_*`, `session_*` and `organization_*` tables in the Fleet object;
+> - a Connection object's presence is the `machine_presence` table there;
+> - the Registry's leases are the reset's Fleet tables;
+> - the Organization Registry is withdrawn, and its "one machine, one organization" claim waits on your choice.
+> A hand-off between two of those objects becomes one transaction in the Fleet object, reproved in B2–B4. **Don't build the objects named below.**
+
 **A fleet harness session** (organization authority):
 
 | State | Entered by | Leaves to | Guard and effect |
@@ -1619,6 +1710,13 @@ Every interval is measured on the Connection object's own clock and reported as 
 
 <h2 id="program-design--failure-recovery-and-concurrency">Failure, recovery and concurrency</h2>
 <ex-markdown id="program-design--failure-recovery-and-concurrency-text"><script type="text/markdown">
+> **Superseded placement (3 November).** Parts of this section were written for today's separate objects: a per-machine Connection object, a separate organization authority object, the Organization Registry and today's Registry. The central storage reset replaces them with **one Fleet object per organization plus one per project, and no new store** ([current map](#program-design--central-storage-with-the-fleet-structure-change)). Read this section's rules as rules: they still hold. Read its object names as homes in the current map:
+> - the organization authority is a module with `machine_*`, `session_*` and `organization_*` tables in the Fleet object;
+> - a Connection object's presence is the `machine_presence` table there;
+> - the Registry's leases are the reset's Fleet tables;
+> - the Organization Registry is withdrawn, and its "one machine, one organization" claim waits on your choice.
+> A hand-off between two of those objects becomes one transaction in the Fleet object, reproved in B2–B4. **Don't build the objects named below.**
+
 | Situation | Detected by | Handling | Owner |
 |---|---|---|---|
 | Machine enrollment revoked; the close is interrupted, or the sign-in service misses the disable | organization authority outbox; the sign-in service | New connections, renewals and grants are already refused at the revocation's commit; the close resumes until done; the next refused refresh makes the sign-in service disable the client | organization authority; sign-in service |
@@ -1660,6 +1758,13 @@ Every interval is measured on the Connection object's own clock and reported as 
 
 <h2 id="program-design--trust-boundaries">Trust boundaries</h2>
 <ex-markdown id="program-design--trust-boundaries-text"><script type="text/markdown">
+> **Superseded placement (3 November).** Parts of this section were written for today's separate objects: a per-machine Connection object, a separate organization authority object, the Organization Registry and today's Registry. The central storage reset replaces them with **one Fleet object per organization plus one per project, and no new store** ([current map](#program-design--central-storage-with-the-fleet-structure-change)). Read this section's rules as rules: they still hold. Read its object names as homes in the current map:
+> - the organization authority is a module with `machine_*`, `session_*` and `organization_*` tables in the Fleet object;
+> - a Connection object's presence is the `machine_presence` table there;
+> - the Registry's leases are the reset's Fleet tables;
+> - the Organization Registry is withdrawn, and its "one machine, one organization" claim waits on your choice.
+> A hand-off between two of those objects becomes one transaction in the Fleet object, reproved in B2–B4. **Don't build the objects named below.**
+
 ```mermaid
 flowchart TB
   subgraph M[A machine - trusted as a whole]
@@ -2045,6 +2150,13 @@ Some sections still mention the ticket names of the retired item-two plan. Read 
 
 <h2 id="program-design--changes-and-cutover">Changes and cutover</h2>
 <ex-markdown id="program-design--changes-and-cutover-text"><script type="text/markdown">
+> **Superseded placement (3 November).** Parts of this section were written for today's separate objects: a per-machine Connection object, a separate organization authority object, the Organization Registry and today's Registry. The central storage reset replaces them with **one Fleet object per organization plus one per project, and no new store** ([current map](#program-design--central-storage-with-the-fleet-structure-change)). Read this section's rules as rules: they still hold. Read its object names as homes in the current map:
+> - the organization authority is a module with `machine_*`, `session_*` and `organization_*` tables in the Fleet object;
+> - a Connection object's presence is the `machine_presence` table there;
+> - the Registry's leases are the reset's Fleet tables;
+> - the Organization Registry is withdrawn, and its "one machine, one organization" claim waits on your choice.
+> A hand-off between two of those objects becomes one transaction in the Fleet object, reproved in B2–B4. **Don't build the objects named below.**
+
 **What changes:**
 - **Sign-in service:** the core and storage on Drizzle (R29–R33); request limits (R52); telemetry on both hosts (R51); people's membership, roles and permissions in the organization plugin, and provisioning new organizations at central; the token-kind dispatch, keeping today's agent path until step 3; the link to central and the `/fleet/` forwarding; the Router device-login client, one machine client per enrollment, the extended device grant, its approval hook and the revoke refusal; disabling a machine's client when its enrollment ends; the who-is-logged-in page.
 - **Fleet central:** today's deployment, now behind the sign-in service; each organization's authority and Fleet object, named by its ID; the Organization Registry's organization list and machine claim; the admin commands, the permission guard and lookups; the operation routes the sign-in service calls; the machine token check; machine enrollment, revocation and supersession; session registration; remote starts; presence in each Connection object; session activity; `WhoIsLoggedIn`; telemetry on both hosts; the `fleet-identity-protocol` crate.
@@ -2078,6 +2190,13 @@ There's nothing to migrate: presence is new state in each Connection object, and
 
 <h2 id="program-design--requirement-trace">Requirement trace</h2>
 <ex-markdown id="program-design--requirement-trace-text"><script type="text/markdown">
+> **Superseded placement (3 November).** Parts of this section were written for today's separate objects: a per-machine Connection object, a separate organization authority object, the Organization Registry and today's Registry. The central storage reset replaces them with **one Fleet object per organization plus one per project, and no new store** ([current map](#program-design--central-storage-with-the-fleet-structure-change)). Read this section's rules as rules: they still hold. Read its object names as homes in the current map:
+> - the organization authority is a module with `machine_*`, `session_*` and `organization_*` tables in the Fleet object;
+> - a Connection object's presence is the `machine_presence` table there;
+> - the Registry's leases are the reset's Fleet tables;
+> - the Organization Registry is withdrawn, and its "one machine, one organization" claim waits on your choice.
+> A hand-off between two of those objects becomes one transaction in the Fleet object, reproved in B2–B4. **Don't build the objects named below.**
+
 | U | R | E | Owner | Interface | Shape and home | State | Failure | Proof |
 |---|---|---|---|---|---|---|---|---|
 | U1 | R1: three kinds of actor; machines and services are not actors | E3, E6, E7 | organization authority; issuer | `Principal`; `MachinePrincipal` kept separate | `MachinePrincipal` in `identity_contract.rs`; the agent `Principal` stays in the Switchboard (`agent-portal-sdk` `trusted-context-contracts.ts`), so the Rust side proves the machine's own parse and refusals, and SO6 proves it never parses as a `Principal` | none: parse rule | an unknown kind rejected at parse; a machine or service token refused where an actor is expected | contract: principal parse and refuse; machine and service tokens each under their own schema |
