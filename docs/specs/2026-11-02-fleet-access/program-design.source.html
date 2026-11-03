@@ -384,7 +384,7 @@ flowchart TB
 **Still to settle at B2 (named, not guessed):**
 - where "one machine, one organization" is enforced (your pending choice; recommended: a `sign_in_machine_claims` table in the sign-in database, with authorize, then claim, then activate), and how a connecting machine's organization is found (from its token's `organizationId`);
 - the reshaped `machine_enrollments` columns, and the `fleet_presence_*` tables, shown to you before code;
-- remote start keeps its rule of no queue and no redelivery: a start to a disconnected machine is refused, not stored in the outbox (the reset's D2 owns remote create; this rule is checked against it then).
+- remote start: **decided 3 November (owner), refuse a start to an offline machine, for now.** Both designs mark it as a temporary workaround (reset D2 at `9742dc5ea`: R18, reason "target offline (temporary)"), with a code comment at the refusal, until the two are redesigned together.
 </script></ex-markdown>
 
 <h3 id="program-design--the-database-map">The database map</h3>
@@ -957,7 +957,7 @@ pub struct ListWorkspaceMachines { pub organization_id: OrganizationId, pub work
   - A target that is unknown, in another organization, not enrolled or without an allowance gets the same `machineNotAllowed`, so nothing about another organization shows (R34).
   - It records the remote start with its whole body (requester, target, project, launch) and a deadline: admission time plus the request's timeout, capped at central's maximum. A repeat with the same ID and body returns the recorded answer; the same ID with a different body is `requestIdReused`.
   - It then delivers `StartRequestedSession` through the target's connection delivery face (`Connection(target)`, rank 5, which the authority may call: `call_graph.rs:97–171` at `f465808f`). The delivery handler only sends the frame and acknowledges it; it never calls back into the authority. This follows the bounded live-delivery pattern already used for forwarded deliveries, which carry a deadline and a correlation and check duplicates (`forward_delivery.rs:43–144`), not the durable notice path that resumes later.
-  - **No open connection:** a known non-delivery. The record ends as `machineNotConnected` and the requester is refused, with nothing created. **An ambiguous send** (the delivery call fails or times out): the record stays `forwarded`, the requester gets `Forwarded`, and the outcome either arrives or lapses to `unknown`.
+  - **No open connection:** a known non-delivery. The record ends as `machineNotConnected` and the requester is refused, with nothing created. **Temporary (owner, 3 November):** this refusal is a workaround until remote start is redesigned with the reset's D2, whose refusal reason is "target offline (temporary)". The handler that refuses carries a code comment saying so, naming R46 and the reset's D2 R18, so both are found and changed together. **An ambiguous send** (the delivery call fails or times out): the record stays `forwarded`, the requester gets `Forwarded`, and the outcome either arrives or lapses to `unknown`.
 - **The target Router**, on `StartRequestedSession`:
   - After the deadline, it reports `deadlinePassed` and begins nothing.
   - Otherwise the request ID becomes the operation ID of its create, through the existing provider create admission, which looks up a stable operation ID (`conversation_operations.rs:208–225`). So a duplicate delivery, or a resend after a restart around the create, reuses the same operation and never creates a second conversation.
@@ -2262,7 +2262,7 @@ There's nothing to migrate: presence is new state in each Connection object, and
 - **Creating a workspace is checked when you ask:** Fleet applies it shortly after, even if you stopped being the owner in between, giving an empty workspace.
 - **A late registration refusal leaves an idle conversation.** Registration comes after creation, so a refusal there, or a lost reply, leaves a conversation that gets no prompt and acts as nothing. Nothing deletes it automatically.
 - **One registration per conversation** is enforced by the Router's registrar, inside the trusted-Router assumption.
-- **Remote starts aren't queued.** A start to a disconnected machine is refused, and one whose outcome is lost ends as `unknown`.
+- **Remote starts aren't queued, for now.** A start to a disconnected machine is refused (a temporary workaround the owner chose on 3 November, matching the reset's D2), and one whose outcome is lost ends as `unknown`.
 - **Better Auth mapping:** machine tokens use the provider's device grant, extended, with our own device endpoints as the fallback. Neither is proven until the first sign-in slice runs against 1.7.11.
 - **A machine token's `sub` is the approving owner's account,** because the provider owns `sub`. Central reads only `principal`, and the token's audience and client keep it from being used anywhere else. Deleting the approving owner's account ends that machine's renewals; it logs in again.
 - **Each machine has its own client.** The provider ends refresh families by client and person, so this is what keeps one machine's replayed or revoked token from ending another's renewal. The revoke endpoint is closed to machine tokens for the same reason.
