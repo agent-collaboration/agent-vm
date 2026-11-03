@@ -85,7 +85,10 @@
 | 2 Nov | **the permission check:** sign-in checks it live and attaches it; central checks that, then its own records |
 | 2 Nov | **people-change records:** written first, confirmed after |
 | 2 Nov | **every CLI authenticates through the sign-in service;** the operator commands become organization admin commands |
-| 2 Nov | the Router's database is `fleet-client.sqlite` in crate `fleet-client-storage`; no `codex-router` prefix on new crates |
+| 2 Nov | ~~the Router's database is `fleet-client.sqlite` in crate `fleet-client-storage`~~ (replaced 3 Nov); no `codex-router` prefix on new crates |
+| 3 Nov | no new Router database or crate: `fleet_login` and `fleet_session_registrations` go into the existing `fleet-cache.sqlite` (`message-board-storage`), outside the re-enrollment forget step; `fleet/enrollment.json` retires into `fleet_login` (you, relayed by the central storage reset's Lead) |
+| 3 Nov | every table this design creates or changes has a UUIDv7 primary key and `created_at`/`updated_at`; one prefix per concern; CHECK only for booleans (your rule, from the central storage reset) |
+| 3 Nov | central's physical design is the central storage reset (one Fleet object per organization plus project objects); this design maps onto it and keys the Fleet by organization at B2 |
 | 2 Nov | one overall design, then deliverables, each a whole verified PR per repository |
 </script></ex-markdown>
 
@@ -193,7 +196,7 @@ Each approved requirement from the item-two design has one home here. The exact 
 | U14 | if central can't be reached, no new machine token or connection is admitted (fail closed) | section 3 |
 | U15, U45 | central holds the Fleet truth; people live in sign-in; one way in | sections 3, 5 |
 | U16 | one versioned contract between services, on any host | section 6; [encoding rules](program-design.html#program-design--encoding-rules-for-every-boundary-below) |
-| U17, U35 | **a machine's one secret is its refresh credential.** It's kept in the encrypted secret store (Keychain on macOS, a systemd encrypted credential on Linux) when one is available, and in memory only when none exists. A store that exists but is denied or damaged is an error, left untouched, never silently treated as absent. Never plaintext in production, and never in `fleet-client.sqlite` | section 5, row 8; [machine login](program-design.html#program-design--machine-login) |
+| U17, U35 | **a machine's one secret is its refresh credential.** It's kept in the encrypted secret store (Keychain on macOS, a systemd encrypted credential on Linux) when one is available, and in memory only when none exists. A store that exists but is denied or damaged is an error, left untouched, never silently treated as absent. Never plaintext in production, and never in `fleet-cache.sqlite` | section 5, row 8; [machine login](program-design.html#program-design--machine-login) |
 | U18, U19 | each session records its machine and isolation kind; every collaboration call is attributed to the session it actually came from | B4; [attribution](program-design.html#program-design--how-a-collaboration-call-is-attributed) |
 | U20, U26, U46 | people sign in (Google, GitHub or a user-verified passkey), join by invitation, have one role per organization | sections 4, 7 |
 | U21, U31 | only the owner administers and logs machines in, by device code; a machine belongs to one organization | section 4 |
@@ -218,14 +221,10 @@ Each approved requirement from the item-two design has one home here. The exact 
 |---|---|---|---|---|
 | 1 | **Sign-in database** | sign-in | people, sessions, organizations, members, invitations, OAuth clients and tokens, device codes (with the machine's fields), second factors, `sign_in_audit` | exists; organization tables **approved** |
 | 2 | **Organization Registry** | central | the organization list; which organization each machine is in | new |
-| 2b | **Registry** (today's) | central | leases, peer lookup, mail and forwards | exists; loses `machine_enrollments` |
-| 3 | **Organization authority**, per organization | central | enrollments, allowances, sessions, activity, remote starts, change records | new |
-| 4 | **Fleet object**, per organization | central | the directory: workspaces, boards and projects (what exists and who holds it), and the feed. Each project's board contents live in its project copy (5c) | exists; split per organization (yours keeps today's data) |
-| 5 | **Connection object**, per machine | central | the machine's open connection and presence | exists; gains presence |
-| 5b | **Mailbox object**, per machine | central | mail waiting for that machine | exists; unchanged |
-| 5c | **Project copy object**, per project database (today called `Copy`; renamed later) | central | central's synced replica of one project's board, and its sync state | exists; unchanged in storage. The CLI's health, repair and migrate commands act here |
+| 3 | **Fleet store**, per organization (the central storage reset's Fleet object) | central | everything the organization authority holds (enrollments, allowances, sessions, activity, remote starts, change records), the directory and feed, leases, the Fleet outbox, presence (`fleet_presence_*`) and its one durable-steps journal | being built by the reset's D1 for one organization (absorbing today's Registry, Connection and Mailbox objects); this design keys it by organization and adds its tables at B2–B4 |
+| 4 | **Project object**, per project | central | one project's board contents and its sync state. The CLI's health, repair and migrate commands act here | exists; unchanged in storage |
 | 6 | `state.sqlite` | Router | the proxy's accounts, credits, quotas, routing | unchanged |
-| 7 | `fleet-client.sqlite` | Router | `fleet_login` (this machine's login) and `fleet_session_registrations` (its sessions) | new |
+| 7 | `fleet-cache.sqlite` (existing, `message-board-storage`) | Router | central-derived caches (cleared on re-enrollment), plus two new tables the forget step never clears: `fleet_login` (this machine's login) and `fleet_session_registrations` (its sessions) | exists; gains two tables |
 | 8 | **Secret store** | Router | the refresh credential | exists; gains Linux |
 | 9 | **Switchboard store**, per workspace | Switchboard | tool approvals | unchanged |
 
@@ -235,7 +234,7 @@ sequenceDiagram
   participant REG as 2 Registry (orgs)
   participant OA as 3 Authority of O
   participant FO as 4 Fleet object of O
-  participant RF as 7 fleet-client.sqlite
+  participant RF as 7 fleet-cache.sqlite
   Note over SI: organization ID created here (Better Auth)
   SI->>REG: same organization ID: "set up O"
   REG->>OA: names O's authority by that ID
@@ -296,7 +295,7 @@ flowchart TB
   PROTO["fleet-identity-protocol<br/>shapes on the machine's connection"]
   HOST["codex-router-host + -cli<br/>machine login · heartbeat · CLI sign-in"]
   SVC["collaboration-service / -mcp / -client<br/>session registrar · binding · remote start"]
-  FCS["fleet-client-storage (NEW)<br/>fleet-client.sqlite"]
+  FCS["message-board-storage (CHANGED)<br/>fleet-cache.sqlite: fleet_login"]
   SEC["codex-router-secret-store<br/>+ Linux backend"]
   CCF --> CCORE
   CTK --> CCORE
@@ -319,7 +318,7 @@ crates/collaboration-central-core/src/
 ├── access_rules.rs          CHANGED  AccessCaller::Owner removed
 └── machine_enrollment.rs    CHANGED  Access enrollment REMOVED; AdmittedMachine (the admitted
                                  connection's binding) kept, carrying organization and enrollment
-crates/fleet-client-storage/          NEW  fleet_login, fleet_session_registrations
+crates/message-board-storage/        CHANGED  FleetCache: fleet_login, fleet_session_registrations
 crates/collaboration-central-tokio/   CHANGED  self_hosted_issuer.rs REMOVED; TCP → Unix socket
 crates/codex-router-cli/              CHANGED  fleet login; CLI sign-in; fleet enroll REMOVED
 crates/agent-collaboration/           CHANGED  central commands sign in, use project names
@@ -492,7 +491,7 @@ flowchart LR
 | **B1 People, roles and sign-in** | sign in with a second factor; your first organization (created at deploy); invite, accept, remove a member, with records; members refused; owner can't be removed. **Boundary:** the organization shows "setting up" at central until B2; B1's proof uses a central stand-in for that step and earns no credit for it | sign-in packages merged; the B4a branch (`d4ffed8c`) has roles, the fresh-read permission check, owner-unremovable and re-send refusal, provisioning core, tested but **not yet wired**: the plugin isn't turned on, the old admission store is still composed, the hook-pair records aren't written. Migration approved |
 | **B2 Central's organizations** | central sets up an organization when sign-in creates one ("setting up" becomes "ready", for real); its authority applies admin actions under the checked permission; two organizations stay apart | contracts: F1 merged; F1c (`86bf5f19`) keep, then prune the retired people commands. F2a: rework (drop the owner guard and the central-to-sign-in session callback; keep its token parsing, freshness and factor-window code). F2c: rework and complete (keep its machine-claim contracts and queries; drop the owner email from initialization) |
 | **B3 Machine login and the locked link** | approve a machine by device code; it connects only through the sign-in service; renewal on the open connection; revocation refuses it at once. **Boundary:** this proves the connection only, not session messaging | F11 (`56b393a9`): keep its login, discovery and storage work (startup in token mode still test-only). F3a: keep the key cache, key resolution and signature verifier; drop the directory, service-client and person-callback code. The harness (#204): keep, then port its scenarios to the new central layout. F12: not started |
-| **B4 Sessions through their machine** | sessions register through their machine, and sessions on two machines message each other on the new login (the full machine-login journey) | F4a (`2744fa41`): keep its registrar (records before sending, retries without re-creating), composition still test-only. F11 and F4a share `fleet-state-base` (`dfab3027`) once, and it gets renamed to `fleet-client-storage` once |
+| **B4 Sessions through their machine** | sessions register through their machine, and sessions on two machines message each other on the new login (the full machine-login journey) | F4a (`2744fa41`): keep its registrar (records before sending, retries without re-creating), composition still test-only. F11 and F4a share `fleet-state-base` (`dfab3027`) once, and its tables fold into `message-board-storage`'s `FleetCache` once |
 | **B5 Authenticated CLI** | `agent-collaboration central` signs in and runs project commands under permissions | — |
 | **Your switch** | production moves to the new login; old login code removed | — |
 | **B6–B9** | logs and traces; who is logged in; remote start; members in the view | — |
@@ -507,12 +506,9 @@ Named so nothing is guessed. Each has an owner and a point where it gets settled
 
 | Not fully known | Why | Settled by |
 |---|---|---|
-| central's exact tables under the Fleet structure change, including the outbox record (identity, status, expiry) | the restructure is decided in direction, not in schema | the Fleet structure design, before B2 |
-| how central's transactions, recovery, clocks and proofs change when its separate objects become one organization database (the Program Design's physical sections are superseded until then) | today's physical design was written for separate objects | the Fleet structure design, **before B2 starts**; B1 doesn't depend on it |
-| the outbox's meaning beyond its columns: same message identity with different content, the hand-off to the recipient, keeping a terminal receipt after the payload expires; remote start stays no-queue, no-redelivery | defines what a stored row means | the Fleet structure design |
-| per-recipient ordering, expiry and cancellation for relayed mail | not designed yet | the Fleet structure design |
-| how today's Registry, Mailbox and Connection objects migrate into the organization Fleet database, and when, relative to B2–B4 | depends on the restructure's own plan | the Fleet structure design plus this design's plan |
-| who owns the Fleet structure design | the proposal came from an Advisor in `collab-improvements` | you |
+| central's physical tables, outbox meaning, mail ordering and expiry, and the Registry/Mailbox/Connection move | now designed by the **central storage reset** (codex-router `design/central-storage-reset` at `b4dd99d16`; Lead: Claude Code session `13635880`), whose D1 is in implementation; staging starts empty, so nothing migrates | the reset; this design's mapping onto it is in the Program Design's [central storage section](program-design.html#program-design--central-storage-with-the-fleet-structure-change) |
+| the Organization Registry's tables; the reshaped `machine_enrollments`; the `fleet_presence_*` tables; `Fleet { organization }` at the two address resolvers | this design's additions on top of the reset's D1 | B2's document, tables shown to you before code |
+| remote start's no-queue, no-redelivery rule against the reset's remote create | the reset's D2 owns remote create | checked when the reset's D2 is designed |
 | each CLI command's exact admin route and shapes | written with the deliverable | B5's document |
 | where the CLI keeps your person token between runs | the same keeping rule as the machine credential applies; the exact home isn't picked | B5's document |
 | D1 behavior of Better Auth's plugin under load (rate limits, D1 latency) | not measured | B1's proof on D1 |
