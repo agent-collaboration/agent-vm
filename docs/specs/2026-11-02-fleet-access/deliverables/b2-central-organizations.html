@@ -159,11 +159,11 @@ erDiagram
 <h2 id="b2-flows">Its flows</h2>
 
 <ex-markdown id="b2-flows-text"><script type="text/markdown">
-**Setting up an organization.** One idempotent transaction at central, so central needs no workflow of its own for it. The sign-in service's workflow (B1) repeats the call until it gets `Provisioned`.
+**Setting up an organization.** One idempotent transaction at central, so central needs no workflow of its own for it. The sign-in service makes a plain call (B1 builds no workflows). If the call fails or its reply is lost, the organization stays "setting up" until the call is made again, which nothing does automatically until the later workflow work. Any repeat is safe: it finds the same stamp and record and answers `Provisioned`.
 
 ```mermaid
 sequenceDiagram
-  participant SI as Sign-in service (its set-up workflow)
+  participant SI as Sign-in service (plain call)
   participant L as The link
   participant F as Fleet object of organization O
   SI->>L: ProvisionOrganization { organizationId: O }
