@@ -63,7 +63,7 @@
 | In B1 | Rule home in the overall design | Not in B1 |
 |---|---|---|
 | sign-in with Google, GitHub, or a user-verified passkey | [U20](../requirements.html), [second factors](../program-design.html#program-design--second-factors-step-up-and-recovery-r53-r54) | machine login and device codes (B3) |
-| step-up: a second factor within 15 minutes for every change; app first, recovery codes, passkey after; self-serve recovery with two factors | U43, U44 | forwarding anything to central; the admin forwarding plugin (B3, B5) |
+| step-up: a second factor within 15 minutes for every change; app first, recovery codes, passkey after; self-serve recovery with two factors | U43, U44 | forwarding anything to central; the link and the admin forwarding for workspaces (B2), for machines (B3), for projects (B5) |
 | flood limits at sign-in (Turnstile is already merged) | U42, [flood limits](../program-design.html#program-design--flood-limits-at-sign-in-r42-r52) | the who-is-logged-in page (B7) |
 | Better Auth's organization plugin: your organization, owner and member roles, invitations | U46, [people, roles and permissions](../program-design.html#program-design--people-roles-and-permissions) | the CLI (B5) |
 | invite, accept, cancel, remove, each with its change record; re-send refused; owner unremovable | OD26, [people, roles and permissions](../program-design.html#program-design--people-roles-and-permissions) | central itself (B2 onward) |
