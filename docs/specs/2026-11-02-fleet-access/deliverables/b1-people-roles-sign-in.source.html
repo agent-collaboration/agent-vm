@@ -46,7 +46,7 @@
 
 <ex-markdown id="b1-see-text"><script type="text/markdown">
 1. You sign in with Google or GitHub. If you have no second factor yet, you set up an authenticator app and get your recovery codes, then can add a passkey.
-2. Your organization is already there (created at deploy), with you as its owner. At central it shows **"setting up"** until B2, because central's side isn't built yet.
+2. After your first sign-in, you create your organization from the sign-in page (only you can), and you're its owner. At central it shows **"setting up"** until B2, because central's side isn't built yet.
 3. You invite `alice@…` as a member. That needs a second factor from the last 15 minutes. A change record is written first; if it can't be written, the invite is refused.
 4. Alice signs in with that email, accepts, and is a member. She can see nothing and do nothing yet.
 5. You cancel a pending invitation, or remove Alice. Each leaves its record.
@@ -70,7 +70,7 @@
 | Better Auth's organization plugin: your organization, owner and member roles, invitations | U46, [people, roles and permissions](../program-design.html#program-design--people-roles-and-permissions) | the CLI (B5) |
 | invite, accept, cancel, remove, each with its change record; re-send refused; owner unremovable | OD26, [people, roles and permissions](../program-design.html#program-design--people-roles-and-permissions) | central itself (B2 onward) |
 | the live permission check, and the confirmation it attaches, ready for later deliverables | OD25 | |
-| your first organization created at deploy; the "set up at central" call made to a stand-in | [provisioning](../program-design.html#program-design--people-roles-and-permissions) | |
+| your first organization, created by you after your first sign-in (no deploy-time seed); the "set up at central" call made to a stand-in | [provisioning](../program-design.html#program-design--people-roles-and-permissions) | |
 | the approved tables, migrated on both builds; today's local admission removed | OD4 | |
 | today's agent path kept working until step 3 | [the sign-in service storage](../program-design.html#program-design--the-sign-in-service-storage-core-and-hosts) | |
 </script></ex-markdown>
