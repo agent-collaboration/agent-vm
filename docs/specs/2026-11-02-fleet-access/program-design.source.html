@@ -15,6 +15,7 @@
 <a href="program-design.html">Program Design</a>
 <a href="verification-design.html">Verification Design</a>
 <a href="deliverables/b1-people-roles-sign-in.html">B1 People, roles and sign-in</a>
+<a href="deliverables/b2-central-organizations.html">B2 Central's organizations</a>
 </nav></ex-nav>
 <ex-document id="content" document-id="fleet-access-program-design" revision="2026-10-30.1">
 <p id="set-pages"><a href="index.html">Fleet access</a>: <a href="requirements.html">Requirements</a> · <a href="specification.html">Specification</a> · <strong>Program Design</strong> · <a href="verification-design.html">Verification Design</a> · <a href="deliverables/b1-people-roles-sign-in.html">B1 People, roles and sign-in</a></p>
@@ -499,146 +500,18 @@ erDiagram
 ```
 </script></ex-markdown>
 
-<h4 id="program-design--fleet-central-registry">Fleet central · Organization Registry (withdrawn 3 November)</h4>
-<ex-markdown id="program-design--fleet-central-registry-text"><script type="text/markdown">
-> **Superseded placement (3 November).** Parts of this section were written for today's separate objects: a per-machine Connection object, a separate organization authority object, the Organization Registry and today's Registry. The central storage reset replaces them with **one Fleet object per organization plus one per project, and no new store** ([current map](#program-design--central-storage-with-the-fleet-structure-change)). Read this section's rules as rules: they still hold. Read its object names as homes in the current map:
-> - the organization authority is a module with `machine_*`, `session_*` and `organization_*` tables in the Fleet object;
-> - a Connection object's presence is the `machine_presence` table there;
-> - the Registry's leases are the reset's Fleet tables;
-> - the Organization Registry is withdrawn, and its "one machine, one organization" claim waits on your choice.
-> A hand-off between two of those objects becomes one transaction in the Fleet object, reproved in B2–B4. **Don't build the objects named below.**
+<h4 id="program-design--fleet-central-fleet-store">Fleet central · each organization's Fleet store</h4>
+<ex-markdown id="program-design--fleet-central-fleet-store-text"><script type="text/markdown">
+**Rewritten 4 November.** Central's storage is the central storage reset's: one Fleet object per organization plus one per project. Fleet access adds only tables and modules inside the Fleet object. The earlier layout (an Organization Registry, a separate authority object, per-machine Connection objects, and their tables here) is removed.
 
-One for the whole central, its own Durable Object (`OrganizationRegistryObject`, named `organization-registry`; on Tokio its own SQLite database): the one object that holds what spans organizations. Its two tables are new at step 2, when today's `machine_enrollments` is dropped from today's Registry, which otherwise keeps its role (leases, notice marks, peer lookup, mail and forwards). An organization's authority is named by its ID, so the row keeps no address.
+Each deliverable's doc owns its tables and their SQL:
+- **B2** ([central's organizations](deliverables/b2-central-organizations.html)): `organization_identity`, `organization_change_records`, and workspaces through the reset's `fleet_workspaces`;
+- **B3:** `machine_enrollments` (the reset's table, reshaped), `machine_allowances`;
+- **B4:** `session_registrations`, `session_isolation_records`, `session_activity`, `machine_activity`;
+- **B7:** `machine_presence`;
+- **B8:** `session_remote_starts`.
 
-```mermaid
-erDiagram
-  organizations ||--o{ fleet_machines : claims
-  organizations {
-    text organization_id PK
-    text state "creating or active"
-  }
-  fleet_machines {
-    text service_id PK "the installation"
-    text peer_id UK
-    text organization_id FK
-    text claimed_at "once, after authorization"
-  }
-```
-</script></ex-markdown>
-
-<h4 id="program-design--fleet-central-organization-authority">Fleet central · each organization's authority</h4>
-<ex-markdown id="program-design--fleet-central-organization-authority-text"><script type="text/markdown">
-New, one per organization. Table names follow the record types in the binding table above. Not drawn: the records of changes, and the outbox that closes connections.
-
-It holds no people: membership and roles live in the sign-in service (E19). Its own row says only that its storage is set up:
-
-```mermaid
-erDiagram
-  organization {
-    text organization_id PK
-    text state "active"
-  }
-```
-
-A session's membership is its registration: `fleet_session` below names its workspace, and counts while its machine has an active enrollment here.
-
-Machines:
-
-```mermaid
-erDiagram
-  machine_enrollment }o..o{ machine_allowance : "same installation"
-  machine_enrollment }o..o| machine_activity : "same installation"
-  machine_enrollment {
-    text enrollment_id PK
-    text installation_id
-    text authorized_by "the owner's approval"
-    text request_id UK
-    text state "reserved, approved, enrolled, revoked, expired"
-  }
-  machine_allowance {
-    text installation_id PK
-    text workspace_id PK
-    text state
-  }
-  machine_activity {
-    text installation_id PK
-    text connection_id "the connection the applied report came on"
-    integer attach_sequence "orders connections"
-    integer activity_sequence "highest activity report applied"
-  }
-```
-
-Sessions, and starts on another machine:
-
-```mermaid
-erDiagram
-  fleet_session ||--|| isolation_record : has
-  fleet_session ||--o| remote_start : "started by, if remote"
-  fleet_session ||--o| session_activity : "latest report"
-  fleet_session {
-    text session_ref PK
-    text project_id
-    text workspace_id
-    text started_by "machine, session or remote session"
-    integer started_at "when it was registered"
-    text state "active, removed, ended"
-  }
-  session_activity {
-    text session_ref PK
-    text connection_id "the connection it came on"
-    text activity "working or idle"
-    integer reported_at
-  }
-  isolation_record {
-    text session_ref PK
-    text kind
-    text environment
-  }
-  remote_start {
-    text request_id PK
-    text requester_session
-    text target_installation
-    text launch "directory, harness, policy"
-    integer deadline
-    text bound_session
-    text state
-  }
-```
-</script></ex-markdown>
-
-<h4 id="program-design--fleet-central-fleet-object">Fleet central · each organization's Fleet object</h4>
-<ex-markdown id="program-design--fleet-central-fleet-object-text"><script type="text/markdown">
-Existing, now one per organization. Today's tables (`core_migrations/0003_fleet_records.sql` at `f465808f`). A project also names its board, and each board belongs to one workspace. Not drawn: `fleet_feed` (`entry_id` primary key, `position` unique and contiguous, `record_id`), and the decision, request and feed-reader tables.
-
-```mermaid
-erDiagram
-  workspaces ||--o{ boards : has
-  workspaces ||--o{ project_directory : has
-  workspaces ||--o{ repository_attachments : has
-  workspaces ||--o{ workspace_adrs : has
-  workspaces {
-    text workspace_id PK
-    text name UK "unique in its organization"
-  }
-  boards {
-    text board_id PK
-    text workspace_id FK
-  }
-  project_directory {
-    text project_id PK
-    text workspace_id FK
-    text board_id FK
-  }
-  repository_attachments {
-    text attachment_id PK
-    text workspace_id FK
-    text repository_reference
-  }
-  workspace_adrs {
-    text adr_id PK
-    text workspace_id FK
-  }
-```
+All follow your table rule: a UUIDv7 key, `created_at` and `updated_at`, typed columns, and one prefix per concern.
 </script></ex-markdown>
 
 <h3 id="program-design--people-roles-and-permissions">People, roles and permissions (U46, U47, R13, OD25)</h3>
@@ -1231,9 +1104,9 @@ The results stay today's: done, pending or unknown, with transfer IDs and fences
 
 Every organization command and lookup names its organization and is refused unless the permission guard below passes. There is no fleet-wide role (OD24), and central keeps no roles at all: the sign-in service decides which person holds which permission ([people, roles and permissions](#program-design--people-roles-and-permissions)). Results are `Applied`, `Admitted { commandId }` (a change another store applies; `CommandStatus` shows it pending until applied), or `Refused { reason: NotPermitted | NotFound | Conflict | RecordUnwritable | SecondFactorRequired { within_seconds } }`; a refused command reveals nothing, and `SecondFactorRequired` (R53) is answered only to a caller whose confirmation names the route's permission, before anything else is checked or changed. **Audit (people sign-in R12):** every applied command writes its record (who, what changed, the organization, when) in the same transaction as the change, at the owner of the state it changes; if the record can't be written, that transaction fails and nothing changes. Most commands change the organization authority's own state and are recorded there. `CreateWorkspace` changes the Fleet object's workspaces, so it is handed over, as below. `ProvisionOrganization` commits in the Organization Registry with its record there. People changes are recorded in the sign-in service (OD26). An organization's audit view is assembled when read, by the admin surface, from each owner's records for that organization; nothing is copied, and an owner that can't be read is shown as unavailable.
 
-**A change another store applies (`CreateWorkspace`):** the organization authority checks the guard when you ask, records the command with its record in one transaction, and replies `Admitted`; its outbox has the Fleet object create the workspace once per command ID, with Fleet's own record, retrying until it does. If your role loses `workspace:create` in between, it is still created: an empty workspace. Creating a workspace is idempotent by its canonical name (the `ResourceName` value after its own trim, compared byte for byte: case-sensitive, with no Unicode normalization, as F1 publishes it): if a workspace of that name already exists, the command resolves to it and shows as applied, so two admitted requests for the same name never collide after admission. Handing an organization over is adding another owner in Better Auth, then leaving; central is not involved. The guard holds when you ask, not at Fleet's commit. Changes that stay at the sign-in service (linked logins, passkeys) keep that design's own records.
+**`CreateWorkspace` is one transaction** in the organization's Fleet object: the guard, the workspace in the reset's `fleet_workspaces`, and its change record, then `Applied`. No other store is involved, so there's no `Admitted` and no `CommandStatus` (B2's doc). Creating a workspace is idempotent by its canonical name (the `ResourceName` value after its own trim, compared byte for byte).
 
-**The list of organizations:** the Organization Registry keeps each organization's ID and its state (`creating`, `active`). Better Auth owns the organization itself (its name, members and roles); the sign-in service sends `ProvisionOrganization` once Better Auth has created it ([provisioning](#program-design--people-roles-and-permissions)). The Registry commits the row as `creating`, with its record. A Registry outbox step then initializes the organization authority in one transaction of the authority (its `organization` row and its own record) and creates the organization's Fleet object (OD8). The row becomes `active` once that is acknowledged, and the Registry answers `Provisioned`; a repeat answers the same. Your first organization is created by the step 2 deploy in Better Auth, with you as its owner, then provisioned the same way. An authority's object is named by its organization ID (`getByName`), so nothing reads the Organization Registry to reach it; until its initialization arrives, it refuses every command and decision from its own state, so an interrupted creation exposes only a `creating` row.
+**The list of organizations** is Better Auth's `organization` table in the sign-in service. Central has one Fleet object per provisioned organization, stamped with its ID by `ProvisionOrganization` in one idempotent transaction (B2's doc).
 
 | Command | Request fields | What else it changes |
 |---|---|---|

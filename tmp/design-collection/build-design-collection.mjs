@@ -213,9 +213,10 @@ const collectionPages = [
 	{ label: 'Fleet access: Program Design', set: 'fleet-access', setLabel: 'Program Design', source: 'specs/2026-11-02-fleet-access/program-design.source.html', embeds: false },
 	{ label: 'Fleet access: Verification Design', set: 'fleet-access', setLabel: 'Verification Design', source: 'specs/2026-11-02-fleet-access/verification-design.source.html', embeds: false },
 	{ label: 'Fleet access: B1 People, roles and sign-in', set: 'fleet-access', setLabel: 'B1 People, roles and sign-in', source: 'specs/2026-11-02-fleet-access/deliverables/b1-people-roles-sign-in.source.html', embeds: false },
+	{ label: "Fleet access: B2 Central's organizations", set: 'fleet-access', setLabel: "B2 Central's organizations", source: 'specs/2026-11-02-fleet-access/deliverables/b2-central-organizations.source.html', embeds: false },
 ].map((page) => ({ ...page, reader: page.source.replace(/\.source\.html$/, '.html') }));
 
-const itemTwoMenuOrder = ['Overview', 'Requirements', 'Specification', 'Program Design', 'Verification Design', 'Delivery plan', 'B1 People, roles and sign-in'];
+const itemTwoMenuOrder = ['Overview', 'Requirements', 'Specification', 'Program Design', 'Verification Design', 'Delivery plan', 'B1 People, roles and sign-in', "B2 Central's organizations"];
 
 function menuTargetsFor(page) {
 	if (!page.set) return collectionPages.filter((target) => target.inMenu).map((target) => ({ target, label: target.label }));
