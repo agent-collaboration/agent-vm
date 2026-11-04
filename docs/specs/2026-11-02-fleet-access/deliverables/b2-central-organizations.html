@@ -149,7 +149,7 @@ erDiagram
   - The Fleet object runs one transaction at a time (a Durable Object on Cloudflare; one writing connection on Tokio), so two first provisions can't both stamp it.
 - **Your existing organization** keeps today's store. The deployment's config names its one organization ID, mapped to today's object `fleet` (Cloudflare) and `fleet.db` (Tokio), the same on both hosts. No other organization can take that name.
 - **Two kinds of change record**, both in this one table:
-  - *Set-up* (`origin: signInProvisioning`): written with the stamp, keyed by the sign-in service's provisioning request ID, which the sign-in workflow reuses on every retry. It has no person and no permission; none is invented.
+  - *Set-up* (`origin: signInProvisioning`): written with the stamp. Its `request_id` is the organization ID, which is all the unchanged `ProvisionOrganization { organizationId }` request carries, so a retry finds the same record. It has no person and no permission; none is invented.
   - *A person's change* (`origin: person`): the verified person from the token, and the exact permission the sign-in service confirmed.
 - Workspaces live in the reset's own `fleet_workspaces` table. B2 adds no workspace table.
 - No people are stored at central. Membership and roles stay in the sign-in service (Better Auth).
@@ -208,7 +208,7 @@ sequenceDiagram
 
 **A request naming the wrong organization:** the Fleet object compares the request's organization with its stamp. It refuses on a mismatch and changes nothing. A routing or forwarding bug therefore can't reach another organization's data.
 
-**Simpler than before:** creating a workspace used to be "admitted", then applied later by another store. Now it's one transaction in one store, so its answer is `Applied` or `Refused`, and a lost reply is recovered through the operation ID. `Admitted` and `CommandStatus` stay in the contract only for changes that really do finish later: project moves (B5) and remote starts (B8).
+**Simpler than before:** creating a workspace used to be "admitted", then applied later by another store. Now it's one transaction in one store, so its answer is `Applied` or `Refused`, and a lost reply is recovered through the operation ID. Project moves (B5) and remote starts (B8) keep their own existing result contracts, unchanged. The generic `Admitted` and `CommandStatus` shapes are no longer used by any B2 command; what happens to them is decided when B5 is designed.
 </script></ex-markdown>
 
 <h2 id="b2-proof">How it's proven</h2>
