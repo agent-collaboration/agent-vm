@@ -45,7 +45,7 @@
 <h2 id="b2-see">What you'll see working</h2>
 
 <ex-markdown id="b2-see-text"><script type="text/markdown">
-- You create an organization on the sign-in page. Within seconds it changes from "setting up" to "ready", because central really has set it up, on both builds (Cloudflare and Tokio).
+- You create an organization on the sign-in page. It changes from "setting up" to "ready" once central has really set it up, on both builds (Cloudflare and Tokio). On a healthy system that's a few seconds; it's a goal, not a guarantee.
 - As its owner, you create a workspace. It appears, and a record of who created it, with which permission, is written in the same step.
 - A member, who holds no permissions, tries the same and is refused, and nothing changes.
 - A second organization can't see the first one's workspaces or records, even if a request names the wrong organization.
@@ -253,7 +253,7 @@ Every check runs on **both builds** (workerd Durable Objects and native Tokio), 
 - F2a's owner guard;
 - every plan to put authority, presence or a registry in its own object.
 
-**Pull requests:** one in codex-router (B2a–B2e) and one small one in switchboard (the real provisioning call). Both are built by Sol coders, with the Rust work running on Sunclaw.
+**Pull requests:** one in codex-router (B2a–B2e), and one in switchboard: the link (Cloudflare service binding and the Node socket), the admin forwarding plugin with its live permission check, the admin endpoints, the workspaces-and-records page, and the real provisioning call. Both are built by Sol coders, with the Rust work running on Sunclaw.
 </script></ex-markdown>
 
 <h2 id="b2-unknowns">Not fully known, and your decisions</h2>
