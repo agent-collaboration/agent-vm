@@ -346,7 +346,7 @@ Your live, read-only view of your organization (R47–R50). Only you open it (R4
 <ex-markdown id="specification--c13-second-factor-confirmation-text"><script type="text/markdown">
 | Part | What it says |
 |---|---|
-| a person token | `second_factor_at`: when the session last confirmed a second factor (absent if never), and `amr`: how (`otp` for an app or recovery code; `hwk` or `swk` with `user` for a passkey; `mfa` when a second factor is present) |
+| a person token | `second_factor_at`: when the session last confirmed a second factor (absent if never), and `amr`: how (`otp` for an app or recovery code; `pop` with `user` for a passkey (proof of possession of a key, IANA AMR registry 2023; a passkey's backup flag says whether it can sync, not whether its key is hardware-protected, so `hwk` and `swk` would claim what isn't known); `mfa` when a second factor is present) |
 | Fleet central's refusal | `secondFactorRequired { withinSeconds }`, in every owner command's refusal and in the device-login decision: the change needs a second factor confirmed within that many seconds; nothing changed. Denying a device code is checked by the same rule at the sign-in service, which doesn't ask central for a denial. |
 | what you see | no second factor yet: "This needs a second factor. Add a passkey or an authenticator app now." Has one: "Confirm it's you with your passkey or app code." |
 | recovery | your Google or GitHub sign-in, then "Use a recovery code or your app code", then add the new passkey or app |
