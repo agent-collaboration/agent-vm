@@ -120,7 +120,7 @@ All in the sign-in database. Nothing at central.
 | `session.activeOrganizationId` | new column | **approved** |
 | `sign_in_audit.organization_id` | new column; people-change records use it | **approved** |
 | `allowed_email`, `deployment_owner`, `organization_admission_claim`, `admitted_person_guard` | removed | **approved** |
-| `twoFactor`, `user.twoFactorEnabled`, `user.secondFactorSetAt`, `session.secondFactorAt`, `session.secondFactorMethod` | new, for second factors | **approved 4 November** (the generated SQL must match these tables) |
+| `twoFactor`, `user.twoFactorEnabled`, `user.secondFactorSetAt`, `session.secondFactorAt`, `session.secondFactorMethod` | new, for second factors | **approved 4 November**; the generated SQL (7 statements, sha256 `755982dd…`) was checked against these tables by the Lead and matches |
 | everything else (users, accounts, OAuth, device codes) | unchanged | — |
 </script></ex-markdown>
 
