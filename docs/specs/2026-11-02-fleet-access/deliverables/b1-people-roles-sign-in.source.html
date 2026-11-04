@@ -106,7 +106,7 @@ packages/sign-in-core/
 ├── src/central-link/       NEW      only the confirmation producer and the provisioning client
 │                                    (no forwarding yet)
 └── drizzle/                CHANGED  the approved migration (sha256 7aab7380…), plus the
-                                     second-factor migration (needs your approval, below)
+                                     second-factor migration (tables approved 4 November)
 ```
 </script></ex-markdown>
 
@@ -121,7 +121,7 @@ All in the sign-in database. Nothing at central.
 | `session.activeOrganizationId` | new column | **approved** |
 | `sign_in_audit.organization_id` | new column; people-change records use it | **approved** |
 | `allowed_email`, `deployment_owner`, `organization_admission_claim`, `admitted_person_guard` | removed | **approved** |
-| `twoFactor`, `user.twoFactorEnabled`, `user.secondFactorSetAt`, `session.secondFactorAt`, `session.secondFactorMethod` | new, for second factors | **needs your approval** (generated SQL comes to you before use) |
+| `twoFactor`, `user.twoFactorEnabled`, `user.secondFactorSetAt`, `session.secondFactorAt`, `session.secondFactorMethod` | new, for second factors | **approved 4 November** (the generated SQL must match these tables) |
 | everything else (users, accounts, OAuth, device codes) | unchanged | — |
 </script></ex-markdown>
 
@@ -236,7 +236,7 @@ sequenceDiagram
 ```mermaid
 flowchart LR
   T1["B1a organizations, roles, records<br/>(from the B4a branch) + approved migration"] --> T4["B1d the B1 journey<br/>on both builds"]
-  T2["B1b second factors<br/>(needs your SQL approval)"] --> T4
+  T2["B1b second factors<br/>(tables approved)"] --> T4
   T3["B1c flood limits"] --> T4
   T4 --> PR(["one PR: B1 → main"])
 ```
@@ -250,7 +250,7 @@ flowchart LR
 <ex-markdown id="b1-unknowns-text"><script type="text/markdown">
 | Not fully known | Settled by |
 |---|---|
-| the second-factor tables' exact SQL | generated, then brought to you for approval before B1b uses it |
+| the second-factor tables' exact SQL | tables approved 4 November; the generated SQL is checked against them before B1b uses it |
 | whether Better Auth 1.7.11's passkey hook can require user verification at sign-in; until proven, passkey *sign-in* stays off, and passkeys still work as a second factor | B1b's proof |
 | Better Auth's plugin and rate limits under D1's latency | B1's proof on D1 |
 
