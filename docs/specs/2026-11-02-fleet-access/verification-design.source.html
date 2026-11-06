@@ -71,6 +71,12 @@ Heavy runs (workerd, whole suites) go to sunclaw, never your Mac. Time is always
 | U42 | Login can't be flooded | Hammer each sign-in route from one address: past its limit, requests are refused and nothing is created, while another address still gets in. A forged address header doesn't help. A sign-in without a good Turnstile token is refused. | How the binding counts across Cloudflare locations, deployed |
 | U43 | Step-up | As owner, invite someone and approve a second machine: refused until you confirm with your passkey or app code, then it works; 15 minutes later it asks again. The first machine is approved without it, and looking needs none. | — |
 | U44 | Self-serve recovery | Lose the passkey: sign in with Google, use a recovery code, add a new passkey. With Google alone, adding one is refused, and a used recovery code doesn't work twice. | — |
+| U49 | Steps one at a time, then back where you were going | In a real browser, a new owner signs in and sees only the authenticator step, then only the organization step, then lands where they started: the command line, the invitation, or their account. Reloading, going back or opening a second tab shows the same step. | Phone browsers other than Chrome's phone view; screen readers |
+| U50 | Six journeys before release | All six (first owner, returning sign-in, command line, invited member, passkey, recovery) run end to end on a local sign-in service, then again on staging after each deploy, with no one signing in by hand. | Google's, GitHub's and the passkey's own sign-in screens (checked once per release, U54) |
+| U51 | Your account page | With nothing waiting, setup ends on the account page: your factors, your organizations (switching works), "you're all set", and no admin actions. | — |
+| U52 | A designed look | Every page is checked in a real browser at phone width and desktop: the Switchboard name only, one heading, the shared Agent Studio colours, everything labelled and reachable by keyboard. The command-line notice shows only while a command line waits. | A designer's judgement of the look: you see the screenshots on the release page |
+| U53 | Staging verified without you | After each staging deploy, the staging run resets its test users, signs them in through the staging-only route, and drives every journey. No real person's account is used. | — |
+| U54 | How staging is proven | Production refuses the staging route and a session staging made, and production's owner isn't a test address. Before each release, one real Google sign-in (the dedicated test Google account, through computer use) passes on staging. Locally, every page also runs with stand-ins. | Hosted GitHub sign-in, and a physical passkey (a virtual one is used) |
 </script></ex-markdown>
 
 <h2 id="verification-design--shared-observations">Shared observations</h2>
@@ -214,6 +220,37 @@ The lasting part of these negatives, the entry's refusals, runs locally in SO4. 
 - **Telemetry down:** with the collector stopped, the same run gives the same answers and the same state.
 - **The deploy configuration:** both Workers' configs turn on Workers Logs with the named destinations; central's turns on traces; the sign-in Worker's traces and invocation logs are off.
 - **JT1, once on the private stack (temporary):** a login, a refusal and a Google sign-in run with harmless canary values placed in request URLs and queries. Every record Cloudflare keeps for both Workers (Workers Logs, and central's automatic spans) is read through Cloudflare's API and searched for those canaries and for every secret of the run, and so are the records at your destination once you name it (OD17). Until then the export leg stays unverified. For central, the URL canary is expected in its spans (the stated limit); a credential carried in a header appearing in any of its records turns its traces off.
+
+**SO14: the setup-flow journey, locally** (needed, lasting). A new `verify-auth` journey `setup-flow`.
+- **What it reuses:** `local-auth-harness` (real workerd or Node, D1 or better-sqlite3, Google, GitHub and Turnstile protocol fixtures) with B2's controlled central peer. Its `served-owner-browser` driver follows only real redirects, but runs scripts in JSDOM, so it can't see layout, CSP enforcement or keyboard behaviour.
+- **What must be built:** a real-browser driver in `scripts/verify-auth/`, in TypeScript over the Chrome DevTools Protocol (headless Chrome; not Playwright). It uses CDP's virtual WebAuthn authenticator for passkeys, a phone viewport of 400 px, and the harness's controlled clock for deadlines and the 15-minute window. TOTP codes are computed from the key text the page shows, at the harness's controlled time.
+- **What it drives:** the six journeys on both hosts, each starting from the owner CLI's real `sign-in?authorize=…&deadline=…` address or an invitation link. Plus the review's discriminating cases:
+  - a clean database with the CLI started first;
+  - an incomplete bootstrap, then Try again;
+  - the deadline passing with a still-valid address, including a bootstrap held across it;
+  - a wrong, then right, authenticator code, and a reload before Finish;
+  - Accept then reload, and Decline by a person already in another organization;
+  - Accept and Decline at once;
+  - a Decline on a pending but expired invitation;
+  - a wrong-account invitation.
+- **What it reads:** the page each step lands on (its heading, its one step, and the notice), the loopback's received code, the database rows (factor, `member`, `invitation` status, client), and per page: the application name, the heading count, computed colours against `panel-theme.css` tokens, overflow at 400 px, labels, and the keyboard tab order.
+
+**SO15: the staging run after each deploy** (needed, lasting). The same driver as SO14, pointed at staging.
+- **What it drives:**
+  1. `POST /__staging/test-identities/reset`, then create the configured-owner test identity and an invitee (both `.invalid`), with the staging bearer secret read through `agent-vault` and never printed;
+  2. sign each in through `POST /__staging/test-identities` and take its cookie;
+  3. drive journeys 1–4 and 6, and journey 5 from adding a passkey (a CDP virtual authenticator) onward, all against the staging deploy.
+- **TOTP:** codes come from the key text the page shows, timed from the staging response's `Date` header, never the run machine's clock.
+- **Not part of this run, as you chose:** the sign-in step itself (provider, passkey sign-in, real Turnstile).
+- **What it reads:** what SO14 reads, through staging's pages and staging's D1 (read with `wrangler d1 execute --remote` on the staging database).
+
+**SO16: production negatives and the release record** (needed, lasting; the real sign-in part runs once per release, temporary).
+- **Negatives:** against production, as a network client, read-only:
+  - `/__staging/test-identities` and `/reset` → 404;
+  - a session cookie that SO15 minted on staging → treated as no session;
+  - production's deployed sign-in configuration (read with `wrangler`) → its configured owner isn't under the test domain;
+  - the production build artifact → contains no `testUtils`, no staging module and no harness fixtures (a search of the bundle that's deployed).
+- **The real sign-in:** a Codex Verifier with computer use and Brave signs in to staging with the dedicated test Google account, through the real Turnstile widget, and reaches the account page. Agents never use your own account. Its screenshot and the session row go into the release record, together with SO15's results and the negatives.
 </script></ex-markdown>
 
 <h2 id="verification-design--coverage-rows">Coverage rows</h2>
@@ -254,6 +291,12 @@ The lasting part of these negatives, the entry's refusals, runs locally in SO4. 
 | **U42**: R52, R42 | SO2's flood cases on both hosts | R52; R42; V44, V34 | SO2: local workerd with Miniflare's rate-limit binding, and the Node host | lasting | Past each class's limit from one address: 429 or `slow_down`, with nothing changed; another address passes; a forged header is ignored; counts expire with no rows. A sign-in without a verified Turnstile token creates nothing. A build that leaves the limiter off outside production, trusts `x-forwarded-for`, creates a device code on a limited request, or skips Turnstile fails. | — | The binding's sharing and approximate counting across deployed Cloudflare locations; Turnstile's real siteverify, checked once at JC1 |
 | **U43**: R53, R13, C13 | SO4's step-up scenarios; SO2's token claims | R53; C13; V45 | SO4 (Tokio and workerd); SO2 | lasting | Every R13 change succeeds only with a fresh second factor, the first machine without, reads without; the refusal changes nothing. A build that accepts Google alone for a change, skips the window, or extends the exception fails. | — | — |
 | **U44**: R54 | SO2's second-factor cases | R54; V46 | SO2 (local workerd and Node) | lasting | First factor from a provider sign-in with codes shown once; later changes need two factors; a code works once; nothing resets another person's factors. A build where Google alone replaces a factor, or a code works twice, fails. | — | The after-verification hook refusing an unverified passkey sign-in, until B1 proves it at 1.7.11 (passkey sign-in stays off until then) |
+| **U49**: R57, R58, R60 | Drive every combination of steps and destinations, then the six journeys | R57, R58, R60; V49, V50, V52 | focused Hegel tests on `decideSetupPage`, plus SO14 on both hosts | lasting (SO14) | The page reached after each action is the first pending step only; after the last step it's the destination R58 names; past the deadline it's the account page with the notice, never the loopback. A build that shows two steps, skips a pending step, follows an outside or expired destination, or redirects to a closed loopback fails. | `people-owner-page` host e2e (CLI continuation, organization chooser), whose JSDOM driver follows real redirects | real browsers other than Chrome |
+| **U50**: R58–R61, R63 | Run all six journeys locally on both hosts, then on staging | R63; V50–V53, V55 | SO14 (both hosts), SO15 (staging) | lasting | Each journey ends where R63 says, with its rows: factor set, membership or none, invitation accepted or rejected exactly once, and the CLI holding a code. A build where any journey stops short, an invitation is answered twice, or an expired invitation is declined fails. | `people-factor-enrollment`, `people-passkey-page` host e2e (software authenticator) | passkey sign-in on staging (SO14 locally only, as R65 says) |
+| **U51**: R58, R62 | Finish setup with nothing waiting; switch organization | R62; V54 | SO14, SO15 | lasting | The account page lists the person's factors and organizations, switching changes `activeOrganizationId`, it says "you're all set", and it offers no admin control. A build that lands elsewhere, or shows an admin control, fails. | none | — |
+| **U52**: R64 | Inspect every page in a real browser at 400 px and desktop | R64; V56; `panel-theme.css` tokens | SO14 (and SO15 on staging) | lasting | Every page: the application name Switchboard and never "Tool Portal"; exactly one `h1`; computed colours equal the shared tokens; no horizontal overflow at 400 px; every control has a label and is reached by Tab; the command-line notice only with a CLI destination. A build with the old name, two headings, forced overflow or the notice with nothing waiting fails. | `served-page-appearance` unit test (CSS and slots, not layout) | a person's judgement of the look: the release page shows screenshots for you |
+| **U53**: R65 | After each staging deploy, run SO15 | R65; V57 | SO15 against staging | lasting | Every journey and named refusal passes from test identities; the run's accounts are all `.invalid`; no hand sign-in happened. A run that needed a person, used a real account, or skipped a journey fails. | none | — |
+| **U54**: R66, R67 | Production negatives; one real sign-in per release; the local runs | R66, R67; V58, V59 | SO16 (production negatives; real sign-in on staging), SO14 (local) | lasting (real sign-in: temporary, once per release) | Production answers the staging routes 404, treats a staging cookie as no session, has a non-test owner, and its bundle has no test code; the real Google sign-in reaches the account page through the real Turnstile. A build that ships `testUtils`, shares staging's secret or database with production, or a release without its real sign-in fails. | none | hosted GitHub sign-in; a physical passkey; Turnstile under real attack traffic |
 </script></ex-markdown>
 
 <h2 id="verification-design--journeys-to-build-or-extend">Journeys to build or extend</h2>
@@ -271,6 +314,9 @@ The lasting part of these negatives, the entry's refusals, runs locally in SO4. 
 | Cutover checks (SO10) | needed | temporary, once per step | a test sign-in service and test Fleet central behind it, with a test Access application on `/fleet/` | refusals and successes per step |
 | Contract round trips (SO6) | needed | lasting | generated fixtures through Rust and Zod | parse results |
 | The link and its operations (SO7) | needed | lasting | each C7 route, through the real link on each host; a direct request to central | refusals; unchanged state; central's outbound requests |
+| `verify-auth` `setup-flow` (SO14) | needed: a CDP real-browser driver over `local-auth-harness` with B2's central peer | lasting | the owner CLI's sign-in address and invitation links, then each page and action | landing pages, loopback codes, rows, the look per page |
+| Staging run (SO15) | needed: the SO14 driver against staging, plus the staging-only routes | lasting | the staging test-identity routes, then the journeys | as SO14, through staging's pages and D1 |
+| Production negatives and release record (SO16) | needed | lasting (the real sign-in: temporary, once per release) | production's staging routes, a staging cookie, the deployed configuration and bundle; the real Google sign-in on staging | 404s, no session, the owner value, a bundle search, the real sign-in's account page and screenshot |
 
 Heavy runs (workerd, whole suites) run on sunclaw, never on your Mac. The deployed rows run as network clients. SO1's and SO8's native launch parts need provider accounts on the run machine and an isolated, signed debug Host and Router root on declared ports. SO11 also needs a provider account on the run machine, and SO12 needs Codex and Claude accounts there. The Linux tests run in codex-router's existing CI test job; no job or gate is added.
 </script></ex-markdown>
