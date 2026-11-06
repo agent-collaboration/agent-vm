@@ -2021,6 +2021,144 @@ Some sections still mention the ticket names of the retired item-two plan. Read 
 | V5s | **B9** Members in the view |
 </script></ex-markdown>
 
+<h2 id="program-design--getting-in-the-setup-flow">Getting in: the setup flow, the pages and staging proof (R57–R67)</h2>
+<ex-markdown id="program-design--getting-in-the-setup-flow-text"><script type="text/markdown">
+**What changes:** today the sign-in service has two pages, `/sign-in` and `/owner-ready`. The second shows every form at once: the factors, the organization, and a command-line Continue button. The new design keeps today's proven way of carrying the command line's request (a validated `authorize` address in the page's URL), adds **one decision that picks the page**, splits the pages into one small page per step, and puts the test sign-in in a **separate staging build**. Every change still goes through Better Auth's own endpoints and the existing hooks (R53, R54, OD26).
+
+Evidence: [current-system walk](../../../tmp/2026-11-06-onboarding-pd/current-system.md) at switchboard `41302fc8` (PR #10) and `6d924013` (B2), Better Auth 1.7.11; [program review](../../../tmp/2026-11-06-onboarding-pd/review.md).
+
+```mermaid
+flowchart TB
+  REQ["A page request<br/>GET /sign-in, /setup, /invitation/:id, /account<br/>(carrying authorize + deadline when a command line waits)"] --> DEC["setup decision<br/>(pure, sign-in-core)<br/>decideSetupPage"]
+  DEC -->|"not signed in"| P1["Sign-in page"]
+  DEC -->|"secondFactor pending"| P2["Authenticator step"]
+  DEC -->|"organization pending"| P3["Organization step<br/>invitations; Create only for the configured owner;<br/>else ask for an invitation"]
+  DEC -->|"an unanswered invitation"| P4["Invitation page<br/>Join org as role: Accept / Decline"]
+  DEC -->|"command line waiting,<br/>no current organization"| P5["Choose organization"]
+  DEC -->|"command line waiting, ready,<br/>before its deadline"| CONT["Returning to the command line<br/>(POST bootstrap, then the authorize address;<br/>no approve screen)"]
+  DEC -->|"ready, nothing waiting,<br/>or the deadline passed"| P6["Account page"]
+```
+</script></ex-markdown>
+<h3 id="program-design--getting-in-choices">The choices</h3>
+<ex-markdown id="program-design--getting-in-choices-text"><script type="text/markdown">
+**1. How the command line's request survives the steps (R58).**
+
+| Option | What it is | Gains | Costs |
+|---|---|---|---|
+| **A. Today's validated `authorize` address, plus the CLI's own deadline (selected)** | the CLI opens `/sign-in?authorize=…&deadline=…`. Every page keeps both parameters, and the social sign-in `callbackURL` carries them. `ownerAuthorizationResume` still validates the address. The deadline is the CLI's own wait end (`owner-cli-login.ts:154`), fixed once and never renewed. | already built and proven on both hosts (`served-owner-browser`); the owner's client is created at continuation, when an owner session and active organization exist; no native call auto-resumes past the recovery codes | our own continuation beside Better Auth's. The deadline is unsigned, but a forged one only changes where the forger's own browser lands, since the loopback address is still validated. An invalid address now means "none" instead of 503. |
+| B. Better Auth's `postLogin` step | the CLI opens native `/oauth2/authorize`; Better Auth sends a signed query to our setup page; we resume with `/oauth2/continue` | Better Auth's own "choose after login" hook; compatible with `skip_consent` | three problems found in review. Native authorize refuses an unknown client before reaching login (`authorize-CtCi8mAs.mjs:5722`), so a first owner, whose client the bootstrap creates later, can't start (PD-F1). The signed query's `exp` (600 s) is re-signed at every prompt and isn't the CLI's 300 s wait (PD-F2). Native resume after a cookie rotation can skip past the recovery codes (PD-F3). |
+
+**Reopen B if** the owner's CLI client becomes a configured trusted client that exists from deploy. Two problems would remain: the deadline and the recovery-code ordering.
+
+**2. Where an invitation destination lives (R58, R61).** It's our own route, `/invitation/:id`. Sign-in carries it as the `callbackURL`. The page reads the invitation through Better Auth's `get-invitation`, which checks the session, the recipient's verified email and that it's pending before returning anything (`crud-invites.mjs:498–521`), so a wrong account learns nothing. **After Accept or Decline the controller navigates to `/setup`**, carrying `authorize` and `deadline` if a command line waits and dropping the invitation ID. So the used invitation is never reopened: the decision then shows the next step, the command line, or the account page.
+
+**3. Where the test sign-in lives (R66).** A separate staging entrypoint (`sign-in-host-cloudflare/src/staging/`), like the existing proof entrypoint. It builds the auth instance with **the same core factory and the same options** as production, plus Better Auth's `testUtils` plugin, on staging's own D1 and secret. A production-build flag was rejected: R66 forbids a configuration that could turn it on.
+
+**4. How the pages look (R64).** They stay server-rendered React from `tool-access-ui/server` (no client app), with its dark-only Agent Studio palette (`panel-theme.css:9`). The shell's product name becomes one `applicationName = "Switchboard"` constant, and the doubled `h2` headings go.
+</script></ex-markdown>
+<h3 id="program-design--getting-in-binding">Where each new entity lives</h3>
+<ex-markdown id="program-design--getting-in-binding-text"><script type="text/markdown">
+| E | Owner | Home | Shape at its boundary | Kept as |
+|---|---|---|---|---|
+| E29 Setup step | sign-in core | `sign-in-core/src/setup-flow/` (new) | `SetupStep = { kind: "secondFactor" } \| { kind: "organization", offer: OrganizationOffer }`, `OrganizationOffer = { kind: "create" } \| { kind: "invitations", invitationIds: UUIDv7[] } \| { kind: "askForInvitation" }` | derived from existing rows: factor history (`second-factor-store.ts`), `member`, `invitation` |
+| E30 Ready | sign-in core | `setup-flow/` | part of `SetupPage` | derived |
+| E31 Invitation | Better Auth organization plugin | `invitation` (existing) | `get-invitation`'s response; the page uses `organizationName`, `role` | persisted (native) |
+| E32 Return destination | sign-in core | the page URL | `ReturnDestination = { kind: "commandLine", authorize: OwnerAuthorizationResume, deadlineMs: number } \| { kind: "invitation", invitationId: UUIDv7, then: ReturnDestination } \| { kind: "none" }`, parsed at the edge; anything invalid parses as `none` | in the URL, never stored |
+| E33 Test identity | staging entrypoint | Better Auth `user` rows on staging's D1 only | `TestIdentityRequest = { email: string, name: string }`, email under the staging test domain; `TestIdentityResult = { kind: "signedIn", userId, setCookie: string[] } \| { kind: "refused", reason: "unauthorized" \| "notTestDomain" } \| { kind: "unavailable" }` | persisted on staging only |
+| E34 Release | deployment workflow | the release record (Verification Design) | none: a process fact | not stored by the service |
+
+`SetupPage = { kind: "signIn" } \| { kind: "step", step: SetupStep } \| { kind: "invitation", invitationId } \| { kind: "chooseOrganization" } \| { kind: "continueCommandLine" } \| { kind: "account", notice?: "commandLineExpired" }`. It's a closed TypeScript union. The core reaches storage and time only through the existing injected stores and clock (R30), so the deadline is compared on the injected clock.
+
+**The staging test domain** is a reserved `.invalid` name, set in staging's configuration. No real provider can verify an address there. On staging the configured owner is itself a test identity, so the first-owner journey can run. Production's configured owner is your real address, checked by the release run (not by code, so no production code path knows about test identities).
+</script></ex-markdown>
+<h3 id="program-design--getting-in-components">Components and paths</h3>
+<ex-markdown id="program-design--getting-in-components-text"><script type="text/markdown">
+| Component | One job | Changes because | Used by |
+|---|---|---|---|
+| `setup-flow/decide-setup-page.ts` (new, pure) | from the session facts, memberships, pending invitations for the verified email, the destination and the clock, pick one `SetupPage` | the steps or their order change | the page router |
+| page router in `sign-in-http-handler.ts` (modified) | GET `/sign-in`, `/setup`, `/invitation/:id`, `/account` → the decided page. No GET writes anything. | a page is added | browsers |
+| page components in `sign-in-core/src/pages/` (split) | one component per `SetupPage` kind from `tool-access-ui/server`, with a step indicator on the step pages | the look changes | the router |
+| authenticator step controller and `factor-enrollment-page.ts` (modified) | see the recovery-code path below | — | the authenticator step |
+| invitation page controller (new) | Accept (native `accept-invitation`) or Decline (the decline endpoint below), then navigate to `/setup` with the remaining destination | — | the invitation page |
+| `decline-invitation` endpoint in a project Better Auth plugin (new, beside `passkey-confirmation-plugin.ts`) | refuse unless the signed-in, verified email is the recipient and the invitation hasn't expired (`expiresAt` against the injected clock, as Better Auth's own accept checks); then `adapter.update({ model: "invitation", where: [id, status = "pending"], update: { status: "rejected" } })`; no row updated means already answered | native `reject-invitation` updates without a status guard (`crud-invites.mjs:394`), so a Decline racing an Accept could overwrite it (PD-F5) | the invitation page |
+| continuation page script (replaces the Continue button) | on `continueCommandLine`, POST `/owner/bootstrap` (unchanged: creates or reads back the client and its resource link, idempotently, for an owner with an active organization), then, **only if the injected clock is still before the deadline**, `location.assign(authorize)`. Past the deadline, at any point including after a slow or retried bootstrap, it goes to `/account?notice=commandLineExpired` instead. `incomplete` or a refusal shows the reason and **Try again**, and Try again re-checks the deadline. A member, who needs no bootstrap, goes straight to `authorize`. | — | the continuation page |
+| route allowlist in `sign-in-request-handler.ts` (modified) | add `organization/get-invitation`, the project's `decline-invitation`, and passkey `generate-authenticate-options` and `verify-authentication` (R63 journey 5; Turnstile already guards them). Native `reject-invitation` stays closed. | a route is exposed | everything |
+| `owner-cli-login.ts` (modified) | add `deadline` (its own wait end) to the address it opens | — | the owner CLI |
+| staging entrypoint `sign-in-host-cloudflare/src/staging/` (new) | build the auth instance with the shared factory, options and stores plus `testUtils()`; serve `POST /__staging/test-identities` (find or create the user for an email under the test domain via `ctx.test.createUser`/`saveUser`, then `ctx.test.login({ userId })` → `Set-Cookie`) and `POST /__staging/test-identities/reset` (delete test-domain users, their sessions and memberships, and organizations only test users own). Both need the staging bearer secret. Every other request goes to the same production handler. | — | the staging verification system |
+
+The `/owner-ready` page and its always-present Continue button go away (hard cutover, no redirect). The core factory takes an optional extra-plugins list only from code: the production entry passes none, and no configuration field sets it.
+
+**Recovery codes (R59).**
+1. The step's form POSTs `two-factor/enable`. Native returns the setup address and the plaintext codes once (`two-factor/index.mjs:133–174`).
+2. The adapter renders the QR, the key and the code form, and holds the codes in an inert `<template>` the page doesn't show.
+3. The controller POSTs `verify-totp` as JSON, without any OAuth query. A wrong code (`INVALID_CODE`) keeps the page, with the error beside the field.
+4. A correct code rotates the cookie (the browser takes it) and the controller reveals the codes with **Finish**. Finish navigates to `/setup`, keeping the destination.
+5. A reload or second tab is a fresh GET. The decision sees the factor set up and moves on, and the codes are gone from memory.
+6. A repeated `enable` before verification replaces the unverified secret and codes natively.
+
+```mermaid
+sequenceDiagram
+  participant CLI as owner CLI
+  participant B as browser
+  participant R as page router + decideSetupPage
+  participant BA as Better Auth endpoints
+  CLI->>B: open /sign-in?authorize=…&deadline=…
+  B->>R: GET /sign-in
+  R-->>B: Sign-in page (Google, GitHub, passkey; Turnstile)
+  B->>BA: social sign-in (callbackURL /setup?authorize&deadline)
+  BA-->>B: 302 /setup?… with session
+  B->>R: GET /setup → Authenticator step
+  B->>BA: enable, then verify-totp (JSON)
+  B-->>B: reveal codes, Finish
+  B->>R: GET /setup → Organization step
+  B->>BA: create organization (or accept invitation)
+  B->>R: GET /setup → continueCommandLine (now < deadline)
+  B->>BA: POST /owner/bootstrap → complete
+  B->>BA: GET authorize (session; skip_consent)
+  BA-->>B: 302 loopback ?code&state&iss
+  B->>CLI: code; the CLI exchanges it (unchanged)
+```
+
+Error edges: past the deadline, the decision gives `account` (and the continuation script checks again just before it navigates) with the notice "Your command-line sign-in expired; run it again", and the CLI's own wait reports the same. A malformed or foreign `authorize` parses as `none`. A store error is 503, as today. Native refusals show beside their field (R60, R61).
+</script></ex-markdown>
+<h3 id="program-design--getting-in-state-failure-trust">State, failure and trust</h3>
+<ex-markdown id="program-design--getting-in-state-failure-trust-text"><script type="text/markdown">
+**State.** No new stored state for the flow. The decision reads the rows that already own each fact. The recovery codes live only in the page between `enable` and Finish. The destination lives only in the URL.
+
+**Concurrency.**
+- Two Accepts: native's pending guard.
+- Accept against Decline: the decline endpoint's pending-guarded update. Whichever lands first wins, and the other is told it's already answered.
+- Two tabs: they read the same rows. A second `enable` before verification restarts the setup.
+- Bootstrap twice: it's idempotent (create or read back).
+
+**Failure.**
+- Central unavailable when an organization is created: unchanged from B2 (setting up, Try again).
+- Bootstrap incomplete: the continuation page shows Try again, and no organization is created again.
+- A member runs the CLI before the owner's client exists: Better Auth's authorize answers `invalid_client`, and the page says the command line isn't set up yet for this service.
+- Deadline passed: account page with the notice.
+
+**Trust.**
+- **Separate state.** Staging and production have separate D1 databases and separate auth secrets, so a cookie or session minted on staging is unknown to production.
+- **No test identity in production.** The `.invalid` test domain can't be verified by Google or GitHub. That's an assumption about the providers, unproven here, so it isn't the only fence. The release run checks that production's configured owner isn't under it. The production artifact has no `testUtils` and no staging module (production's allowlist answers `/__staging/*` with 404).
+- **Staging routes.** They need `STAGING_TEST_SIGN_IN_SECRET`, a Worker secret on staging only, and touch only test-domain users.
+- **Pages.** They never navigate anywhere but this service or a validated loopback.
+</script></ex-markdown>
+<h3 id="program-design--getting-in-proof-seams">Proof seams</h3>
+<ex-markdown id="program-design--getting-in-proof-seams-text"><script type="text/markdown">
+- **The page decision**: `decideSetupPage` is pure, so Hegel property tests run over every combination of facts and clock (R57, R58, R60).
+- **Locally (R67)**: the existing `local-auth-harness` (real workerd or Node; Google, GitHub and Turnstile protocol fixtures; B2's controlled central peer), driven by a real browser for the look at 400 px and keyboard use (R64). The Verification Design picks the driver. Discriminating cases from review:
+  - a clean database with the CLI started first, plus an existing owner whose client bootstrap was left incomplete (PD-F1);
+  - the CLI's deadline passing while the rest is still valid (PD-F2);
+  - the delivered controller against native `enable` and `verify-totp` responses (PD-F3);
+  - Accept followed by a reload, and Decline for a person in another organization (PD-F4);
+  - Accept and Decline at once (PD-F5).
+- **On staging (R65, R66)**: the staging entrypoint resets and creates test identities, then the journeys run against the staging deploy. The production negatives (PD-F7):
+  - a session cookie minted on staging is refused by production;
+  - production's configured owner isn't under the test domain (the release run reads the deployed configuration);
+  - the production artifact has no `testUtils` or staging module;
+  - production answers `/__staging/*` with 404.
+- **Before a release**: one real Google or GitHub sign-in, by a dedicated test account or by you with a Verifier watching.
+</script></ex-markdown>
 <h2 id="program-design--changes-and-cutover">Changes and cutover</h2>
 <ex-markdown id="program-design--changes-and-cutover-text"><script type="text/markdown">
 > **Superseded placement (3 November).** Parts of this section were written for today's separate objects: a per-machine Connection object, a separate organization authority object, the Organization Registry and today's Registry. The central storage reset replaces them with **one Fleet object per organization plus one per project, and no new store** ([current map](#program-design--central-storage-with-the-fleet-structure-change)). Read this section's rules as rules: they still hold. Read its object names as homes in the current map:
@@ -2111,6 +2249,17 @@ There's nothing to migrate: presence is new state in each Connection object, and
 | U40 | R48: each change shows within OD14; an unclean drop shows not connected with its last-seen time; a disconnected machine's sessions show unknown | E7, E24 | Connection object (presence, on its own clock); organization authority; session activity reporter; the page | `Heartbeat`; `ReadMachinePresence` at each lookup, with a deadline of half a refresh; `ReportSessionActivity` (the whole state, sequenced); refresh every sixth of OD14, with an answer deadline of one interval | `MachinePresenceAnswer` (durations); `SessionActivity`; `SessionActivityEntry` | presence in each Connection object (three heartbeats of silence); activity counted only on the connection answered `Open` | a crash → `NotConnected` after three heartbeats of silence; a Connection object that doesn't answer → unavailable; an unanswered or refused activity report → a fresh whole-state report; central restart → `NotConnected` until reconnect | a controlled clock at each object: a connect, a clean close, a cut connection, a session starting and stopping, all within OD14; a session on a cut machine reads unknown; the Connection object's and the organization authority's clocks offset by several seconds, with the same result |
 | U40, U32, U21 | R49: only the organization's admin; only its own machines and sessions; unavailable, never a stale picture; no operator shown | E1, E6, E7, E24 | the permission check (`organization:view`) and central's permission guard; who-is-logged-in page | `WhoIsLoggedIn` under the permission guard; the page's freshness timer | `LookupRefusal`; no operator field in any row | none: a read | anyone else → refused, nothing revealed; failure or OD14 without a snapshot → unavailable | admin route and page: owner, member, other organization's owner, bot, session and machine tokens; central stopped while the page is open |
 | U40 | R50 (stage C): each member's sign-in state and last sign-in | E3, E19 | sign-in service (members and sign-in facts, both its own) | the page reads Better Auth's `member` and `session` rows | Better Auth `member`, `session` | none: each fact read from its owner | as R49 | stage C: a person signing in and out, shown within OD14 |
+| U49, U43, U44 | R57: one pending step at a time; nothing past sign-in while a step is pending; reload changes nothing | E3, E29, E30 | sign-in core setup decision | `decideSetupPage`; the page router | `SetupPage`, `SetupStep` in `sign-in-core/src/setup-flow/` | derived from factor history, `member`, `invitation` | store error → 503 | Hegel property tests over the facts; local journeys |
+| U49, U50, U51 | R58: back to the destination; choose an organization first if needed; invitation used once; deadline; else account page | E30, E31, E32 | sign-in core (page router, decision); continuation page script | `decideSetupPage`; `/setup`, `/invitation/:id`; `/owner/bootstrap` then authorize | `ReturnDestination` in the URL; `OwnerAuthorizationResume` (existing) | none stored | invalid → `none`; past the deadline → account with notice; bootstrap incomplete → Try again | Hegel tests with the clock; clean-DB CLI-first; incomplete bootstrap; deadline passed with a valid address; bootstrap paused or retried across the deadline → account, never loopback; Accept then reload |
+| U49, U50, U44 | R59: QR and key, code, recovery codes until Finish; reload never re-shows them | E25, E29 | authenticator step controller; enrollment page adapter | native `two-factor/enable` then `verify-totp` (JSON, no OAuth query) | `factor-enrollment-page.ts` (modified); codes in an inert template | codes only in the page | wrong code keeps the setup; repeated enable restarts it | the delivered controller against native responses: wrong code, right code, reload before Finish |
+| U49, U50, U26 | R60: invitations offered; Create only for the configured owner; short name follows the name until edited | E1, E19, E29, E31 | organization step page; existing organization hooks | native `create`, `accept-invitation` | `OrganizationOffer`; page controller | `organization`, `member` (native) | refusal beside the field | page tests; local journey |
+| U50, U20 | R61: Join org as role, Accept or Decline, used once; wrong account learns nothing | E19, E31 | invitation page and controller; project `decline-invitation` endpoint | native `get-invitation`, `accept-invitation`; `decline-invitation` (pending-guarded update) | Better Auth invitation rows | `invitation` (native) | already answered → told so; wrong account → generic refusal | Accept and Decline at once; Accept then reload; wrong account; Decline POST on a pending but expired invitation leaves it unchanged |
+| U51 | R62: account page with factors and organizations, done, no admin | E3, E19, E25 | account page | native `set-active`, factor routes | page component | native rows | as their routes | local journey |
+| U50 | R63: six journeys before a release | E3, E29, E31, E32, E34 | the pages above; passkey sign-in routes allowlisted | as above | as above | as above | as above | Verification Design: local and staging runs of all six |
+| U52 | R64: Switchboard name, the shared dark palette, one heading, notice only when waiting, 400 px, keyboard | none: every page | `pages/` with `tool-access-ui/server` | page components | `applicationName` constant; `panel-theme.css` (existing) | none | none | real-browser checks at 400 px; a scan for other application names |
+| U53, U54 | R65: every journey on every staging deploy, no person, no real accounts | E33, E29, E31 | the staging verification system | `POST /__staging/test-identities`, `/reset` | `TestIdentityRequest`, `TestIdentityResult` | staging rows, reset per run | a refused or unavailable test sign-in fails the run | Verification Design: the post-deploy run |
+| U53, U54, U20, U42 | R66: the test path only on staging; production refuses it and what it makes; one real sign-in per release | E33, E34 | staging entrypoint (shared factory + `testUtils`); deployment | staging-only routes | `sign-in-host-cloudflare/src/staging/` (new); `.invalid` test domain | separate staging D1 and secret | production → 404; staging cookie → refused | staging cookie against production; production's configured owner not under the test domain; artifact scan; `/__staging/*` → 404; release record of the real sign-in |
+| U54, U33 | R67: every page and journey on a local Worker with stand-ins; none in production builds | none: every page | `sign-in-test-support` harness (existing) | `startLocalAuthHarness` | fixtures (existing) plus B2's controlled central | temporary | none | the local runs; a production-bundle scan for fixtures |
 
 **Coverage:** each obligation of the [Specification](specification.html#specification--obligations) has a row. R19 here is a machine's revocation; its notices come with step 3. R50's people half is built in this design; its bot half comes when bots exist.
 </script></ex-markdown>
