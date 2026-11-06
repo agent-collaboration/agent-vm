@@ -145,6 +145,26 @@ Every row is your direction, or a decision already recorded in the people sign-i
 | U41 | **You can see what happened.** Logs and traces from every Fleet-access service reach an OpenTelemetry tool. On Cloudflare that's what Cloudflare gives: Workers Logs for both Workers and traces for Fleet central, exported over OTLP (the sign-in Worker's automatic traces would record sign-in codes from its URLs). The Node and Tokio hosts export the same over OTLP. Every login, refusal and connection leaves a record with its reason. No token, code or secret is ever in one. | When a login or a connection fails, you need to see why without reading code or adding logging after the fact. | "we shoudl also allow otel logign etc cloudflare gives us" |
 | U42 | **Login can't be flooded.** Repeated sign-in, code-entry, approval and login requests from one address are slowed and change nothing, on every host, using what Better Auth and Cloudflare already give: Better Auth's rate limits, Cloudflare's rate-limit binding, and a **Cloudflare Turnstile** check on people's sign-in, through Better Auth's captcha plugin. | The sign-in service is public: people sign in there and machines' codes are entered there. A flood could guess codes or fill storage. | "flood protection to login? isthere helpers or in clodkuflare sdk or otehrs to help with this? or bettehr authy?"; "is rate limits tehre?"; "cloduflare tursntile shodul be itnergrated we have accoutn" |
 
+**Getting in**
+
+The rows above say who may sign in and what each person needs. These say what **the experience** must be: the pages a person moves through, from their first visit to ready.
+
+**The pages today:** a picture of today's signed-in pages isn't included yet. They can't be captured without signing in, and the staging test setup path (U54) is what makes that possible. Until then, the record is your screenshot of 6 November: the old "Tool Portal" name, a doubled heading, no steps, a command-line card with no command line waiting, and uneven alignment.
+
+| ID | Need | Why it matters | Your words |
+|---|---|---|---|
+| U49 | **Signed in isn't ready.** After signing in, a person is taken through each required step that's still missing, one at a time: first their second factor, then an organization (create one, accept an invitation, or choose one they're in). Then they return to where they were going, such as the command line that's waiting or the invitation they opened, and the flow checked that destination when it started. The flow is taken from Clerk's and Better Auth's own onboarding. | The pages showed every form at once, with no steps, and didn't say what came next. | "steal flow and design from better auth and clerks on the system"; "why the fuck is the sign in so slop?"; "Yes: getting in, and staging verification" (review 58647d30) |
+| U50 | **Six journeys, all before release.** (1) A first-time owner: sign in, set up the authenticator app and recovery codes, then create the organization. (2) A returning person signs in and is asked for a second factor only when making a change. (3) The command-line login, as it works today, with no "Approve this command line?" screen. (4) An invited member opens the invitation, signs in as themselves, and accepts or declines. (5) Adding a passkey and signing in with it. (6) Recovery with a recovery code or another second factor. Journeys 1–4 are built first, then 5 and 6. All six work before the pages are released. | These are the ways people actually get in. Passkeys (U20) and recovery (U44) are already required, so only their order was open. | the recommended build order in review 58647d30 |
+| U51 | **Where setup ends.** When setup is done and nothing (no command line or invitation) is waiting, the person lands on their **account page**: their second factors, the organizations they're in (with one to choose), and a clear sign that they're done. It has no admin actions. | A person must know they've finished and what they can do next, without a new admin surface. | "Your account page" (review 58647d30) |
+| U52 | **A designed look.** Every page carries the **Switchboard** name and uses Agent Studio's colours, as the Switchboard's own pages do, built from its shadcn and React components. The pages follow one design system: one heading per page, a step indicator during setup, and consistent alignment. The command-line notice appears only while a command line is waiting. They work at phone width too. | The pages came out unstyled, then styled but with no designed flow: the old product name, a doubled heading, no steps, a stray command-line card. | "i asked you to use colors from agent studio which is what tool portal uses but shadcn and react design system properly for the flow"; Switchboard (OD12) |
+
+**Proving it on staging, without you**
+
+| ID | Need | Why it matters | Your words |
+|---|---|---|---|
+| U53 | **Staging is verified without you.** Every journey in U50 is driven and checked on staging by the verification system, not by you. The Verification Design says how. Your own accounts are never used for automated checks. | Staging was never fully verified, and agents' safety rules stop them before Google sign-in and authenticator setup on your account. | "i do not want to fucking touch staging you do it … you must verify the whole fucking thing and make verification systems for staging in the verification design" |
+| U54 | **How staging and the pages are proven.** Better Auth's own test helpers (`testUtils`) sign in a test identity through a **staging-only test setup path**, and the automated checks start from there: authenticator setup with computed codes, organization creation, the setup pages under their security policy, and permission refusals. Production refuses that path, and that refusal is proven. Once per release, one **real** sign-in is checked, by a dedicated test account or by you once while a Verifier watches. That covers the real Google or GitHub step and its real Turnstile check. For UI checks, the sign-in Worker runs locally with stand-ins for the sign-in provider, Turnstile and central. | There's no exception to "Google, GitHub or passkey only" and no new sign-in provider, while every journey still gets proven. | the recommended staging option in review 58647d30; "for ui testing you can mock things localy run the worker locallyf" |
+
 **How it's built**
 
 | ID | Need | Why it matters | Your words |
@@ -176,7 +196,9 @@ Every row is your direction, or a decision already recorded in the people sign-i
 - a second factor (passkey or app code) for the owner's changes, and self-serve recovery with recovery codes;
 - explicit limits on sign-in, code-entry, approval and login requests (R42 asks for them; nothing sets them today);
 - telemetry: Cloudflare's Workers Logs and traces are off for both Workers, central's Tokio host logs without exporting, and the sign-in service logs nothing;
-- the live who-is-logged-in view.
+- the live who-is-logged-in view;
+- designed sign-in and setup pages: steps one at a time, a return to where you were going, the invitation page, the account page and the Switchboard look (U49–U52);
+- a verification system for staging that needs neither you nor your accounts, plus local runs of the pages with stand-ins (U53, U54).
 
 **What may change:**
 - Fleet central and the Router (`agent-collaboration/agent-collaboration`);
@@ -196,7 +218,13 @@ agent-vm is frozen and changes for neither. The Switchboard isn't changed by thi
   - logging machines in unattended, without your device-code approval. That's parked for later, and your preferred shape is **OIDC trust**: you register an issuer (a cloud provider, or your own), and a machine presenting a fresh ID token from it is enrolled by central. This design keeps the hook: every machine token names its issuer;
   - any agent-vm work;
   - proof inside a VM, or a new Linux CI job;
-  - the view changing any access, or showing who sits at a machine.
+  - the view changing any access, or showing who sits at a machine;
+  - automated checks using your own Google, GitHub or authenticator.
+- **Not now** (you chose otherwise in review 58647d30):
+  - an "Approve this command line?" screen;
+  - an organization home with member lists, invite forms or admin actions;
+  - a staging-only mock sign-in provider;
+  - releasing before passkey sign-in and recovery work.
 - **Later, if needed:**
   - dashboards, alerts and metrics beyond what the platform gives; Logpush;
   - the owner resetting a member's second factors (removing a member already ends their access);
@@ -216,6 +244,8 @@ agent-vm is frozen and changes for neither. The Switchboard isn't changed by thi
 - Inviting someone, or approving your second machine, without a passkey or app code in the last 15 minutes is refused; with one it works. Someone who lost their passkey replaces it with their Google sign-in plus a recovery code; Google alone can't.
 - A login, a refusal and a connection each show in the OpenTelemetry tool with their reason, and no token, code or secret from the run appears in any record.
 - You open the view and see each machine and its sessions. A cut machine shows as not connected within the bound. Nobody else can open it.
+- A first-time owner goes from the sign-in page through the authenticator and the organization, one step at a time, and lands on the account page. A command-line login started before sign-in continues to the command line afterwards. An invited member lands on "Join *organization*", not on organization creation.
+- Each of the six journeys passes on staging with nobody signed in by hand. The test setup path is refused in production. One real sign-in is checked before each release.
 </script></ex-markdown>
 <h2 id="requirements--after-the-switch">What stays as today after the switch</h2>
 <ex-markdown id="requirements--after-the-switch-text"><script type="text/markdown">
