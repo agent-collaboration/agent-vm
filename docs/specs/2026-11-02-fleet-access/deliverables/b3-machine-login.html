@@ -28,6 +28,7 @@
 <a href="b1-people-roles-sign-in.html">B1 People, roles and sign-in</a>
 <a href="b2-central-organizations.html">B2 Central's organizations</a>
 <a href="b3-machine-login.html">B3 Machine login and the locked link</a>
+<a href="bg-getting-in.html">BG Getting in</a>
 </nav></ex-nav>
 <ex-document id="content" document-id="fleet-access-b3" revision="2026-11-07.1">
 
@@ -323,7 +324,7 @@ Every central check runs on **both builds** (workerd Durable Objects and native 
 | B3b | central: `machine_enrollments` reshaped and `machine_allowances`, `DecideDeviceLogin`, `DecideMachineToken` with BA1, idle expiry, the re-key, change records, and the admin commands, including `WithdrawMachineAllowance` | B2's guard, ledger and change records |
 | B3c | central: the machine token check, connection admission on the link, `RenewMachineToken`, and revocation with its local close | F3a: keeps the key cache, key resolution and verifier; drops the directory, service-client and person-callback code |
 | B3d | Router: the `FleetLogin` request, the device flow, `fleet_login` and `fleet_machine`, the ordered credential publication, the classified store open, memory-only keeping, renewal, the re-key, and the R10/R10a switch | F11 (`56b393a9`): keeps its login, discovery and storage work |
-| B3e | the machineLogin setting; the macOS journey against both central builds; Linux backend and memory-only checks under SO9 | the harness (#204): keep, then port its scenarios to the new central layout |
+| B3e | the machineLogin setting; the macOS journey against both central builds; Linux memory-only checks in the existing Ubuntu job | the harness (#204): keep, then port its scenarios to the new central layout |
 
 **Thrown out:** the per-machine Connection object, the Organization Registry's machine claim, and the Access-era enrollment path, which goes at step 2.
 
