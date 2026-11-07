@@ -334,7 +334,7 @@ Every central check runs on **both builds** (workerd Durable Objects and native 
 | B2's handoff "pinning the stamp in a machine's enrollment": B2 names it for B3 but no contract defines it | reconciled with B2's doc before B3a; nothing new is invented for it here |
 | the split crate names for the files above | design-2 D2 on `main` |
 | the B3 agent choices (M01–M15, D03, D04, D08–D10) | your answers on the [assumptions page](../../../../tmp/2026-10-30-lead-pages/assumptions-by-deliverable.html), group B3 |
-| a secret store for Routers on Linux without systemd, such as Fly or Firecracker VMs | today they keep the credential in memory and ask for a new code after a restart; a better store is open, and outside B3 unless you pull it in |
+| Routers on VMs with no store (Fly, Sprites, Firecracker) | **you decided (7 Nov): a later design, using OIDC or platform identity.** Until then they keep the credential in memory and ask for a new code after a restart or cold wake. Not in B3 |
 | that B3a's Better Auth facts hold at 1.7.11 | B3a's first slice; if one fails, the fallback above |
 
 **Your decisions on this page:**
