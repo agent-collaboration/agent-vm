@@ -125,8 +125,9 @@ Names marked *proposed* are B3 additions. `organization_authority/` is supplied 
 - **agent-collaboration (codex-router), Router**
   - the Router host: the `FleetLogin` operator request, the device flow, polling, refresh and renewal
   - `message-board-storage` (FleetCache): the `fleet_login` row, plus `fleet_machine` (Design 3), in the 2026111000xx migration block
-  - the secret-store crate: a read-only classified open, `usable | absent | unusable { cause }`; the credential publication from F11 (`fleet_machine_login/login_publication.rs`, `refresh_credential_store.rs`)
-  - the Linux backend: the systemd encrypted credential (F12)
+  - the secret-store crate: the `RefreshCredentialStore` and `DataKeySource` traits; `EncryptedEnvelopeStore` and `MemoryOnlyStore`; one `DataKeySource` type each for `MacKeychain`, `LinuxSecretService` and `SystemdCredential` (F12); the read-only classified open over an injected ordered list, `usable | absent | unusable { cause }`. Today's `cfg`-selected `PlatformKeychainAccess` and `with_platform_keychain_for_production` are replaced
+  - the Router host's composition root: builds the ordered source list per platform and injects it
+  - the credential publication from F11 (`fleet_machine_login/login_publication.rs`, `refresh_credential_store.rs`)
   - `board-fleet-sync`: `RenewMachineToken` and its answer as new variants of the board consumer request
   - the Router's link switch on a re-login (Design 3 R10, R10a)
 - **sign-in service (switchboard)**
@@ -178,7 +179,7 @@ erDiagram
 **On the Router:** Design 3's store, in the 2026111000xx block.
 - `fleet_login`, one row: the sign-in address, the organization, the enrollment ID, the machine client ID, the machine environment, and central's receiver and relay IDs. **It never holds token bytes.** Each later login replaces it.
 - `fleet_machine`: `id` = the machine's UUIDv7, which is its existing peer UUIDv7 on an updated root (Design 3 R5); `former_id` = its former v4 service id, kept as history.
-- The refresh credential is in the Router's existing encrypted secret store, whose data key comes from the Keychain or the systemd credential. When no store exists, it stays only in Host memory. Production writes no plaintext, and memory-only keeping writes no credential bytes.
+- The refresh credential is in the Router's encrypted envelope file. Its data key comes from the first usable injected source: the Keychain on macOS; Secret Service, then the systemd credential, on Linux. When no store exists, it stays only in Host memory. Production writes no plaintext, and memory-only keeping writes no credential bytes.
 </script></ex-markdown>
 
 <h2 id="b3-flows">Its flows</h2>
@@ -270,10 +271,19 @@ Pending Fleet requests and accepted creations depend on where the new enrollment
 - **A different central:** pending requests end as "cancelled: enrolled with another central". An accepted creation keeps its accepted decision, its local installation ends as "not installed: enrolled with another central", and its creation input is removed.
 - Either way, each caller sees its outcome, and nothing is sent to, or recovered from, a central other than the one a request was made to.
 
-**Where the refresh credential lives.** The host classifies its store when it starts:
-- **usable:** the encrypted store;
-- **absent:** memory only, and the login answer says so;
-- **unusable** (denied, damaged, or a migration half done): an error. The host refuses to log in, never falls back to memory, and never touches the store's contents.
+**Where the refresh credential lives: every backend injected (your decision, 7 Nov).** The login code sees one trait, `RefreshCredentialStore` (save, read, retire). How and where the secret is kept sits behind it:
+
+| Trait | Implementations, injected by the Router host |
+|---|---|
+| `RefreshCredentialStore` | `EncryptedEnvelopeStore` (the encrypted file plus one key source), `MemoryOnlyStore` |
+| `DataKeySource` (today's `KeychainAccess`, generalized) | `MacKeychain`, `LinuxSecretService`, `SystemdCredential`, a memory source for tests |
+
+The host passes an ordered list: macOS `[MacKeychain]`; Linux `[LinuxSecretService, SystemdCredential]`. When it starts, it classifies them:
+- **usable:** the first source that opens supplies the key for the encrypted file;
+- **absent** (every backend missing, such as no D-Bus session and no credentials directory): memory only, and the login answer says so;
+- **unusable** (a present source is denied, locked or damaged, or a migration is half done): an error. The host refuses to log in, tries no later source, never falls back to memory, and never touches the store's contents.
+
+The keyring holds the file's key, not the credential, because the credential rotates on every refresh and `systemd-creds` can't be written at runtime.
 </script></ex-markdown>
 
 <h2 id="b3-proof">How it's proven</h2>
@@ -295,6 +305,7 @@ Every central check runs on **both builds** (workerd Durable Objects and native 
 | only machine tokens connect | every token but a valid sign-in service machine token is refused at the connection, including a person token, a stale one, one for another client or installation, and one for a superseded enrollment | a connection admitted on the wrong token |
 | allowances one at a time | withdraw W1 while W2 stays; a non-owner's withdrawal is refused, with both unchanged | withdrawal only by revoking the whole machine |
 | saving a login | In encryptedStore mode, kill between credential confirmation, metadata publication and retirement: any published login refers to its confirmed credential, and no inconsistent pair is used. An interrupted first login may leave no published login. In memoryOnly mode, restart may retain public metadata but loses the credential; no connection opens until a fresh device-code login completes | metadata used without its credential, or memory-only credential bytes persisted |
+| every backend injected | the login code compiles against `RefreshCredentialStore` alone, and the secret-store crate selects no platform. Fake sources prove the order: absent then usable gives the second; a present-but-locked first source is an error that never reaches the second; all absent gives memory only. Each real source is tested on its platform: `MacKeychain` on macOS; `SystemdCredential` and `LinuxSecretService` in the existing Ubuntu job, where a session bus exists there | a platform chosen by `cfg` inside the crate, or a locked keyring silently skipped |
 | the store is honest | with a store: exactly one credential of the new login; no store: nothing on disk, and after a restart a new code brings back the same machine; a denied or damaged store: an error, with no memory fallback and its contents unchanged; no plaintext in production | a plaintext credential, or a silent memory fallback |
 | the link switch (R10, R10a) | hold an old notice, a read and an install across the switch, and kill the Router at each step: never a mix. Same central: pending requests are sent and accepted creations installed. Another central: pending requests are cancelled, and accepted creations end "not installed" with their input removed. Each case is repeated after a restart | old link state used by the new session, or an accepted creation lost |
 | step 1 and step 2 | step 1 works unchanged; on a test deployment, step 2 refuses the old credential and every bad machine token despite a valid Access token, and nothing restores the old login | either login accepted, or a way back |
@@ -336,6 +347,7 @@ Every central check runs on **both builds** (workerd Durable Objects and native 
 | the B3 agent choices (M01–M15, D03, D04, D08–D10) | your answers on the [assumptions page](../../../../tmp/2026-10-30-lead-pages/assumptions-by-deliverable.html), group B3 |
 | Routers on VMs with no store (Fly, Sprites, Firecracker) | **you decided (7 Nov): a later design, using OIDC or platform identity.** Until then they keep the credential in memory and ask for a new code after a restart or cold wake. Not in B3 |
 | that B3a's Better Auth facts hold at 1.7.11 | B3a's first slice; if one fails, the fallback above |
+| whether Secret Service is available on the Linux machines that run Routers, and whether a CI runner offers a session bus for `LinuxSecretService`'s real test | B3d; a source that can't open passes to the next one by design |
 
 **Your decisions on this page:**
 1. **Approve B3 as written,** including BA1 and the re-key.
