@@ -1047,8 +1047,10 @@ The sign-in service asks central nothing about people: no sign-in, passkey, pers
 #[serde(rename_all = "camelCase")]
 pub struct ProvisionOrganization { pub organization_id: OrganizationId } // sent after Better Auth created it; idempotent
 #[serde(tag = "result", rename_all = "camelCase")]
-pub enum ProvisionOrganizationResult { Provisioned {} } // the only answer: a repeat answers it again; no answer, an error or an unwritable record means unknown, and the sign-in service retries (a malformed body is refused by the route, as every operation's is)
+pub enum ProvisionOrganizationResult { Provisioned {} } // the only answer: a repeat answers it again; no answer, an error or an unwritable record means unknown; the organization stays setting up until the owner's Try again repeats the call, with no automatic retry until later workflow work; a malformed body is refused by the route, as every operation's is
 ```
+
+Provisioning follows [B2's plain-call rule](deliverables/b2-central-organizations.html#b2-flows).
 
 **Where the organization ID comes from:** for a device-login decision, the code's organization; for a machine token, the enrollment's; for provisioning, the organization Better Auth just created. The organization authority answers only for its own organization ID, and a request naming another organization reaches another authority, which answers from its own state.
 </script></ex-markdown>
@@ -1569,7 +1571,7 @@ An ambiguous creation stays prepared until the registrar learns the outcome; it 
 | approved (internal) | activation of a device-code approval | enrolled, lapsed | admits nothing; becomes `enrolled` at its first machine token, and only then supersedes the installation's earlier enrollment; lapses at the code's lifetime if never redeemed, leaving the working enrollment untouched |
 | enrolled | its first machine token | revoked, expired | connections, renewals and grants allowed, only on connections carrying this enrollment; a newer enrollment of the same installation becoming `enrolled` ends this one (`revoked`, reason superseded) in the same transaction, without a removal notice, because the machine and its allowances stay; this one's open connections are closed |
 | revoked | `RevokeMachineEnrollment`, or superseded | — (terminal) | if not superseded: allowances withdrawn, sessions removed, connection closed, machine client disabled |
-| expired | its optional end time passes (set at approval; none by default) | — (terminal) | as revoked, at the next decision that reads it |
+| expired | no machine token granted for 30 days (one setting; [R40](specification.html#specification--machine-login)) | — (terminal) | as revoked, at the next decision that reads it; renewal keeps it alive ([idle expiry](#program-design--machine-login)) |
 
 **A remote start** (organization authority), keyed by its request ID and holding its body, its deadline and, once bound, its one session: `forwarded` (admitted, delivery sent or ambiguous) → `started` (settled by the session's registration, which binds it; the target's report only confirms), `refusedByTarget` (the target's report) or `unknown` (nothing settled by the deadline plus one minute, on a wake). A refusal before delivery is recorded as `refused` with its reason. From `unknown`, a registration that arrives while the record is unbound moves it to `started` with `late`; every other state after `forwarded` is terminal. `RemoteStartStatus` returns whichever result is recorded, a central refusal included. A second session for a bound record, or a report from any machine but the target, is refused. Nothing retries.
 
@@ -1604,11 +1606,11 @@ Every interval is measured on the Connection object's own clock and reported as 
 | Sender mismatch, stale or foreign binding | binding lookup | Refused, nothing recorded | session binding |
 | Router restarts during a start or registration | the registrar's record | Resend the identical registration; the binding stays prepared and admits nothing until `Registered` | session registrar |
 | A provider can't carry the binding | its advertised MCP support | Start refused before any conversation is created | session registrar |
-| Organization creation interrupted | Organization Registry row `creating` | The Organization Registry's outbox step sets up the organization's authority again; the authority refuses everything until initialized | Organization Registry |
+| Organization creation interrupted | no confirmation from central | The organization stays setting up and Fleet refuses work until the owner presses **Try again**; one plain call, no automatic retry until later workflow work ([B2](deliverables/b2-central-organizations.html#b2-flows)) | sign-in service |
 | Fleet central is down | no answer over the link | Every organization stops: no new connection, renewal or decision (R25). The sign-in service still signs people in, and refuses what needs central | Fleet central |
 | Registration refused after the conversation was created | `Refused` | The binding never activates; the conversation gets no prompt; nothing deletes it | session registrar |
 | A lost create reply | no provider answer | The binding stays prepared until the outcome is known; no automatic replay | session registrar |
-| The owner changes while a workspace creation waits | — | It still applies once: an empty workspace | Fleet object |
+| The owner's authorization no longer holds when a workspace creation is applied | the applying transaction | Refused, nothing changed; the permission check, workspace and change record share one transaction ([R13](specification.html#specification--administration); [B2](deliverables/b2-central-organizations.html#b2-flows)) | Fleet object |
 | The issuer's signing key rotates | published key set | Receivers refetch once on an unknown key ID | each receiver |
 | Fleet central unreachable during a device-code approval or renewal | the decision request times out | The approval is refused and the code stays pending until it expires; a renewal fails and the machine retries before its token's grant expiry, then stops connecting | sign-in core; Router machine login |
 | Central approves, then marking the code approved fails | the approve endpoint errors after `Approved` | The new enrollment stays `approved` and admits nothing; it lapses at the code's lifetime; the machine's working enrollment, if any, is untouched | sign-in core; organization authority |
@@ -2283,12 +2285,12 @@ There's nothing to migrate: presence is new state in each Connection object, and
 - **OD19, decided (31 October):** Google and GitHub; never Facebook; never Apple relay addresses.
 - **OD20, decided (31 October):** the first second factor is the authenticator app (it issues the recovery codes), then a passkey.
 - **OD17, decided (31 October):** no export yet; you turn on OpenTelemetry export later. Cloudflare keeps its own records meanwhile.
-- **SD8, decided (the owner, 31 October):** 5 seconds, measured on central's clock from receiving the confirmation to applying the change.
+- **SD8, decided (the owner, 31 October):** 5 seconds, measured on central's clock from receiving the confirmation to applying the change ([your go-ahead](../../../tmp/2026-10-30-lead-pages/item-two-decisions.html#decided-earlier)).
 
 **Design notes:**
 - **Codex is bound through the app-server's thread config only.** Its creation code builds the native thread config for helper starts today, so the binding goes there.
 - **Records live with each state owner.** An organization's audit view is assembled from them when read.
-- **Creating a workspace is checked when you ask:** Fleet applies it shortly after, even if you stopped being the owner in between, giving an empty workspace.
+- **Creating a workspace is checked and applied together:** one transaction at Fleet central checks the permission, creates the workspace and records the change; there is no later application ([R13](specification.html#specification--administration); [B2](deliverables/b2-central-organizations.html#b2-flows)).
 - **A late registration refusal leaves an idle conversation.** Registration comes after creation, so a refusal there, or a lost reply, leaves a conversation that gets no prompt and acts as nothing. Nothing deletes it automatically.
 - **One registration per conversation** is enforced by the Router's registrar, inside the trusted-Router assumption.
 - **Remote starts aren't queued, for now.** A start to a disconnected machine is refused (a temporary workaround the owner chose on 3 November, matching the reset's D2), and one whose outcome is lost ends as `unknown`.
