@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B2 Central's organizations</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-presentation id="path-b2" title="B2, start to finish" description="What B2 delivers, the parts it touches, its data, its flows, how it's proven, and how it's built.">
+  <ex-step to="b2-see" icon="rocket">What you'll see working.</ex-step>
+  <ex-step to="b2-base" icon="stack">What it sits on: the central reset.</ex-step>
+  <ex-step to="b2-scope" icon="shield-check">In and out of B2.</ex-step>
+  <ex-step to="b2-parts" icon="git-branch">The parts it touches.</ex-step>
+  <ex-step to="b2-data" icon="stack">Its data.</ex-step>
+  <ex-step to="b2-flows" icon="plug">Its flows.</ex-step>
+  <ex-step to="b2-proof" icon="shield-check">How it's proven.</ex-step>
+  <ex-step to="b2-plan" icon="rocket">How it's built.</ex-step>
+  <ex-step to="b2-unknowns" icon="users">Not fully known, and your decisions.</ex-step>
+</ex-presentation>
+<ex-nav for="content"><nav slot="pages" aria-label="Pages">
+<a href="../index.html">Overview</a>
+<a href="../requirements.html">Requirements</a>
+<a href="../specification.html">Specification</a>
+<a href="../program-design.html">Program Design</a>
+<a href="../verification-design.html">Verification Design</a>
+<a href="b1-people-roles-sign-in.html">B1 People, roles and sign-in</a>
+<a href="b2-central-organizations.html">B2 Central's organizations</a>
+<a href="b3-machine-login.html">B3 Machine login and the locked link</a>
+</nav></ex-nav>
+<ex-document id="content" document-id="fleet-access-b2" revision="2026-11-05.1">
+
+<h1>B2 Central's organizations</h1>
+
+<ex-callout id="b2-answer" title="In short" tone="tldr">
+<ex-markdown id="b2-answer-text"><script type="text/markdown">
+- **Written fresh on 4 November.** It sits on the central storage reset: one Fleet object per organization, plus one per project. All of Fleet access's earlier central layout is thrown out: the Organization Registry, the separate authority object, the per-machine Connection objects, and hand-offs between stores.
+- **What B2 delivers:**
+  - central sets up a new organization when the sign-in service creates one, so "setting up" becomes "ready" for real;
+  - admin actions (to start with, creating a workspace and reading the organization's records) are applied only under the permission the sign-in service checked;
+  - two organizations never see each other's data.
+- **Everything B2 adds is tables and modules inside the reset's Fleet object.** No new store, no new object kind.
+- **B2 starts after the reset's D1 is on `main`** (D1 is the other Lead's first deliverable: central becomes one Fleet object).
+</script></ex-markdown>
+</ex-callout>
+
+<h2 id="b2-see">What you'll see working</h2>
+
+<ex-markdown id="b2-see-text"><script type="text/markdown">
+- You create an organization on the sign-in page. It changes from "setting up" to "ready" once central has really set it up, on both builds (Cloudflare and Tokio). On a healthy system that's a few seconds; it's a goal, not a guarantee.
+- As its owner, you create a workspace. It appears, and a record of who created it, with which permission, is written in the same step.
+- A member, who holds no permissions, tries the same and is refused, and nothing changes.
+- A second organization can't see the first one's workspaces or records, even if a request names the wrong organization.
+- Your existing organization keeps today's central data.
+</script></ex-markdown>
+
+<h2 id="b2-base">What it sits on: the central reset</h2>
+
+<ex-markdown id="b2-base-text"><script type="text/markdown">
+The other Lead's design (codex-router `design/central-storage-reset`; shared database page `stores.html`) gives central **one Fleet object per organization** and **one object per project**, with nothing per machine. The Fleet object holds:
+- the machine connections;
+- enrollments and leases;
+- the directory (`fleet_workspaces`, `fleet_boards`, `fleet_project_directory`, `fleet_creation_decisions`);
+- the Fleet outbox;
+- **one durable-steps journal with one alarm**.
+
+Their D1 builds it for one organization. **B2 adds what's needed for many organizations, and for actions taken under a person's permission.**
+
+```mermaid
+flowchart TB
+  SI["sign-in service<br/>people, roles, organizations (Better Auth)<br/>checks the permission live"]
+  subgraph C["central"]
+    subgraph FA["Fleet object, organization A"]
+      R["the reset's parts<br/>connections · directory · leases · outbox · journal"]
+      B2A["B2 adds: organization identity · permission guard<br/>admin commands · change records"]
+    end
+    FB["Fleet object, organization B<br/>(same shape, its own store)"]
+    P["project objects"]
+  end
+  SI -->|"the link: ProvisionOrganization, admin requests"| FA
+  SI -->|"the link"| FB
+  FA --> P
+```
+</script></ex-markdown>
+
+<h2 id="b2-scope">In and out of B2</h2>
+
+<ex-markdown id="b2-scope-text"><script type="text/markdown">
+| In B2 | Not in B2 (where it goes) |
+|---|---|
+| the Fleet address keyed by organization: `Fleet { organization }` | machine login, enrollments, allowances and the locked link (B3) |
+| setting up an organization (`ProvisionOrganization` → `Provisioned`), and the sign-in service's real call replacing B1's stand-in | sessions registering through their machine (B4) |
+| **the link itself** (the `CENTRAL` service binding on Cloudflare, the Unix socket on Node and Tokio), and **the sign-in service's admin forwarding for B2's operations**: its admin page and endpoints, the live permission check, and the attached confirmation | machine connections over the link (B3) |
+| each Fleet object stamped with its organization by a **statement the sign-in service signs**, checked whenever central starts and on every command; a request for another organization refused | the authenticated command-line tool (B5) |
+| the stamp renewed **automatically**: it lasts a year, and once a day the sign-in service re-signs any stamp with 30 days or less left | pinning the stamp in a machine's enrollment (B3) |
+| a project belongs to the organization whose Fleet directory lists it; imports name their target organization and are refused if it differs from the stamp | a project's organization in its replicated state (never: replicated state isn't a source of truth) |
+| the permission guard: person token, the sign-in service's attached confirmation, second-factor freshness | who is logged in, presence (B7); remote start (B8) |
+| admin command `CreateWorkspace`; `WorkspaceLookup` for the workspace itself (its allowed machines come with B3's allowances); reading the organization's change records | machine commands: `AllowMachine`, `RevokeMachineEnrollment`, `SetTokenLifetime` (B3); `RemoveSession` (B4) |
+| change records written in the same transaction as each change | "one machine, one organization" (you deferred it) |
+</script></ex-markdown>
+
+<h2 id="b2-parts">The parts it touches</h2>
+
+<ex-tree id="b2-tree" title="agent-collaboration (codex-router): what B2 changes" icon="folder"><script type="text/markdown">
+- `crates/collaboration-central-core/src/`
+  - `organization_authority/` (new, a module of the Fleet object)
+    - `identity.rs`: the organization stamp, the one-row `organization_identity` table, mismatch refusal
+    - `organization_statement.rs`: verifies the signed stamp (closed profile, published keys, injected issuer, audience, expected organization and clock)
+    - `statement_replacement.rs`: the replacement rule: a new statement must name the stored one's digest inside its signature
+    - `project_ownership.rs`: token organization = stamp, and the project is in this Fleet's `fleet_project_directory`, checked before any project call
+    - `provisioning.rs`: `ProvisionOrganization`, one transaction, idempotent by organization ID
+    - `permission_guard.rs`: checks the person token and the attached confirmation, and second-factor freshness (from F2a: keeps its token parsing, freshness and factor-window code; drops the owner guard and the session callback)
+    - `person_token.rs`: verifies the token against the sign-in service's published keys (from F3a: keeps the key cache, resolution and signature check; drops the directory, service tokens and introspection)
+    - `workspace_commands.rs`: `CreateWorkspace`, writing through the reset's directory tables
+    - `change_records.rs`: `organization_change_records`, written in the same transaction as each change
+    - `lookups.rs`: `WorkspaceLookup`, and reading the change records
+  - `identity_contract.rs` (from F1c): the B2 shapes; the retired people commands are pruned
+  - the Fleet store's migrations: two new tables
+  - `central_router.rs`: the existing `internal/organization-provisioning` route and the B2 `public/admin` routes
+- central's copy of each project keeps a private note of its Fleet, so a restart finds it: on Cloudflare in the copy object's own storage, on Tokio in a `_copy_fleet_reference` table in the copy's own database. It's never copied out of central and grants nothing.
+- `crates/collaboration-central-cloudflare/src/object_location.rs`: `Fleet { organization }` resolves with `getByName(organizationId)`; your organization maps to today's object named `fleet`
+- `crates/collaboration-central-tokio/src/native_objects.rs`: `Fleet { organization }` resolves to `fleet-<organizationId>.db`; your organization maps to today's `fleet.db`
+- sign-in service (switchboard):
+  - `packages/sign-in-core/src/`: signing the stamp with Better Auth's own `signJWT` helper (type `fleet-organization-stamp+jwt`, a one-year expiry), and the renewal planner that picks stamps with 30 days or less left
+  - `packages/sign-in-core/src/central-link/`: the provisioning client calls the real link instead of B1's stand-in; the admin forwarding for B2's routes (our own Better Auth plugin endpoints, one per route) attaches the live permission confirmation
+  - `packages/sign-in-host-cloudflare/`: the `CENTRAL` service binding and a daily scheduled trigger for renewal; `packages/sign-in-host-node/`: the Unix-socket link and a daily timer for renewal
+  - the admin page: create a workspace, list the organization's workspaces and records
+</script></ex-tree>
+
+<h2 id="b2-data">Its data</h2>
+
+<ex-markdown id="b2-data-text"><script type="text/markdown">
+Two new tables, both in each organization's Fleet store, following your table rule: a UUIDv7 key, `created_at` and `updated_at`, typed columns, and a concern prefix.
+
+```mermaid
+erDiagram
+  organization_identity {
+    text id PK "UUIDv7: the organization ID (from Better Auth)"
+    text organization_statement "the signed stamp, stored exactly as received"
+    integer created_at
+    integer updated_at
+  }
+  organization_change_records {
+    text id PK "UUIDv7"
+    text request_id UK "the operation's own ID; a repeat finds this row"
+    text kind "organizationProvisioned or workspaceCreated"
+    text origin "person or signInProvisioning"
+    text actor_person_id "from the verified person token; empty for signInProvisioning"
+    text permission_checked "the permission the sign-in service confirmed; empty for signInProvisioning"
+    text target_id "e.g. the workspace ID"
+    integer created_at
+    integer updated_at
+  }
+```
+
+- `organization_identity` has **at most one row**, and it's written only by the internal provisioning request:
+  - On a fresh store, every public command and read is refused until it's stamped, revealing nothing.
+  - The organization never changes, and provisioning for a different organization fails. The signed statement can be replaced, but only by a valid statement for the same organization that names the stored statement's digest inside its signature. A setup retry without that never replaces anything: if a stamp is stored, it answers `Provisioned` and keeps it.
+  - Central checks the stored statement against the sign-in service's published keys whenever it starts, and refuses every command if the check fails.
+  - The Fleet object runs one transaction at a time (a Durable Object on Cloudflare; one writing connection on Tokio), so two first provisions can't both stamp it.
+- **Your existing organization** keeps today's store. The deployment's config names its one organization ID, mapped to today's object `fleet` (Cloudflare) and `fleet.db` (Tokio), the same on both hosts. No other organization can take that name.
+- **Two kinds of change record**, both in this one table:
+  - *Set-up* (`origin: signInProvisioning`): written with the stamp. Its `request_id` is the organization ID, which is all the unchanged `ProvisionOrganization { organizationId }` request carries, so a retry finds the same record. It has no person and no permission; none is invented.
+  - *A person's change* (`origin: person`): the verified person from the token, and the exact permission the sign-in service confirmed.
+- Workspaces live in the reset's own `fleet_workspaces` table. B2 adds no workspace table.
+- **Project ownership needs no new column or table.** A project belongs to O because O's Fleet directory (`fleet_project_directory`) lists it. An organization column on each project would only copy the stamp.
+- No people are stored at central. Membership and roles stay in the sign-in service (Better Auth).
+- **The SQL comes to you before B2 uses it**, like B1's.
+</script></ex-markdown>
+
+<h2 id="b2-flows">Its flows</h2>
+
+<ex-markdown id="b2-flows-text"><script type="text/markdown">
+**Setting up an organization.** One idempotent transaction at central, so central needs no workflow of its own for it. The sign-in service makes a plain call (B1 builds no workflows). If the call fails or its reply is lost, the organization stays "setting up" until the call is made again, which nothing does automatically until the later workflow work. Any repeat is safe: it finds the same stamp and record and answers `Provisioned`.
+
+```mermaid
+sequenceDiagram
+  participant SI as Sign-in service (plain call)
+  participant L as The link
+  participant F as Fleet object of organization O
+  SI->>SI: sign the stamp statement for O (Better Auth signJWT, one year)
+  SI->>L: ProvisionOrganization { organizationId: O, organizationStatement }
+  L->>F: routed by Fleet { organization: O }
+  F->>F: verify the statement against the published keys
+  F->>F: one transaction: stamp organization_identity = O with the statement, write its change record
+  F-->>SI: Provisioned
+  Note over SI,F: a repeat finds the stamp already O and answers Provisioned, changing nothing
+  SI->>SI: mark the organization ready (Better Auth fleetState)
+```
+
+**Renewing the stamp, automatically.** Once a day, the sign-in service looks at each organization's stamp. For any with 30 days or less left, it reads the current statement's digest from central over the private link and signs a new statement naming that digest. Central swaps it in only if the stamp it holds is the one named. A key change runs the same path for every organization at once, then confirms each central holds the new key's statement and passes a cold restart before the old key is retired.
+
+```mermaid
+sequenceDiagram
+  participant SI as Sign-in service (daily)
+  participant F as Fleet object of O
+  SI->>F: read the current statement's digest (private link only)
+  F-->>SI: digest D
+  SI->>SI: sign a new statement for O with replaces = D
+  SI->>F: ProvisionOrganization { O, new statement }
+  F->>F: verify it; stored digest is D? then replace and write a change record
+  F-->>SI: Provisioned (or refused as stale if D no longer matches)
+```
+
+**An admin command under the checked permission.**
+
+```mermaid
+sequenceDiagram
+  participant You
+  participant SI as Sign-in service
+  participant F as Fleet object of your organization
+  You->>SI: create workspace "research"
+  SI->>SI: session current? your role holds workspace:create? (live check)
+  SI->>F: CreateWorkspace + your person token + its confirmation naming workspace:create
+  F->>F: guard: token valid, confirmation matches person, organization, permission and route; second factor fresh
+  F->>F: one transaction: workspace in fleet_workspaces + change record
+  F-->>You: Applied (or Refused: notPermitted · secondFactorRequired · conflict)
+```
+
+**What the guard checks** (carried over from the design's permission rules, unchanged):
+- The person token is valid, its audience is central's admin address, and it's the right kind of token. Its expiry is rechecked at the applying transaction.
+- The confirmation is bound to this token, person, session, organization, route permission and request, and it's used once.
+- The applying transaction runs within **5 seconds of central receiving the request** (SD8), on central's own clock.
+- Changes need a fresh second factor; reads are exempt.
+- A refusal happens before anything about the subject is read, so it reveals nothing.
+
+**Repeats and lost replies on `CreateWorkspace`.** Each request carries two identities:
+- **The operation ID** (UUIDv7), chosen once by the sign-in admin page and kept on every retry. It goes through the Fleet object's existing request ledger, the reset's `fleet_request_decisions`, which keeps each request's canonical hash and its answer (`fleet_decision_step.rs`):
+  - the same operation repeated gets its original answer, with the same workspace;
+  - the same operation ID with a different body, person or organization is refused as a conflict;
+  - two operations for the same canonical name (trimmed, then compared byte for byte) end with one workspace, and the second gets that workspace back.
+- **A fresh confirmation** from the sign-in service's live check, for every attempt. A retry is checked again; an old confirmation is never reused.
+- If the reply is lost after central commits, the retry finds the operation in the ledger and gets the original answer. The caller sees an honest "created" or "already created". The workspace and its record go through the Fleet's own write path and feed, not a separate insert.
+
+**Every Fleet call carries its organization:** every resolver and call path, not just the two host address functions. Today's global Fleet call identities change to include it. A subject from another organization looks exactly like one that doesn't exist, before any project object is touched.
+
+**A request for a project:** central checks that the token's organization equals the stamp, and that the project is in this Fleet's directory, before touching the project. A project that isn't listed is refused exactly like one that doesn't exist.
+
+**A request naming the wrong organization:** the Fleet object compares the request's organization with its stamp. It refuses on a mismatch and changes nothing. A routing or forwarding bug therefore can't reach another organization's data.
+
+**Simpler than before:** creating a workspace used to be "admitted", then applied later by another store. Now it's one transaction in one store, so its answer is `Applied` or `Refused`, and a lost reply is recovered through the operation ID. Project moves (B5) and remote starts (B8) keep their own existing result contracts, unchanged. The generic `Admitted` and `CommandStatus` shapes are no longer used by any B2 command; what happens to them is decided when B5 is designed.
+</script></ex-markdown>
+
+<h2 id="b2-proof">How it's proven</h2>
+
+<ex-markdown id="b2-proof-text"><script type="text/markdown">
+Every check runs on **both builds** (workerd Durable Objects and native Tokio), with the clock injected and no wall-clock waits. Heavy runs happen on Sunclaw.
+
+| What | The check | Wrong build it catches |
+|---|---|---|
+| setting up is real and repeat-safe | provision O, then provision O again: one stamp, one change record, both answers `Provisioned` | a repeat that writes a second record, or a "ready" without central's answer |
+| organizations stay apart | provision A and B; create "research" in A; B's lookup and records show nothing of A's (B2 proves this for admin data; machines and sessions are proven in B3 and B4) | shared storage, or an unkeyed address |
+| a wrong organization is refused | send A's Fleet object a request naming B: refused, nothing changed | a missing stamp check |
+| the permission is enforced | no confirmation, a confirmation for another permission, another person or another organization: each `notPermitted`, nothing written | a guard that trusts the caller |
+| second-factor freshness | a stale factor on a change gives `secondFactorRequired`; reads are exempt | factors ignored |
+| change and record together | make the record write fail: no workspace is created | the record written separately |
+| your organization keeps its data | provision your organization on a store holding today's data: everything is still there; the configured name is the same organization on both hosts, and no other organization can claim it | a fresh store replacing yours |
+| before set-up, nothing works | a public command or read on an unstamped store is refused, revealing nothing | a store usable before it's provisioned |
+| the stamp can't be stolen or doubled | provision B on A's stamped store: refused; two first provisions at once: one stamp | an overwrite, or two IDs |
+| the guard holds over time | a request held past 5 s, an expired token or factor, a reused confirmation, the wrong audience or token kind: each refused, nothing written | a guard checked only on arrival |
+| lost replies and repeats | cut the reply after central commits a workspace, restart, retry the same operation: one workspace, one record, the original answer; the same operation ID with a changed body is refused; two requests for one name end with one workspace | duplicates, or a replay that changes the answer |
+| set-up records | provisioning writes one set-up record with no person; its retry finds the same record | an invented person, or a missing record |
+| the real journey | you, signed in, create a workspace on the sign-in admin page and it appears; a member is refused; requests off the link, or a public request to an internal route, are refused; on both builds | a central test with a hand-made token passed off as the journey |
+| the stamp is genuine | an edited or forged statement, the wrong type, purpose, audience or organization, an access token presented as a stamp, an unknown or retired key: each refused before a write; a stored statement edited on disk makes central refuse every command after a restart | a stamp trusted without its signature |
+| renewal can't go backwards | a newer statement is stored, then one prepared against the older stamp arrives late: refused; a setup retry after renewal keeps the new stamp; two renewals at once: one wins | the old key's statement coming back and stranding startup |
+| renewal is automatic | on a controlled clock, a stamp reaching 30 days left is re-signed by the daily trigger on both builds; one further from expiry isn't touched | a manual step, or a stamp that expires |
+| project ownership | a token for O naming a project that isn't in O's directory is refused, nothing changed; an import aimed at the wrong central is refused | a project-side organization trusted |
+| the real call from sign-in | B1's stand-in is replaced; creating an organization end to end turns it ready on both builds | a stand-in left in |
+</script></ex-markdown>
+
+<h2 id="b2-plan">How it's built</h2>
+
+<ex-markdown id="b2-plan-text"><script type="text/markdown">
+**Starts after:** the reset's D1 reaches `main`, and B1 (which brings the sign-in side of provisioning, to a stand-in).
+
+| Step | What | Reuses / drops |
+|---|---|---|
+| B2a | `Fleet { organization }` on both hosts; the stamp and mismatch refusal | new, at the reset's two address resolvers |
+| B2b | `ProvisionOrganization`, the link (binding and socket), and the sign-in service's real call | F1c contracts (keep; prune the retired people commands) |
+| B2c | the permission guard and the person-token check | F2a: keeps its token parsing, freshness and factor window, drops the owner guard and callback. F3a: keeps the key cache and verifier, drops the directory, service tokens and introspection |
+| B2d | `CreateWorkspace`, `WorkspaceLookup`, change records, and the sign-in admin page plus forwarding for them | the reset's directory tables and request ledger |
+| B2e | the end-to-end journey on both builds | — |
+
+**Thrown out:**
+- F2c's Organization Registry (migrations and SQL);
+- F3a's directory and service-token code;
+- F2a's owner guard;
+- every plan to put authority, presence or a registry in its own object.
+
+**Pull requests:** one in codex-router (B2a–B2e), and one in switchboard: the link (Cloudflare service binding and the Node socket), the admin forwarding plugin with its live permission check, the admin endpoints, the workspaces-and-records page, and the real provisioning call. Both are built by Sol coders, with the Rust work running on Sunclaw.
+</script></ex-markdown>
+
+<h2 id="b2-unknowns">Not fully known, and your decisions</h2>
+
+<ex-markdown id="b2-unknowns-text"><script type="text/markdown">
+| Not fully known | Settled by |
+|---|---|
+| the exact SQL of the two tables (now with the signed statement column) and the copy's private Fleet note | on the [stamp decisions page](../../../../tmp/2026-10-30-lead-pages/fleet-stamp-decisions.html), decision 6 |
+| what happens if a stored stamp stops checking out | decision 4 on that page |
+| the exact adapter from `CreateWorkspace` onto the reset's request ledger (the rules above are fixed) | the reset's D1 code, once on `main` |
+| how the Fleet object's request routing reaches B2's module | the reset's D1 code, once on `main` |
+
+**Your decisions on this page:**
+1. **Approve B2 as written.**
+</script></ex-markdown>
+
+<ex-choice id="approve-b2" title="Approve B2 Central's organizations?">
+<ex-option id="b2-approve" title="**Approve B2**">
+<template slot="summary">B2 starts after the reset's D1 is on main, built on its Fleet object.</template>
+</ex-option>
+<ex-option id="b2-change" title="Change something first (say what in a comment)">
+<template slot="summary">I'll revise and bring it back.</template>
+</ex-option>
+</ex-choice>
+
+</ex-document>
+</body>
+</html>

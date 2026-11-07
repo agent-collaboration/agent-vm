@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B3 Machine login and the locked link</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-presentation id="path-b3" title="B3, start to finish" description="What B3 delivers, the parts it touches, its data, its flows, how it's proven, and how it's built.">
+  <ex-step to="b3-see" icon="rocket">What you'll see working.</ex-step>
+  <ex-step to="b3-base" icon="stack">What it sits on.</ex-step>
+  <ex-step to="b3-scope" icon="shield-check">In and out of B3.</ex-step>
+  <ex-step to="b3-parts" icon="git-branch">The parts it touches.</ex-step>
+  <ex-step to="b3-data" icon="stack">Its data.</ex-step>
+  <ex-step to="b3-flows" icon="plug">Its flows.</ex-step>
+  <ex-step to="b3-proof" icon="shield-check">How it's proven.</ex-step>
+  <ex-step to="b3-plan" icon="rocket">How it's built.</ex-step>
+  <ex-step to="b3-unknowns" icon="users">Not fully known, and your decisions.</ex-step>
+</ex-presentation>
+<ex-nav for="content"><nav slot="pages" aria-label="Pages">
+<a href="../index.html">Overview</a>
+<a href="../requirements.html">Requirements</a>
+<a href="../specification.html">Specification</a>
+<a href="../program-design.html">Program Design</a>
+<a href="../verification-design.html">Verification Design</a>
+<a href="b1-people-roles-sign-in.html">B1 People, roles and sign-in</a>
+<a href="b2-central-organizations.html">B2 Central's organizations</a>
+<a href="b3-machine-login.html">B3 Machine login and the locked link</a>
+</nav></ex-nav>
+<ex-document id="content" document-id="fleet-access-b3" revision="2026-11-07.1">
+
+<h1>B3 Machine login and the locked link</h1>
+
+<ex-callout id="b3-answer" title="In short" tone="tldr">
+<ex-markdown id="b3-answer-text"><script type="text/markdown">
+- **What B3 delivers:**
+  - a Router logs in by **device code**: you approve it on the sign-in page and choose its workspaces;
+  - it gets short-lived **machine tokens** from the sign-in service and connects to central **only through the sign-in service**;
+  - it renews on the open connection with no one acting;
+  - revoking it refuses it at once and closes its connection.
+- **The boundary:** B3 proves the machine's connection, not session messaging (that's B4).
+- **It sits on B2's Fleet object.** Enrollments and allowances are tables in each organization's Fleet object. There's no per-machine object, no Organization Registry, no separate authority object.
+- **Three additions since the Program Design:**
+  - every machine moves to a **UUIDv7 id at its first B3 login**;
+  - central fences activation with an **enrollment generation** (BA1, below);
+  - B3 carries Design 3's Router-side rules for the login and for switching the link (R9, R10, R10a).
+- **Production stays on step 1 (today's login).** B3 builds step 2 and runs it on test deployments. Switching production is your step, later.
+- **This page is a draft for review.** Nothing in it has been built or observed yet.
+</script></ex-markdown>
+</ex-callout>
+
+<h2 id="b3-see">What you'll see working</h2>
+
+<ex-markdown id="b3-see-text"><script type="text/markdown">
+- `codex-router fleet login --organization <id> --label <label>` prints a code and an address (on a Mac and on Linux). You open the address signed in, approve, and pick the machine's workspaces. The Router connects. This works on both central builds (Cloudflare and Tokio).
+- Two Routers you approved stay independent. One's replayed or revoked refresh credential never touches the other's renewal.
+- The machine keeps renewing for as long as it runs, with nobody acting. One switched off for more than 30 days needs your approval again.
+- You revoke a machine. Its connection closes, its next renewal is refused, and it asks for a new code.
+- A machine that logs in again while active keeps its sessions and allowances, and its old connection closes.
+- A machine with no encrypted store keeps its credential in memory and says so. After a restart it asks for a new code and comes back as the same machine.
+- A machine that logged in before B3 logs in once more and comes back with its new UUIDv7 id. Its sessions, allowances and board relationships are still attached.
+</script></ex-markdown>
+
+<h2 id="b3-base">What it sits on</h2>
+
+<ex-markdown id="b3-base-text"><script type="text/markdown">
+- **B2** gives each organization its Fleet object, stamped with its organization, plus the link that only the sign-in service holds and the permission guard. B3 adds the machine tables and modules to that same Fleet object.
+- **The central storage reset (design 2)** gives central one Fleet object per organization. Every handler writes inside one object-storage transaction. Closing a revoked machine's connection is a design-2 local action: it's done when the targeted old connection is gone. It isn't a message to a peer, and B3 adds no retry columns of its own.
+- **The repo split (design-2 D2)** moves the fleet crates into codex-router under new names. B3 branches after it lands on `main`.
+- **Design 3 (local storage)** gives the Router one local store. B3 writes the Router's login into its `fleet_login` row and its identity into `fleet_machine`. Design 3's PR A leaves `fleet_machine` and its migrations to B3.
+
+```mermaid
+flowchart LR
+  R["Router host<br/>fleet_login · fleet_machine<br/>refresh credential: encrypted store or memory"]
+  SI["sign-in service<br/>device grant · per-enrollment client<br/>machine tokens · approval page"]
+  subgraph C["central"]
+    F["Fleet object of the organization<br/>B2: stamp · guard · directory<br/>B3: enrollments · allowances · generation"]
+  end
+  R -->|"device code, refresh"| SI
+  R -->|"connection with a machine token, through the sign-in service"| SI
+  SI -->|"the link: DecideDeviceLogin · DecideMachineToken · the machine connection"| F
+```
+</script></ex-markdown>
+
+<h2 id="b3-scope">In and out of B3</h2>
+
+<ex-markdown id="b3-scope-text"><script type="text/markdown">
+| In B3 | Not in B3 (where it goes) |
+|---|---|
+| the device grant at the sign-in service: the request, the approval page, the extended code fields, `DecideDeviceLogin`, its `/.well-known/fleet-login` and metadata entry | sessions registering through their machine (B4) |
+| the device-code token handler: one public client per enrollment, `DecideMachineToken` before every mint, the revoke-endpoint before-hook | the authenticated command-line tool (B5) |
+| machine tokens (C9) and central's check of them; connection admission over the link; `RenewMachineToken` on the open connection | who is logged in, presence and its `machine_presence` table (B7); remote start (B8) |
+| enrollments, allowances (`machine_allowance` by scope, installation and workspace), idle expiry at 30 days, change records | switching production to step 2 (yours, later) and removing Cloudflare Access (step 3) |
+| admin commands `AllowMachine`, `WithdrawMachineAllowance`, `RevokeMachineEnrollment`, `SetTokenLifetime`, and their pages | notices to the Switchboard about revocations and allowances (step 3) |
+| revocation: one transaction, then the old connection closed as a design-2 local action, and the sign-in service disabling the client | "one machine, one organization" across organizations (you deferred it) |
+| **BA1**: the enrollment-generation fence | remote create's trip (the D2 Lead's) |
+| **the UUIDv7 re-key**: carry the retained former v4 id when present; central converts the same machine once and accepts repeats of the same mapping | |
+| the Router host: the `FleetLogin` operator request (public inputs only), the `fleet_login` row, the classified store open, memory-only keeping | Linux secret stores (Secret Service, systemd credentials, F12): out of scope; non-macOS Routers move to a later OIDC design |
+| Design 3's **R10/R10a** on the Router: replacing an enrollment switches the link as one change, with pending requests kept or cancelled by whether it's the same central | |
+| the `machineLogin` setting at central: step 1 in production, step 2 on test deployments | |
+</script></ex-markdown>
+
+<h2 id="b3-parts">The parts it touches</h2>
+
+<ex-markdown id="b3-parts-intro"><script type="text/markdown">
+Names marked *proposed* are B3 additions. `organization_authority/` is supplied by B2 and must exist before B3 starts. Other reused code is identified by its foundation branch or commit. The final split paths are pinned after design-2 D2 lands.
+</script></ex-markdown>
+
+<ex-tree id="b3-tree" title="What B3 changes" icon="folder"><script type="text/markdown">
+- **agent-collaboration (codex-router), central**
+  - `crates/collaboration-central-core/src/organization_authority/` (B2's module of the Fleet object)
+    - `machine_enrollment.rs` *proposed*: reserve, approve and activate an enrollment, with idle expiry and the generation fence (BA1)
+    - `device_login_decision.rs` *proposed*: `DecideDeviceLogin`, authorize-reserve-activate in one Fleet transaction
+    - `machine_token_decision.rs` *proposed*: `DecideMachineToken`, the first Grant (activate and supersede) and every later Grant with live checks
+    - `machine_token.rs` *proposed*: the machine token check (C9), reusing B2's key cache and verifier
+    - `machine_connection.rs` *proposed*: `AdmitMachineConnection`, `RenewMachineToken`, closing on revocation or supersession
+    - `machine_commands.rs` *proposed*: `AllowMachine`, `WithdrawMachineAllowance`, `RevokeMachineEnrollment`, `SetTokenLifetime` (the existing contracts in `identity_contract/organization_commands.rs`)
+    - the re-key, inside `device_login_decision.rs`: link a former v4 id to the new v7 id once
+  - `identity_contract.rs`: the B3 shapes (the Program Design's `DeviceLoginDecision`, `MachineTokenDecision`, `MachineConnectionAdmission`, `EndedMachineClient`), plus `base_generation` on the enrollment
+  - `fleet-identity-protocol`: `MachineTokenRenewal`, so the Router can read it
+  - the Fleet store's migrations: `machine_enrollments` reshaped and `machine_allowances` (PD:509)
+  - the Cloudflare and Tokio host crypto for checking machine-token signatures (C9's allowed algorithms), beside B2's
+- **agent-collaboration (codex-router), Router**
+  - the Router host: the `FleetLogin` operator request, the device flow, polling, refresh and renewal
+  - `message-board-storage` (FleetCache): the `fleet_login` row, plus `fleet_machine` (Design 3), in the 2026111000xx migration block
+  - the secret-store crate: the `RefreshCredentialStore` and `DataKeySource` traits; `EncryptedEnvelopeStore` and `MemoryOnlyStore`; the `MacKeychain` `DataKeySource`; the read-only classified open over an injected ordered list, `usable | absent | unusable { cause }`. Today's `cfg`-selected `PlatformKeychainAccess` and `with_platform_keychain_for_production` are replaced
+  - the Router host's composition root: builds the ordered source list per platform and injects it
+  - the credential publication from F11 (`fleet_machine_login/login_publication.rs`, `refresh_credential_store.rs`)
+  - `board-fleet-sync`: `RenewMachineToken` and its answer as new variants of the board consumer request
+  - the Router's link switch on a re-login (Design 3 R10, R10a)
+- **sign-in service (switchboard)**
+  - `packages/sign-in-core/src/`: the device grant extension, the device-code token handler, per-enrollment client creation, the revoke before-hook, `DecideDeviceLogin` and `DecideMachineToken` calls on the link, and disabling an ended client
+  - the approval page: the code, the machine's label, its workspaces, Approve or Deny
+  - `packages/sign-in-host-cloudflare/` and `packages/sign-in-host-node/`: carrying the machine connection over the link (B2's binding and socket)
+</script></ex-tree>
+
+<h2 id="b3-data">Its data</h2>
+
+<ex-markdown id="b3-data-text"><script type="text/markdown">
+**At central:** the Program Design assigns B3 two tables in each organization's Fleet store (PD:509): **`machine_enrollments`** (the reset's table, reshaped) and **`machine_allowances`**. Both follow your table rule (a UUIDv7 key, `created_at` and `updated_at`, typed columns, a concern prefix). The drawing below is a **logical proposal**, reconciled with the reset's existing `machine_enrollments` columns before the SQL comes to you.
+
+```mermaid
+erDiagram
+  machine_enrollments {
+    text id PK "UUIDv7: the enrollment, also its machine client ID"
+    text installation_id "the machine's installation (v7)"
+    text request_id UK "the device code record ID: the idempotency key"
+    text state "reserved, approved, enrolled, revoked or expired"
+    text end_reason "owner or superseded, when revoked"
+    text approved_by "the approving person"
+    text permission_checked "machine:enroll"
+    integer base_generation "the generation it was approved at (BA1)"
+    text machine_client_id "recorded at the first Grant"
+    integer last_grant_at "for the 30-day idle expiry"
+    integer created_at
+    integer updated_at
+  }
+  machine_allowances {
+    text id PK "UUIDv7"
+    text installation_id
+    text workspace_id
+    text scope
+    text state "active or withdrawn"
+    integer created_at
+    integer updated_at
+  }
+```
+
+- **Two per-installation values have no home yet:** `enrollment_generation` (BA1) and `former_id` (the re-key). They go as two columns on the installation's existing row in the reset's Fleet store if the D1 code has one. If it has none, they go in one small proposed table, `machine_installations`. This is decided against the D1 code and shown in the SQL you approve.
+- **At most one enrollment is active per installation.** The active enrollment and the generation change only in the first Grant and in a revocation, each one Fleet transaction.
+- Reserved and approved states are internal. Lookups show only the observable states (PD:351).
+- **Change records** reuse B2's `organization_change_records`, with new kinds: `machineEnrolled`, `machineRevoked`, `allowanceChanged`, `tokenLifetimeSet`.
+- **Live connection state** (which connection belongs to which enrollment, its token expiry) uses the reset's existing machine-connection persistence, named once D1 is on `main`. The who-is-logged-in table `machine_presence` is B7's, not B3's.
+- **No people are stored at central.** The approver is a person ID from the sign-in service's check.
+- **At step 2** the Access-era enrollment credential and its code are removed. The reset's `machine_enrollments` table stays, reshaped. The Program Design's older line that drops the whole table (PD:1009) predates the reset and is on the stale-text list.
+
+**On the Router:** Design 3's store, in the 2026111000xx block.
+- `fleet_login`, one row: the sign-in address, the organization, the enrollment ID, the machine client ID, the machine environment, and central's receiver and relay IDs. **It never holds token bytes.** Each later login replaces it.
+- `fleet_machine`: `id` = the machine's UUIDv7, which is its existing peer UUIDv7 on an updated root (Design 3 R5); `former_id` = its former v4 service id, kept as history.
+- The refresh credential is in the Router's encrypted envelope file. Its data key comes from the injected `MacKeychain` source on macOS. On Linux and every other platform no source is injected, so it stays only in Host memory. Production writes no plaintext, and memory-only keeping writes no credential bytes.
+</script></ex-markdown>
+
+<h2 id="b3-flows">Its flows</h2>
+
+<ex-markdown id="b3-flows-text"><script type="text/markdown">
+**Logging a machine in.** Approval writes a reserved enrollment and then an approved one. The enrollment becomes active, and replaces any older one, only at its first machine token.
+
+```mermaid
+sequenceDiagram
+  participant R as Router host
+  participant SI as Sign-in service
+  participant You
+  participant F as Fleet object of the organization
+  R->>SI: device authorization (installation v7, former v4 when present, label, organization)
+  SI-->>R: device code, user code, address
+  You->>SI: open the address, approve, pick workspaces
+  SI->>SI: code pending and unexpired? your role holds machine:enroll? (live)
+  SI->>F: DecideDeviceLogin (request ID = device code record ID)
+  F->>F: one transaction: reserve then approve, base_generation = current generation, allowances written, re-key a former v4 id
+  F-->>SI: Approved { enrollmentId }
+  R->>SI: poll with the device code
+  SI->>SI: redeem once, create the enrollment's own public client
+  SI->>F: DecideMachineToken { enrollment, client }
+  F->>F: first Grant: generation unchanged? then activate, supersede the old one, bump the generation
+  F-->>SI: Grant (names the superseded enrollment and client, if any)
+  SI-->>R: machine token, refresh credential, machine_client_id, central's receiver and relay
+  R->>R: publish: confirm the encrypted credential (or hold it in memory), then replace the fleet_login row, then retire older credentials
+  R->>SI: connect with the machine token (through the sign-in service, over the link)
+  SI->>F: AdmitMachineConnection
+  F-->>R: Admitted
+```
+
+**Saving a login is ordered, not one transaction.** The credential and the `fleet_login` row live in different places, so the Host publishes in order, reusing F11's publication path:
+1. confirm the new encrypted credential;
+2. replace the public row;
+3. retire older credentials.
+
+An ordinary unconfirmed publication returns `outcomeUnknown`. If the Host dies, an attached CLI sees its stream end without a terminal frame and reports "login interrupted, run it again"; the old pending code is not resumed. Startup uses no unmatched metadata/credential pair. Memory-only keeping retains public metadata but requires a new code; a present unusable store remains an error.
+
+**BA1, the enrollment-generation fence.** The rule: a login the Router has given up on can never replace a newer one.
+- Each installation has `enrollment_generation`. It's bumped on every activation and every revocation.
+- An approval records `base_generation`. Its first Grant activates only if the generation is unchanged, and then supersedes and bumps it. Otherwise it answers `Refuse { superseded }`, and that approval can never activate.
+- **What this means:** among approvals made at the same generation, the first Grant wins. It doesn't promise that the later-started login wins. The losing login needs a fresh approval.
+- **ABA:** A is approved at g. B activates (g+1) and is revoked (g+2). A's late first Grant is refused, so a revocation ends every approval made before it.
+- **Repeat Grants** keep the live checks: the enrollment must be the installation's active one and not superseded, revoked or expired. So no Grant is decided after a supersession or a revocation. A Grant decided just before a revocation can still be released by the issuer within its 60-second redemption window (M06). The resulting token is refused at every connection and renewal, because central reads the enrollment live.
+- **Why at central:** the Host keeps one pending login per lifetime (M12) and abandons it on restart (M13), but that doesn't cover requests already in flight. A first-Grant request sent by the old Host can still arrive after the replacement login's Grant and supersede it, with no host bug involved. Only central can order these. It costs one integer compare.
+
+**The UUIDv7 re-key.** It runs once, at a machine's first B3 login.
+- On a fresh root, the Router creates one UUIDv7 from its injected ID source. On an updated root, it reuses its existing peer UUIDv7 as `fleet_machine.id` (Design 3 R5). It carries the former v4 service id with the device authorization of its first B3 login.
+- At approval, if the former id names an installation in this organization, that installation takes the v7 id: its sessions, allowances and board relationships stay attached, and the v4 id and its watches are retired.
+- **One logical conversion, not one request.** `fleet_machine.former_id` stays as history (Design 3), and the Router sends it with each login. Central applies the mapping the first time and treats the same former-to-new mapping as already done after that, including after a lost token answer. A former id already linked to a different v7 id is refused.
+- No conversion code runs anywhere else. After the switch, no new login accepts a v4 id; step 1's old login is unchanged.
+
+**Renewal.** The Router refreshes at the sign-in service before `grant_expires_at`. Each refresh asks central `DecideMachineToken`, and central reads the enrollment live. On the open connection, the Router sends the fresh token (`RenewMachineToken`), and central answers `renewed` or `refused { reason }`. After a refusal the Router refreshes once more; if that also fails, or the reason is `enrollmentNotActive`, it stops and asks for a new code.
+
+**Revoking a machine.**
+
+```mermaid
+sequenceDiagram
+  participant You
+  participant SI as Sign-in service
+  participant F as Fleet object
+  participant R as Router
+  You->>SI: revoke machine M
+  SI->>SI: live check, machine:revoke
+  SI->>F: RevokeMachineEnrollment + person token + confirmation
+  F->>F: one transaction: enrollment revoked, allowances withdrawn, sessions removed, generation bumped, record written, close recorded
+  F-->>SI: Applied { ended: enrollment, client }
+  SI->>SI: disable that enrollment's client
+  F->>R: close the old connection (design-2 local action, done when it's gone)
+  R->>SI: refresh
+  SI->>F: DecideMachineToken
+  F-->>SI: Refuse (enrollmentNotActive)
+  SI-->>R: refused, Router asks for a new code
+```
+
+If the close or the disable is lost, nothing is exposed: every decision already reads the enrollment live, and the connection ends at its token's expiry at the latest.
+
+**Logging in again (Design 3 R10, R10a, on the Router).** When a new enrollment replaces the old one, the Router switches the link as one change:
+1. It stops new Fleet work and new project reads.
+2. It waits for the old session's work, and every project read already handed out, to finish.
+3. It clears the old link state.
+4. It starts the new session and accepts Fleet work again, with no Host restart.
+
+A crash leaves either the old enrollment with its link, or the new one with a cleared link, never a mix. Step 3 clears the board read cache, the claim install folders and the mail status cursor, as today (Design 3 R10).
+
+Pending Fleet requests and accepted creations depend on where the new enrollment points:
+- **The same central:** pending requests are sent on the new session, and accepted project creations still waiting to be installed are completed.
+- **A different central:** pending requests end as "cancelled: enrolled with another central". An accepted creation keeps its accepted decision, its local installation ends as "not installed: enrolled with another central", and its creation input is removed.
+- Either way, each caller sees its outcome, and nothing is sent to, or recovered from, a central other than the one a request was made to.
+
+**Where the refresh credential lives: every backend injected (your decision, 7 Nov).** The login code sees one trait, `RefreshCredentialStore` (save, read, retire). How and where the secret is kept sits behind it:
+
+| Trait | Implementations, injected by the Router host |
+|---|---|
+| `RefreshCredentialStore` | `EncryptedEnvelopeStore` (the encrypted file plus one key source), `MemoryOnlyStore` |
+| `DataKeySource` (today's `KeychainAccess`, generalized) | `MacKeychain`, and a memory source for tests |
+
+The host passes `[MacKeychain]` on macOS and an empty list everywhere else (your decision, 7 Nov: Linux secret stores are out of scope; non-macOS Routers move to a later OIDC design). A later store is one more `DataKeySource`, injected the same way. When it starts, it classifies the list:
+- **usable:** the first source that opens supplies the key for the encrypted file;
+- **absent:** every source is backend-absent and the existing read-only store classifier permits Absent: memory only, and the login answer says so;
+- **unusable:** Only `BackendAbsent` advances to the next injected source. A present source that is locked, denied, missing the existing store's key, or yields invalid key/store data returns an error and stops. If every source is backend-absent, select memoryOnly only when the existing read-only store classifier also permits Absent; existing encrypted, legacy or temporary credential data without its key remains unusable. Classification creates or overwrites nothing. Fresh-store key creation stays in explicit startup initialization before classification, only for writable key sources. The host refuses to log in and never touches the store's contents.
+
+The Keychain holds the stable data key, and the rotating refresh credential is written to the encrypted envelope.
+</script></ex-markdown>
+
+<h2 id="b3-proof">How it's proven</h2>
+
+<ex-markdown id="b3-proof-text"><script type="text/markdown">
+Every central check runs on **both builds** (workerd Durable Objects and native Tokio), with the clock injected and no wall-clock waits. Sign-in checks run on workerd+D1 and Node+better-sqlite3. **The real Router journey runs on macOS** against both central hosts. Linux's memory-only restart case runs in the existing Ubuntu test job. Linux has no store in B3, and no new CI job or VM proof is added. Heavy runs go to the Sunclaw test agent. The Verification Design rows are U33, U31, U17, U35, U34 and U21.
+
+| What | The check | Wrong build it catches |
+|---|---|---|
+| a login reaches only its machine and organization | the owner approves: only the requesting installation logs into only that organization; someone else opening or denying the code leaves it for the owner | an approval that logs in another machine, or into another organization |
+| a code is used once | a code works once, expires at its lifetime, and limits guesses (RFC 8628 §5) | a reusable or endless code |
+| two machines stay apart | the same owner approves A and B; A's retired refresh credential is replayed past its reuse window, and is presented at the revoke endpoint under every client; B's rows and renewal are untouched | one client shared by every machine |
+| renewal needs nobody | on a controlled clock, a running machine renews past many token lifetimes; one idle for 30 days is refused as `idleExpired` | a manual step, or a machine that never expires |
+| revocation is immediate | revoke: the connection closes, the next renewal and connection are refused, and the client is disabled; drop the close: the machine still gets nothing and ends at its token's expiry | a revocation checked only at connect |
+| re-login while active | the machine logs in again: sessions and allowances stay, the old connection closes, the old client is disabled | a re-login that loses the machine's state |
+| re-login after revocation | it logs in again: nothing comes back, and you choose its workspaces again | a revocation undone by logging in |
+| **BA1** | (1) A and B approved at g: Grant B, then Grant A is refused, B stays active; (2) the reverse order; (3) a repeat of A after B superseded it: refused, nothing minted; (4) a repeat after revocation: refused; (5) ABA: refused; (6) a repeat of the active enrollment: Grant, generation unchanged. Property: at most one active enrollment per installation, and no approval activates after a generation change | a late or repeated Grant replacing a newer login, or one minting after revocation |
+| **the re-key** | an updated root seeded with a peer UUIDv7 and a v4 service id logs in: `fleet_machine.id` is exactly that peer UUIDv7, and one installation keeps its sessions, allowances and board relationships; the re-key commits but the token answer is lost, then a restart and a retry with the same saved identity: the same machine, no duplicate; a former id linked to another v7 id is refused; a later login sending the same mapping changes nothing | a new identity minted, a duplicate machine, or a retry rejected |
+| only machine tokens connect | every token but a valid sign-in service machine token is refused at the connection, including a person token, a stale one, one for another client or installation, and one for a superseded enrollment | a connection admitted on the wrong token |
+| allowances one at a time | withdraw W1 while W2 stays; a non-owner's withdrawal is refused, with both unchanged | withdrawal only by revoking the whole machine |
+| saving a login | In encryptedStore mode, kill between credential confirmation, metadata publication and retirement: any published login refers to its confirmed credential, and no inconsistent pair is used. An interrupted first login may leave no published login. In memoryOnly mode, restart may retain public metadata but loses the credential; no connection opens until a fresh device-code login completes | metadata used without its credential, or memory-only credential bytes persisted |
+| every backend injected | the login code compiles against `RefreshCredentialStore` alone, and the secret-store crate selects no platform. Fake-source unit tests prove ordering and error precedence: absent then usable gives the second; a locked, denied or damaged first source stops with no later-source access; all absent gives memory only; existing ciphertext with every backend absent, a recorded store ID with a missing item, a wrong key, and damaged metadata are each an error, and no metadata is used without its matching key. On Linux, with an empty list, the host selects memory only, and existing ciphertext without its key is still an error. The macOS native Keychain adapter is proven separately from fake and guarded unit tests | a platform chosen by `cfg` inside the crate, a locked keyring silently skipped, or existing ciphertext turned into a fresh store |
+| the store is honest | with a store: exactly one credential of the new login; no store: nothing on disk, and after a restart a new code brings back the same machine; a denied or damaged store: an error, with no memory fallback and its contents unchanged; no plaintext in production | a plaintext credential, or a silent memory fallback |
+| the link switch (R10, R10a) | hold an old notice, a read and an install across the switch, and kill the Router at each step: never a mix. Same central: pending requests are sent and accepted creations installed. Another central: pending requests are cancelled, and accepted creations end "not installed" with their input removed. Each case is repeated after a restart | old link state used by the new session, or an accepted creation lost |
+| step 1 and step 2 | step 1 works unchanged; on a test deployment, step 2 refuses the old credential and every bad machine token despite a valid Access token, and nothing restores the old login | either login accepted, or a way back |
+| the real journey | two Routers on macOS log in by device code through the sign-in page and connect, against both central builds; one is revoked and refused | a central test with a hand-made token passed off as the journey |
+</script></ex-markdown>
+
+<h2 id="b3-plan">How it's built</h2>
+
+<ex-markdown id="b3-plan-text"><script type="text/markdown">
+**Starts after:** B2 on `main`, and design-2 D2 (the repo split) on `main`. It runs in parallel with BG.
+
+| Step | What | Reuses / drops |
+|---|---|---|
+| B3a | sign-in: the device grant extension and metadata entry, the token handler with one client per enrollment, the revoke before-hook. This first slice proves the Better Auth facts the Program Design lists against 1.7.11 (consent with `referenceId`, issuing under another client, the two-machine replay, the mixed-client revoke) | new; the fallback is our own device endpoints minting through `issueTokens` |
+| B3b | central: `machine_enrollments` reshaped and `machine_allowances`, `DecideDeviceLogin`, `DecideMachineToken` with BA1, idle expiry, the re-key, change records, and the admin commands, including `WithdrawMachineAllowance` | B2's guard, ledger and change records |
+| B3c | central: the machine token check, connection admission on the link, `RenewMachineToken`, and revocation with its local close | F3a: keeps the key cache, key resolution and verifier; drops the directory, service-client and person-callback code |
+| B3d | Router: the `FleetLogin` request, the device flow, `fleet_login` and `fleet_machine`, the ordered credential publication, the classified store open, memory-only keeping, renewal, the re-key, and the R10/R10a switch | F11 (`56b393a9`): keeps its login, discovery and storage work |
+| B3e | the machineLogin setting; the macOS journey against both central builds; Linux backend and memory-only checks under SO9 | the harness (#204): keep, then port its scenarios to the new central layout |
+
+**Thrown out:** the per-machine Connection object, the Organization Registry's machine claim, and the Access-era enrollment path, which goes at step 2.
+
+**Pull requests:** one in codex-router (B3b–B3e) and one in switchboard (B3a plus the approval page).
+
+**Who builds it:**
+- Opus high Implementers take the structural work: the Router host and central's module.
+- Sol 6.1 high Implementers take the exact work: the token handler, the wire shapes, and BA1's edge cases.
+- Sol 6.1 high Verifiers and Sol 6.1 xhigh Reviewers check it.
+- Rust runs on Sunclaw.
+</script></ex-markdown>
+
+<h2 id="b3-unknowns">Not fully known, and your decisions</h2>
+
+<ex-markdown id="b3-unknowns-text"><script type="text/markdown">
+| Not fully known | Settled by |
+|---|---|
+| the exact SQL of `machine_enrollments` (reshaped) and `machine_allowances`, where the generation and former id live, and the reset's live connection-state home | the reset's D1 code on `main`; the SQL comes to you first |
+| B2's handoff "pinning the stamp in a machine's enrollment": B2 names it for B3 but no contract defines it | reconciled with B2's doc before B3a; nothing new is invented for it here |
+| the split crate names for the files above | design-2 D2 on `main` |
+| the B3 agent choices (M01–M15, D03, D04, D08–D10) | your answers on the [assumptions page](../../../../tmp/2026-10-30-lead-pages/assumptions-by-deliverable.html), group B3 |
+| Routers on VMs with no store (Fly, Sprites, Firecracker) | **you decided (7 Nov): a later design, using OIDC or platform identity.** Until then they keep the credential in memory and ask for a new code after a restart or cold wake. Not in B3 |
+| that B3a's Better Auth facts hold at 1.7.11 | B3a's first slice; if one fails, the fallback above |
+
+**Your decisions on this page:**
+1. **Approve B3 as written,** including BA1 and the re-key.
+</script></ex-markdown>
+
+<ex-choice id="approve-b3" title="Approve B3 Machine login and the locked link?">
+<ex-option id="b3-approve" title="**Approve B3**">
+<template slot="summary">B3 starts after B2 and the repo split are on main, in parallel with BG.</template>
+</ex-option>
+<ex-option id="b3-change" title="Change something first (say what in a comment)">
+<template slot="summary">I'll revise it and bring it back.</template>
+</ex-option>
+</ex-choice>
+
+</ex-document>
+</body>
+</html>
