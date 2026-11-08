@@ -97,7 +97,7 @@ flowchart LR
 | admin commands `AllowMachine`, `WithdrawMachineAllowance`, `RevokeMachineEnrollment`, `SetTokenLifetime`, and their pages | notices to the Switchboard about revocations and allowances (step 3) |
 | revocation: one transaction, then the old connection closed as a design-2 local action, and the sign-in service disabling the client | "one machine, one organization" across organizations (you deferred it) |
 | **BA1**: the enrollment-generation fence | remote create's trip (the D2 Lead's) |
-| **the UUIDv7 re-key**: carry the retained former v4 id when present; central converts the same machine once and accepts repeats of the same mapping | |
+| **the UUIDv7 re-key**: carry the retained former service (routing) id, v4 or v7, when present; central converts the same machine once and accepts repeats of the same mapping | |
 | the Router host: the `FleetLogin` operator request (public inputs only), the `fleet_login` row, the classified store open, memory-only keeping | Linux secret stores (Secret Service, systemd credentials, F12): out of scope; non-macOS Routers move to a later OIDC design |
 | Design 3's **R10/R10a** on the Router: replacing an enrollment switches the link as one change, with pending requests kept or cancelled by whether it's the same central | |
 | the `machineLogin` setting at central: step 1 in production, step 2 on test deployments | |
@@ -118,7 +118,7 @@ Names marked *proposed* are B3 additions. `organization_authority/` is supplied 
     - `machine_token.rs` *proposed*: the machine token check (C9), reusing B2's key cache and verifier
     - `machine_connection.rs` *proposed*: `AdmitMachineConnection`, `RenewMachineToken`, closing on revocation or supersession
     - `machine_commands.rs` *proposed*: `AllowMachine`, `WithdrawMachineAllowance`, `RevokeMachineEnrollment`, `SetTokenLifetime` (the existing contracts in `identity_contract/organization_commands.rs`)
-    - the re-key, inside `device_login_decision.rs`: link a former v4 id to the new v7 id once
+    - the re-key, inside `device_login_decision.rs`: link a former service id to the machine's peer UUIDv7 once
   - `identity_contract.rs`: the B3 shapes (the Program Design's `DeviceLoginDecision`, `MachineTokenDecision`, `MachineConnectionAdmission`, `EndedMachineClient`), plus `base_generation` on the enrollment
   - `fleet-identity-protocol`: `MachineTokenRenewal`, so the Router can read it
   - the Fleet store's migrations: `machine_enrollments` reshaped and `machine_allowances` (PD:509)
@@ -179,7 +179,7 @@ erDiagram
 
 **On the Router:** Design 3's store, in the 2026111000xx block.
 - `fleet_login`, one row: the sign-in address, the organization, the enrollment ID, the machine client ID, the machine environment, and central's receiver and relay IDs. **It never holds token bytes.** Each later login replaces it.
-- `fleet_machine`: `id` = the machine's UUIDv7, which is its existing peer UUIDv7 on an updated root (Design 3 R5); `former_id` = its former v4 service id, kept as history.
+- `fleet_machine`: `id` = the machine's UUIDv7, which is its existing peer UUIDv7 on an updated root (Design 3 R5); `former_id` = its former service (routing) id, kept as history. That id is a v4 on a pre-PR-A root and a v7 on a root created after Design 3's PR A, which mints separate service and peer UUIDv7s; its role, not its UUID version, makes it the former id.
 - The refresh credential is in the Router's encrypted envelope file. Its data key comes from the injected `MacKeychain` source on macOS. On Linux and every other platform no source is injected, so it stays only in Host memory. Production writes no plaintext, and memory-only keeping writes no credential bytes.
 </script></ex-markdown>
 
@@ -194,12 +194,12 @@ sequenceDiagram
   participant SI as Sign-in service
   participant You
   participant F as Fleet object of the organization
-  R->>SI: device authorization (installation v7, former v4 when present, label, organization)
+  R->>SI: device authorization (installation = peer v7, former service id when present, label, organization)
   SI-->>R: device code, user code, address
   You->>SI: open the address, approve, pick workspaces
   SI->>SI: code pending and unexpired? your role holds machine:enroll? (live)
   SI->>F: DecideDeviceLogin (request ID = device code record ID)
-  F->>F: one transaction: reserve then approve, base_generation = current generation, allowances written, re-key a former v4 id
+  F->>F: one transaction: reserve then approve, base_generation = current generation, allowances written, re-key a former service id
   F-->>SI: Approved { enrollmentId }
   R->>SI: poll with the device code
   SI->>SI: redeem once, create the enrollment's own public client
@@ -229,10 +229,10 @@ An ordinary unconfirmed publication returns `outcomeUnknown`. If the Host dies, 
 - **Why at central:** the Host keeps one pending login per lifetime (M12) and abandons it on restart (M13), but that doesn't cover requests already in flight. A first-Grant request sent by the old Host can still arrive after the replacement login's Grant and supersede it, with no host bug involved. Only central can order these. It costs one integer compare.
 
 **The UUIDv7 re-key.** It runs once, at a machine's first B3 login.
-- On a fresh root, the Router creates one UUIDv7 from its injected ID source. On an updated root, it reuses its existing peer UUIDv7 as `fleet_machine.id` (Design 3 R5). It carries the former v4 service id with the device authorization of its first B3 login.
-- At approval, if the former id names an installation in this organization, that installation takes the v7 id: its sessions, allowances and board relationships stay attached, and the v4 id and its watches are retired.
+- On a fresh root, the Router creates one UUIDv7 from its injected ID source. On an updated root, it reuses its existing peer UUIDv7 as `fleet_machine.id` (Design 3 R5). It carries the former service (routing) id, v4 or v7, with the device authorization of its first B3 login.
+- At approval, if the former id names an installation in this organization, that installation takes the peer UUIDv7: its sessions, allowances and board relationships stay attached, and the former service id and its routing and watches are retired.
 - **One logical conversion, not one request.** `fleet_machine.former_id` stays as history (Design 3), and the Router sends it with each login. Central applies the mapping the first time and treats the same former-to-new mapping as already done after that, including after a lost token answer. A former id already linked to a different v7 id is refused.
-- No conversion code runs anywhere else. After the switch, no new login accepts a v4 id; step 1's old login is unchanged.
+- No conversion code runs anywhere else. After the switch, no new login accepts a former service id as a machine id; step 1's old login is unchanged.
 
 **Renewal.** The Router refreshes at the sign-in service before `grant_expires_at`. Each refresh asks central `DecideMachineToken`, and central reads the enrollment live. On the open connection, the Router sends the fresh token (`RenewMachineToken`), and central answers `renewed` or `refused { reason }`. After a refusal the Router refreshes once more; if that also fails, or the reason is `enrollmentNotActive`, it stops and asks for a new code.
 
@@ -302,7 +302,7 @@ Every central check runs on **both builds** (workerd Durable Objects and native 
 | re-login while active | the machine logs in again: sessions and allowances stay, the old connection closes, the old client is disabled | a re-login that loses the machine's state |
 | re-login after revocation | it logs in again: nothing comes back, and you choose its workspaces again | a revocation undone by logging in |
 | **BA1** | (1) A and B approved at g: Grant B, then Grant A is refused, B stays active; (2) the reverse order; (3) a repeat of A after B superseded it: refused, nothing minted; (4) a repeat after revocation: refused; (5) ABA: refused; (6) a repeat of the active enrollment: Grant, generation unchanged. Property: at most one active enrollment per installation, and no approval activates after a generation change | a late or repeated Grant replacing a newer login, or one minting after revocation |
-| **the re-key** | an updated root seeded with a peer UUIDv7 and a v4 service id logs in: `fleet_machine.id` is exactly that peer UUIDv7, and one installation keeps its sessions, allowances and board relationships; the re-key commits but the token answer is lost, then a restart and a retry with the same saved identity: the same machine, no duplicate; a former id linked to another v7 id is refused; a later login sending the same mapping changes nothing | a new identity minted, a duplicate machine, or a retry rejected |
+| **the re-key** | three roots: a pre-PR-A root (peer UUIDv7, v4 service id), a root created after PR A (separate peer and service UUIDv7s), and a fresh B3 root (no former id). Each logs in: `fleet_machine.id` is exactly that peer UUIDv7, and one installation keeps its sessions, allowances and board relationships; the re-key commits but the token answer is lost, then a restart and a retry with the same saved identity: the same machine, no duplicate; a former id linked to another v7 id is refused; a later login sending the same mapping changes nothing | a new identity minted, a duplicate machine, or a retry rejected |
 | only machine tokens connect | every token but a valid sign-in service machine token is refused at the connection, including a person token, a stale one, one for another client or installation, and one for a superseded enrollment | a connection admitted on the wrong token |
 | allowances one at a time | withdraw W1 while W2 stays; a non-owner's withdrawal is refused, with both unchanged | withdrawal only by revoking the whole machine |
 | saving a login | In encryptedStore mode, kill between credential confirmation, metadata publication and retirement: any published login refers to its confirmed credential, and no inconsistent pair is used. An interrupted first login may leave no published login. In memoryOnly mode, restart may retain public metadata but loses the credential; no connection opens until a fresh device-code login completes | metadata used without its credential, or memory-only credential bytes persisted |
