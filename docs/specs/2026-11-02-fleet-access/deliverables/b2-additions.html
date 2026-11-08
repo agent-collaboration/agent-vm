@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B2 additions: tokens and revocation</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="content"><nav slot="pages" aria-label="Pages">
+<a href="../index.html">Overview</a>
+<a href="../requirements.html">Requirements</a>
+<a href="../specification.html">Specification</a>
+<a href="../program-design.html">Program Design</a>
+<a href="../verification-design.html">Verification Design</a>
+<a href="b1-people-roles-sign-in.html">B1 People, roles and sign-in</a>
+<a href="b2-central-organizations.html">B2 Central's organizations</a>
+<a href="b2-additions.html">B2 additions: tokens and revocation</a>
+<a href="b3-machine-login.html">B3 Machine login and the locked link</a>
+<a href="bg-getting-in.html">BG Getting in</a>
+</nav></ex-nav>
+<ex-document id="content" document-id="fleet-access-b2-additions" revision="2026-11-08.1">
+
+<h1>B2 additions: tokens and revocation</h1>
+
+<ex-callout id="b2x-answer" title="In short" tone="tldr">
+<ex-markdown id="b2x-answer-text"><script type="text/markdown">
+- **What this adds to B2:** the token and revocation model you chose on 6 November, which replaces B2's "attached confirmation" guard:
+  - a **reusable person token** carrying role and permissions, bound to the caller's key;
+  - **revision counters** pushed to central, which refuses tokens below them;
+  - a **used-requests table**, so each request counts once;
+  - central verifying the key-bound proof itself.
+- **Already decided by you:**
+  - the tables (r3 section 6, t14);
+  - person-within-organization scope;
+  - expiry fallback and revoke shown only after central confirms;
+  - central verifies DPoP;
+  - 60 + 5 seconds;
+  - intent inside the proof (t15a);
+  - keyring, otherwise memory (t15b);
+  - device-code sign-in (t15d);
+  - a key-bound refresh credential (t15e);
+  - accepting the Better Auth replay gap (t15c).
+- **Waiting on your answers:** the nine B2 values on the [assumptions page](../../../../tmp/2026-10-30-lead-pages/assumptions-by-deliverable.html), plus how the admin page carries its token (below). The parts they don't touch are being built now.
+- **This page is a draft for review.** It was written on the owner's instruction to keep developing. The central side is being built on Lead A's #233 branch and tested on staging, not production.
+</script></ex-markdown>
+</ex-callout>
+
+<h2 id="b2x-change">What changes in B2</h2>
+
+<ex-markdown id="b2x-change-text"><script type="text/markdown">
+| B2 as written (5 Nov) | Now |
+|---|---|
+| central's guard checks a person token **plus a confirmation the sign-in service attaches** to each request | central checks a **reusable person token** (role, permissions, revisions) and a **DPoP proof** signed by the caller's key; no per-request confirmation |
+| Stable operation IDs use the existing ledger for repeat results; a separate fresh/unused per-request confirmation is required but is not the operation ledger. | a **used-requests table** (`organization_used_requests`) with a watermark holds the fresh request ID; the stable operation ID still maps to the reset's `fleet_request_decisions` |
+| role checked live at the sign-in service, no push | **revision counters** pushed from the sign-in service; central refuses a token below its stored floor |
+| Retained from B2: provisioning carries the signed statement; renewal reads the current digest privately and uses signed replaces/CAS. The older PD's organizationId-only sketch is stale. | unchanged |
+| B2's one-year statement, renewed with 30 days left | 120-day statement / 60-days-left renewal (your choice 3f), coordinated across constants, validators, signing and renewal; existing statements are replaced by normal re-sign/CAS, not reset |
+</script></ex-markdown>
+
+<h2 id="b2x-flow">The flow</h2>
+
+<ex-markdown id="b2x-flow-text"><script type="text/markdown">
+The CLI flow. Applying the same caller-held token and key path to the admin page is the proposal below, awaiting your confirmation.
+
+```mermaid
+sequenceDiagram
+  participant C as caller (CLI)
+  participant SI as sign-in service
+  participant F as Fleet object of the organization
+  C->>SI: get a person token (device code)
+  SI->>SI: one snapshot: session, member role, policy digest, person and org revisions
+  SI-->>C: token bound to C's key (cnf.jkt), with permissions and revisions
+  C->>F: request + token + DPoP proof (htm, htu, ath, intent), through the sign-in service
+  F->>F: verify token and proof, then in the applying transaction check floors, expiry, factor freshness, permission, request time and watermark
+  F->>F: insert the used-request marker, then apply the operation (same transaction)
+  F-->>C: Applied or Refused
+  Note over SI,F: a role change, removal or sign-out bumps a revision in the same database step as the Better Auth write
+  SI->>F: push the latest revision (coalesced, retried until acknowledged)
+  F->>F: raise the floor, never lower it, acknowledge after commit
+```
+</script></ex-markdown>
+
+<h2 id="b2x-parts">The parts</h2>
+
+<ex-markdown id="b2x-parts-text"><script type="text/markdown">
+**Central (codex-router, being built now on `item2/b2-central-on-d1`):**
+- `organization_authorization_floors`, `person_organization_authorization_floors`, `organization_used_requests` (r3 section 6, approved).
+- The person-token check (F3a's key cache and verifier) and the DPoP check, reusing the prototype `person_dpop_prototype/proof_verification.rs` (`verify_person_request`, 43 vectors on both hosts).
+- The applying transaction: floors and states, policy digest, the three expiry bounds, factor freshness, permission, request time within `N − 65 s < T ≤ N + 5 s` and above the watermark; then the marker and the operation together.
+- Receiving pushed revisions: higher applies, same is idempotent, a conflict is refused, an acknowledgement follows commit.
+
+**Sign-in (switchboard, next):**
+- `organization_authorization_revisions` and `person_organization_authorization_revisions` (approved), each bump in the same database step as the Better Auth write it follows. The atomic fence prototype proved this on Node and D1 (5/5 each).
+- Token claims added by the existing contributor: `token_profile`, `organization_id`, `authorization_subject_id`, both revisions, `permission_policy_digest`, `permissions`, the original factor facts, session_expires_at_ms, authorization_snapshot_at_ms and authorization_snapshot_valid_until_ms. Capture S before dispatching the coherent primary read; the fixed deadline is S + L (L ≤ 300,000 ms). Release refuses elapsed application bounds; delay, retry or native token stamping never redates that snapshot or its factor facts. Native iat/exp remain native, and central admits only before the minimum of native exp, session deadline and snapshot deadline, with equality expired.
+- A coalesced push drainer (after commit, on startup, periodically) and "revoked everywhere" shown only with central's acknowledgements.
+- Provisioning with the statement; the renewal digest read and signed `replaces`.
+
+**CLI (switchboard owner CLI, after the B2 values):** device-code sign-in (`--device`), the DPoP key in the keyring or memory, the key-bound refresh credential, the intent claim.
+</script></ex-markdown>
+
+<h2 id="b2x-proof">How it's proven</h2>
+
+<ex-markdown id="b2x-proof-text"><script type="text/markdown">
+Every central check runs on both builds (workerd and Tokio), with the clock injected and no wall-clock waits. Sign-in checks run on workerd+D1 and Node+better-sqlite3. Heavy runs go to the Sunclaw test agent; staging runs are coordinated with Lead A.
+
+These rows are examples. **The full gate is r3 section 9** (`tmp/2026-11-06-push-revision-replay/advisor-design-r3.md`): person/org scope, remove/rejoin and session-end fan-out races; independent session and snapshot expiry; old-policy refusal, stop/resume and deletion ordering, payload conflicts and missing floors; after-hook crash, zero-row and failed-batch cases and late ACKs; concurrent replay, rollback after purge and backup recovery; the 120/60 statement transition; and a controlled real Node/workerd issuer → Rust central → persisted admission observation. Seeded floors and handcrafted tokens can't stand in for that last one. The native-AS cleanup/rollback replay-refusal row is superseded by t15c's accepted limitation: native AS reservations remain required, but no cleanup change, sweep, adapter wrapper or claim of unconditional AS replay refusal is part of this gate. Central's separate replay/admission checks remain required.
+
+| What | The check | Wrong build it catches |
+|---|---|---|
+| a token below the floor is refused | push revision 3; a token at revision 2 is refused, nothing written | a guard that ignores pushed revisions |
+| each request counts once | the same request ID twice: the second is refused; a fresh request ID with the same operation ID gets the original answer | a replay applied, or a retry duplicating the effect |
+| the watermark holds | purge advances the watermark first; an old request after a purge is refused | a purge that reopens replay |
+| DPoP is required | a Bearer request, a proof for another URL, a stale proof, a proof signed by another key: each refused | a token usable without its key |
+| revision and write together | the Better Auth write fails, so no revision bump, and the reverse | a bump without the change, or a change without the bump |
+| push is truthful | drop an acknowledgement: the source keeps it pending; "revoked everywhere" waits for it | a revoke shown before central confirms |
+| floors never go backwards | an older push after a newer one changes nothing | a reordered push undoing a revoke |
+| the stamp renews safely | an old statement with a new digest, a late old statement, and two renewals at once: refused, refused, one wins | a stamp stolen back or doubled |
+</script></ex-markdown>
+
+<h2 id="b2x-open">Not fully known, and your decisions</h2>
+
+<ex-markdown id="b2x-open-text"><script type="text/markdown">
+| Open | Settled by |
+|---|---|
+| the nine B2 values: clock premise (T03), the intent format (T06), refresh lifetime (T07), the refresh lock (T09), policy digest (T15), the key profile (T16), keyring naming (T18), the legacy mapping (D07), the session cap (D11) | your answers on the assumptions page. Until then, central keeps intent checking behind one function using the proposed format, marked pending |
+| **how the admin page carries its token.** Your 6 Nov answer was "reusable token with role" plus pushed increments. That settles a reusable person credential checked by central; it doesn't settle where the browser's token and key live (browser-held, or held server-side bound to your web session). The proposal is that the page gets its own person token | your confirmation; the page's token path is not built until you confirm |
+| the B2 tables `organization_identity` and `organization_change_records`: your 6 Nov answer was "change", and they haven't been re-approved since | your approval of their SQL; staging only until then |
+| the exact mapping from Better Auth's writes to the revision bump on each native path | the atomic fence prototype's evidence plus the sign-in slice |
+
+**Your decisions on this page:**
+1. **Approve the B2 additions as written.**
+2. **Confirm or change the proposed admin-page token path.** Approving the additions doesn't decide it, and doesn't decide the nine pending values.
+</script></ex-markdown>
+
+<ex-choice id="approve-b2x" title="Approve the B2 additions?">
+<ex-option id="b2x-approve" title="**Approve**">
+<template slot="summary">Central continues as built; the sign-in and CLI slices follow your B2 answers.</template>
+</ex-option>
+<ex-option id="b2x-revise" title="Change something first (say what in a comment)">
+<template slot="summary">I'll revise and bring it back.</template>
+</ex-option>
+</ex-choice>
+
+<ex-choice id="b2x-page-token" title="The admin page and central">
+<ex-option id="b2x-page-own" title="**The page gets its own person token** (proposed interpretation of your reusable-token answer)">
+<template slot="summary">The page holds a key-bound person token like the CLI's; central checks it the same way.</template>
+</ex-option>
+<ex-option id="b2x-page-other" title="Something else (say what in a comment)">
+<template slot="summary">I'll revise the page path.</template>
+</ex-option>
+</ex-choice>
+
+</ex-document>
+</body>
+</html>
