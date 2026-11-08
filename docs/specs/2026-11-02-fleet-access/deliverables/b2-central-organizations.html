@@ -29,7 +29,7 @@
 <a href="bg-getting-in.html">BG Getting in</a>
 <a href="b2-additions.html">B2 additions: tokens and revocation</a>
 </nav></ex-nav>
-<ex-document id="content" document-id="fleet-access-b2" revision="2026-11-05.1">
+<ex-document id="content" document-id="fleet-access-b2" revision="2026-11-08.1">
 
 <h1 id="heading-b2-central-s-organizations">B2 Central's organizations</h1>
 
@@ -256,7 +256,7 @@ Every check runs on **both builds** (workerd Durable Objects and native Tokio), 
 | second-factor freshness | a stale factor on a change gives `secondFactorRequired`; reads are exempt | factors ignored |
 | change and record together | make the record write fail: no workspace is created | the record written separately |
 | your organization keeps its data | provision your organization on a store holding today's data: everything is still there; the configured name is the same organization on both hosts, and no other organization can claim it | a fresh store replacing yours |
-| before set-up, nothing works | a public command or read on an unstamped store is refused, revealing nothing | a store usable before it's provisioned |
+| before set-up, nothing works | a public command or read on an unstamped store is refused, revealing nothing. This covers B2's own public commands and reads on any unstamped store. Today's Access-era routes on today's store keep working until the switch removes them in the same deploy that provisions your organization (Program Design, step 2); that is the approved transition, not an exception to the rule (Lead, 8 Nov) | a store usable before it's provisioned |
 | the stamp can't be stolen or doubled | provision B on A's stamped store: refused; two first provisions at once: one stamp | an overwrite, or two IDs |
 | the guard holds over time | a request held past 5 s, an expired token or factor, a reused confirmation, the wrong audience or token kind: each refused, nothing written | a guard checked only on arrival |
 | lost replies and repeats | cut the reply after central commits a workspace, restart, retry the same operation: one workspace, one record, the original answer; the same operation ID with a changed body is refused; two requests for one name end with one workspace | duplicates, or a replay that changes the answer |
