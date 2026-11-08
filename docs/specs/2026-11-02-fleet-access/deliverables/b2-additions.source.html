@@ -42,7 +42,12 @@
   - device-code sign-in (t15d);
   - a key-bound refresh credential (t15e);
   - accepting the Better Auth replay gap (t15c).
-- **Waiting on your answers:** the nine B2 values on the [assumptions page](../../../../tmp/2026-10-30-lead-pages/assumptions-by-deliverable.html), plus how the admin page carries its token (below). The parts they don't touch are being built now.
+- **Decided by you, 8 November:**
+  - these additions are approved;
+  - the nine B2 values are accepted as proposed;
+  - the B2 table SQL is approved;
+  - **the sign-in server holds the admin page's credential**, tied to your web session, and signs each admin request; the browser holds no token or key;
+  - `central-link` is confirmed: a second Worker from the same crate, a private proxy to the Fleet Durable Object.
 - **This page is a draft for review.** It was written on the owner's instruction to keep developing. The central side is being built on Lead A's #233 branch and tested on staging, not production.
 </script></ex-markdown>
 </ex-callout>
@@ -62,7 +67,7 @@
 <h2 id="b2x-flow">The flow</h2>
 
 <ex-markdown id="b2x-flow-text"><script type="text/markdown">
-The CLI flow. Applying the same caller-held token and key path to the admin page is the proposal below, awaiting your confirmation.
+The CLI flow. For the admin page, the sign-in server holds the person credential tied to your web session and signs each request (your decision, 8 Nov). Central checks it the same way.
 
 ```mermaid
 sequenceDiagram
@@ -124,9 +129,9 @@ These rows are examples. **The full gate is r3 section 9** (`tmp/2026-11-06-push
 <ex-markdown id="b2x-open-text"><script type="text/markdown">
 | Open | Settled by |
 |---|---|
-| the nine B2 values: clock premise (T03), the intent format (T06), refresh lifetime (T07), the refresh lock (T09), policy digest (T15), the key profile (T16), keyring naming (T18), the legacy mapping (D07), the session cap (D11) | your answers on the assumptions page. Until then, central keeps intent checking behind one function using the proposed format, marked pending |
-| **how the admin page carries its token.** Your 6 Nov answer was "reusable token with role" plus pushed increments. That settles a reusable person credential checked by central; it doesn't settle where the browser's token and key live (browser-held, or held server-side bound to your web session). The proposal is that the page gets its own person token | your confirmation; the page's token path is not built until you confirm |
-| the B2 tables `organization_identity` and `organization_change_records`: your 6 Nov answer was "change", and they haven't been re-approved since | your approval of their SQL; staging only until then |
+| the nine B2 values | **accepted as proposed (you, 8 Nov)**: T06 intent = closed `{v:1, operation, organization, target, operationId, params}`, JCS then SHA-256, claim `intent` |
+| how the admin page carries its token | **decided (you, 8 Nov):** the sign-in server holds the key-bound person credential tied to the web session and signs each admin request; no browser token or key |
+| the B2 tables `organization_identity` and `organization_change_records` | **approved as drafted (you, 8 Nov)**, with kinds organizationProvisioned, workspaceCreated, stampRenewed |
 | the exact mapping from Better Auth's writes to the revision bump on each native path | the atomic fence prototype's evidence plus the sign-in slice |
 
 **Your decisions on this page:**
