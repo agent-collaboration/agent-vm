@@ -20,7 +20,7 @@
 <a href="b3-machine-login.html">B3 Machine login and the locked link</a>
 <a href="bg-getting-in.html">BG Getting in</a>
 </nav></ex-nav>
-<ex-document id="content" document-id="fleet-access-b2-additions" revision="2026-11-08.2">
+<ex-document id="content" document-id="fleet-access-b2-additions" revision="2026-11-08.3">
 
 <h1>B2 additions: tokens and revocation</h1>
 
@@ -102,7 +102,13 @@ sequenceDiagram
 - A coalesced push drainer (after commit, on startup, periodically) and "revoked everywhere" shown only with central's acknowledgements.
 - Provisioning with the statement; the renewal digest read and signed `replaces`.
 
-**CLI (switchboard owner CLI, after the B2 values):** device-code sign-in (`--device`), the DPoP key in the keyring or memory, the key-bound refresh credential, the intent claim.
+**CLI (switchboard owner CLI, after the B2 values):** device-code sign-in (`--device`), the DPoP key in the keyring or memory, the key-bound refresh credential, the intent claim. Lead decisions, 8 Nov:
+- The keyring is the macOS Keychain through `/usr/bin/security` behind an injected runner, with the secret on stdin. Everywhere else the key is held in memory for that command only.
+- Accepted tradeoff (t15b): the key is extractable so it can persist, and any process running as the user can read the item.
+- A third system client carries the CLI's admin grants.
+- The CLI reaches central through a sign-in relay that accepts Authorization-DPoP only and forwards unchanged over the private link.
+- For both the page and the CLI, the proof's `htu` names central's admin endpoint (`CENTRAL_PUBLIC_ORIGIN` + route), not the relay hop. This is a deliberate deviation from RFC 9449.
+- A refresh token is released only for the fleet CLI's DPoP-bound person token.
 </script></ex-markdown>
 
 <h2 id="b2x-proof">How it's proven</h2>
