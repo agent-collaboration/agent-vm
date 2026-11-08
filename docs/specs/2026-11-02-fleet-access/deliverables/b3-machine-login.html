@@ -316,7 +316,7 @@ Every central check runs on **both builds** (workerd Durable Objects and native 
 <h2 id="b3-plan">How it's built</h2>
 
 <ex-markdown id="b3-plan-text"><script type="text/markdown">
-**Starts after:** B2 on `main`, and design-2 D2 (the repo split) on `main`. It runs in parallel with BG.
+**Starts after:** B2 on `main`, design-2 D2 (the repo split) on `main`, and Design 3's PR A (codex-router #236, local storage) on `main`, because B3 writes `fleet_login` and `fleet_machine` in the store PR A reshapes. It runs in parallel with BG.
 
 | Step | What | Reuses / drops |
 |---|---|---|
