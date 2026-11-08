@@ -20,7 +20,7 @@
 <a href="b3-machine-login.html">B3 Machine login and the locked link</a>
 <a href="bg-getting-in.html">BG Getting in</a>
 </nav></ex-nav>
-<ex-document id="content" document-id="fleet-access-b2-additions" revision="2026-11-08.1">
+<ex-document id="content" document-id="fleet-access-b2-additions" revision="2026-11-08.2">
 
 <h1>B2 additions: tokens and revocation</h1>
 
@@ -94,7 +94,7 @@ sequenceDiagram
 - `organization_authorization_floors`, `person_organization_authorization_floors`, `organization_used_requests` (r3 section 6, approved).
 - The person-token check (F3a's key cache and verifier) and the DPoP check, reusing the prototype `person_dpop_prototype/proof_verification.rs` (`verify_person_request`, 43 vectors on both hosts).
 - The applying transaction: floors and states, policy digest, the three expiry bounds, factor freshness, permission, request time within `N − 65 s < T ≤ N + 5 s` and above the watermark; then the marker and the operation together.
-- Receiving pushed revisions: higher applies, same is idempotent, a conflict is refused, an acknowledgement follows commit.
+- Receiving pushed revisions: higher applies, same is idempotent, a conflict is refused, an acknowledgement follows commit. The push arrives at `POST /internal/organization-authorization-revisions` on the private link only (central-link and the Tokio socket; public central answers 404). It carries a closed tagged body, organization or person, and the reply is `{acknowledgedRevision}`, or 409 conflict, 412 person-before-organization, 403 wrong organization or 503 retry. An unstamped Fleet refuses the push. Lead decision, 8 Nov: this makes central-link's sixth closed route, after provisioning, the digest read and the three admin routes.
 
 **Sign-in (switchboard, next):**
 - `organization_authorization_revisions` and `person_organization_authorization_revisions` (approved), each bump in the same database step as the Better Auth write it follows. The atomic fence prototype proved this on Node and D1 (5/5 each).
