@@ -264,7 +264,7 @@ Every check runs on **both builds** (workerd Durable Objects and native Tokio), 
 | the real journey | you, signed in, create a workspace on the sign-in admin page and it appears; a member is refused; requests off the link, or a public request to an internal route, are refused; on both builds | a central test with a hand-made token passed off as the journey |
 | the stamp is genuine | an edited or forged statement, the wrong type, purpose, audience or organization, an access token presented as a stamp, an unknown or retired key: each refused before a write; a stored statement edited on disk makes central refuse every command after a restart | a stamp trusted without its signature |
 | renewal can't go backwards | a newer statement is stored, then one prepared against the older stamp arrives late: refused; a setup retry after renewal keeps the new stamp; two renewals at once: one wins | the old key's statement coming back and stranding startup |
-| renewal is automatic | on a controlled clock, a stamp reaching 30 days left is re-signed by the daily trigger on both builds; one further from expiry isn't touched | a manual step, or a stamp that expires |
+| renewal is automatic | on a controlled clock, a stamp reaching 60 days left is re-signed by the daily trigger on both builds; one further from expiry isn't touched | a manual step, or a stamp that expires |
 | project ownership | a token for O naming a project that isn't in O's directory is refused, nothing changed; an import aimed at the wrong central is refused | a project-side organization trusted |
 | the real call from sign-in | B1's stand-in is replaced; creating an organization end to end turns it ready on both builds | a stand-in left in |
 </script></ex-markdown>
