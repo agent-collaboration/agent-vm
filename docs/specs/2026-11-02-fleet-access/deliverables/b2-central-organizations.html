@@ -93,7 +93,7 @@ flowchart TB
 | setting up an organization (`ProvisionOrganization` → `Provisioned`), and the sign-in service's real call replacing B1's stand-in | sessions registering through their machine (B4) |
 | **the link itself** (the `CENTRAL` service binding on Cloudflare, the Unix socket on Node and Tokio), and **the sign-in service's admin forwarding for B2's operations**: its admin page and endpoints, the live permission check, and the attached confirmation | machine connections over the link (B3) |
 | each Fleet object stamped with its organization by a **statement the sign-in service signs**, checked whenever central starts and on every command; a request for another organization refused | the authenticated command-line tool (B5) |
-| the stamp renewed **automatically**: it lasts a year, and once a day the sign-in service re-signs any stamp with 30 days or less left | pinning the stamp in a machine's enrollment (B3) |
+| the stamp renewed **automatically**: it lasts 120 days, and once a day the sign-in service re-signs any stamp with 60 days or less left (your choice 3f, recorded in B2 additions) | pinning the stamp in a machine's enrollment (B3) |
 | a project belongs to the organization whose Fleet directory lists it; imports name their target organization and are refused if it differs from the stamp | a project's organization in its replicated state (never: replicated state isn't a source of truth) |
 | the permission guard: person token, the sign-in service's attached confirmation, second-factor freshness | who is logged in, presence (B7); remote start (B8) |
 | admin command `CreateWorkspace`; `WorkspaceLookup` for the workspace itself (its allowed machines come with B3's allowances); reading the organization's change records | machine commands: `AllowMachine`, `RevokeMachineEnrollment`, `SetTokenLifetime` (B3); `RemoveSession` (B4) |
@@ -122,7 +122,7 @@ flowchart TB
 - `crates/collaboration-central-cloudflare/src/object_location.rs`: `Fleet { organization }` resolves with `getByName(organizationId)`; your organization maps to today's object named `fleet`
 - `crates/collaboration-central-tokio/src/native_objects.rs`: `Fleet { organization }` resolves to `fleet-<organizationId>.db`; your organization maps to today's `fleet.db`
 - sign-in service (switchboard):
-  - `packages/sign-in-core/src/`: signing the stamp with Better Auth's own `signJWT` helper (type `fleet-organization-stamp+jwt`, a one-year expiry), and the renewal planner that picks stamps with 30 days or less left
+  - `packages/sign-in-core/src/`: signing the stamp with Better Auth's own `signJWT` helper (type `fleet-organization-stamp+jwt`, a 120-day expiry; your choice 3f), and the renewal planner that picks stamps with 30 days or less left
   - `packages/sign-in-core/src/central-link/`: the provisioning client calls the real link instead of B1's stand-in; the admin forwarding for B2's routes (our own Better Auth plugin endpoints, one per route) attaches the live permission confirmation
   - `packages/sign-in-host-cloudflare/`: the `CENTRAL` service binding and a daily scheduled trigger for renewal; `packages/sign-in-host-node/`: the Unix-socket link and a daily timer for renewal
   - the admin page: create a workspace, list the organization's workspaces and records
@@ -179,7 +179,7 @@ sequenceDiagram
   participant SI as Sign-in service (plain call)
   participant L as The link
   participant F as Fleet object of organization O
-  SI->>SI: sign the stamp statement for O (Better Auth signJWT, one year)
+  SI->>SI: sign the stamp statement for O (Better Auth signJWT, 120 days)
   SI->>L: ProvisionOrganization { organizationId: O, organizationStatement }
   L->>F: routed by Fleet { organization: O }
   F->>F: verify the statement against the published keys
@@ -189,7 +189,7 @@ sequenceDiagram
   SI->>SI: mark the organization ready (Better Auth fleetState)
 ```
 
-**Renewing the stamp, automatically.** Once a day, the sign-in service looks at each organization's stamp. For any with 30 days or less left, it reads the current statement's digest from central over the private link and signs a new statement naming that digest. Central swaps it in only if the stamp it holds is the one named. A key change runs the same path for every organization at once, then confirms each central holds the new key's statement and passes a cold restart before the old key is retired.
+**Renewing the stamp, automatically.** Once a day, the sign-in service looks at each organization's stamp. For any with 60 days or less left (your choice 3f), it reads the current statement's digest from central over the private link and signs a new statement naming that digest. Central swaps it in only if the stamp it holds is the one named. A key change runs the same path for every organization at once, then confirms each central holds the new key's statement and passes a cold restart before the old key is retired.
 
 ```mermaid
 sequenceDiagram
