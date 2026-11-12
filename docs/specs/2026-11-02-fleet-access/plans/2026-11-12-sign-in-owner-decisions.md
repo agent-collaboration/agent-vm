@@ -197,6 +197,21 @@ The screenshots in `switchboard.item2-sign-in-pages-design/tmp/2026-11-sign-in-p
 - **one primary action per page**; secondary actions (the current session, continue to the management CLI, back) are quiet links in a footer line;
 - error pages: one clear message, what to do, and one action.
 
+**Learn from Clerk and Better Auth UI first (owner, 12 Nov: "learning Clerk's design with the shadcn component system … best practices"):**
+- **Read before designing:**
+  - `agent-vm.design-portal-remediation/tmp/2026-11-06-onboarding-research/research.md`, the onboarding research from 6 Nov;
+  - its pinned sources under `sources/clerk/` (Clerk's session tasks: `TaskChooseOrganization`, `TaskSetupMFA` with the QR/manual view, verify, recovery codes, an explicit finish), and `sources/ui/` (Better Auth UI's current shadcn components for organization create/switch, two-factor enable, backup codes and passkeys).
+- **Take their interaction patterns and best practices, not their branding:**
+  - one task at a time after sign-in;
+  - a centred auth card;
+  - a QR code with a manual key fallback;
+  - a one-time-code input;
+  - recovery codes with copy and download, and an explicit "I've saved them" finish;
+  - a clear error with one recovery action;
+  - organization name with the slug derived from it.
+- **Build with the shadcn component system already in `tool-access-ui`** (`components.json`, shadcn 4.22.0). Where a needed shadcn primitive is missing (e.g. `input-otp`), add it through that package's shadcn setup, so it becomes part of the shared design system rather than page-specific code.
+- **Before building:** send the Lead a short note mapping each page to the Clerk/Better Auth UI pattern it follows, plus any shadcn component you'll add. The Lead approves, then you build.
+
 **Constraints:**
 - Use only `tool-access-ui`'s existing components and theme. No new visual language and no page-specific CSS beyond layout.
 - Avoid the owner's banned defaults: cream backgrounds, italic accent words, "01 / 02" section labels, monospace labels, pill buttons, gratuitous gradients, predictable card grids. A step list may number its steps if that's the design system's list pattern; otherwise use step names.
