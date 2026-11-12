@@ -247,7 +247,7 @@ The screenshots in `switchboard.item2-sign-in-pages-design/tmp/2026-11-sign-in-p
 **Proof:**
 - `pnpm check`, plus the existing unit tests and sign-in host tests on both hosts.
 - The **Verifier** captures every scene at the new head, on Node and workerd, at 1280 and 390 CSS px, into `tmp/2026-11-sign-in-pages/screenshots-<head>/`, and reports one line per scene saying what it shows.
-- The Lead checks every picture before the owner sees a gallery.
+- **UI acceptance grid (Lead, per role-lead `ui-acceptance.md`):** every page × its states (normal, error, loading where it exists) × widths 1280 and 390 × hosts Node and workerd, plus any dialog or toast it opens. The Verifier returns one frame per cell with a one-line read. The Lead opens and judges **every** frame, writing two verdicts: working, and quality (readable, nothing clipped or overlapping, grouping as designed, one primary action). Missing cells are named, never passed. #10 is ready only when every cell passes quality.
 
 **Sessions:**
 - 🐒 Implementer (WS6): claude-local `20c2febb-6892-4c29-9ed5-a2ca39baa6d3`, Opus/high, worktree as above. Write scope: that worktree only. Push `item2/sign-in-pages-design` (no force) and keep #10 a draft.
