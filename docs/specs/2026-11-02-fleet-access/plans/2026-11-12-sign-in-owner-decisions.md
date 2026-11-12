@@ -67,6 +67,18 @@ All paths above are relative to `/Users/shravansunder/code/projects/agent-vm.des
 
 The Implementer and Verifier work as a pair and talk directly. The Reviewer stays outside that loop.
 
+## Proof basis (pinned for the Verifier)
+
+The Verification Design (`verification-design.source.html`, revision `2026-10-30.1`) predates these decisions and is **not** updated for them. That refresh is deferred, and the Lead owns it. For this work the proof basis is:
+- **WS1:**
+  - the B3 deliverable's `#b3-proof` table at the agent-vm commit carrying this file's latest edit: the rows "a code is used once", "the code's deadline reaches central (N10)", "a repeat returns the first approval (N03)", plus the sign-in halves of "a login reaches only its machine and organization" and "the real journey";
+  - the sign-in halves of Verification Design U31 (only you log machines in), U21 (approving a code) and U33 (login by device code).
+  - The central halves of N10 and N03 are observed against the stand-in central only, and named unverified.
+- **WS2:**
+  - the B2 deliverable's `#b2-proof` rows "renewal can't go backwards", "renewal happens on use" and "a lost answer can't strand renewal";
+  - Verification Design U14's renewal clause (fail closed).
+- **Both hosts for every row:** Cloudflare/workerd with D1, and Node with better-sqlite3, on a controlled clock.
+
 ## Checker duties
 
 - **Verifier (paired verification):**
