@@ -56,7 +56,7 @@ All paths above are relative to `/Users/shravansunder/code/projects/agent-vm.des
   Not guarded: setup `provisionOrganization`, and the guard's own digest read.
 - **D2, definite non-stale refusals** (`organization-mismatch`, `invalid-statement`): one refused try, and the sent stamp is cleared under its conditional update. Stale refusals reconcile per B2 rule 3.
 - **D3, empty record on a ready organization:** the first guarded use seeds the confirmed stamp from central's digest read, by a conditional write only where the digest is null, then applies the rules. If that read is unavailable, the call proceeds without the guard, and central's own stamp check still fails closed.
-- **D4, counters:** cumulative, never reset, each with its last time and reason.
+- **D4, counters (clarified 12 Nov):** two cumulative counts, unanswered and refused, that never reset. Beside them sits **one** latest-try record covering both kinds (`fleetStampLastTryAt` and its outcome or reason). A later try of either kind replaces it. This matches the owner page's single "last time and reason". There is no separate last time or reason per kind.
 - **D5, setup (final Lead ruling, 12 Nov, the Implementer's option B, push 01a1cdd5).** Central's wire answers `{"result":"provisioned"}` both when it stores the bytes and when it already holds a stamp (`provisioning.rs:140`, `organization_link_transport.rs:82`). So sign-in can't tell the two apart, and the earlier "record only on `Provisioned`" ruling is withdrawn.
   - After a `provisioned` answer, setup reads central's digest at once and records central's facts (digest, `exp`, `kid`) by a conditional write where the digest is null.
   - If that read fails, the record stays empty and D3 seeds it on first use.
