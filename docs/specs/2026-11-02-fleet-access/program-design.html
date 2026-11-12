@@ -878,11 +878,12 @@ pub struct DecideDeviceLogin {
     pub label: MachineLabel,
     pub allowed_workspaces: Vec<WorkspaceId>,  // chosen on the approval page (log-in and its workspaces together)
     pub approver_second_factor_at: Option<UnixSeconds>, // the approver's last second factor (R53); None is accepted only for the organization's first machine
+    pub code_expires_at: UnixSeconds,          // the device code record's own expiry (owner, 9 Nov, N10): stored as `code_expires_at`; the first Grant is refused at or after it
 }
 #[serde(tag = "result", rename_all = "camelCase")]
 pub enum DeviceLoginDecision {
     #[serde(rename_all = "camelCase")]
-    Approved { enrollment_id: EnrollmentId },
+    Approved { enrollment_id: EnrollmentId, label: MachineLabel, allowed_workspaces: Vec<WorkspaceId> }, // what central stored; a repeat of the same request_id returns the first approval unchanged (owner, 9 Nov, N03); the approval page shows these
     Refused { reason: DeviceLoginRefusal },    // notPermitted | machineInAnotherOrganization | unknownWorkspace | secondFactorRequired { within_seconds } (R53)
 }
 

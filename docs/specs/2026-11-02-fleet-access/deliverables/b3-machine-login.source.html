@@ -199,9 +199,9 @@ sequenceDiagram
   SI-->>R: device code, user code, address
   You->>SI: open the address, approve, pick workspaces
   SI->>SI: code pending and unexpired? your role holds machine:enroll? (live)
-  SI->>F: DecideDeviceLogin (request ID = device code record ID)
+  SI->>F: DecideDeviceLogin (request ID = device code record ID, codeExpiresAt)
   F->>F: one transaction: reserve then approve, base_generation = current generation, allowances written, re-key a former service id
-  F-->>SI: Approved { enrollmentId }
+  F-->>SI: Approved { enrollmentId, machineLabel, workspaces } (a repeat returns the stored approval)
   R->>SI: poll with the device code
   SI->>SI: redeem once, create the enrollment's own public client
   SI->>F: DecideMachineToken { enrollment, client }
@@ -344,11 +344,18 @@ Every central check runs on **both builds** (workerd Durable Objects and native 
 | Not fully known | Settled by |
 |---|---|
 | the exact SQL of `machine_enrollments` (reshaped) and `machine_allowances`, where the generation and former id live, and the reset's live connection-state home | the reset's D1 code on `main`; the SQL comes to you first |
-| B2's handoff "pinning the stamp in a machine's enrollment": B2 names it for B3 but no contract defines it | reconciled with B2's doc before B3a; nothing new is invented for it here |
+| B2's handoff "pinning the stamp in a machine's enrollment" | **you decided (9 Nov): dropped.** No pin column, field or check anywhere |
 | the split crate names for the files above | design-2 D2 on `main` |
 | the B3 agent choices (M01–M15, D03, D04, D08–D10) | your answers on the [assumptions page](../../../../tmp/2026-10-30-lead-pages/assumptions-by-deliverable.html), group B3 |
 | Routers on VMs with no store (Fly, Sprites, Firecracker) | **you decided (7 Nov): a later design, using OIDC or platform identity.** Until then they keep the credential in memory and ask for a new code after a restart or cold wake. Not in B3 |
 | that B3a's Better Auth facts hold at 1.7.11 | B3a's first slice; if one fails, the fallback above |
+
+**Your decisions of 9 Nov (from the B3 questions page):**
+- **The code's real deadline (N10, Q1).** `DecideDeviceLogin` carries `codeExpiresAt`, the device code record's own expiry. Central stores it in `machine_enrollments` (one column, `code_expires_at`) and refuses the first Grant at or after it. Until B3 central lands, sign-in builds against the contract with a stand-in central.
+- **The same request number with different contents (N03, Q2): return the first approval.** Central answers a repeated `DecideDeviceLogin` with the approval it already stored, and ignores the changed contents. No fingerprint column. So the admin always sees the truth, `Approved` carries what central stored (`enrollmentId`, `machineLabel`, `workspaces`), and the sign-in approval page shows those rather than the form it submitted.
+- **Token lifetime (Q3): one per organization,** central's configured lifetime set by `SetTokenLifetime`. That was already the design, and no issuer copy is added.
+- **The stamp pin: dropped** (row above).
+- **N11 and N07** were decided earlier: a short outage answers "try again", and idle expiry records an automatic cause with no person named.
 
 **Your decisions on this page:**
 1. **Approve B3 as written,** including BA1 and the re-key.
