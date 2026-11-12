@@ -197,6 +197,21 @@ The screenshots in `switchboard.item2-sign-in-pages-design/tmp/2026-11-sign-in-p
 - **one primary action per page**; secondary actions (the current session, continue to the management CLI, back) are quiet links in a footer line;
 - error pages: one clear message, what to do, and one action.
 
+**Owner direction (12 Nov): use Better Auth UI** ("if better auth has ui why not just use this"). This replaces "redesign with our own components".
+- **What it is:** Better Auth UI's shadcn flavour is copied into our shadcn project (`shadcn add @better-auth-ui/auth`). `tool-access-ui` is that project (`components.json`, shadcn 4.22.0), so the components become ours, in our theme. Sources and pins: `tmp/2026-11-06-onboarding-research/research.md` and `sources/ui/` (better-auth-ui at `cb5b4dc8`).
+- **Step 1, a trial before converting anything:**
+  - add the Better Auth UI shadcn components to `tool-access-ui` at a pinned version, compatible with Better Auth 1.7.11 (their 1.7 migration guide);
+  - render the two-factor setup page with it on **both** hosts;
+  - report:
+    1. how a client React bundle is served under the existing CSP and nonces;
+    2. Turnstile before social sign-in still enforced;
+    3. our server rules unchanged (the form hidden until confirmed, the 15-minute step-up message);
+    4. bundle size;
+    5. what the existing served-page host tests need.
+
+  Report to the Lead **before** converting the other pages. A blocker comes back as a design break with evidence.
+- **Step 2:** convert every sign-in page to Better Auth UI components. Build the pages it doesn't cover (the `/device` approval page, the step-up message, the organization setup state) from its copied components in the same style.
+
 **Learn from Clerk and Better Auth UI first (owner, 12 Nov: "learning Clerk's design with the shadcn component system … best practices"):**
 - **Read before designing:**
   - `agent-vm.design-portal-remediation/tmp/2026-11-06-onboarding-research/research.md`, the onboarding research from 6 Nov;
