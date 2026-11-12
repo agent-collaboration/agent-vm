@@ -149,7 +149,7 @@ The Verification Design (`verification-design.source.html`, revision `2026-10-30
 
 - **Return:** the role handback to the Lead (claude-local `cd5902e2-2105-4472-adde-031ae6496e30`). For each claim, give the commit, the command or observation, and what it doesn't cover.
 - **Work log:** no Router log. The Lead's trace is `~/dev/session-logs/projects/2026/2026-10-agent-vm/planbooks/2026-10-18-tool-portal-identity-advisor-claude-2febb449.md`. Helpers return their rows in the handback, and the Lead records them.
-- **Messaging:** direct messages only. Don't subscribe to the coordination board.
+- **Messaging:** direct messages for work. The Fleet access work thread is `01a1cfd4-034e-7abd-bbaa-2ccc976db77d` (project `01a1b6f0-c6bd`). Any board subscription uses `quietSeconds: 1200`, `capSeconds: 1200` (owner, 12 Nov: 20 minutes, no constant messages).
 
 ## Next workstreams (Lead, 12 Nov, after the owner's correction "you should have never done cloudflare crons")
 
