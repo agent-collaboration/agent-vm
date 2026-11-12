@@ -57,11 +57,13 @@ All paths above are relative to `/Users/shravansunder/code/projects/agent-vm.des
 - **D2, definite non-stale refusals** (`organization-mismatch`, `invalid-statement`): one refused try, and the sent stamp is cleared under its conditional update. Stale refusals reconcile per B2 rule 3.
 - **D3, empty record on a ready organization:** the first guarded use seeds the confirmed stamp from central's digest read, by a conditional write only where the digest is null, then applies the rules. If that read is unavailable, the call proceeds without the guard, and central's own stamp check still fails closed.
 - **D4, counters:** cumulative, never reset, each with its last time and reason.
-- **D5, setup (revised by the Lead after the Implementer's correction, push 01a1cdc9):**
-  - When central answers **`Provisioned`** to the setup statement sign-in just sent, central stored exactly those bytes. Setup then records that statement as the confirmed stamp (digest, `exp`, `kid`) in the same update that marks the organization ready.
-  - When central answers **`AlreadyProvisioned`**, for example on Try again after a lost setup reply, setup leaves the record empty, and D3 seeds it on first use.
+- **D5, setup (final Lead ruling, 12 Nov, the Implementer's option B, push 01a1cdd5).** Central's wire answers `{"result":"provisioned"}` both when it stores the bytes and when it already holds a stamp (`provisioning.rs:140`, `organization_link_transport.rs:82`). So sign-in can't tell the two apart, and the earlier "record only on `Provisioned`" ruling is withdrawn.
+  - After a `provisioned` answer, setup reads central's digest at once and records central's facts (digest, `exp`, `kid`) by a conditional write where the digest is null.
+  - If that read fails, the record stays empty and D3 seeds it on first use.
+  - **Why B over A:** the stamp is fresh at setup, so the read nearly always succeeds. An organization unused for its stamp's whole life can then still renew on its first later use, because central accepts a new stamp naming an expired one. Under A, any organization idle for 120 days after setup couldn't recover on its own.
+  - The cost is one extra link call at setup.
 - **D6, key change:** today's server-only entry stays. Every ready organization goes through the same guard with `force`, idle and not-due ones included. No host trigger is added.
-- **Edge: an empty record and an already-expired stamp at first use.** This happens only after a lost setup reply plus no use for the stamp's whole life. The seed read is refused, because central's digest read refuses an expired stamp. That counts one **unanswered** try with reason `seed-unavailable`, and the call proceeds. Central then refuses it, failing closed, and the caller gets the existing unavailable answer. This is the documented limit: sign-in can't recover on its own, and the counters make it visible. It is never treated as success or as a renewed stamp.
+- **Edge: an empty record and an already-expired stamp at first use.** This happens only when setup's digest read failed and the organization then went unused for the stamp's whole life. The seed read is refused, because central's digest read refuses an expired stamp. That counts one **unanswered** try with reason `seed-unavailable`, and the call proceeds. Central then refuses it, failing closed, and the caller gets the existing unavailable answer. This is the documented limit: sign-in can't recover on its own, and the counters make it visible. It is never treated as success or as a renewed stamp.
 
 ## Limits
 
