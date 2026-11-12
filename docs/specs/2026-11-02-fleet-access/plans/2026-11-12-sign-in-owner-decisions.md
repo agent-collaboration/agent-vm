@@ -25,7 +25,7 @@ All paths above are relative to `/Users/shravansunder/code/projects/agent-vm.des
 ## WS1: #11, what changes (sign-in side only)
 
 1. `DecideDeviceLogin` carries `codeExpiresAt`, the device code record's own expiry. Central stores it and refuses the first Grant at or after it. That central half is **not** built here.
-2. `Approved` carries what central stored: `enrollmentId`, `label`, `allowedWorkspaces`. A repeat of the same request id returns the first approval unchanged. The sign-in approval result page shows central's returned label and workspaces, never the submitted form.
+2. `Approved` carries what central stored: `enrollmentId`, `label`, `allowedWorkspaces`. A repeat of the same request id returns the first approval unchanged. **Lead decision (12 Nov, the Implementer's option A):** no served approval page exists yet. So `POST /api/auth/machine-login/approve` returns central's stored label and workspaces (never the submitted form), and that response *is* the approval result, proven as the HTTP response on both hosts. The served `/device` page is a later slice of #11, with its own design pass. It is not in WS1, and it renders only that response.
 3. No stamp pin anywhere: no column, field or check.
 4. Token lifetime stays central's per-organization setting. No issuer copy.
 5. The central side is a **stand-in** that honours this contract. Name it in the handback as unverified until B3 central lands.
@@ -45,7 +45,7 @@ All paths above are relative to `/Users/shravansunder/code/projects/agent-vm.des
 
 ## Limits
 
-- **Write scope:** `/Users/shravansunder/code/projects/switchboard.item2-b3a-device-grant` (WS1) and `/Users/shravansunder/code/projects/switchboard.item2-b2-sign-in-additions` (WS2) only. Nothing in codex-router, agent-fleet-sync, agent-vm (except the Verifier's own notes under its worktree `tmp/`), staging or production.
+- **Write scope:** `/Users/shravansunder/code/projects/switchboard.item2-b3a-device-grant` (WS1) and `/Users/shravansunder/code/projects/switchboard.item2-b2-sign-in-additions` (WS2) only. **The Verifier's own write scope (apparatus only, no product code):** `.agents/skills/verify-auth/**` and its driver under `scripts/` or `tests/` as the skill places it, in `/Users/shravansunder/code/projects/switchboard.item2-b3a-verify-auth` (#14, the machine-login journeys) and `/Users/shravansunder/code/projects/switchboard.item2-b2-verify-auth` (#13, the renew-on-use journeys). It may push those two branches, and merge the matching WS branch into them to run against it. Nothing in codex-router, agent-fleet-sync, agent-vm (except the Verifier's own notes under its worktree `tmp/`), staging or production.
 - **Commands:** the repository's own scripts (`pnpm install`, `pnpm check`, `pnpm test:unit`, `pnpm test:integration`, `pnpm lint`, `pnpm lint:types`, the `verify-auth` journeys), `git` on those two branches, and `gh pr` view/edit on #11–#14. Pushing to those two branches is allowed. Not allowed: `--force`, amend, stash, `--no-verify`, merging any PR, or deploying.
 - Standing rules:
   - no wall clock in tests (inject the clock, wait on events);
@@ -78,6 +78,11 @@ The Verification Design (`verification-design.source.html`, revision `2026-10-30
   - the B2 deliverable's `#b2-proof` rows "renewal can't go backwards", "renewal happens on use" and "a lost answer can't strand renewal";
   - Verification Design U14's renewal clause (fail closed).
 - **Both hosts for every row:** Cloudflare/workerd with D1, and Node with better-sqlite3, on a controlled clock.
+- **Declared targets:**
+  - **workerd:** the WS branch head, through the existing dual-storage suite (real handler and Better Auth on workerd with D1);
+  - **Node:** the same head, through the built Node listener with better-sqlite3.
+  - The Implementer names the exact commit when it declares a target.
+  - The lasting journeys go into `verify-auth` on #14 (WS1) and #13 (WS2), with each run's receipts saved in that worktree's `tmp/`.
 
 ## Checker duties
 
