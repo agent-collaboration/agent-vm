@@ -11,6 +11,8 @@ Two switchboard draft PRs carry the owner's decisions of 9 Nov and pass the repo
 
 Order: WS1 first, then WS2. WS2's build starts only once the Reviewer's design pass (R-design below) has no open blocking finding on the B2 renew-on-use section. **Status (Lead, 12 Nov):** R-design is cleared. It found no blocking finding on B2 renew-on-use. F1 (the `Approved` field names) and O1 were fixed in agent-vm `1b6791c4`. WS1's product is frozen at `55636ebb`, with Sunclaw receipts pending. **WS2 may start now,** in its own worktree. The WS1 handback is still due once the receipts are in.
 
+**WS1 accepted by the Lead (12 Nov) for review at switchboard `55636ebb584b87437f47a813e4f22de2ffd15904`** (#11), with Verifier apparatus #14 at `7176db2ce7a9130430af4003ee509d7c5be9a988`. **R-code for WS1 is now due.** The Reviewer reviews the diff `227e6217f..55636ebb`, read-only, against WS1 items 1–5, the pinned proof basis and the receipts in `switchboard.item2-b3a-verify-auth/tmp/2026-11-12-ws1-verifier-7176/` and `switchboard.item2-b3a-device-grant/tmp/2026-11-ws1/`.
+
 ## Governing sources (read in full before editing)
 
 - B3 deliverable: `docs/specs/2026-11-02-fleet-access/deliverables/b3-machine-login.source.html`, especially `#b3-flows` (the device-login sequence) and `#b3-unknowns` ("Your decisions of 9 Nov").
