@@ -164,6 +164,10 @@ The Verification Design (`verification-design.source.html`, revision `2026-10-30
   - **Drain on use accepted as designed.** Inside one guard run and one D7 deadline: the stamp step, then the organization's pending revisions (organization fence, then its person pairs). Pushes carry the run's signal. The drainer becomes "guard each organization with pending rows". No recursion or double push.
   - **Q1 = A, fail closed:** if a pending revision isn't acknowledged by the deadline, the original Fleet call answers the existing unavailable "try again shortly". Ordering protects revocations: a removal must reach central before any call that could depend on it.
   - The Node startup drain is dropped, because on use covers it.
+  - **Q2 (12 Nov): keep one budget per guard run.** If renewal uses up the deadline while revisions are pending, the pushes don't go and the call answers unavailable (Q1 = A). That holds even over a valid stamp, because the same peer didn't answer the renewal, and the next use starts a fresh budget. D7's "a valid stamp completes the call" holds when nothing is pending.
+  - Proof changes:
+    - the D7 host-path case uses a forward or relay with no pending revisions (valid → the call goes out, expired → withheld);
+    - a new case: renewal times out with a revision pending → unavailable.
   - Everything listed for removal goes: both crons, `scheduled`, the triggers, `startPeriodicHostJob`, the Node drain timer and the `drainScheduler` injection.
 
 ### WS4: wire #11's machine calls through #12's guard (after WS3)
