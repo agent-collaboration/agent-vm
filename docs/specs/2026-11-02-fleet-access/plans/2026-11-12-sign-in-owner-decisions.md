@@ -150,3 +150,22 @@ The Verification Design (`verification-design.source.html`, revision `2026-10-30
 - **Return:** the role handback to the Lead (claude-local `cd5902e2-2105-4472-adde-031ae6496e30`). For each claim, give the commit, the command or observation, and what it doesn't cover.
 - **Work log:** no Router log. The Lead's trace is `~/dev/session-logs/projects/2026/2026-10-agent-vm/planbooks/2026-10-18-tool-portal-identity-advisor-claude-2febb449.md`. Helpers return their rows in the handback, and the Lead records them.
 - **Messaging:** direct messages only. Don't subscribe to the coordination board.
+
+## Next workstreams (Lead, 12 Nov, after the owner's correction "you should have never done cloudflare crons")
+
+### WS3: no scheduled triggers (owner decision, 12 Nov)
+**Outcome.** The sign-in service has **no Cloudflare cron triggers and no Node timers** for its own jobs. Remove `triggers.crons` and the `scheduled` handler, and remove the Node drain/backfill timers. Each job they did happens **on use or at deploy** instead. The runtime-free core holds the logic, and both hosts behave the same.
+- **Authorization revision drain** (today: after each fence-changing response, plus every 5 minutes as recovery for a lost hint). Keep the after-response drain. The recovery becomes **on use**: before any sign-in→Fleet call for an organization (the D1 guard point), drain that organization's pending revisions first, inside the same D7 run deadline. Order matters, so central sees revisions before later calls.
+- **Authorization fence backfill** (today: deploy step, plus daily cron safety net, plus Node startup). Keep the deploy step and Node startup. **The Implementer proposes** how a failed backfill recovers without a timer. The preferred direction is that a fenced write meeting a missing fence runs the backfill for that organization first and fails closed if it can't. Bring the proposal to the Lead before building it.
+- Proof: both hosts. No cron or timer exists in config or code. A lost after-response hint is drained by the next Fleet call. The deadline bounds the drain. Backfill recovery follows the accepted proposal.
+- Branch: `item2/b2-sign-in-additions` (#12), on top of `87b4d5a89`. #12 reopens; WS2's review stands for its earlier diff.
+
+### WS4: wire #11's machine calls through #12's guard (after WS3)
+**Outcome.** `DecideDeviceLogin` and `DecideMachineToken` (#11) run through `prepareOrganizationFleetCall` (#12), with the same rules and deadline. Do it on `item2/b3a-device-grant` by merging `item2/b2-sign-in-additions` into it. #11 then carries #12 until #12 merges.
+
+### WS5: recapture the #10 screenshots (Verifier, now)
+The screenshots in `switchboard.item2-sign-in-pages-design/tmp/2026-11-sign-in-pages/screenshots/` are from `66f478e6`. They predate `3921fe0f` (step-specific headings) and `edc5ede8` (organization creation hidden until the factor is confirmed), so they misrepresent the PR.
+- Recapture the same ten scenes at #10 head `41302fc85`, on Node and workerd, at 1280 and 390 CSS px. Use the existing `start-visual-hosts.ts` / `visual-entry.ts`.
+- Save them to `.../tmp/2026-11-sign-in-pages/screenshots-41302fc8/` with the same file names.
+- Report one line per scene saying what it shows.
+- Write scope for this: that new folder only, plus starting and stopping your own preview processes, by exact PID.
