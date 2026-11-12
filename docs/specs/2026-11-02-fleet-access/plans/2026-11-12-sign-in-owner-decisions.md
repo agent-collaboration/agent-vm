@@ -252,3 +252,15 @@ The screenshots in `switchboard.item2-sign-in-pages-design/tmp/2026-11-sign-in-p
 **Sessions:**
 - 🐒 Implementer (WS6): claude-local `20c2febb-6892-4c29-9ed5-a2ca39baa6d3`, Opus/high, worktree as above. Write scope: that worktree only. Push `item2/sign-in-pages-design` (no force) and keep #10 a draft.
 - 🔬 The Verifier (01a1cda2-c16d) does the captures. WS5's plain recapture of `41302fc85` is no longer needed; if it's done already, keep it as the "before" set.
+
+### WS7: sign-in recovers when central starts empty (Lead, 12 Nov; owner decision relayed by Lead A: the new central starts EMPTY, with no data migration; Lead A's redesign Specification R29)
+**Outcome.** When central has no stamp for an organization that sign-in marks ready, sign-in recovers by itself, with no person involved.
+- Central has no stamp when the stamp read answers `none`, or when a replace is refused because the named digest is unknown and the read then says `none`.
+- Sign-in clears that organization's stamp record (a conditional update), signs a **fresh setup statement** (no `replaces`), sends `ProvisionOrganization`, and on `provisioned` seeds the record from central's digest read (D5). The original call then proceeds, all inside the same D7 budget. If that fails, the caller gets the existing unavailable answer and the next use retries.
+- Revision pushes need nothing extra: central's floor starts fresh, and a higher revision applies.
+
+**Proof:** both hosts. A ready organization whose central forgot it recovers on the next Fleet call. Revisions and admin calls then succeed. A central that's just slow (no answer) is **not** treated as empty.
+
+**Open (asked of Lead A):** does the new central answer `none` for an unknown organization on the digest read? Build against today's `none`, and record it as an assumption until Lead A confirms.
+
+**Branch:** `item2/b2-sign-in-additions` (#12), after WS3. Implementer: the WS3 Implementer (claude-local `ccc121df`).
