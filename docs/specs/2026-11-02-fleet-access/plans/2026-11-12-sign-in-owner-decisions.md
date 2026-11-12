@@ -222,6 +222,7 @@ The screenshots in `switchboard.item2-sign-in-pages-design/tmp/2026-11-sign-in-p
     - **Lead condition:** Better Auth 1.7.11 returns `session.token` in the get-session JSON. Core field `token` has no `returned: false`, and `parseSessionOutput` keeps it. Strip it with a Better Auth `after` hook on `/get-session`, covering both the normal and the refreshed-session paths, so JavaScript never sees the token, as today with the httpOnly cookie.
     - Prove it on both hosts: the response has no `token`; the cookie stays httpOnly; a cross-site request gets no session; the bearer plugin stays off.
     - Step 2 is unblocked.
+    - **Turnstile scope (owner OK 12 Nov, on my recommendation, after "scripts on the page can read get-session"):** only the sign-in page's CSP allows `https://challenges.cloudflare.com`. Every signed-in page (owner, factor, confirm, chooser, create, error) drops it from `script-src` and `frame-src`. Proof on both hosts: the signed-in pages' CSP header has no `challenges.cloudflare.com`, and the sign-in page's Turnstile still works.
 - **Step 2:** convert every sign-in page to Better Auth UI components. Build the pages it doesn't cover (the `/device` approval page, the step-up message, the organization setup state) from its copied components in the same style.
 
 **Learn from Clerk and Better Auth UI first (owner, 12 Nov: "learning Clerk's design with the shadcn component system … best practices"):**
