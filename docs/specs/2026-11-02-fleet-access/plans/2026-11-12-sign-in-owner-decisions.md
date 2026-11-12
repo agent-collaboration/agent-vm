@@ -208,6 +208,7 @@ The screenshots in `switchboard.item2-sign-in-pages-design/tmp/2026-11-sign-in-p
     3. our server rules unchanged (the form hidden until confirmed, the 15-minute step-up message);
     4. bundle size;
     5. what the existing served-page host tests need.
+    6. whether Better Auth UI's shadcn registry components work with our shadcn flavour. `tool-access-ui` uses style `base-mira` with `@base-ui/react` primitives and our `panel-theme.css`, and their components may assume Radix primitives. Prefer keeping our primitives and theme; the auth components should pick them up unchanged.
 
   Report to the Lead **before** converting the other pages. A blocker comes back as a design break with evidence.
 - **Step 2:** convert every sign-in page to Better Auth UI components. Build the pages it doesn't cover (the `/device` approval page, the step-up message, the organization setup state) from its copied components in the same style.
