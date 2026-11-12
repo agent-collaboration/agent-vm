@@ -9,7 +9,7 @@ Two switchboard draft PRs carry the owner's decisions of 9 Nov and pass the repo
 - **WS1, #11 (B3a, machine device login)**, branch `item2/b3a-device-grant`, at `227e6217f` when this was written.
 - **WS2, #12 (B2 sign-in side)**, branch `item2/b2-sign-in-additions`, at `1668129fe` when this was written.
 
-Order: WS1 first, then WS2. WS2's build starts only once the Reviewer's design pass (R-design below) has no open blocking finding on the B2 renew-on-use section.
+Order: WS1 first, then WS2. WS2's build starts only once the Reviewer's design pass (R-design below) has no open blocking finding on the B2 renew-on-use section. **Status (Lead, 12 Nov):** R-design is cleared. It found no blocking finding on B2 renew-on-use. F1 (the `Approved` field names) and O1 were fixed in agent-vm `1b6791c4`. WS1's product is frozen at `55636ebb`, with Sunclaw receipts pending. **WS2 may start now,** in its own worktree. The WS1 handback is still due once the receipts are in.
 
 ## Governing sources (read in full before editing)
 
