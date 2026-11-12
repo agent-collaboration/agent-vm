@@ -261,6 +261,6 @@ The screenshots in `switchboard.item2-sign-in-pages-design/tmp/2026-11-sign-in-p
 
 **Proof:** both hosts. A ready organization whose central forgot it recovers on the next Fleet call. Revisions and admin calls then succeed. A central that's just slow (no answer) is **not** treated as empty.
 
-**Open (asked of Lead A):** does the new central answer `none` for an unknown organization on the digest read? Build against today's `none`, and record it as an assumption until Lead A confirms.
+**Confirmed by Lead A (12 Nov, R29):** the new central answers "no stamp" (`none`) for an unknown organization on the digest read, not an error. Key on it.
 
 **Branch:** `item2/b2-sign-in-additions` (#12), after WS3. Implementer: the WS3 Implementer (claude-local `ccc121df`).
