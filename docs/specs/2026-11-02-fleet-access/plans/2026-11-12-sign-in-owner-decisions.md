@@ -211,6 +211,14 @@ The screenshots in `switchboard.item2-sign-in-pages-design/tmp/2026-11-sign-in-p
     6. **No Radix, ever (owner, 12 Nov: "definitely do not want radix … that's a no go").** Take the auth components from Better Auth UI's **Base UI variant**, `examples/start-shadcn-baseui-example/src/components/auth/**` (style `base-nova`, only `@base-ui/react`), pinned at better-auth-ui commit `2b028ec5256d`. Don't use the default `shadcn add @better-auth-ui/auth` registry: it's built from the Radix example (`radix-nova`). The components import `@/components/ui/*`, which must resolve to `tool-access-ui`'s existing Base UI primitives and `panel-theme.css`. **The trial fails** if any `@radix-ui/*` or `radix-ui` package appears in any `package.json` or `pnpm-lock.yaml`. Report the new dependencies it does need (e.g. `@better-auth-ui/react`, `@tanstack/react-query`, `input-otp`, `sonner`) with versions.
 
   Report to the Lead **before** converting the other pages. A blocker comes back as a design break with evidence.
+- **Trial result (12 Nov, local `ws6-ba-ui-trial` at `9232a353`, report `switchboard.item2-sign-in-pages-design/tmp/2026-11-12-ws6/ws6-trial-report.md`):** the Base UI components compile and render in our theme on both hosts, with zero Radix. Lead rulings:
+  - **A:** a new package `packages/auth-ui` with its own `components.json` whose `ui` alias points at `tool-access-ui`'s primitives. The panel's boundary gate stays unchanged.
+  - **C:** compile the sonner and input-otp CSS into our stylesheet and pass input-otp the nonce. No CSP change.
+  - **D:** fix the copied code to repository lint standards (no lint override), and cut the `additional-field` edge.
+  - **E:** trim, then accept the weight.
+  - **F:** a browser journey on both hosts against real Better Auth; the Verifier owns the driver (CDP, not Playwright).
+  - **The Step 2 page→pattern map is approved.**
+  - **B is waiting on the owner:** opening `GET /api/auth/get-session` and `GET /api/auth/list-accounts` is a security-boundary change. Do A, C, D and E now; Step 2's session-dependent pages wait on B.
 - **Step 2:** convert every sign-in page to Better Auth UI components. Build the pages it doesn't cover (the `/device` approval page, the step-up message, the organization setup state) from its copied components in the same style.
 
 **Learn from Clerk and Better Auth UI first (owner, 12 Nov: "learning Clerk's design with the shadcn component system … best practices"):**
