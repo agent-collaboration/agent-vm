@@ -75,6 +75,12 @@ All paths above are relative to `/Users/shravansunder/code/projects/agent-vm.des
     - the pending bytes and the unanswered count survive;
     - the next use re-sends the identical bytes.
   - The Implementer picks the mechanism (an `AbortSignal` from an injected deadline source, or the repository's equivalent).
+  - **The deadline must end the guard's wait even if the transport ignores the abort.** Race the deadline against the call; don't rely only on the abort reaching the peer. So a service binding or socket that never honours the signal still can't hang the original call.
+  - **Any** deadline in a guard run counts as `unanswered-timeout`, including during a stale reconcile read. It is never counted as `refused`.
+  - **Proof layers (Lead ruling, 12 Nov, on the Verifier's D7 challenge):**
+    - **Node:** the built host, through the Unix transport, with a held peer, and the original drain dispatched or not dispatched.
+    - **workerd:** the real server-only guard and client in the storage Worker, with a held `CentralTransport`, plus the original Fleet call's dispatch observed through the existing workerd host path where the harness allows it.
+    - **Named unverified:** whether an abort propagates over the production `CENTRAL` service binding. The harness rebuilds incoming `CENTRAL` requests without a signal. This is acceptable only because the deadline ends the wait by itself (above), and the Verifier checks that property directly.
 - **WS2 proof preservation (Lead, 12 Nov, the Reviewer's R-code findings; both accepted, and both restore removed coverage):**
   1. **Keep the real-central stale-predecessor negative.** `b2e-joint-journey.host.e2e.test.ts` lost its case of two distinct signed proposals (200, then 409), with the winning stamp and records unchanged. The new identical-replay case (200/200) stays as well. B2 `#b2-proof` "renewal can't go backwards" requires both, against real central on both builds. The old daily job isn't needed for this.
   2. **Restore the post-close assertions** in `sign-in-node-host.integration.test.ts`: the listener stopped, and the configured provider-secret, account and path canaries are absent from logs. Only `renewalTimerCancelled` is correctly removed.
