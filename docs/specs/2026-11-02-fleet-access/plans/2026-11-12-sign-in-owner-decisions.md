@@ -171,7 +171,7 @@ The Verification Design (`verification-design.source.html`, revision `2026-10-30
   - Everything listed for removal goes: both crons, `scheduled`, the triggers, `startPeriodicHostJob`, the Node drain timer and the `drainScheduler` injection.
 
 ### WS4: wire #11's machine calls through #12's guard (after WS3)
-**Outcome.** `DecideDeviceLogin` and `DecideMachineToken` (#11) run through `prepareOrganizationFleetCall` (#12), with the same rules and deadline. Do it on `item2/b3a-device-grant` by merging `item2/b2-sign-in-additions` into it. #11 then carries #12 until #12 merges.
+**Outcome.** `DecideDeviceLogin` and `DecideMachineToken` (#11) run through `prepareOrganizationFleetCall` (#12), with the same rules and deadline. **Also the WebSocket connect** (owner, 12 Nov: "the rest of the calls are via websocket after it's established via sign-in"): sign-in runs the guard before it forwards `<sign-in>/fleet/v1/session` to central, wherever that forward lives (#11 or B3). Calls over the open WebSocket don't pass sign-in; central's own stamp and token checks cover them. Token refresh (`DecideMachineToken`) runs the guard, so organizations with long-lived connections still renew. A central restart drops connections, and the reconnect's guard recovers (WS7). Do it on `item2/b3a-device-grant` by merging `item2/b2-sign-in-additions` into it. #11 then carries #12 until #12 merges.
 
 ### WS5: recapture the #10 screenshots (Verifier, now)
 The screenshots in `switchboard.item2-sign-in-pages-design/tmp/2026-11-sign-in-pages/screenshots/` are from `66f478e6`. They predate `3921fe0f` (step-specific headings) and `edc5ede8` (organization creation hidden until the factor is confirmed), so they misrepresent the PR.
