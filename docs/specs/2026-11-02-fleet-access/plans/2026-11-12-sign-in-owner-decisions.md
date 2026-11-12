@@ -159,6 +159,12 @@ The Verification Design (`verification-design.source.html`, revision `2026-10-30
 - **Authorization fence backfill** (today: deploy step, plus daily cron safety net, plus Node startup). Keep the deploy step and Node startup. **The Implementer proposes** how a failed backfill recovers without a timer. The preferred direction is that a fenced write meeting a missing fence runs the backfill for that organization first and fails closed if it can't. Bring the proposal to the Lead before building it.
 - Proof: both hosts. No cron or timer exists in config or code. A lost after-response hint is drained by the next Fleet call. The deadline bounds the drain. Backfill recovery follows the accepted proposal.
 - Branch: `item2/b2-sign-in-additions` (#12), on top of `87b4d5a89`. #12 reopens; WS2's review stands for its earlier diff.
+- **Lead rulings on the Implementer's WS3 proposal (push 01a1cf4a-efa5):**
+  - **Backfill recovery accepted.** On a failed fenced batch, run the organization-scoped insert-or-ignore backfill, retry the same statements once, and otherwise fail closed. The deploy step and the Node startup backfill stay.
+  - **Drain on use accepted as designed.** Inside one guard run and one D7 deadline: the stamp step, then the organization's pending revisions (organization fence, then its person pairs). Pushes carry the run's signal. The drainer becomes "guard each organization with pending rows". No recursion or double push.
+  - **Q1 = A, fail closed:** if a pending revision isn't acknowledged by the deadline, the original Fleet call answers the existing unavailable "try again shortly". Ordering protects revocations: a removal must reach central before any call that could depend on it.
+  - The Node startup drain is dropped, because on use covers it.
+  - Everything listed for removal goes: both crons, `scheduled`, the triggers, `startPeriodicHostJob`, the Node drain timer and the `drainScheduler` injection.
 
 ### WS4: wire #11's machine calls through #12's guard (after WS3)
 **Outcome.** `DecideDeviceLogin` and `DecideMachineToken` (#11) run through `prepareOrganizationFleetCall` (#12), with the same rules and deadline. Do it on `item2/b3a-device-grant` by merging `item2/b2-sign-in-additions` into it. #11 then carries #12 until #12 merges.
