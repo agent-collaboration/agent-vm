@@ -55,7 +55,7 @@ All paths above are relative to `/Users/shravansunder/code/projects/agent-vm.des
   - no new or changed check gates or CI steps;
   - checked-in scripts are TypeScript;
   - no secrets, `op://` refs or test-account addresses in repos or PRs.
-- Heavy or long runs go to the Sunclaw test agent (codex-local `01a1b755`), never ssh, if the Mac's free disk is under 30 GiB or a run is long.
+- Heavy or long runs go to the **Sunclaw test agent**, never ssh: SessionRef serviceId `8b61218b-d5f3-4ae9-a2db-d2fb4075dbc2`, endpoint `codex-local`, session `01a1b755-5c31-7690-b2b4-5b116d355a7a` (Sunclaw's own Router service, not this Mac's). Send a self-contained packet with exact commands, its own debug root and port, and what to report. This applies if the Mac's free disk is under 30 GiB or a run is long (a full suite or many connections). Focused unit, integration and listener runs may stay on the Mac.
 
 ## Sessions (agent-router SessionRefs, service `0ff962c5-7fa3-4c18-a5ca-1bbe8db09e89`)
 
