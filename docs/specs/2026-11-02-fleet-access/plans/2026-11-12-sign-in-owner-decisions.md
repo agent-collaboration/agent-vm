@@ -179,3 +179,34 @@ The screenshots in `switchboard.item2-sign-in-pages-design/tmp/2026-11-sign-in-p
 - Save them to `.../tmp/2026-11-sign-in-pages/screenshots-41302fc8/` with the same file names.
 - Report one line per scene saying what it shows.
 - Write scope for this: that new folder only, plus starting and stopping your own preview processes, by exact PID.
+
+### WS6: redesign the sign-in pages (#10), replacing WS5's plain recapture (Lead, 12 Nov, after the owner flagged the page as "very ugly")
+**Branch:** `item2/sign-in-pages-design` (#10), from `41302fc85`. **Worktree:** `/Users/shravansunder/code/projects/switchboard.item2-sign-in-pages-design`.
+
+**What's wrong now** (the owner's screenshot of the second-factor page):
+1. The page heading is repeated as the first card's title.
+2. Two primary buttons compete, with different alignment.
+3. "Your session" sits between the setup steps.
+4. "Create your organization" is a card with no action.
+5. A wide column is pinned to the left.
+6. The page says "Tool Portal"; the product is **Switchboard** (owner OD12).
+
+**Outcome.** Every served sign-in page (sign-in, organization chooser, second-factor setup, authenticator setup, recovery codes, confirm, confirmed, owner ready, too-many-attempts, confirmation-needed) follows one layout:
+- a narrow, centred column with one page heading and the name "Switchboard";
+- multi-step flows show their steps **in order**, with only the current one active; later steps are shown as upcoming, not as empty cards;
+- **one primary action per page**; secondary actions (the current session, continue to the management CLI, back) are quiet links in a footer line;
+- error pages: one clear message, what to do, and one action.
+
+**Constraints:**
+- Use only `tool-access-ui`'s existing components and theme. No new visual language and no page-specific CSS beyond layout.
+- Avoid the owner's banned defaults: cream backgrounds, italic accent words, "01 / 02" section labels, monospace labels, pill buttons, gratuitous gradients, predictable card grids. A step list may number its steps if that's the design system's list pattern; otherwise use step names.
+- Behaviour is unchanged: the form stays hidden until the factor is confirmed, the CSP nonces and the controllers stay as they are, and existing host tests keep passing (update their text expectations only where the copy changes).
+
+**Proof:**
+- `pnpm check`, plus the existing unit tests and sign-in host tests on both hosts.
+- The **Verifier** captures every scene at the new head, on Node and workerd, at 1280 and 390 CSS px, into `tmp/2026-11-sign-in-pages/screenshots-<head>/`, and reports one line per scene saying what it shows.
+- The Lead checks every picture before the owner sees a gallery.
+
+**Sessions:**
+- 🐒 Implementer (WS6): claude-local `20c2febb-6892-4c29-9ed5-a2ca39baa6d3`, Opus/high, worktree as above. Write scope: that worktree only. Push `item2/sign-in-pages-design` (no force) and keep #10 a draft.
+- 🔬 The Verifier (01a1cda2-c16d) does the captures. WS5's plain recapture of `41302fc85` is no longer needed; if it's done already, keep it as the "before" set.
