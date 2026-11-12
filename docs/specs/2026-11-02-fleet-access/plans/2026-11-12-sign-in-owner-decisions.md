@@ -75,6 +75,9 @@ All paths above are relative to `/Users/shravansunder/code/projects/agent-vm.des
     - the pending bytes and the unanswered count survive;
     - the next use re-sends the identical bytes.
   - The Implementer picks the mechanism (an `AbortSignal` from an injected deadline source, or the repository's equivalent).
+- **WS2 proof preservation (Lead, 12 Nov, the Reviewer's R-code findings; both accepted, and both restore removed coverage):**
+  1. **Keep the real-central stale-predecessor negative.** `b2e-joint-journey.host.e2e.test.ts` lost its case of two distinct signed proposals (200, then 409), with the winning stamp and records unchanged. The new identical-replay case (200/200) stays as well. B2 `#b2-proof` "renewal can't go backwards" requires both, against real central on both builds. The old daily job isn't needed for this.
+  2. **Restore the post-close assertions** in `sign-in-node-host.integration.test.ts`: the listener stopped, and the configured provider-secret, account and path canaries are absent from logs. Only `renewalTimerCancelled` is correctly removed.
 - **Edge: an empty record and an already-expired stamp at first use.** This happens only when setup's digest read failed and the organization then went unused for the stamp's whole life. The seed read is refused, because central's digest read refuses an expired stamp. That counts one **unanswered** try with reason `seed-unavailable`, and the call proceeds. Central then refuses it, failing closed, and the caller gets the existing unavailable answer. This is the documented limit: sign-in can't recover on its own, and the counters make it visible. It is never treated as success or as a renewed stamp.
 
 ## Limits
