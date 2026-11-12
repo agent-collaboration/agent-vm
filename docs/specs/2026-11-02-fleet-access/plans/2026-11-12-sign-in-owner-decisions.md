@@ -65,6 +65,16 @@ All paths above are relative to `/Users/shravansunder/code/projects/agent-vm.des
   - **Why B over A:** the stamp is fresh at setup, so the read nearly always succeeds. An organization unused for its stamp's whole life can then still renew on its first later use, because central accepts a new stamp naming an expired one. Under A, any organization idle for 120 days after setup couldn't recover on its own.
   - The cost is one extra link call at setup.
 - **D6, key change (clarified 12 Nov):** today's server-only entry stays, and no host trigger is added. On a key change, **every ready organization whose stamp isn't signed by the current key** goes through the same guard and is re-signed. That includes idle ones and ones with more than 60 days left, which is what `force` means: ignore the 60-day window. An organization whose stamp is already signed by the current key is **not force re-signed** (`currentSends: 0` is correct for one outside its window). If it is inside its 60-day window, the ordinary renewal applies, exactly as it would on its next use, with the same in-doubt rules. That is intended, not a D6 breach (Lead, 12 Nov, on the Reviewer's WS2 candidate). Then the old key is retired only after each central holds a current-key statement and passes a cold restart (B2 rule 6). An old-key statement still unanswered and pending does **not** count as re-signed.
+- **D7, a bounded renewal attempt (Lead, 12 Nov, on the Reviewer's WS2 R-code finding).** Renewal now runs inside the original request, so it must end on its own.
+  - **One deadline per guard run** covers its central calls: the replace/re-send and the seed or reconcile digest read. The default is **5 seconds**, held in the sign-in configuration.
+  - At the deadline the in-flight link request is aborted (the clients already map `TimeoutError` to `timeout`). It counts as one **unanswered** try with reason `unanswered-timeout`. The pending sent bytes are kept. Then rule 4 decides: a valid stamp makes the original call; an expired one answers the existing unavailable "try again shortly".
+  - The deadline runs on the **injected** clock or timer, and tests drive it with no wall clock.
+  - **Proof:** on both host paths, with the renewal peer deliberately held open and never answering:
+    - a valid stamp inside its window still completes the original call;
+    - an expired one answers unavailable;
+    - the pending bytes and the unanswered count survive;
+    - the next use re-sends the identical bytes.
+  - The Implementer picks the mechanism (an `AbortSignal` from an injected deadline source, or the repository's equivalent).
 - **Edge: an empty record and an already-expired stamp at first use.** This happens only when setup's digest read failed and the organization then went unused for the stamp's whole life. The seed read is refused, because central's digest read refuses an expired stamp. That counts one **unanswered** try with reason `seed-unavailable`, and the call proceeds. Central then refuses it, failing closed, and the caller gets the existing unavailable answer. This is the documented limit: sign-in can't recover on its own, and the counters make it visible. It is never treated as success or as a renewed stamp.
 
 ## Limits
