@@ -45,6 +45,24 @@ All paths above are relative to `/Users/shravansunder/code/projects/agent-vm.des
 3. The guard runs before each sign-in→Fleet call that exists on this branch. WS1's calls adopt it when the two branches meet. Whichever PR merges second wires the other's calls, and the handback says which calls were wired.
 4. The schema change goes through the repository's existing Drizzle migration route for both hosts.
 
+### WS2 Lead rulings (12 Nov; the source is the Implementer's proposals, pushes 01a1cdc1 and 01a1cdc9, accepted by the Lead)
+
+- **Cron:** renewal comes off the Cloudflare `0 0 * * *` cron, the Node timer and their wiring and tests. The cron stays, firing **only** `runAuthorizationRevisionBackfill`, because that is accepted B2 recovery. Dropping the cron is an open owner question, not part of this work.
+- **D1, guard placement:** one server-only endpoint, `prepareOrganizationFleetCall`, runs before:
+  - the revision drainer's `pushAuthorizationRevision`;
+  - `forwardFleetAdminRequest`;
+  - `relayFleetAdminRequest`, which reads `organization_id` from sign-in's own DPoP access token for the guard only. An undecodable token skips the guard, and central still verifies everything.
+
+  Not guarded: setup `provisionOrganization`, and the guard's own digest read.
+- **D2, definite non-stale refusals** (`organization-mismatch`, `invalid-statement`): one refused try, and the sent stamp is cleared under its conditional update. Stale refusals reconcile per B2 rule 3.
+- **D3, empty record on a ready organization:** the first guarded use seeds the confirmed stamp from central's digest read, by a conditional write only where the digest is null, then applies the rules. If that read is unavailable, the call proceeds without the guard, and central's own stamp check still fails closed.
+- **D4, counters:** cumulative, never reset, each with its last time and reason.
+- **D5, setup (revised by the Lead after the Implementer's correction, push 01a1cdc9):**
+  - When central answers **`Provisioned`** to the setup statement sign-in just sent, central stored exactly those bytes. Setup then records that statement as the confirmed stamp (digest, `exp`, `kid`) in the same update that marks the organization ready.
+  - When central answers **`AlreadyProvisioned`**, for example on Try again after a lost setup reply, setup leaves the record empty, and D3 seeds it on first use.
+- **D6, key change:** today's server-only entry stays. Every ready organization goes through the same guard with `force`, idle and not-due ones included. No host trigger is added.
+- **Edge: an empty record and an already-expired stamp at first use.** This happens only after a lost setup reply plus no use for the stamp's whole life. The seed read is refused, because central's digest read refuses an expired stamp. That counts one **unanswered** try with reason `seed-unavailable`, and the call proceeds. Central then refuses it, failing closed, and the caller gets the existing unavailable answer. This is the documented limit: sign-in can't recover on its own, and the counters make it visible. It is never treated as success or as a renewed stamp.
+
 ## Limits
 
 - **Write scope:** `/Users/shravansunder/code/projects/switchboard.item2-b3a-device-grant` (WS1) and `/Users/shravansunder/code/projects/switchboard.item2-b2-sign-in-additions` (WS2) only. **The Verifier's own write scope (apparatus only, no product code):** `.agents/skills/verify-auth/**` and its driver under `scripts/` or `tests/` as the skill places it, in `/Users/shravansunder/code/projects/switchboard.item2-b3a-verify-auth` (#14, the machine-login journeys) and `/Users/shravansunder/code/projects/switchboard.item2-b2-verify-auth` (#13, the renew-on-use journeys). It may push those two branches, and merge the matching WS branch into them to run against it. **Verification apparatus in test support (Lead, 12 Nov):** in those two verify-auth worktrees only, also the existing verification drivers and their helpers under `packages/sign-in-test-support/src/test-fixtures/` and `packages/sign-in-test-support/src/storage-cases/` (e.g. `device-grant-verification-cli.ts`), their apparatus tests (e.g. `device-grant-verification.unit.test.ts`), and new verification-only files there, including a machine-login Node listener driver. **Not** product code, and **not** product tests the Implementer owns. If a helper is shared with product tests, ask the Implementer before changing it. The full `startNodeSignInHost` has no machine-decision injection, so name that wiring limit in observations rather than working around it. Nothing in codex-router, agent-fleet-sync, agent-vm (except the Verifier's own notes under its worktree `tmp/`), staging or production.
