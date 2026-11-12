@@ -201,7 +201,7 @@ sequenceDiagram
   SI->>SI: code pending and unexpired? your role holds machine:enroll? (live)
   SI->>F: DecideDeviceLogin (request ID = device code record ID, codeExpiresAt)
   F->>F: one transaction: reserve then approve, base_generation = current generation, allowances written, re-key a former service id
-  F-->>SI: Approved { enrollmentId, machineLabel, workspaces } (a repeat returns the stored approval)
+  F-->>SI: Approved { enrollmentId, label, allowedWorkspaces } (a repeat returns the stored approval; Program Design DeviceLoginDecision)
   R->>SI: poll with the device code
   SI->>SI: redeem once, create the enrollment's own public client
   SI->>F: DecideMachineToken { enrollment, client }
@@ -354,7 +354,7 @@ Every central check runs on **both builds** (workerd Durable Objects and native 
 
 **Your decisions of 9 Nov (from the B3 questions page):**
 - **The code's real deadline (N10, Q1).** `DecideDeviceLogin` carries `codeExpiresAt`, the device code record's own expiry. Central stores it in `machine_enrollments` (one column, `code_expires_at`) and refuses the first Grant at or after it. Until B3 central lands, sign-in builds against the contract with a stand-in central.
-- **The same request number with different contents (N03, Q2): return the first approval.** Central answers a repeated `DecideDeviceLogin` with the approval it already stored, and ignores the changed contents. No fingerprint column. So the admin always sees the truth, `Approved` carries what central stored (`enrollmentId`, `machineLabel`, `workspaces`), and the sign-in approval page shows those rather than the form it submitted.
+- **The same request number with different contents (N03, Q2): return the first approval.** Central answers a repeated `DecideDeviceLogin` with the approval it already stored, and ignores the changed contents. No fingerprint column. So the admin always sees the truth, `Approved` carries what central stored (`enrollmentId`, `label`, `allowedWorkspaces`, exactly Program Design's `DeviceLoginDecision`), and the sign-in approval page shows those rather than the form it submitted.
 - **Token lifetime (Q3): one per organization,** central's configured lifetime set by `SetTokenLifetime`. That was already the design, and no issuer copy is added.
 - **The stamp pin: dropped** (row above).
 - **N11 and N07** were decided earlier: a short outage answers "try again", and idle expiry records an automatic cause with no person named.
