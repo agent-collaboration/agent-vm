@@ -218,7 +218,10 @@ The screenshots in `switchboard.item2-sign-in-pages-design/tmp/2026-11-sign-in-p
   - **E:** trim, then accept the weight.
   - **F:** a browser journey on both hosts against real Better Auth; the Verifier owns the driver (CDP, not Playwright).
   - **The Step 2 page→pattern map is approved.**
-  - **B is waiting on the owner:** opening `GET /api/auth/get-session` and `GET /api/auth/list-accounts` is a security-boundary change. Do A, C, D and E now; Step 2's session-dependent pages wait on B.
+  - **B, decided by the owner (12 Nov, "sure its fine"):** open `GET /api/auth/get-session` and `GET /api/auth/list-accounts`, read-only. Nothing else is added to the allowlist.
+    - **Lead condition:** Better Auth 1.7.11 returns `session.token` in the get-session JSON. Core field `token` has no `returned: false`, and `parseSessionOutput` keeps it. Strip it with a Better Auth `after` hook on `/get-session`, covering both the normal and the refreshed-session paths, so JavaScript never sees the token, as today with the httpOnly cookie.
+    - Prove it on both hosts: the response has no `token`; the cookie stays httpOnly; a cross-site request gets no session; the bearer plugin stays off.
+    - Step 2 is unblocked.
 - **Step 2:** convert every sign-in page to Better Auth UI components. Build the pages it doesn't cover (the `/device` approval page, the step-up message, the organization setup state) from its copied components in the same style.
 
 **Learn from Clerk and Better Auth UI first (owner, 12 Nov: "learning Clerk's design with the shadcn component system … best practices"):**
