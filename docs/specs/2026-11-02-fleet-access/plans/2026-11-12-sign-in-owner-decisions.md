@@ -553,3 +553,14 @@ I read the diff (`07740c65..4351d782`, 6 files):
 - **one more author-run of the Verifier's F packet, unchanged except for the target head.** The island bundle changed (zod config and print), so F at `07740c65` no longer covers the shipped bundle.
 
 After that: the Reviewer's correction check, CI at the head, then the merge.
+
+### WS6 R-print2 frozen; the correction check starts (Lead, 13 Nov)
+- **Freeze: #10 `ee137e5f`.** I read the CSS diff `4351d782..ee137e5f`. Print-hiding and the visible codes rule are both scoped by `body:has([data-backup-codes-print])`, with the visible rule one step more specific. `transition: none` is set under print.
+- **Author gates:** check 12/12, unit 2187/2187, page host tests 33/33 on both hosts.
+- **Chrome on both hosts:** Replace mounts the island; Print calls `window.print` once; under print only the codes show; other pages print as they look; no eval or `Function`.
+- `05799aa1` is superseded and defective (codes hidden), and is kept.
+- **In parallel now:**
+  - **Verifier:** the F author-run packet at `ee137e5f`, with only the target head changed. The Implementer runs it once and the Verifier audits.
+  - **Reviewer:** correction check of `07740c65..ee137e5f` (R-print, zod jitless, R-print2) against R-print and R-print2. Return READY or findings.
+  - **CI** at `ee137e5f`.
+- **Merge** when all three pass.
