@@ -657,3 +657,4 @@ The owner, answering the three open items ("yes run this stuff"; on Sunclaw: "i 
   - **D4:** one Fleet-setup message in product words, with no "Central".
   - **P1:** Deny disabled while Approve is pending.
 - **Recapture:** the changed cells and their siblings (review*, approved*, confirm-again*, fleet-*). Gates: check, unit, and the device and page host tests on both hosts.
+- **`/device` as a lasting verify-auth journey (Lead, 13 Nov 12:33Z; the Verifier's gap):** not now. The WS8 grid and component observation are temporary proof for this slice. The lasting journey is B3e's "real journey": two Routers log in by device code through the sign-in page against both central builds. That journey and its `verify-auth` skill entry are commissioned with B3e, when central exists. Recorded in the B3 rows; no skill write now.
