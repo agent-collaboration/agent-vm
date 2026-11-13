@@ -274,3 +274,16 @@ The Verifier was stuck on a Codex approval prompt for the computer-use tool (`cu
   1. **WS3 observation** on #12 at `6a5ad8a6`, plus B2e on both pairings via Sunclaw. This unblocks the WS7 push and the #12 merge.
   2. **WS7** once the Implementer pushes it.
   3. **WS6 UI grid** on #10 at `e22b08bc`.
+
+### WS3 repair R-batch (Lead, 13 Nov; the Verifier's finding at `6a5ad8a6`)
+**Defect:** `deliverOrganizationRevisions` reads only `authorizationRevisionDrainBatchSize` (100) pending rows and reports "delivered" from that batch alone. With 101 pending person pairs, 100 are acknowledged, the original call proceeds and the 101st (possibly a revocation) stays unsent. That violates Q1 = A.
+
+**Fix, at the owning boundary:**
+- Keep delivering batches for that organization **until none are pending**, all inside the same D7 run deadline.
+- Before returning ready, **re-read** that organization's pending count. Ready only when it's zero; a row that advanced while being acknowledged counts as pending.
+- If the deadline hits while any remain pending, answer unavailable (fail closed).
+- Don't raise or remove the batch size as the fix.
+
+**Proof:** a permanent case on **both storage legs** with more than 100 pending pairs (e.g. 101, and 250 to cross two batches): every row is delivered before the call, and when the deadline cuts in mid-way the call is refused. Show it red at `6a5ad8a6` first.
+
+**Then:** rebase WS7 onto the repaired WS3, freeze a new target for the Verifier, and hold my WS3 acceptance until it's observed.
