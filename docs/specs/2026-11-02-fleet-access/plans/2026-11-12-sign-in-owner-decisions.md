@@ -763,3 +763,8 @@ I read the new `device-user-code.ts`. There is no copied alphabet or length any 
 - **Owner:** "let's revisit later". The leaning: rename the current private repo to `switchboard-auth` (auth packages stay there), and move the rest to a new public `switchboard` repo, which fits with central, already public. Public packages would be published to npm.
 - **Not started.** To pick up after the B3 stack merges, with a design: what moves, a fresh history or a filtered history with a secret scan, the npm scope and publishing, how `switchboard-auth` consumes them, and the CI and check-gate split. Page: `tmp/2026-11-12-lead-pages/repo-split-public-private.html`.
 - **Owner, 13 Nov 20:07Z:** the licence is **AGPL**. Later direction: code public; production deploy and ops private in `fleet-ops`, moved without leaking history. Still deferred.
+- **WS12 done; the B2e carry is closed (Lead, 13 Nov 21:05Z):**
+  - B2e joint at merged #12 `b277be05` against central `e847a888`: workerd+workerd 10/10, Node+Tokio 10/10, both empty-restart cases on each, launcher teardown 2/2. Zero failures or skips; all nine commands exit 0.
+  - The Verifier audited the originals (`/private/tmp/2026-11-ws12-b2e-verifier/handback.md`).
+  - Upkeep: #12 `b277be05` and #11 `997d4245` gates are green.
+  - Both stay held until B3 central.
