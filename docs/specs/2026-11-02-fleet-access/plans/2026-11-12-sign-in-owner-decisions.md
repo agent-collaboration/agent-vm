@@ -680,3 +680,4 @@ The owner, answering the three open items ("yes run this stuff"; on Sunclaw: "i 
   - gates: check, unit, and the device host files on both hosts. No grid recapture: this adds no new screen state.
 - The Reviewer's review continues. Its correction check covers R-race together with any other findings.
 - **R-race frozen at #11 `515f8b29`; Lead accepted the diff (13 Nov 12:59Z).** Reviewer: correction check of `35e7b9b0..515f8b29` against R-race only. Return READY or findings.
+- **WS8 done (13 Nov 13:02Z):** R-race correction READY at #11 `515f8b29`; #12 `c1ad4759` READY. Held until B3 central.
