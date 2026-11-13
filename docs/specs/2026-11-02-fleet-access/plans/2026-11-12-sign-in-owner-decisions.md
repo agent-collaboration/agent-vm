@@ -313,3 +313,14 @@ The Verifier was stuck on a Codex approval prompt for the computer-use tool (`cu
 The Lead accepted WS3 at switchboard `887c9abe` (apparatus #13 `3fde8337`); see `tmp/2026-11-12-ws1-handbacks/lead-acceptance.md`.
 - **Reviewer:** review the diff `66060057..887c9abe` (WS3 plus R-batch) read-only, against the WS3 rulings (Q1 = A, Q2, wholly-unfenced backfill, R-batch) and the B2 rules.
 - **Implementer:** push WS7 (`ee3fcd8b`) and freeze it for the Verifier's WS7 observation, including B2e on both pairings.
+
+### WS7 ruling R-notdue (Lead, 13 Nov; the Verifier's WS7 source challenge on `ee3fcd8b`)
+**Gap:** a ready organization whose stamp isn't due (more than 60 days left) skips the digest read, so recovery never runs. After central restarts empty, its calls are refused until the renewal window.
+
+**Fix, no extra read on normal calls:** when **the original Fleet call** comes back with central's refusal meaning "this Fleet holds no stamp / is not provisioned for this organization", the guard treats the record as forgotten. Within the same D7 budget it clears the record (CAS), signs a fresh setup statement, provisions, seeds from central's digest read, and **retries the original call once**.
+- A second refusal, or no time left, answers unavailable.
+- Any other refusal is returned unchanged.
+- The refusal kind is central's existing unstamped-store refusal (B2 design: "the unstamped-store refusal covers B2's own public surfaces"). Use its exact wire form from the B2e pinned central (`e847a888`).
+- Lead A will be asked to keep that kind distinct in R29.
+
+**Proof:** a permanent not-due empty-central case on both storage legs and on the host: the call recovers and succeeds on the first use. A refusal of any other kind is not retried.
