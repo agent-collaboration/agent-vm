@@ -681,3 +681,21 @@ The owner, answering the three open items ("yes run this stuff"; on Sunclaw: "i 
 - The Reviewer's review continues. Its correction check covers R-race together with any other findings.
 - **R-race frozen at #11 `515f8b29`; Lead accepted the diff (13 Nov 12:59Z).** Reviewer: correction check of `35e7b9b0..515f8b29` against R-race only. Return READY or findings.
 - **WS8 done (13 Nov 13:02Z):** R-race correction READY at #11 `515f8b29`; #12 `c1ad4759` READY. Held until B3 central.
+
+### Owner decision: use Better Auth UI as shipped (13 Nov 13:55Z)
+- **Owner:** "i want to use the better auth ui standard"; "unless there's really good reason not to we should use their ui".
+  - This supersedes R-print and R-print2 (in-page print).
+  - **Standing rule:** take Better Auth UI's components and helpers as they come; diverge only for a strong, named reason, which goes to the owner.
+- **WS9, Print the upstream way (new PR to `main`; #10 is merged):**
+  - Branch `item2/sign-in-print-upstream` from `main`, in an Agent Studio worktree.
+  - **Restore Better Auth UI's `printTextFile`** in `packages/auth-ui/.../two-factor/backup-codes.tsx`. Remove our `@media print` block, the `data-backup-codes-print` marker and their tests.
+  - **CSP:** add `frame-src blob:` to the **signed-in** pages' policy (`sign-in-core/src/pages/page-document.tsx` `pageContentSecurityPolicy`).
+    - The sign-in page stays `frame-src https://challenges.cloudflare.com` only. It shows no codes.
+    - No other directive changes. A `blob:` document inherits the page's policy, so scripts stay nonce-gated.
+  - **Keep the zod JIT setting** (C6). It's about our bundle, not a Better Auth UI divergence.
+- **Proof:**
+  - CSP host tests on both hosts: signed-in pages carry `frame-src blob:`, the sign-in page doesn't, nothing else changed;
+  - headless Chrome on both hosts: Replace recovery codes, then Print loads the `blob:` frame with no CSP violation, and print is called once on that frame;
+  - gates: check, unit, and the page host tests on both hosts;
+  - Reviewer R-code, then CI. The Lead merges after READY and green CI.
+- **Sessions:** the WS6/WS8 Implementer (claude-local `20c2febb`) builds. The Verifier audits the probe as before (author-run).
