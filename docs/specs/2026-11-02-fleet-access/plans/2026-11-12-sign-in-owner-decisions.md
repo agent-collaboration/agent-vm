@@ -357,3 +357,9 @@ Normal calls get no extra read. This supersedes the "unstamped refusal kind" wor
 - A push 503 followed by a `none` probe recovers.
 - A push 503 with any other probe outcome stays unavailable.
 - B2e against pinned central on both pairings.
+
+**R-floors timing (Lead, 13 Nov, the Verifier's recommendation and the Implementer's source agree):**
+- **When:** reset the organization's fence ACKs to 0 **when the authoritative `none` is observed**, while this run conditionally owns clearing the old stamp record (CAS), **before** attempting the idempotent setup. Not after setup is confirmed.
+- **Reason:** if setup commits but its reply is lost, the next use reads a stamp rather than `none`. An after-confirmation reset would then never happen, and the floors would stay missing.
+- **Safe:** `none` proves central holds nothing for the organization, floors included. The rows stay pending until a setup lands, then go in the same or the next use.
+- **Proof:** a "setup applied, reply lost" case: the next use delivers the floors and the call succeeds.
