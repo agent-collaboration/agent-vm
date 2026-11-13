@@ -501,3 +501,14 @@ No receipt closes trial ruling F ("a browser journey on both hosts against real 
 - **Ruling F's real-browser journey adds a step:** Replace recovery codes, then the island is present and "I've saved my recovery codes" finishes.
 
 **Recapture r3:** the changed cells and their siblings, as R-ui2 listed, plus `confirmed/replace-recovery-codes-next-page`. Gates: check, unit, and the page host tests on both hosts.
+
+### WS6 grid passes; ruling F route (Lead, 13 Nov ~10:20Z)
+**Grid:** the r3 grid at #10 `07740c65` passes working and quality on all 34 cells (`lead-ui-judgment-ws6.md`, Round 3). What's left before #10 merges: **ruling F**, then CI.
+
+**F, the Chrome capability gap.** In the Verifier's local run (apparatus `71a084ab`, local-only), both owned Chrome instances exited with SIGABRT before DevTools came up. Zero browser steps ran. The Verifier's sandbox can't start Chrome, and no escalation was attempted. The Implementer's session runs headless Chrome locally.
+
+**Route (Lead decision, the same pattern as the grid):** the Verifier hands the Implementer the exact F command at the local apparatus (its driver, oracle and expected results unchanged). The Implementer runs it once at `07740c65` on both hosts and returns the raw outputs and logs untouched. The Verifier audits identity and reads every result; the Lead judges.
+- Labelled **author-run**. The Implementer may not edit the driver or the expected results.
+- If a step fails, the Verifier interprets the failure and the Implementer repairs the product.
+
+**The taxonomy audit (`scripts/audit-test-taxonomy.ts`) is not changed now.** Registering the dedicated `native-browser.host.e2e.test.ts` there is a check-script change, which needs the owner's approval. The apparatus stays local-only until the owner answers. The F run itself doesn't need the audit, since it runs through its dedicated config.
