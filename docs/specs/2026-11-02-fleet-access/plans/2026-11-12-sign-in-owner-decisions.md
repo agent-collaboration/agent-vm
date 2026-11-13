@@ -665,3 +665,17 @@ The owner, answering the three open items ("yes run this stuff"; on Sunclaw: "i 
   - **#12:** `5d3f9772..c1ad4759`, the main merge resolution (B2 `organizationSetup` in #10's shell) plus D4;
   - **#11:** `3424fd99..35e7b9b0`, the `/device` page.
 - Check them against the WS8 design and rulings A–C (C1's server-built callback in particular), the R-device corrections, and no behaviour change to the setup/retry controller. Return READY or findings. No merge; #11 and #12 stay held.
+
+### WS8 correction R-race (Lead, 13 Nov 12:52Z; the Reviewer's candidate, confirmed from source)
+- **Found:** `device-approval-page.ts:95–100`. When Better Auth's verify returns 200 without machine context (a second tab's claim lost), the page reads the stored code only as `pending`.
+  - Better Auth 1.7.11 (`device-authorization/routes.mjs:529`) takes its record snapshot before the conditional claim.
+  - So this order fails: tab B reads pending → tab A claims, reviews and approves → B's claim loses and gets a bare 200 → B's fallback finds the code **approved** and shows "expired".
+  - That breaks N03 and A1 for the same person.
+- **Fix:** the same protected fallback read resolves either way, keeping the person, client and expiry guards:
+  - `pending` → review;
+  - `approved`, for this person and unexpired → A1 approved-loading;
+  - anything else → expired.
+- **Proof:**
+  - a host test on both hosts that forces this cross-phase interleaving (B's verify snapshot before A approves, B's claim after). It must fail on `35e7b9b0`. The existing two-tab test awaits both page loads first, so it can't catch this.
+  - gates: check, unit, and the device host files on both hosts. No grid recapture: this adds no new screen state.
+- The Reviewer's review continues. Its correction check covers R-race together with any other findings.
