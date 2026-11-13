@@ -583,3 +583,4 @@ The owner, answering the three open items ("yes run this stuff"; on Sunclaw: "i 
   - `pnpm test:taxonomy` and `pnpm check` green with no audit change;
   - `pnpm test:e2e:host` runs it on both hosts locally (author-run if the Verifier's sandbox still can't start Chrome);
   - CI "E2E (host)" on #13 runs it on ubuntu-latest. If Chrome needs a flag or isn't present there, report before changing any workflow, because a workflow change needs the owner.
+- **Integration boundary for the relocated F test (Lead, 13 Nov 11:04Z):** do **not** merge the open #10 branch into #13. Make the test portable now: a same-checkout host test, existing fixtures, private temp evidence, Chrome found through the environment, with no Mac path and no private target file. Wait for #10 to merge to main, then merge `origin/main` into #13 and run it there.
