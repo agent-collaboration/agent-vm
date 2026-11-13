@@ -363,3 +363,15 @@ Normal calls get no extra read. This supersedes the "unstamped refusal kind" wor
 - **Reason:** if setup commits but its reply is lost, the next use reads a stamp rather than `none`. An after-confirmation reset would then never happen, and the floors would stay missing.
 - **Safe:** `none` proves central holds nothing for the organization, floors included. The rows stay pending until a setup lands, then go in the same or the next use.
 - **Proof:** a "setup applied, reply lost" case: the next use delivers the floors and the call succeeds.
+
+### WS7 acceptance prerequisite: a real-central empty-restart case (Lead, 13 Nov)
+WS7 is frozen at `f58d79a7`, proven against a controlled central (unstamped 503, floors required). That's a stand-in. Since recovering from an emptied central is WS7's whole purpose, **add one permanent B2e case against pinned central `e847a888` on both pairings** (Node + Tokio, workerd + workerd):
+1. provision an organization, and push its floors;
+2. **restart central with empty storage** (a fresh store or object, not the same database), so it doesn't know the organization;
+3. make an ordinary admin call through sign-in.
+
+It passes when the call succeeds on that first use, after sign-in observes the 503, probes `none`, resets its ACKs, sets up fresh, re-pushes the floors, then retries. A second case uses a not-due stamp. A build without R-floors or R-notdue must fail it.
+- **Implementer:** add the case (product test, B2e harness).
+- **Verifier:** observe it on both pairings.
+
+WS7 acceptance waits for it.
