@@ -537,3 +537,19 @@ No receipt closes trial ruling F ("a browser journey on both hosts against real 
   - a headless-Chrome check on both hosts that emulates print media on the replacement-codes page and shows only the codes, with no CSP violation logged on clicking Print;
   - gates: check, unit, and the page host tests on both hosts.
 - **After it:** the Reviewer re-checks only this change, CI runs at the new head, then the merge.
+
+### WS6 R-print review (Lead, 13 Nov 10:40Z; #10 `4351d782`)
+I read the diff (`07740c65..4351d782`, 6 files):
+- `backup-codes.tsx` now calls `window.print()`, with the codes list marked `data-backup-codes-print`.
+- `auth-ui.css` adds an `@media print` block.
+- The island turns zod JIT off (`z.config({ jitless: true })`) before any schema exists, which removes the `Function('')` CSP probe. The same validation runs without the eval fast path.
+- The two to three remaining console lines per island page are sonner's and input-otp's injected `<style>` tags, whose CSS is already served. The rest are expected 401/403/429 refusals. Accepted as a named library limit.
+
+**One small correction (R-print2):** the print block hides `body *` on **every** page that loads `auth-ui.css`, so printing any other sign-in page gives a blank sheet. Scope it to pages that contain the codes list, e.g. `body:has([data-backup-codes-print]) *`, so other pages print as they look. Add a unit or host assertion that the hiding rule is scoped.
+
+**Then, at the new head:**
+- gates: check, unit, and the page host tests on both hosts;
+- the Chrome print-media check on both hosts, as before, plus one non-codes page printing visibly;
+- **one more author-run of the Verifier's F packet, unchanged except for the target head.** The island bundle changed (zod config and print), so F at `07740c65` no longer covers the shipped bundle.
+
+After that: the Reviewer's correction check, CI at the head, then the merge.
