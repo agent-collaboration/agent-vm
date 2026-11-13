@@ -707,3 +707,17 @@ The owner, answering the three open items ("yes run this stuff"; on Sunclaw: "i 
   - The Verifier then audits, the Lead records the WS9 acceptance, and the Reviewer starts.
 - **Owner confirmed C6 (13 Nov 14:44Z):** keep zod `jitless` ("jitless is safer"). The sign-in pages never allow `unsafe-eval`.
 - **#15 merged (Lead, 13 Nov 14:51Z):** at `3ff406c2` after acceptance, R-code READY, CI green, clean. Carried: #12 and #11 pick it up at their next main merge.
+
+### Owner decision C2 = B: wrong codes the Better Auth UI default way (13 Nov 17:37Z)
+- **Owner** (decision page review `3633c45e`): picked **B, Better Auth UI default**. This reverses my R1 (inline-only errors in our own words).
+- **WS10, a new PR to `main`:**
+  - Branch `item2/sign-in-errors-upstream` from `main`.
+  - Remove `withInlineErrors` and `refusalInOurWords` (`auth-ui/src/lib/auth/inline-auth-errors.ts`) and their uses in `confirm-second-factor-step.tsx` and `enable-two-factor-step.tsx`. A wrong code then shows inline and in Better Auth UI's toast, in Better Auth's words.
+  - **Keep** the single provider tree: one `ErrorToaster`, which fixed a real duplicate-toast bug, not a style choice. One toast per failure is Better Auth UI's own behaviour.
+  - Remove the custom wrong-code strings from the localization.
+  - Check where else `withInlineErrors` is used (enrolment start, passkey rename). Revert those uses too, so every form is Better Auth UI's default; list each one.
+- **Proof:**
+  - unit tests updated to expect Better Auth UI's behaviour;
+  - the three refusal states captured on both hosts at both widths, so the Lead judges them (inline plus toast, Better Auth wording);
+  - gates: check, unit, and the page host tests on both hosts;
+  - then the Verifier audit, my acceptance, R-code, CI, and the merge.
