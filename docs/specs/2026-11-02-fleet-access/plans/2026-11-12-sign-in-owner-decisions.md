@@ -424,3 +424,25 @@ The Verifier's send of the capture packet to Sunclaw was **rejected by automatic
 - It stops its own processes by exact PID.
 
 **Independence limit:** these frames are captured by the author, and that's labelled. The **Verifier** checks frame identity against the metadata and the target independently and reads every frame. The **Lead** judges every frame (ui-acceptance).
+
+### WS6 correction R-ui (Lead, 13 Nov 08:50Z; the Lead's judgment of the grid at #10 `cd60464e`)
+**Judgment:** `agent-vm.design-portal-remediation/tmp/2026-11-12-ws1-handbacks/lead-ui-judgment-ws6.md`. Working passes for all 21 captured cells; quality fails on four groups, so #10 is not ready.
+
+**Fix, on #10 (`item2/sign-in-pages-design`), product code:**
+- **Q1, one flow keeps its steps.** A new person who enrols sees the same step list from enrolment to creating the organization. Today `signInFlowSteps` adds "Confirm your second factor" as done once `factorPage` is `confirmed`, so the create step shows a step the person never did. A returning person who needs a step-up confirmation (`confirm/*`) may still see the confirm step. The choice of how (what the server knows about "confirmed by enrolling" versus "confirmed by step-up") is the Implementer's; it must not change the factor rules themselves.
+- **Q2, the create step is one task.** While the organization is being created, the page shows the steps and the organization form only. The Security block (passkeys, recovery codes, authenticator app) stays on the account page (`confirmed` with no organization task). The factor rules and the hidden-until-confirmed form are unchanged.
+- **Q3, the refused-continue error.** "Owner sign-in was refused" becomes an error in the same destructive style as `limited` and `refused`, with what to do and one action.
+- **Q4, replacement recovery codes.** `recovery-codes/new-codes` gets the same Copy / Download .txt / Print actions and the "I've saved my recovery codes" finish as the enrolment codes screen, from the same component.
+- **Polish if cheap:** P1, Turnstile `size: "flexible"` so it lines up with the buttons; P2, an instruction line on `confirm/confirm-recovery-code` like its app-code sibling.
+
+**Recapture, same route as before (author-captured, labelled), into a new `tmp/2026-11-13-ws6-grid-r1/` at the new freeze:**
+- all 21 cells again, plus these missing cells:
+  - the finish transitions: enroll-app finish → the next page, confirm success → the next page;
+  - `app-setup/no-script-setup` with "Setup URI" expanded;
+  - long pages at 390 below the fold (a second, scrolled frame or a full-page frame for `organization-create/*` and `app-setup/no-script-setup`);
+  - replacement recovery codes while pending;
+  - a wrong code and a step-up refusal with their real toasts or inline errors, through a stand-in mode that refuses (visual-entry only; no product change for it).
+- Gates: `pnpm check`, the unit tests, and the sign-in host tests on both hosts; update text expectations only where copy changes.
+- Then the Verifier checks identity and reads every frame, and the Lead judges again.
+
+**Not in R-ui:** the `/device` page (after #10 merges, by plan) and any new visual language. Everything stays within `tool-access-ui`'s Bridge-synced components.
