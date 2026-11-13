@@ -734,3 +734,9 @@ The owner, answering the three open items ("yes run this stuff"; on Sunclaw: "i 
   - **Fix, WS11 on #11:** drop the copied alphabet and length. Accept any trimmed value up to 64 characters with no URL characters, encode it into `/device?user_code=`, and let Better Auth's own `/device` verify decide whether it's a real code. Display formatting stays.
   - The C1 open-redirect test is kept: a URL-shaped or path-shaped value still can't change the destination.
   - Gates: check, unit, and the device host files on both hosts. Then the Verifier audit, the Lead's acceptance and the Reviewer.
+
+### WS11 rulings (Lead, 13 Nov 18:03Z; #11 `e6323efa`)
+I read the new `device-user-code.ts`. There is no copied alphabet or length any more. It refuses only empty input, more than 64 characters, or URL and control characters. One normalization is shared with B3a's guard.
+1. **No "no such code" message: accepted.** An unknown code shows the same "This code can't be used" as an expired one. A separate "doesn't exist" message would let someone probe which codes are live (enumeration). This matches Better Auth's own verify, which answers both the same way.
+2. **The enter-code hint: change it.** "Eight letters and numbers, like ABCD-EFGH" restates Better Auth's default format, the same copy we just removed. Make it "Enter the code shown on your machine." Display grouping (`ABCD-EFGH`) stays, since it only formats what's stored.
+- Then: the Verifier audits, the Lead accepts, and the Reviewer runs R-code. #11 stays held.
