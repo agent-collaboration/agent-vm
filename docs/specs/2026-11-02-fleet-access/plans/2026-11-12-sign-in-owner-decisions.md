@@ -265,3 +265,12 @@ The screenshots in `switchboard.item2-sign-in-pages-design/tmp/2026-11-sign-in-p
 **Confirmed by Lead A (12 Nov, R29):** the new central answers "no stamp" (`none`) for an unknown organization on the digest read, not an error. Key on it.
 
 **Branch:** `item2/b2-sign-in-additions` (#12), after WS3. Implementer: the WS3 Implementer (claude-local `ccc121df`).
+
+### Verifier order and tools (Lead, 13 Nov 02:45Z)
+The Verifier was stuck on a Codex approval prompt for the computer-use tool (`cua_repl`) from 12 Nov 10:30Z, recapturing for WS5, which is superseded. I interrupted that turn.
+- **WS5 is cancelled** (WS6 replaces it).
+- **No computer-use (`cua_repl`) or desktop tools.** They need owner approval in the Codex app, which nobody can answer unattended. For screenshots use a headless Chrome CDP driver (as WS6's `trial-observe.ts` does) or the Sunclaw Operator. If a tool asks for approval, stop and tell the Lead at once; don't wait on it.
+- **Order:**
+  1. **WS3 observation** on #12 at `6a5ad8a6`, plus B2e on both pairings via Sunclaw. This unblocks the WS7 push and the #12 merge.
+  2. **WS7** once the Implementer pushes it.
+  3. **WS6 UI grid** on #10 at `e22b08bc`.
