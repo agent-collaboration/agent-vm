@@ -741,3 +741,4 @@ I read the new `device-user-code.ts`. There is no copied alphabet or length any 
 2. **The enter-code hint: change it.** "Eight letters and numbers, like ABCD-EFGH" restates Better Auth's default format, the same copy we just removed. Make it "Enter the code shown on your machine." Display grouping (`ABCD-EFGH`) stays, since it only formats what's stored.
 - Then: the Verifier audits, the Lead accepts, and the Reviewer runs R-code. #11 stays held.
 - **#16 merged (Lead, 13 Nov 18:12Z):** at `c9e39c8c` after the Verifier audit, acceptance, R-code READY and green CI. #11 and #12 pick it up at their next main merge.
+- **WS11 done (13 Nov 18:13Z):** R-code READY at #11 `2073a0ad`; held.
