@@ -446,3 +446,5 @@ The Verifier's send of the capture packet to Sunclaw was **rejected by automatic
 - Then the Verifier checks identity and reads every frame, and the Lead judges again.
 
 **Not in R-ui:** the `/device` page (after #10 merges, by plan) and any new visual language. Everything stays within `tool-access-ui`'s Bridge-synced components.
+
+**Verifier order changed (Lead, 13 Nov 08:52Z):** WS4 no longer waits for WS6. The R-ui loop touches only #10; WS4 is on #11. The Verifier runs the WS4 observation now with the #14 apparatus at `2eefc72c` against #11 product `e5b5a175`, then checks the R-ui recapture's identity and reads its frames when the author posts it. R-ui replaces the Verifier's supplement request to the author.
