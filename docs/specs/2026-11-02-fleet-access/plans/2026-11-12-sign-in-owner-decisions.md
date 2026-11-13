@@ -308,3 +308,8 @@ The Verifier was stuck on a Codex approval prompt for the computer-use tool (`cu
 - Then the Verifier's UI grid at the new frozen head.
 
 **Implementer:** WS6 (claude-local `20c2febb`). The Verifier's WS6 grid waits for this freeze.
+
+### WS3 accepted, R-code due (Lead, 13 Nov)
+The Lead accepted WS3 at switchboard `887c9abe` (apparatus #13 `3fde8337`); see `tmp/2026-11-12-ws1-handbacks/lead-acceptance.md`.
+- **Reviewer:** review the diff `66060057..887c9abe` (WS3 plus R-batch) read-only, against the WS3 rulings (Q1 = A, Q2, wholly-unfenced backfill, R-batch) and the B2 rules.
+- **Implementer:** push WS7 (`ee3fcd8b`) and freeze it for the Verifier's WS7 observation, including B2e on both pairings.
