@@ -564,3 +564,9 @@ After that: the Reviewer's correction check, CI at the head, then the merge.
   - **Reviewer:** correction check of `07740c65..ee137e5f` (R-print, zod jitless, R-print2) against R-print and R-print2. Return READY or findings.
   - **CI** at `ee137e5f`.
 - **Merge** when all three pass.
+
+### Owner decisions, 13 Nov 11:01Z (first-hand, in the Lead's session)
+The owner, answering the three open items ("yes run this stuff"; on Sunclaw: "i asked you to delegate … why have to keep approve"):
+1. **Test-taxonomy audit: yes, option A.** Register only `scripts/verify-auth/native-browser.host.e2e.test.ts` in `scripts/audit-test-taxonomy.ts`, as run by its dedicated `native-browser.config.ts` and kept out of the default suites. That single file, with no general exemption, plus the script's unit regression. The Verifier may then push its F apparatus to #13 with `pnpm check` green.
+2. **Sunclaw: yes.** Switchboard source, the visual-preview harnesses and verification packets may be sent to the owner's Sunclaw test agent (codex-local `01a1b755`) for test runs. This is a standing permission for this work; helpers cite this entry. Credentials, `op://` refs and test-account addresses still never go in packets.
+3. **Leftover preview processes 87857 and 87898: yes to stopping them.** By the time I checked, both had already exited (`ps` showed neither), so nothing was killed.
