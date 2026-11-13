@@ -404,3 +404,9 @@ No code change. The proof should include one generic-loss case (not only the tim
 **Proof:** an actual-client held-retry case observes the signal reach the transport and the request aborted at the deadline, on both hosts' client paths.
 
 **Order:** this goes on #12 (`item2/b2-sign-in-additions`) **before** WS4 continues. Then refreeze; the Verifier runs a focused observation and the Reviewer runs a correction check.
+- **WS4 built at #11 `909c8ef1` (Lead rulings, 13 Nov):**
+  - **WebSocket connect:** `<sign-in>/fleet/v1/session` doesn't exist on #11, so its guard stays an obligation for the code that adds the forward (B3d/B4). It's recorded in the B3 rows.
+  - **Proof layer:** #11's machine proof runs on storage cases on both legs, with no HTTP host lane. That's accepted for WS4; machine host-lane cases come with B3 central.
+  - **Fixture:** the machine product stand-in now acknowledges revision pushes. No assertion changed.
+  - **The single `ECONNRESET`** in "people: a lost provisioning reply" (Node, `e8311b01`) is recorded as a flake candidate. The Verifier watches for a repeat; it's not ignored.
+  - The Verifier observes WS4 after the WS6 grid and R-retrysignal.
