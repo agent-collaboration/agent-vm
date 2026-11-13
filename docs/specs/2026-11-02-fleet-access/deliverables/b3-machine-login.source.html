@@ -288,6 +288,46 @@ The host passes `[MacKeychain]` on macOS and an empty list everywhere else (your
 The Keychain holds the stable data key, and the rotating refresh credential is written to the encrypted envelope.
 </script></ex-markdown>
 
+<h2 id="b3-device-page">The approval page (<code>/device</code>)</h2>
+
+<ex-markdown id="b3-device-page-text"><script type="text/markdown">
+Lead design, 13 Nov. It is built with the sign-in pages' shell and `packages/auth-ui` components (Better Auth UI, Base UI, our theme; see #10), after #10 merges.
+
+```
+            Switchboard
+     Approve a machine login
+
+  Code on your machine:  ABCD-EFGH   ← must match the Router's screen
+  Machine:  "studio-mac"   Organization:  Acme
+
+  Workspaces it may use
+   [x] research     [ ] billing     [x] infra
+   (none yet: approve the login now, add workspaces later)
+
+        [ Approve ]        Deny
+  ───────────────────────────────────────────
+  Signed in as you · Not you?
+```
+
+**States:**
+- **enter code:** reached without `?user_code=`; a code field.
+- **review:** as drawn.
+- **confirm again:** central answers `secondFactorRequired { within_seconds }`. The second-factor confirm step (the same one as #10's `ConfirmSecondFactorStep`) runs inline, then Approve is retried with the same request ID.
+- **approved:** shows central's stored label and workspaces from the `Approved` reply, never the form.
+- **denied.**
+- **errors:** code expired or used, not permitted (no `machine:enroll`), machine in another organization, unknown workspace. Each gets one message and one action.
+- **unavailable:** "try again shortly".
+
+**Rules:**
+- One primary action (Approve).
+- Deny is a secondary button.
+- The code is shown large and next to the Router's instruction.
+- A second tab or a retry shows the first approval (N03).
+- Turnstile is not loaded here (signed-in page).
+
+**Data:** the code record gives the label, organization and code. **The workspace choices need a central call that lists the organization's workspaces (ID and name) for an approver with `machine:enroll`. None exists today:** `WorkspaceLookup` takes one workspace ID. This is asked of Lead A's redesign, which keeps the workspace list. Until it exists, the page offers no workspace picker and approves the login with no workspaces; allowances are added later with `AllowMachine`.
+</script></ex-markdown>
+
 <h2 id="b3-proof">How it's proven</h2>
 
 <ex-markdown id="b3-proof-text"><script type="text/markdown">
