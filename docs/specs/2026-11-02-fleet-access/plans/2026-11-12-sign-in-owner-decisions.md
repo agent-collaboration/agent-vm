@@ -331,3 +331,9 @@ The Lead accepted WS3 at switchboard `887c9abe` (apparatus #13 `3fde8337`); see 
 - Any other probe outcome (a valid stamp, unavailable, timeout) returns the original refusal unchanged.
 
 Normal calls get no extra read. This supersedes the "unstamped refusal kind" wording above.
+
+**WS7 recovery-setup uncertainty (Lead ruling, 13 Nov, on the Verifier's question about `unansweredSetupWaits`):**
+- **Sent slot: not used for recovery setup.** Setup (`ProvisionOrganization` with no `replaces`) is idempotent at central: if a setup already landed, central keeps it and answers `provisioned`. The digest seed read right after records central's actual stamp. So a lost recovery-setup reply leaves digest = null and sent = null, and the next use signs a fresh setup again. That's the intended expectation.
+- **Counters: still recorded.** A deadline or lost reply during recovery adds **one unanswered try** with reason `unanswered-timeout`, and updates the latest-try record per D4/D7, so the owner's tracking shows it. A refused setup counts one refused try with its reason.
+- `reprovisionFresh` must record that outcome, not return `central-empty` silently.
+- The proof includes the counter assertion on both storage legs.
