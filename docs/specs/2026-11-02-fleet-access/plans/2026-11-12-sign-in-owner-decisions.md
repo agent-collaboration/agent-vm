@@ -622,3 +622,8 @@ The owner, answering the three open items ("yes run this stuff"; on Sunclaw: "i 
   - No behaviour change to setup or retry.
   - Add those states to the WS8 grid and to the page host tests on both hosts.
 - **Verifier:** abort your own in-progress `origin/main` merge on #13 (no resolution there). Once the Implementer freezes the #12 resolution, merge that #12 head (which contains main) into #13, then run the relocated F host e2e.
+- **Skips at #12 `fb2c9673` (Lead, 13 Nov 11:32Z):** none are new.
+  - 12 tests on both hosts are the B2e joint-central files, which run only with pinned central artifacts.
+  - 2 tests are Node-only `runIf(cloudflare)` cases.
+  - The skip conditions are byte-identical to `5d3f9772`.
+  - **Carried:** the B2e joint (both pairings) must run again at the merged #12 head before #12 is released. The owner page and handler changed in the main merge, and the last joint run was at `cc6acc86`.
