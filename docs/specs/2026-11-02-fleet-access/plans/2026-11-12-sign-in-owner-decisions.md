@@ -287,3 +287,24 @@ The Verifier was stuck on a Codex approval prompt for the computer-use tool (`cu
 **Proof:** a permanent case on **both storage legs** with more than 100 pending pairs (e.g. 101, and 250 to cross two batches): every row is delivered before the call, and when the deadline cuts in mid-way the call is refused. Show it red at `6a5ad8a6` first.
 
 **Then:** rebase WS7 onto the repaired WS3, freeze a new target for the Verifier, and hold my WS3 acceptance until it's observed.
+
+### WS6 B-sync: the design system comes from Agent Studio's Bridge (owner, 13 Nov: "proper shadcn and proper design with the themes i asked … from bridge in agent studio, it provides that with base ui")
+**Finding (Lead, 13 Nov):** `tool-access-ui` is a copy of BridgeWeb's design system (`panel-theme.css` header: "BridgeWeb design-token source of truth"; both are shadcn `base-mira` on Base UI), but it has drifted from BridgeWeb at agentstudio `d77e97bb3` (origin/main):
+- `card` 123 lines, `input-group` 100, `field` 63, `button` 47, `sonner` 47, `input` 31, `alert` 26 (diff lines);
+- `--background` n2 against Bridge's n1;
+- Bridge-only components: `status-badge`, `item-content`, `combobox`, `dropdown-menu`, `popover`, `switch`, `toggle`, `scroll-area`, typography roles.
+
+**Outcome, before the WS6 UI grid:** `tool-access-ui`'s shadcn primitives and design tokens match BridgeWeb (`~/code/projects/agentstudio/BridgeWeb`) at **`d77e97bb3`**.
+- **Primitives:** copy BridgeWeb `src/components/ui/*` for every primitive we use, plus any Bridge component the sign-in pages need.
+- **Tokens:** the token layers of `src/app/bridge-app.css` and `src/design-tokens/*` (palette, typography roles, row metrics), keeping Bridge's primitives → roles → contexts layering.
+- **Base UI only, no Radix.**
+- Keep our import alias (`cn`), and record every intentional difference from Bridge in a short `BRIDGE_SYNC.md` in `tool-access-ui`, with the commit.
+- `auth-ui` keeps aliasing `ui` to these primitives, so the sign-in pages pick up Bridge's look unchanged.
+- The admin panel also uses `tool-access-ui`, so its look moves to Bridge too. That's intended.
+
+**Proof:**
+- `pnpm check`, plus the panel and sign-in host tests.
+- A component diff against BridgeWeb at `d77e97bb3` is empty except for the recorded differences.
+- Then the Verifier's UI grid at the new frozen head.
+
+**Implementer:** WS6 (claude-local `20c2febb`). The Verifier's WS6 grid waits for this freeze.
