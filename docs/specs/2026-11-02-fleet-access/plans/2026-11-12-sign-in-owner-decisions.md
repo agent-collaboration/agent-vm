@@ -722,3 +722,15 @@ The owner, answering the three open items ("yes run this stuff"; on Sunclaw: "i 
   - gates: check, unit, and the page host tests on both hosts;
   - then the Verifier audit, my acceptance, R-code, CI, and the merge.
 - **WS10 at PR #16 `c9e39c8c` (Lead, 13 Nov 17:46Z):** the grid is judged: 12 frames, working and quality PASS. On both hosts and both widths each refusal shows Better Auth's words inline plus **exactly one** toast ("Invalid code" / "Invalid backup code"), with no ghost toast. That is option B as chosen. **Verifier:** audit the WS10 evidence (gates, the component test red on main, the grid receipt and frames). Then the Lead records the acceptance, the Reviewer runs R-code, CI runs, and the Lead merges.
+
+### Owner answers on N1–N10 (13 Nov 17:50Z, decision page review `b6e9cecf`)
+- The owner agrees to all ten.
+- **N1:** "we need to change it anyway".
+- **N6:** the Lead still accepts on the data, and merging still needs the Sol-high Reviewer's READY. That is unchanged.
+- **N7:** "can we not just trust better auth ui?" Yes. Print, Copy and Download are Better Auth UI's own helpers, so no manual check is added. Closed.
+- **N8, "are we doing weird stuff? … what happens if they update the library?":** yes, a little.
+  - `machine-login/device-user-code.ts` copies Better Auth 1.7.11's code alphabet and length (`defaultCharset`, 8), because Better Auth doesn't export them. If Better Auth, or our config (`userCodeLength`, `generateUserCode`), changes the code format, real codes would fail our check, and a signed-out approver would land on the account page instead of `/device`.
+  - The check isn't needed for safety: the return address is built on our fixed `/device` path, and the value only goes into an encoded query parameter.
+  - **Fix, WS11 on #11:** drop the copied alphabet and length. Accept any trimmed value up to 64 characters with no URL characters, encode it into `/device?user_code=`, and let Better Auth's own `/device` verify decide whether it's a real code. Display formatting stays.
+  - The C1 open-redirect test is kept: a URL-shaped or path-shaped value still can't change the destination.
+  - Gates: check, unit, and the device host files on both hosts. Then the Verifier audit, the Lead's acceptance and the Reviewer.
