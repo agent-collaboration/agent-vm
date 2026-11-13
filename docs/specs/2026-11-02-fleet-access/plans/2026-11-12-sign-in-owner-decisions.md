@@ -758,3 +758,7 @@ I read the new `device-user-code.ts`. There is no copied alphabet or length any 
   - `sign-in-core` keeps the plugins and domain logic.
 - **The Lead designs it first:** the package, the moves, host wiring, and the architecture-audit rule for the new package. The **audit rule change comes to the owner for approval** (check script).
 - Not started; nothing changes until the B3 stack is on main.
+
+### Owner direction, deferred: repo visibility (13 Nov 20:02Z)
+- **Owner:** "let's revisit later". The leaning: rename the current private repo to `switchboard-auth` (auth packages stay there), and move the rest to a new public `switchboard` repo, which fits with central, already public. Public packages would be published to npm.
+- **Not started.** To pick up after the B3 stack merges, with a design: what moves, a fresh history or a filtered history with a secret scan, the npm scope and publishing, how `switchboard-auth` consumes them, and the CI and check-gate split. Page: `tmp/2026-11-12-lead-pages/repo-split-public-private.html`.
