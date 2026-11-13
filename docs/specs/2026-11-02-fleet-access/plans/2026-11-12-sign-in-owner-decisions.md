@@ -591,3 +591,25 @@ The owner, answering the three open items ("yes run this stuff"; on Sunclaw: "i 
 **Next:**
 - **Verifier:** merge `origin/main` into #13 and run the relocated F host e2e (an author-run if Chrome is still blocked in its sandbox; Sunclaw is allowed). Then push #13; its CI E2E (host) runs it.
 - **Lead:** the `/device` page build (deferred until after #10), by plan.
+
+### WS8: the `/device` approval page on #11 (Lead, 13 Nov; starts now that #10 is on main)
+- **Governing design:** `deliverables/b3-machine-login.source.html#b3-device-page` (Lead design, 13 Nov): its sketch, states, rules and data. The page goes in the switchboard B3 PR, #11 (`item2/b3a-device-grant`, worktree `switchboard.item2-b3a-device-grant`), as "B3a plus the approval page".
+- **Branch upkeep first:** merge `origin/main` (with #10) into #12 (`item2/b2-sign-in-additions`), then #12 into #11, so the stack stays main ← #12 ← #11. Read both sides on conflicts. #11 and #12 stay draft and held until B3 central, unchanged.
+- **Build:** use #10's shell and `packages/auth-ui` components only, with no new visual language. States:
+  - enter code;
+  - review: the code shown large, machine label and organization, Approve primary and Deny secondary;
+  - confirm again: on `secondFactorRequired`, run #10's `ConfirmSecondFactorStep` inline, then retry Approve with the **same** request ID;
+  - approved: render central's `Approved{label, allowedWorkspaces}` reply, never the form;
+  - denied;
+  - the four errors (code expired or used, not permitted, machine in another organization, unknown workspace), each with one message and one action;
+  - unavailable.
+  - No Turnstile. A second tab or a retry shows the first approval (N03).
+- **Workspace picker: none in this slice.** Central's workspace-list call doesn't exist yet (asked of Lead A's redesign). The page approves with no workspaces, and says so: "approve the login now, add workspaces later". The picker is a later step once the call exists.
+- **Stand-ins:** central's `DecideDeviceLogin` replies through #11's existing machine stand-ins, as in WS1/WS4.
+- **Proof:**
+  - unit tests per state;
+  - page host tests on both hosts, including N03 (two tabs give the same approval) and the confirm-again retry carrying the same request ID;
+  - a WS6-style UI grid (every state × node/workerd × 1280/390, author-captured, Verifier identity check, Lead judges every frame);
+  - gates: check, unit, and the page and machine host tests on both hosts.
+- **Sessions:** the WS6 pair, with 🐒 Implementer claude-local `20c2febb` (Opus high, knows `auth-ui` and the island mount) and the 🔬 Verifier `01a1cda2-c16d` (Sol high). Write scope: the #11 and #12 worktrees.
+- **Stop:** when the grid passes the Lead's judgment and the gates are green; then the Lead's acceptance and R-code. No merge (held until B3 central).
