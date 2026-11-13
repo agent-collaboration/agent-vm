@@ -512,3 +512,18 @@ No receipt closes trial ruling F ("a browser journey on both hosts against real 
 - If a step fails, the Verifier interprets the failure and the Implementer repairs the product.
 
 **The taxonomy audit (`scripts/audit-test-taxonomy.ts`) is not changed now.** Registering the dedicated `native-browser.host.e2e.test.ts` there is a check-script change, which needs the owner's approval. The apparatus stays local-only until the owner answers. The F run itself doesn't need the audit, since it runs through its dedicated config.
+
+### WS6 accepted; #10 R-code due (Lead, 13 Nov)
+- **F SUPPORTED** (Verifier audit of author-run packet 04 at `07740c65`). **WS6 is accepted** at `07740c65` (`tmp/2026-11-12-ws1-handbacks/lead-acceptance.md`, WS6), subject to CI E2E (host) at that head.
+- **Reviewer:** review #10 (`origin/main...07740c65`) read-only against the WS6 rulings:
+  - Base UI only, no Radix, in any `package.json` or lockfile;
+  - `auth-ui` resolves its `ui` alias to `tool-access-ui`, and Bridge sync matches BRIDGE_SYNC.md;
+  - decision B and its token-stripping `after` hook, on both the normal and refreshed paths;
+  - the Turnstile CSP scope;
+  - the R-ui/R-ui2/R-mount changes;
+  - the nonce fix;
+  - `appName` and the passkey RP fields (RP ID unchanged);
+  - lint or test weakening.
+
+  Return READY, or findings anchored to file and line.
+- **Merge:** the Lead merges after READY, green CI and a mergeable PR. Before merging, the title and body name Switchboard and list the limits.
