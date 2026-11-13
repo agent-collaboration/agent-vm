@@ -721,3 +721,4 @@ The owner, answering the three open items ("yes run this stuff"; on Sunclaw: "i 
   - the three refusal states captured on both hosts at both widths, so the Lead judges them (inline plus toast, Better Auth wording);
   - gates: check, unit, and the page host tests on both hosts;
   - then the Verifier audit, my acceptance, R-code, CI, and the merge.
+- **WS10 at PR #16 `c9e39c8c` (Lead, 13 Nov 17:46Z):** the grid is judged: 12 frames, working and quality PASS. On both hosts and both widths each refusal shows Better Auth's words inline plus **exactly one** toast ("Invalid code" / "Invalid backup code"), with no ghost toast. That is option B as chosen. **Verifier:** audit the WS10 evidence (gates, the component test red on main, the grid receipt and frames). Then the Lead records the acceptance, the Reviewer runs R-code, CI runs, and the Lead merges.
