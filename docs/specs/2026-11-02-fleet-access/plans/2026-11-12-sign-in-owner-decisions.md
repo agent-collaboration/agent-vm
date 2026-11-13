@@ -584,3 +584,10 @@ The owner, answering the three open items ("yes run this stuff"; on Sunclaw: "i 
   - `pnpm test:e2e:host` runs it on both hosts locally (author-run if the Verifier's sandbox still can't start Chrome);
   - CI "E2E (host)" on #13 runs it on ubuntu-latest. If Chrome needs a flag or isn't present there, report before changing any workflow, because a workflow change needs the owner.
 - **Integration boundary for the relocated F test (Lead, 13 Nov 11:04Z):** do **not** merge the open #10 branch into #13. Make the test portable now: a same-checkout host test, existing fixtures, private temp evidence, Chrome found through the environment, with no Mac path and no private target file. Wait for #10 to merge to main, then merge `origin/main` into #13 and run it there.
+
+### #10 merged (Lead, 13 Nov 11:15Z)
+#10 was merged to `main` as merge commit `6375b1e6`, at the verified head `ee137e5f`. The gates at that head: Lead acceptance; R-code READY; F packet 05 SUPPORTED; CI Validation, E2E (host) and check all green; mergeable and clean, 0 commits behind. The merge deploys nothing; production deploy is the owner's step.
+
+**Next:**
+- **Verifier:** merge `origin/main` into #13 and run the relocated F host e2e (an author-run if Chrome is still blocked in its sandbox; Sunclaw is allowed). Then push #13; its CI E2E (host) runs it.
+- **Lead:** the `/device` page build (deferred until after #10), by plan.
