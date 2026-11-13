@@ -658,3 +658,10 @@ The owner, answering the three open items ("yes run this stuff"; on Sunclaw: "i 
   - **P1:** Deny disabled while Approve is pending.
 - **Recapture:** the changed cells and their siblings (review*, approved*, confirm-again*, fleet-*). Gates: check, unit, and the device and page host tests on both hosts.
 - **`/device` as a lasting verify-auth journey (Lead, 13 Nov 12:33Z; the Verifier's gap):** not now. The WS8 grid and component observation are temporary proof for this slice. The lasting journey is B3e's "real journey": two Routers log in by device code through the sign-in page against both central builds. That journey and its `verify-auth` skill entry are commissioned with B3e, when central exists. Recorded in the B3 rows; no skill write now.
+
+### WS8 accepted; R-code due (Lead, 13 Nov 12:44Z)
+- The R-device grid passes, and WS8 is accepted at #11 `35e7b9b0` and #12 `c1ad4759` (`lead-acceptance.md`, WS8).
+- **Reviewer:** review read-only:
+  - **#12:** `5d3f9772..c1ad4759`, the main merge resolution (B2 `organizationSetup` in #10's shell) plus D4;
+  - **#11:** `3424fd99..35e7b9b0`, the `/device` page.
+- Check them against the WS8 design and rulings A–C (C1's server-built callback in particular), the R-device corrections, and no behaviour change to the setup/retry controller. Return READY or findings. No merge; #11 and #12 stay held.
