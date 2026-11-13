@@ -375,3 +375,9 @@ It passes when the call succeeds on that first use, after sign-in observes the 5
 - **Verifier:** observe it on both pairings.
 
 WS7 acceptance waits for it.
+
+**Recovery-setup counter reason (Lead clarification, 13 Nov, on the Verifier's question):** "adds one unanswered try with reason `unanswered-timeout`" meant the deadline case. The rule is that any unanswered recovery setup counts **one unanswered try with its actual reason**:
+- a deadline is `unanswered-timeout`;
+- a transport loss or lost reply is `unanswered-unavailable`, as current production (`postPrivately`, `reprovisionFresh`) records it.
+
+No code change. The proof should include one generic-loss case (not only the timeout stand-in) that asserts `unanswered-unavailable` and the count.
