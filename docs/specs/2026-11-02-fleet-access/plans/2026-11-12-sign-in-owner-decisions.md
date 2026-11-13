@@ -392,3 +392,15 @@ No code change. The proof should include one generic-loss case (not only the tim
   - #11's own N10/N03 proof must stay green.
   - **Proof:** both hosts; a machine-token refresh renews a due stamp; an empty-central 503 on `DecideMachineToken` recovers.
   - Freeze for the Verifier after the WS6 grid. If #12 changes under review, merge it again.
+
+### WS7 repair R-retrysignal (Lead, 13 Nov; the Reviewer's R-code candidate, accepted)
+**Defect:** `organization-fleet-call.ts` hands the retry its deadline `AbortSignal`, but both callers drop it: `fleet-admin-forwarding.ts` `send: async () => sendFleetAdminRequest(...)` and `fleet-admin-relay.ts` `send: async () => relayFleetAdminRequest(...)`. `FleetAdminLinkClient` takes no signal. The caller stops at the deadline, but the retried request keeps going on the transport.
+
+**Fix:**
+- Add an optional `signal` to those private admin-client methods, and pass it to the internal `Request` / transport.
+- Pass the retry's signal **only on the retry**. The first send stays unbounded (D7, Q2).
+- The wire body is unchanged.
+
+**Proof:** an actual-client held-retry case observes the signal reach the transport and the request aborted at the deadline, on both hosts' client paths.
+
+**Order:** this goes on #12 (`item2/b2-sign-in-additions`) **before** WS4 continues. Then refreeze; the Verifier runs a focused observation and the Reviewer runs a correction check.
