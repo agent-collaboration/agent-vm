@@ -477,3 +477,27 @@ No receipt closes trial ruling F ("a browser journey on both hosts against real 
   - `get-session` returns no `token`.
 - **Return:** a per-step pass/fail on both hosts with screenshots at the error and finish states, as the Verifier's evidence, labelled as observation. No product changes.
 - Social sign-in through Google or GitHub stays out of scope for F; the owner-side real sign-in per release covers it.
+
+### WS6 ruling R-mount (Lead, 13 Nov; the Implementer's break at #10 `72340468`)
+- **Assumed:** a page that a factor form writes with `document.write` behaves like a fresh load.
+- **Found:**
+  - the island bundle is a module, and `document.open` keeps the window and its module map, so the bundle doesn't run again and nothing mounts;
+  - after a real "Replace recovery codes", people get the server fallback list, with no copy, download or finish (`probe-replace-node-island.json`);
+  - r1 closed Q4 on a direct load, which hid this.
+- **Whose assumption:** an agent inference in the WS6 build, not an owner decision.
+
+**Decision: option A.** The island entry exports `mountSignInIslands(document)`. Each island page loads it through a small inline module carrying the page nonce, which imports the bundle and calls it. Inline modules run on every write, while the bundle import is reused.
+- **Why:** it is the smallest change, it fixes every page a factor form writes rather than one card (B), and the no-script fallbacks stay as they are. C, accepting the fallback, would leave Q4's design unseen.
+- **Bounds:**
+  - mounting must be idempotent, so a root that is already mounted is not mounted twice;
+  - no CSP change: the inline module uses the existing per-response nonce;
+  - the served-page assets test is updated for the bootstrap.
+- **Proof:**
+  - a unit or host test that fails on `72340468`;
+  - a headless-Chrome probe on both hosts showing a real Replace recovery codes mounting the island (Copy, Download, Print and the finish button present);
+  - the cell `confirmed/replace-recovery-codes-next-page` valid in the r3 grid.
+
+**Also recorded:** the nonce fix at `72340468` (`setAttribute('nonce', …)`) repairs a defect present since `66f478e6`: Chrome blocked the scripts on every page a factor form wrote. It is on this branch only, not on main.
+- **Ruling F's real-browser journey adds a step:** Replace recovery codes, then the island is present and "I've saved my recovery codes" finishes.
+
+**Recapture r3:** the changed cells and their siblings, as R-ui2 listed, plus `confirmed/replace-recovery-codes-next-page`. Gates: check, unit, and the page host tests on both hosts.
