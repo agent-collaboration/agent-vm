@@ -350,7 +350,7 @@ Normal calls get no extra read. This supersedes the "unstamped refusal kind" wor
 - on `none`: recover (plus R-floors), deliver again, then send the call;
 - on any other outcome: unchanged (unavailable).
 
-**One run budget** covers the guard, the original call, the probe, the recovery and one retry.
+**One run budget (clarified 13 Nov, the Verifier's reading confirmed):** the budget bounds the guard's own work (renewal, delivery) and, after a 503, the probe, the recovery and the one retry. **The first original call isn't bounded or aborted by it.** D7 and Q2 still hold: over a valid stamp with nothing pending, the call goes out even if renewal used up the budget. The probe, recovery and retry only start with budget left. If it's exhausted, the original refusal is returned unchanged.
 
 **Proof:**
 - With a controlled central that **models admission against floors**, an organization that isn't due recovers on first use after an empty restart, and the retried admin call succeeds. Show it red without R-floors.
