@@ -747,3 +747,14 @@ I read the new `device-user-code.ts`. There is no copied alphabet or length any 
 1. **Implementer:** merge `origin/main` (now with #15 and #16) into #12 (`item2/b2-sign-in-additions`), then #12 into #11. Read both sides on any conflict. Run gates at each merged head: check, unit, and the full sign-in host lane on both hosts (only the existing skips allowed). Push; both stay draft.
 2. **Verifier: the carried B2e joint rerun.** Run the B2e joint suite (both pairings, both empty-restart cases) at the merged #12 head against the pinned central build `e847a888`, on Sunclaw (standing permission, plan "Owner decisions, 13 Nov"). This closes the carry from "Skips at #12 `fb2c9673`".
 3. Each hands back with evidence. The Lead judges in the morning summary. No merge (held).
+
+### Owner decision: split the sign-in pages into their own package, after the B3 stack merges (13 Nov 19:56Z; review `296e45cc`)
+- **Owner choice:** "Yes, after the B3 stack merges", the recommended option on `tmp/2026-11-12-lead-pages/package-boundaries.html`.
+- **Later work (starts after #12 and #11 merge to main):** a new `sign-in-pages` package.
+  - It holds the page views, the islands, and the seven page handlers and scripts now in `sign-in-core/src/better-auth/`:
+    - `device-approval-page`, `factor-enrollment-page`, `minimal-owner-pages`, `organization-admin-page`;
+    - `owner-page-script`, `passkey-page-script`, `factor-form-script`.
+  - It depends on `sign-in-core`, `auth-ui` and `tool-access-ui`.
+  - `sign-in-core` keeps the plugins and domain logic.
+- **The Lead designs it first:** the package, the moves, host wiring, and the architecture-audit rule for the new package. The **audit rule change comes to the owner for approval** (check script).
+- Not started; nothing changes until the B3 stack is on main.
