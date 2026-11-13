@@ -258,7 +258,7 @@ The screenshots in `switchboard.item2-sign-in-pages-design/tmp/2026-11-sign-in-p
 **Outcome.** When central has no stamp for an organization that sign-in marks ready, sign-in recovers by itself, with no person involved.
 - Central has no stamp when the stamp read answers `none`, or when a replace is refused because the named digest is unknown and the read then says `none`.
 - Sign-in clears that organization's stamp record (a conditional update), signs a **fresh setup statement** (no `replaces`), sends `ProvisionOrganization`, and on `provisioned` seeds the record from central's digest read (D5). The original call then proceeds, all inside the same D7 budget. If that fails, the caller gets the existing unavailable answer and the next use retries.
-- Revision pushes need nothing extra: central's floor starts fresh, and a higher revision applies.
+- ~~Revision pushes need nothing extra.~~ **Superseded (13 Nov), see R-floors below:** an empty central holds no floors and refuses every person request until it has them.
 
 **Proof:** both hosts. A ready organization whose central forgot it recovers on the next Fleet call. Revisions and admin calls then succeed. A central that's just slow (no answer) is **not** treated as empty.
 
@@ -337,3 +337,23 @@ Normal calls get no extra read. This supersedes the "unstamped refusal kind" wor
 - **Counters: still recorded.** A deadline or lost reply during recovery adds **one unanswered try** with reason `unanswered-timeout`, and updates the latest-try record per D4/D7, so the owner's tracking shows it. A refused setup counts one refused try with its reason.
 - `reprovisionFresh` must record that outcome, not return `central-empty` silently.
 - The proof includes the counter assertion on both storage legs.
+
+### WS7 rulings R-floors and R-push503 (Lead, 13 Nov; the Implementer's design break against pinned central `e847a888`)
+**R-floors.**
+- **The break:** `person_request/request_admission.rs` `admit` refuses any person request without an organization floor and a person floor (`AuthorizationSyncRequired`). A freshly provisioned central has none. Sign-in's fence rows are acknowledged, so they're never pushed again.
+- **Fix:** when a recovery setup lands (`none` → `provisioned`), sign-in sets that organization's fence ACKs (the organization row and every person pair) back to 0, in one store write in the same run. Delivery then pushes their **current** revisions, organization fence first, through the R-batch loop, before the call or its retry. If the budget runs out, the rows stay pending (Q1 = A), and the next use continues.
+- **The ACK-lowering exception:** this is the **only** place an ACK lowers. An ACK means "central holds this revision", and central has just been shown to hold nothing for this organization. Revisions themselves don't change, so tokens still match.
+- **Rejected:** central re-deriving floors, because it would change central's contract.
+
+**R-push503.** On an empty central, the guard's own revision push also gets the unstamped 503 (the push route is among `organization_unstamped_routes.rs:244–301`). Treat a push answered 503 like the original call:
+- probe the digest within the same budget;
+- on `none`: recover (plus R-floors), deliver again, then send the call;
+- on any other outcome: unchanged (unavailable).
+
+**One run budget** covers the guard, the original call, the probe, the recovery and one retry.
+
+**Proof:**
+- With a controlled central that **models admission against floors**, an organization that isn't due recovers on first use after an empty restart, and the retried admin call succeeds. Show it red without R-floors.
+- A push 503 followed by a `none` probe recovers.
+- A push 503 with any other probe outcome stays unavailable.
+- B2e against pinned central on both pairings.
