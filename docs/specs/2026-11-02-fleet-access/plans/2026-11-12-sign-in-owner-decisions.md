@@ -439,7 +439,7 @@ The Verifier's send of the capture packet to Sunclaw was **rejected by automatic
 - all 21 cells again, plus these missing cells:
   - the finish transitions: enroll-app finish → the next page, confirm success → the next page;
   - `app-setup/no-script-setup` with "Setup URI" expanded;
-  - long pages at 390 below the fold (a second, scrolled frame or a full-page frame for `organization-create/*` and `app-setup/no-script-setup`);
+  - keep full-page capture for long pages (the first grid already had it; the Lead's below-the-fold gap is withdrawn);
   - replacement recovery codes while pending;
   - a wrong code and a step-up refusal with their real toasts or inline errors, through a stand-in mode that refuses (visual-entry only; no product change for it).
 - Gates: `pnpm check`, the unit tests, and the sign-in host tests on both hosts; update text expectations only where copy changes.
