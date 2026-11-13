@@ -742,3 +742,8 @@ I read the new `device-user-code.ts`. There is no copied alphabet or length any 
 - Then: the Verifier audits, the Lead accepts, and the Reviewer runs R-code. #11 stays held.
 - **#16 merged (Lead, 13 Nov 18:12Z):** at `c9e39c8c` after the Verifier audit, acceptance, R-code READY and green CI. #11 and #12 pick it up at their next main merge.
 - **WS11 done (13 Nov 18:13Z):** R-code READY at #11 `2073a0ad`; held.
+
+### WS12, overnight upkeep (Lead, 13 Nov 19:54Z; the owner's wakes run until 14 Nov 09:00 ET)
+1. **Implementer:** merge `origin/main` (now with #15 and #16) into #12 (`item2/b2-sign-in-additions`), then #12 into #11. Read both sides on any conflict. Run gates at each merged head: check, unit, and the full sign-in host lane on both hosts (only the existing skips allowed). Push; both stay draft.
+2. **Verifier: the carried B2e joint rerun.** Run the B2e joint suite (both pairings, both empty-restart cases) at the merged #12 head against the pinned central build `e847a888`, on Sunclaw (standing permission, plan "Owner decisions, 13 Nov"). This closes the carry from "Skips at #12 `fb2c9673`".
+3. Each hands back with evidence. The Lead judges in the morning summary. No merge (held).
