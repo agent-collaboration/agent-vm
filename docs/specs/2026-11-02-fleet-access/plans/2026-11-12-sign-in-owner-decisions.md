@@ -640,3 +640,11 @@ The owner, answering the three open items ("yes run this stuff"; on Sunclaw: "i 
   - Turnstile stays on the sign-in page as it is, `trustedOrigins` is unchanged, and any other value is ignored, falling back to the existing return.
   - A host test proves that a non-matching `device` value and an attempted URL both fall back, and that the right one returns to `/device?user_code=`.
 - The rest of the brief (server-rendered page, one `device-approval` island, `[]` workspaces with the "add workspaces later" line, selectors, proof plan) is accepted as written.
+
+### #13 CI route (Lead, 13 Nov 11:54Z)
+- **Found:** CI runs only for PRs into `main` and pushes to `main` (`.github/workflows/ci.yml:3–7`). #13 is based on #12, so its push schedules no CI.
+- **Ruling:**
+  - no workflow change and no rebasing of #13;
+  - the proof for #13 now is the Sunclaw run at `f9ca8011`: full host lane 471 passed / 0 failed / 12 designed B2e skips, both F cases 12/12, check 12/12, once the Verifier's receipt audit passes;
+  - push #13 as a draft after that audit;
+  - CI's E2E (host), including F on ubuntu-latest, runs when the stack's PRs are retargeted to `main` at release. Until then, "F passes in GitHub CI" is listed as **not yet observed**.
