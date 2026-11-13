@@ -527,3 +527,13 @@ No receipt closes trial ruling F ("a browser journey on both hosts against real 
 
   Return READY, or findings anchored to file and line.
 - **Merge:** the Lead merges after READY, green CI and a mergeable PR. Before merging, the title and body name Switchboard and list the limits.
+
+### WS6 ruling R-print (Lead, 13 Nov; the Reviewer's R-code candidate on #10 `07740c65`, accepted)
+- **Finding (confirmed by the Lead from source):** "Print" on the recovery-codes block calls Better Auth UI core's `printTextFile` (`auth-ui/.../two-factor/backup-codes.tsx:80`). That function prints a `blob:` text file through an iframe. Signed-in pages send `default-src 'none'` with no `frame-src` (`sign-in-core/src/pages/page-document.tsx:150–163`), so the frame is blocked and Print does nothing, on enrolment and on replacement. F checked only that the button is there.
+- **Decision: print in the page, with no CSP change.** Replace `printTextFile` in our copied `backup-codes.tsx` with an in-page print: a print stylesheet in the served CSS (`style-src 'self'`) shows only the codes block, then `window.print()`. No iframe, no `blob:` frame, no new CSP source. Adding `frame-src blob:` was rejected: it widens a security boundary for a convenience action. Removing Print was rejected: the codes block's pattern has it.
+- **Also, as a report only:** identify the 16 console errors the F journey logged per host (the grid saw blocked inline-style messages under `style-src 'self'`). Say where they come from and whether any visible behaviour depends on the blocked styles. Fix only if the cause is our own code and the fix needs no CSP change. Otherwise report it to the Lead.
+- **Proof:**
+  - a unit test that fails on `07740c65`: Print calls `window.print` and creates no iframe or `blob:` URL;
+  - a headless-Chrome check on both hosts that emulates print media on the replacement-codes page and shows only the codes, with no CSP violation logged on clicking Print;
+  - gates: check, unit, and the page host tests on both hosts.
+- **After it:** the Reviewer re-checks only this change, CI runs at the new head, then the merge.
