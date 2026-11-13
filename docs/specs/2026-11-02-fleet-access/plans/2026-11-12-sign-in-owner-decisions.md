@@ -502,7 +502,7 @@ No receipt closes trial ruling F ("a browser journey on both hosts against real 
 
 **Recapture r3:** the changed cells and their siblings, as R-ui2 listed, plus `confirmed/replace-recovery-codes-next-page`. Gates: check, unit, and the page host tests on both hosts.
 
-### WS6 grid passes; ruling F route (Lead, 13 Nov ~10:20Z)
+### WS6 grid passes; ruling F route (Lead, 13 Nov 10:02Z)
 **Grid:** the r3 grid at #10 `07740c65` passes working and quality on all 34 cells (`lead-ui-judgment-ws6.md`, Round 3). What's left before #10 merges: **ruling F**, then CI.
 
 **F, the Chrome capability gap.** In the Verifier's local run (apparatus `71a084ab`, local-only), both owned Chrome instances exited with SIGABRT before DevTools came up. Zero browser steps ran. The Verifier's sandbox can't start Chrome, and no escalation was attempted. The Implementer's session runs headless Chrome locally.
