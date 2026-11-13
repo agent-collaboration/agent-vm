@@ -648,3 +648,12 @@ The owner, answering the three open items ("yes run this stuff"; on Sunclaw: "i 
   - the proof for #13 now is the Sunclaw run at `f9ca8011`: full host lane 471 passed / 0 failed / 12 designed B2e skips, both F cases 12/12, check 12/12, once the Verifier's receipt audit passes;
   - push #13 as a draft after that audit;
   - CI's E2E (host), including F on ubuntu-latest, runs when the stack's PRs are retargeted to `main` at release. Until then, "F passes in GitHub CI" is listed as **not yet observed**.
+
+### WS8 correction R-device (Lead, 13 Nov 12:23Z; grid judged at #11 `b0b1b874`)
+- **Judgment:** `tmp/2026-11-12-ws1-handbacks/lead-ui-judgment-ws8.md`. Working passes for all 23 cells; quality fails on D1–D4.
+  - **D1:** no raw workspace IDs. The stand-in replies `[]` for `[]`; an empty list shows "none yet"; a non-empty list shows a count until names can be listed.
+  - **D2:** the code shown large.
+  - **D3:** the organization name wraps at spaces.
+  - **D4:** one Fleet-setup message in product words, with no "Central".
+  - **P1:** Deny disabled while Approve is pending.
+- **Recapture:** the changed cells and their siblings (review*, approved*, confirm-again*, fleet-*). Gates: check, unit, and the device and page host tests on both hosts.
