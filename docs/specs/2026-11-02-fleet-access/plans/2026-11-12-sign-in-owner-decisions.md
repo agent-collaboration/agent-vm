@@ -699,3 +699,4 @@ The owner, answering the three open items ("yes run this stuff"; on Sunclaw: "i 
   - gates: check, unit, and the page host tests on both hosts;
   - Reviewer R-code, then CI. The Lead merges after READY and green CI.
 - **Sessions:** the WS6/WS8 Implementer (claude-local `20c2febb`) builds. The Verifier audits the probe as before (author-run).
+- **WS9 at PR #15 `3ff406c2` (13 Nov 14:02Z), Lead read:** CSP is `frame-src ${turnstile|blob:}`: the sign-in page gets Turnstile only, signed-in pages get `blob:` only, nothing else changed. `printTextFile` is restored and our print CSS removed. Unit and host CSP tests pin the whole policy, red on main. Chrome on both hosts: the blob frame loads and prints once with 0 CSP issues; on main's policy it is blocked. The commit is unsigned after one attempt. **Reviewer:** R-code on `origin/main...3ff406c2` against WS9. Then CI, then the Lead merges.
