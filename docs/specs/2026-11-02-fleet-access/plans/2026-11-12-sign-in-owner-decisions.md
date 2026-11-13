@@ -627,3 +627,16 @@ The owner, answering the three open items ("yes run this stuff"; on Sunclaw: "i 
   - 2 tests are Node-only `runIf(cloudflare)` cases.
   - The skip conditions are byte-identical to `5d3f9772`.
   - **Carried:** the B2e joint (both pairings) must run again at the merged #12 head before #12 is released. The owner page and handler changed in the main merge, and the last joint run was at `cc6acc86`.
+
+### WS8 rulings A–C (Lead, 13 Nov 11:36Z; the Implementer's brief `switchboard.item2-b3a-device-grant/tmp/2026-11-13-ws8-device-page/ws8-design-brief.md`)
+- **A, a fresh tab after approval: A1.** The page handler sees the code is approved and bound to this person, and renders "approved (loading)". The island posts Approve once with the same `userCode`, so the server sends central the same `record.id`. Central's stored reply is shown (N03).
+  - No stored-data change. A2 would add `deviceCode` fields, a persisted-data change; A3 would drop central's reply.
+  - Bound: only for the bound person and only while the code record still exists. Any other answer renders the matching error state.
+- **B, `formerServiceLinkedElsewhere`: its own state, `former-linked`.** It means this machine's former service id is already linked to a different machine (the re-key rule, b3-machine-login:101/234), not another organization. Folding it into "machine in another organization" would misstate the cause.
+  - Message: "This machine's earlier identity is already linked to a different machine. Remove that machine in Switchboard, then log in again from this machine."
+  - Action: "Back to your account".
+- **C, signed out on arrival: C1, bounded.** A signed-out `/device` shows "Sign in to approve this machine", linking to `/sign-in?device=<user_code>`.
+  - Sign-in accepts `device` only if it matches the user-code format. It builds the provider `callbackURL` **server-side** as `<issuer>/device?user_code=<code>` from that fixed path. No caller-supplied URL or path is ever used.
+  - Turnstile stays on the sign-in page as it is, `trustedOrigins` is unchanged, and any other value is ignored, falling back to the existing return.
+  - A host test proves that a non-matching `device` value and an attempted URL both fall back, and that the right one returns to `/device?user_code=`.
+- The rest of the brief (server-rendered page, one `device-approval` island, `[]` workspaces with the "add workspaces later" line, selectors, proof plan) is accepted as written.
