@@ -570,3 +570,16 @@ The owner, answering the three open items ("yes run this stuff"; on Sunclaw: "i 
 1. **Test-taxonomy audit: yes, option A.** Register only `scripts/verify-auth/native-browser.host.e2e.test.ts` in `scripts/audit-test-taxonomy.ts`, as run by its dedicated `native-browser.config.ts` and kept out of the default suites. That single file, with no general exemption, plus the script's unit regression. The Verifier may then push its F apparatus to #13 with `pnpm check` green.
 2. **Sunclaw: yes.** Switchboard source, the visual-preview harnesses and verification packets may be sent to the owner's Sunclaw test agent (codex-local `01a1b755`) for test runs. This is a standing permission for this work; helpers cite this entry. Credentials, `op://` refs and test-account addresses still never go in packets.
 3. **Leftover preview processes 87857 and 87898: yes to stopping them.** By the time I checked, both had already exited (`ps` showed neither), so nothing was killed.
+
+### Correction to owner decision 1: follow the repo's Vitest standard (Lead, 13 Nov 11:02Z)
+- **Owner:** "why would you not use my standard for vitest? unit.test.ts? integration.test.ts or integration folders?"
+- **What the standard says:** host e2e tests are `packages/**/*.host.e2e.test.ts` (AGENTS.md:155; vitest `e2e-host` project, `vitest.config.ts:176–177`). They "must be included in the default `pnpm test:e2e` proof lane so coverage is not lost" (AGENTS.md:207–213), and CI "E2E (host)" runs that lane on every PR.
+- **Why option A is withdrawn:** the F browser journey placed in `scripts/` with a dedicated config kept it out of that lane, against the standard. **Decision 1 (option A) is superseded:** `scripts/audit-test-taxonomy.ts` is **not** changed.
+- **Verifier, #13:**
+  - move the F journey to `packages/sign-in-test-support/src/` as `<name>.host.e2e.test.ts`, next to the existing sign-in host e2e tests;
+  - drop `native-browser.config.ts`;
+  - keep its harness inside Vitest with the injected clock.
+- **Proof:**
+  - `pnpm test:taxonomy` and `pnpm check` green with no audit change;
+  - `pnpm test:e2e:host` runs it on both hosts locally (author-run if the Verifier's sandbox still can't start Chrome);
+  - CI "E2E (host)" on #13 runs it on ubuntu-latest. If Chrome needs a flag or isn't present there, report before changing any workflow, because a workflow change needs the owner.
