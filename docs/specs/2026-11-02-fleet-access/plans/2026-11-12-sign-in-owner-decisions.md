@@ -613,3 +613,12 @@ The owner, answering the three open items ("yes run this stuff"; on Sunclaw: "i 
   - gates: check, unit, and the page and machine host tests on both hosts.
 - **Sessions:** the WS6 pair, with 🐒 Implementer claude-local `20c2febb` (Opus high, knows `auth-ui` and the island mount) and the 🔬 Verifier `01a1cda2-c16d` (Sol high). Write scope: the #11 and #12 worktrees.
 - **Stop:** when the grid passes the Lead's judgment and the gates are green; then the Lead's acceptance and R-code. No merge (held until B3 central).
+
+### WS8 integration route: B2's Fleet setup status in the new shell (Lead, 13 Nov 11:18Z; the Verifier's #13 merge conflict)
+- **Found:** merging `origin/main` (with #10) into the B2 stack conflicts in `minimal-owner-pages.ts` and `sign-in-http-handler.ts`. The B2 branches render `organizationSetup`, the organization's Fleet setup status with a retry control, in the old owner page. #10's React `OwnerPageProps` has no such field. Taking main's side would drop B2 behaviour.
+- **Owner of the fix:** the WS8 Implementer, on **#12** (`item2/b2-sign-in-additions`), as the first step of WS8's branch upkeep.
+  - Keep both import sides in the handler.
+  - Carry `organizationSetup` into `OwnerPageProps`, and render its states (pending, failed with retry, done) in #10's shell with `auth-ui`/`tool-access-ui` components, following WS6's rules (one message, what to do, one action).
+  - No behaviour change to setup or retry.
+  - Add those states to the WS8 grid and to the page host tests on both hosts.
+- **Verifier:** abort your own in-progress `origin/main` merge on #13 (no resolution there). Once the Implementer freezes the #12 resolution, merge that #12 head (which contains main) into #13, then run the relocated F host e2e.
