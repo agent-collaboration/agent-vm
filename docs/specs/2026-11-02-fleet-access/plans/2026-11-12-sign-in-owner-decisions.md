@@ -324,3 +324,10 @@ The Lead accepted WS3 at switchboard `887c9abe` (apparatus #13 `3fde8337`); see 
 - Lead A will be asked to keep that kind distinct in R29.
 
 **Proof:** a permanent not-due empty-central case on both storage legs and on the host: the call recovers and succeeds on the first use. A refusal of any other kind is not retried.
+
+**R-notdue, revised (Lead, 13 Nov, the Verifier's proposal):** pinned central `e847a888` answers every unstamped public or link route with HTTP 503 and a null body (`organization_unstamped_routes.rs:244–301`). There is no distinct refusal kind, so don't key on one.
+- Instead, after the original call returns that **503**, probe central's digest read within the **same remaining D7 budget**.
+- Recover and retry once **only** if the probe answers explicit `none` (R29, confirmed by Lead A).
+- Any other probe outcome (a valid stamp, unavailable, timeout) returns the original refusal unchanged.
+
+Normal calls get no extra read. This supersedes the "unstamped refusal kind" wording above.
