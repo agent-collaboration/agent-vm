@@ -463,3 +463,4 @@ The Verifier's send of the capture packet to Sunclaw was **rejected by automatic
 - WS4 is accepted at #11 `e5b5a175` (`tmp/2026-11-12-ws1-handbacks/lead-acceptance.md`, WS4).
 - **Reviewer:** review WS4's own changes read-only: `08390db6` (the guard wrapper and its wiring) and `e5b5a175` (test-only ordering). The #12 merges in between were reviewed on #12. Check them against the WS4 rulings (13 Nov: shared runner, R-retrysignal, connect forward deferred to B3d/B4, storage-leg proof) and the B3 rows. Return READY, or findings anchored to file and line.
 - **Gates note for WS6:** the unit suite (`pnpm test:unit`) is a required gate alongside `pnpm check` and the page host tests. It was red at `9e2b8a01` (a stale list-accounts row) and was fixed test-only at `955c22cd`.
+- **WS4 R-code READY** (Reviewer, 13 Nov ~09:55Z): zero findings at `e5b5a175`. WS4 is done; #11 stays held until B3 central.
