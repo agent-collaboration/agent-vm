@@ -448,3 +448,13 @@ The Verifier's send of the capture packet to Sunclaw was **rejected by automatic
 **Not in R-ui:** the `/device` page (after #10 merges, by plan) and any new visual language. Everything stays within `tool-access-ui`'s Bridge-synced components.
 
 **Verifier order changed (Lead, 13 Nov 08:52Z):** WS4 no longer waits for WS6. The R-ui loop touches only #10; WS4 is on #11. The Verifier runs the WS4 observation now with the #14 apparatus at `2eefc72c` against #11 product `e5b5a175`, then checks the R-ui recapture's identity and reads its frames when the author posts it. R-ui replaces the Verifier's supplement request to the author.
+
+### WS6 correction R-ui2 (Lead, 13 Nov 09:35Z; the recapture judged at #10 `9e2b8a01`)
+**Judgment:** `tmp/2026-11-12-ws1-handbacks/lead-ui-judgment-ws6.md`, "Round 2". R-ui's Q1–Q4 and P1–P2 are closed. Four new findings:
+- **R1, a wrong code is said once, in our words.** Errors tied to a field show inline only, with no toast. Toasts are only for errors with no field (Lead decision; the Implementer asked). Override Better Auth UI's strings: "That code didn't work. Enter the current code from your app." and "That recovery code didn't work. Each code works once."
+- **R2, the step-up refusal on the create step has its action.** It says why in words that don't contradict the done step, and gives the one action that confirms.
+- **R3, the authenticator app shows Switchboard.** Set Better Auth's `appName: 'Switchboard'`. Today it's unset, so the TOTP issuer is "Better Auth". Use Switchboard in the preview stand-in URI too. Check that nothing else keyed on the app name changes meaning (passkey relying-party *name* only; the relying-party ID is unchanged).
+- **R4, one title for the factor step** in every state (e.g. "Your second factor").
+- **P3:** a spinner on the pending "Replace recovery codes" button.
+
+**Recapture** (same route, `tmp/2026-11-13-ws6-grid-r2/`): the changed cells and their siblings (refusals, `organization-create-refusing`, `app-setup/*`, `confirm/*`, `organization-create/*`, `confirmed/loading-replace-recovery-codes`), plus one unchanged control cell (`sign-in/normal`). The refusal predicate waits for the inline error. Gates: `pnpm check` and the page host tests on both hosts.
