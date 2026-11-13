@@ -381,3 +381,8 @@ WS7 acceptance waits for it.
 - a transport loss or lost reply is `unanswered-unavailable`, as current production (`postPrivately`, `reprovisionFresh`) records it.
 
 No code change. The proof should include one generic-loss case (not only the timeout stand-in) that asserts `unanswered-unavailable` and the count.
+
+### WS7 accepted, R-code due; WS6 grid starts (Lead, 13 Nov)
+- **WS7 accepted** at switchboard `8cff80933`; see `tmp/2026-11-12-ws1-handbacks/lead-acceptance.md`.
+- **Reviewer:** review the diff `887c9abe..8cff80933` read-only, against the WS7 rulings (R-notdue, R-floors and its timing, R-push503, the budget wording, the recovery counter reason, the real-central empty-restart cases).
+- **WS6 grid can start** on #10 at `3c6c69e3`. The chooser-journey update (rows instead of a select) is a **product host test** on #10, so the **WS6 Implementer** applies the Verifier's prepared patch (from its message `01a1d321`), takes the journey to 32/32 on both hosts, and freezes the target. Then the Verifier runs the UI grid (headless CDP or Sunclaw, no computer-use tools).
