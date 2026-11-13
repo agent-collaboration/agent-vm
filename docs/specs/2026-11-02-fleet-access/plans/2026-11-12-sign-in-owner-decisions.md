@@ -705,3 +705,4 @@ The owner, answering the three open items ("yes run this stuff"; on Sunclaw: "i 
   - **Labels to keep:** the Replace step answers from the preview stand-in (`visual-entry.ts`), not real recovery-code generation. The probe counted calls to `frame.print` without calling Chrome's own print.
   - **Implementer, a bounded apparatus fix only:** in the load listener, capture the original bound `frame.print`, then count and **call through** to it, keeping any native error. Record the build tuple with the probe output (target and working-tree label, Node and Chrome versions, full served CSS and island hashes, and the CSP header each page actually sends). Rerun the probe once on both hosts. No product change and no broad gate rerun.
   - The Verifier then audits, the Lead records the WS9 acceptance, and the Reviewer starts.
+- **Owner confirmed C6 (13 Nov 14:44Z):** keep zod `jitless` ("jitless is safer"). The sign-in pages never allow `unsafe-eval`.
