@@ -464,3 +464,16 @@ The Verifier's send of the capture packet to Sunclaw was **rejected by automatic
 - **Reviewer:** review WS4's own changes read-only: `08390db6` (the guard wrapper and its wiring) and `e5b5a175` (test-only ordering). The #12 merges in between were reviewed on #12. Check them against the WS4 rulings (13 Nov: shared runner, R-retrysignal, connect forward deferred to B3d/B4, storage-leg proof) and the B3 rows. Return READY, or findings anchored to file and line.
 - **Gates note for WS6:** the unit suite (`pnpm test:unit`) is a required gate alongside `pnpm check` and the page host tests. It was red at `9e2b8a01` (a stale list-accounts row) and was fixed test-only at `955c22cd`.
 - **WS4 R-code READY** (Reviewer, 13 Nov ~09:55Z): zero findings at `e5b5a175`. WS4 is done; #11 stays held until B3 central.
+
+### WS6 ruling F is still open (Lead, 13 Nov ~10:00Z; raised by the Verifier)
+No receipt closes trial ruling F ("a browser journey on both hosts against real Better Auth; the Verifier owns the driver, CDP not Playwright"). The 128 preview frames use stand-ins, and the 32 page host tests read the served DOM without a browser. **F is a merge prerequisite for #10.**
+- **Verifier:** at the R-ui2 freeze, run a local headless-Chrome CDP journey on the Node and workerd visual hosts, with real Better Auth behind them (no visual-entry stand-in). It runs locally on the Mac, because the Sunclaw route waits on the owner.
+- **Minimum path:** sign-in page loads with Turnstile (test key); an existing session reaches the owner page. Then:
+  - enrol the authenticator (real TOTP from the returned secret), save the codes, finish;
+  - a wrong code is refused inline;
+  - a right code confirms;
+  - create the organization;
+  - replace recovery codes;
+  - `get-session` returns no `token`.
+- **Return:** a per-step pass/fail on both hosts with screenshots at the error and finish states, as the Verifier's evidence, labelled as observation. No product changes.
+- Social sign-in through Google or GitHub stays out of scope for F; the owner-side real sign-in per release covers it.
