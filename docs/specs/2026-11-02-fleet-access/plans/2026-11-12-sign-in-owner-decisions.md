@@ -410,3 +410,17 @@ No code change. The proof should include one generic-loss case (not only the tim
   - **Fixture:** the machine product stand-in now acknowledges revision pushes. No assertion changed.
   - **The single `ECONNRESET`** in "people: a lost provisioning reply" (Node, `e8311b01`) is recorded as a flake candidate. The Verifier watches for a repeat; it's not ignored.
   - The Verifier observes WS4 after the WS6 grid and R-retrysignal.
+
+### WS6 grid capture route (Lead, 13 Nov 08:20Z)
+The Verifier's send of the capture packet to Sunclaw was **rejected by automatic approval review**: private source to a remote recipient, with no first-hand owner authorization in that transcript. The Lead's earlier commit-reference ruling is **withdrawn** (it would bypass the rejection), and the question goes to the owner at 09:00 ET.
+
+**Interim route, no remote and no approval:**
+- The **WS6 Implementer** (claude-local `20c2febb`), whose session already runs headless Chrome over CDP locally, captures the full grid at **#10 `e5ea5c13`**:
+  - every page and state;
+  - 1280×900 and 390×844;
+  - the Node and workerd visual hosts;
+  - any dialog or toast opened.
+- It writes the PNGs plus a metadata file into `switchboard.item2-sign-in-pages-design/tmp/2026-11-13-ws6-grid/`. For each frame: scene, state, width, host, URL, commit and SHA-256.
+- It stops its own processes by exact PID.
+
+**Independence limit:** these frames are captured by the author, and that's labelled. The **Verifier** checks frame identity against the metadata and the target independently and reads every frame. The **Lead** judges every frame (ui-acceptance).
