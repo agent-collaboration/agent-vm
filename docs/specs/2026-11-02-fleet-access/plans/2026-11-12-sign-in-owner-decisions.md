@@ -679,3 +679,4 @@ The owner, answering the three open items ("yes run this stuff"; on Sunclaw: "i 
   - a host test on both hosts that forces this cross-phase interleaving (B's verify snapshot before A approves, B's claim after). It must fail on `35e7b9b0`. The existing two-tab test awaits both page loads first, so it can't catch this.
   - gates: check, unit, and the device host files on both hosts. No grid recapture: this adds no new screen state.
 - The Reviewer's review continues. Its correction check covers R-race together with any other findings.
+- **R-race frozen at #11 `515f8b29`; Lead accepted the diff (13 Nov 12:59Z).** Reviewer: correction check of `35e7b9b0..515f8b29` against R-race only. Return READY or findings.
