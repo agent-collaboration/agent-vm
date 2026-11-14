@@ -931,3 +931,6 @@ codex-router draft PR #270 (`feat/signin-launcher` @`d08b9351f`; central's paire
 - receipts.
 
 **Acceptance waits for #270 to merge,** with the run at the merged commit.
+- **Correction to "WS13 go" (2026-11-14T14:59Z; the Verifier, read from `d08b9351f`):** my line that the workerd controls are "not stdin" was wrong. `WorkerdStorage` owns `TEST_SIGNIN_CLOCK` and `/test/raw-signin-observe`. `tests/support/workerd-bridge.mts` **also** accepts stdin `{setTimeMs}` and `{observe}` and passes them through to those real controls. So the one shared control-process client from the accepted delta drives both hosts; there's no second transport. The Verifier also returned two items to the Implementer:
+  - the initial time is set before provisioning, and again at each restart;
+  - an honest nullable `expiresAt`.
