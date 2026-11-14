@@ -945,3 +945,13 @@ codex-router draft PR #270 (`feat/signin-launcher` @`d08b9351f`; central's paire
   - add a B2e duplicate-name case (refused; workspaces and change records unchanged);
   - add a replay case (byte-identical answer; exactly one `workspaceCreated` record);
   - plus whichever wire changes Lead A confirms.
+- **Lead A confirmed both (2026-11-14T15:02Z, push 01a1da94).**
+  - A duplicate name gets the distinct refusal `nameInUse` (camelCase wire): ledger only, no change. `rejected` stays generic for everything else.
+  - `alreadyExisted` is dropped from Applied in central's setup PR (a hard cutover).
+  - Replay is byte-identical, with one `workspaceCreated` record.
+- **#12 product change (Implementer), made when central's setup PR is up,** so the contract fixtures mirror central's produced schema:
+  1. Remove `alreadyExisted` from `fleet-admin-client.ts`, the `OrganizationAdminResult` fixtures/schema, the admin page's "That workspace already existed." branch, and every test that sets it.
+  2. Add `nameInUse` to `fleetAdminRefusalReasonSchema`. The page and CLI say "A workspace with that name already exists."
+  3. Add the two B2e cases (duplicate name; replay), restore the held originals, and add the R29 expired-digest case and comment fix.
+
+  The Verifier challenges and runs all of it at the setup PR's commit.
