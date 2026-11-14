@@ -1096,3 +1096,9 @@ The workspace id equals the operation id.
   - `grant_expires_at = decided_at + org lifetime`, default 600.
 - **Open (owner, storage):** the per-org home. Proposed 9 Nov: a nullable column on `organization_identity`, null = 600. Never answered. It goes on Lead A's owner page, and I offered to write the section.
 - **Advised for 4b meanwhile:** grant lifetime = the OD2 default of 600 s through one injected value. Only `SetTokenLifetime` is held.
+- **WS14: central's contract export is in #275 (2026-11-14T23:28Z).** #275 is at `e56c63459` (draft; review fixes `852f578a`, `a48feabd`, main merged, `e56c6345`). `collaboration-central-core/contracts/` now has the `OrganizationAdminResult`, `CreateWorkspaceRequest`, `WorkspaceLookupRequest`, `ReadChangeRecordsRequest` and `OrganizationAdminIntent` triplets.
+  - **Implementer:**
+    1. Copy those bytes into switchboard's mirror. The parse test checks equality with central's files, and the README names the producer commit.
+    2. Re-pin B2e from `2a78e3dd5` to `e56c63459` (rebuild on Sunclaw, sign the launcher copy, re-hash).
+    3. Freeze with gates. At #275's merge, compare the merge tree's build and contract inputs, as in WS13 condition 5.
+  - **Verifier:** independent collection at the frozen head.
