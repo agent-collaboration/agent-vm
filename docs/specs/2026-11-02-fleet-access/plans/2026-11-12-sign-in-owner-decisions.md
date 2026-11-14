@@ -955,3 +955,12 @@ codex-router draft PR #270 (`feat/signin-launcher` @`d08b9351f`; central's paire
   3. Add the two B2e cases (duplicate name; replay), restore the held originals, and add the R29 expired-digest case and comment fix.
 
   The Verifier challenges and runs all of it at the setup PR's commit.
+- **WS13 native pin must be the signed launcher (2026-11-14T15:25Z; the Verifier's prerequisite, checked against codex-router `d08b9351f` AGENTS.md:110–130).** The Sunclaw build's native `central_sign_in_launcher` (`0ea9eee5…`) is as-built: linker or ad-hoc signed only, and never run. Central's rule: a debug binary started directly by another process must first be signed with `scripts/cargo_debug_signing_runner.sh --sign-only <exe>`, and an unsigned one must never run on a developer Mac. The old pin was the signed build too (`sunclawSigned`).
+
+  **Implementer:**
+  1. Through the Sunclaw agent you already use, sign a **copy** with the repository runner.
+  2. Keep the as-built original. Record both full SHA-256 hashes and the `codesign` verification.
+  3. Pin the signed copy as the accepted native build.
+  4. If signing fails (no certificate or a locked keychain), return the access gap. Never run it unsigned.
+
+  Don't freeze with `0ea9eee5` as the native identity.
