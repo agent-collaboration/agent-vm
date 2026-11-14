@@ -772,3 +772,26 @@ I read the new `device-user-code.ts`. There is no copied alphabet or length any 
   - Lead A clarifies: "B3 starting" is central's slice 3 (mail, drains, wakes, automations), not our B3a. Our B2 and B3a routes land in central's **slice 4 (sign-in)**, after slice 3. The inputs are at `codex-router.feat-sqlx-do-clean/tmp/2026-11-14-b4-signin-inputs.md`.
   - Lead A will message this session when a central branch serves them, or at once if any shape departs from R29.
   - The 55-min wake is cancelled (owner: compact and wait for the trigger).
+
+### Central slice 4: the BA1 contract answer to Lead A (2026-11-14T03:29Z)
+
+Lead A asked where #11's central contract is authoritative, before central builds slice 4b. Answer sent:
+- **Shapes:** Program Design's "Device-code login request" block and its service-requests route table (`internal/device-login-decisions`, `internal/machine-token-decisions`).
+- **Behaviour and proof:** B3's flows section and its proofs table: BA1 cases 1–6 and the N10 row.
+- **Executable mirror:** #11's `machine-login-contracts.ts` and `validation-vectors.json`.
+- **Central core to port:** codex-router `item2/b3-central-storage` @`10c7bb624`.
+- **One delta from that branch:** `Approved` carries `{enrollmentId, label, allowedWorkspaces}` (owner N03).
+
+**Storage.** BA1's state was owner-approved on 9 Nov against the old central schema (option A). Lead A's redesign tables lack these columns:
+- the generation pair;
+- `code_expires_at`;
+- approver and permission;
+- the machine client id;
+- `last_grant_at`;
+- `end_reason`.
+
+So the mapping goes back to the owner on Lead A's page; I offered the machine-login section. `machine_credentials.token_hash` is unused by BA1.
+
+**Proposed (Lead), pending Lead A's confirmation:** drop `formerServiceId` and the re-key on both sides, because the new central starts empty (R29). On #11 this means removing it from `DecideDeviceLogin` and removing the /device former-linked state, once central's shapes are final.
+
+**Workspace list:** out of slice 4. #11 approves with no workspaces. The list call is proposed after the owner's workspaces-table decision.
