@@ -1052,3 +1052,6 @@ The workspace id equals the operation id.
 6. **If #275 merges with a different tree,** compare build inputs, as in WS13 condition 5.
 
 **Verifier (codex-local 01a1cda2-c16d):** challenge the re-pin and the new cases (real central, nothing seeded, every asserted field from `observe`), then run independently on Sunclaw. Acceptance waits for #275 to merge.
+- **WS14: the conflict wire is final (2026-11-14T21:30Z, Lead A push 01a1dbf7).** It's the existing `conflict` (already in `fleetAdminRefusalReasonSchema`), unchanged.
+  - Central's full set: `nameInUse`, `notPermitted`, `secondFactorRequired`, `refreshRequired`, `authorizationSyncRequired`, `expired`, `requestTime`, `requestReused`, `conflict`, `rejected`.
+  - **For create, the page and CLI show:** "That request was already used for a different workspace. Try again." The page starts a fresh operation id on the next try. The lookup rule is confirmed by Lead A.
