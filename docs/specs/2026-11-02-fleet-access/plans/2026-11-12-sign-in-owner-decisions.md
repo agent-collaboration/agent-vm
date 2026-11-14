@@ -1071,3 +1071,11 @@ The workspace id equals the operation id.
   A is then logged as a central follow-up. Nothing else waits on this.
 - **WS14 provenance: A confirmed (2026-11-14T21:36Z, Lead A push 01a1dbfd).** #275's review-fix batch registers OrganizationAdminResult, CreateWorkspaceRequest, WorkspaceLookupRequest, ReadChangeRecordsRequest and OrganizationAdminIntent in central's schemars contract export (schema, fixtures, negatives, and an export-test drift check). **Fallback B is withdrawn.** WS14 copies central's bytes at that frozen commit and keeps the mirror claim. Lead A sends the commit.
 - **WS14 proof rule 5 (Lead, 2026-11-14T21:36Z; the Verifier's gap, accepted).** "Byte-identical replay" needs raw bytes. Today B2e's `captureReplies` keeps only parsed JSON (`LinkReply`, `afterForward`), which can't prove it. `afterForward` already receives the raw reply `Uint8Array` on both the socket and fetch hops. So capture the raw reply bytes there, or their SHA-256 and length, compare the first answer with the replay, and still require exactly one `workspaceCreated`.
+
+### #13 accepted for review; R-code (Lead, 2026-11-14T21:40Z)
+- **CI at `51fbd461` is green:** Validation, E2E (host) on Ubuntu including F on both hosts, and check. MERGEABLE and CLEAN.
+- **Lead acceptance:** `lead-acceptance.md` § #13.
+- **Reviewer (codex-local 01a1cda2-c280), R-code:** an independent review of #13's full diff `main..51fbd461` (27 files: `verify-auth` skill and references, `sign-in-test-support` fixtures and tests).
+  - Questions: no product code; real paths, not stand-ins presented as proof; F asserts the adopted C2=B behaviour; nothing can pass silently; the portability fix is correct on both OSes.
+  - Return READY or findings at their anchors.
+- **Then:** merge #13 → `main` (Lead).
