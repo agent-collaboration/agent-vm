@@ -1055,3 +1055,11 @@ The workspace id equals the operation id.
 - **WS14: the conflict wire is final (2026-11-14T21:30Z, Lead A push 01a1dbf7).** It's the existing `conflict` (already in `fleetAdminRefusalReasonSchema`), unchanged.
   - Central's full set: `nameInUse`, `notPermitted`, `secondFactorRequired`, `refreshRequired`, `authorizationSyncRequired`, `expired`, `requestTime`, `requestReused`, `conflict`, `rejected`.
   - **For create, the page and CLI show:** "That request was already used for a different workspace. Try again." The page starts a fresh operation id on the next try. The lookup rule is confirmed by Lead A.
+- **WS14 proof rules (Lead, 2026-11-14T21:35Z; the Verifier's preliminary challenge of #275 `2a78e3dd5`, accepted).**
+  1. **Replay and admitted-refusal no-effect:** a new valid proof is still admitted and consumed on a replay, a `nameInUse` or a `conflict`. So compare the workspace and change-record sets, not whole `observe`/`usedRequests` equality. The member and pre-admission refusals keep their existing no-effect assertions.
+  2. **Late replay:** advance both owners' clocks past 24 h (e.g. 86401 s), keeping the operation id and name. Get a current credential and confirmation, observe central's real `nameInUse`, then exactly **one** lookup at `workspaceId = operationId`.
+     - Cover: found with the same name → success; found with a different name or null → the `nameInUse` text.
+     - No second create. A duplicate from a **different** operation id must never become success.
+     - Assert the real page and CLI output text, not only the parsed link result.
+  3. **R29 expired digest:** produce the divergence through the existing server-only `signProposal`/`sendProposal` real transport, not database seeding. Assert the stale → facts → seed → Replace sequence through `observe`'s statement, stamp and records. Keep the expired-facts 200 separate from authorization (admin and revision still require Valid).
+  4. **Contract provenance (open):** #275 exports no organization-admin schema, fixture or negative artifacts. Asked of Lead A: register them in central's contract export, or drop the mirror claim. **Don't generate the expected fixtures from our Zod.** The fixture gate stays open until Lead A answers. Coding and the other work continue.
