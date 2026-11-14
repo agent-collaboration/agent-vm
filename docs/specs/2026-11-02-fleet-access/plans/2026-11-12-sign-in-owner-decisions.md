@@ -831,3 +831,13 @@ A public request to a private path keeps `401 RouteRefused`.
 **Ending check:** B2e on both pairings green against `9efca56f8`, or each blocked case named with its held central route.
 
 **Then:** Lead acceptance → Reviewer (#12 delta) → CI → merge in stack order (`item2/b2-central-organizations` → #12). #11 stays held for 4b.
+
+### WS13 ruling R-native (Lead, 2026-11-14T12:27Z; from the Verifier's feasibility read of `9efca56f8`)
+- **workerd pairing: proceed.** Re-pin to central's own `tests/support/workerd-bridge.mts --signin-plan` topology (gateway `/private` → link bundle → CENTRAL), using the build commands and pins owned there.
+  - Clock, readback and fresh-store restart must come from real central controls (the bridge's test-support gateway) or be returned as a gap.
+  - No fabricated rows, and no observation through our own model.
+- **Native pairing: blocked at central (WS13 step 4).** At `9efca56f8`, `OrganizationSignInLink::start` / `TokioWorkspaceHost::open_with_signin` exist only inside Rust integration fixtures. Nothing runs as its own process.
+  - The Lead has asked Lead A for a test-only launcher bin with the old protocol: `--socket`; a readiness line; stdin `{setTimeMs}` and `{observe}`; SIGTERM removes the socket.
+  - The Implementer prepares the Node side, but doesn't build a central launcher in switchboard and doesn't run against a stand-in.
+- **Held-route cases:** the "admin page: owner create, lookup and records" and "owner CLI through relay: create, same-key refresh, lookup" cases are reported as blocked by central's held routes. Not faked and not silently skipped.
+- **Done for WS13 now:** workerd green on every non-held case, plus the native gap and the held cases named. The native rerun follows Lead A's launcher. #12 merges only after both pairings pass.
