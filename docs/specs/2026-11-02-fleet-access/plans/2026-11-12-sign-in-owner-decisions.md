@@ -859,3 +859,30 @@ Step 1 is a no-op (`main` is unchanged since WS12). Code waits for Lead A's merg
 **R-held (the Implementer's item 6): accepted.** Each held case becomes `blocked by central: <route> held`. It makes one real request and asserts central's actual held answer, read at the merge. The original body stays in source, unchanged and not run.
 - **Why:** this is a check that can fail. It fails the day central serves the route, which forces the original back. `it.todo` or `skip` would prove nothing and could be forgotten.
 - **Not proven, named at acceptance:** create-workspace and non-null lookup against real central. Their merge consequence is judged at #12 acceptance, not here.
+
+### Owner decisions on central (14 Nov, relayed by Lead A, push 01a1da11)
+1. **Machine-login storage: A.**
+   - Each `machine_approvals` row is one login, with the 9 columns.
+   - `machines.enrollment_generation` is added.
+   - One enrolled login per machine (fragment `2026-11-14-machine-login-schema.html`).
+2. **Workspace shape (a):** a description, plus unique names (case-insensitive, trimmed).
+3. **Link admission (a):** a Router presents its sign-in-issued token, and central checks it against our published keys plus a live enrollment read. `machine_credentials` is removed.
+
+**Central's build order:** the B2e test launcher, then setup (create-workspace and non-null lookup), then 4b (port `10c7bb624` with `Approved {enrollmentId, label, allowedWorkspaces}`).
+
+**On our side:**
+- WS13's held-route tripwires fire when setup lands; restore the originals then, and check name-uniqueness refusals.
+- #11 drops `formerServiceId` when 4b's shapes are final.
+
+### Stamp alignment with central (Lead, 2026-11-14T12:40Z; the owner asked the two Leads to align)
+Read from source: central `9efca56f8` and #12 `b277be05`.
+- **Wire: aligned.**
+  - Provisioning and digest bodies, the `{result:"provisioned"}` reply and the digest reply fields all match.
+  - Statuses: 403, 409, 422, 404 = no stamp, 503 = unknown; revision push 412 is mapped.
+- **Behaviour: aligned.** Central's `decide_organization_statement_replacement` against #12:
+  - setup seeds the confirmed stamp from central's digest, so "an existing stamp + a new setup answers provisioned and writes nothing" is safe;
+  - renewal confirms locally (correct, because `replaces` makes "provisioned" mean Replace or a byte-identical replay);
+  - an empty central gives 409, then reconcileStale, then a 404 probe, then a fresh re-provision (WS7, the B2e empty-restart cases);
+  - an expired stored stamp still renews (the Replace path doesn't require it to be valid).
+- **The cold alarm reads its org from `organization_identity`: confirmed to Lead A** under three conditions: identity only, never authority; no row means no alarm work; sign-in never deletes or re-orgs the row.
+- **Edge raised (not blocking):** the digest read answers 503 for an expired stamp, so a diverged and expired org can't reconcile. Proposed to Lead A: answer the stored facts even when expired, and keep 503 for signature or configuration failure. Otherwise it's named as an accepted limit.
