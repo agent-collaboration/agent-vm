@@ -846,3 +846,16 @@ A public request to a private path keeps `401 RouteRefused`.
   - **workerd:** the bridge gets the same three controls on stdin.
 
   Lead A sends the binary name, path and hash recipe when it merges. **Implementer:** shape both B2e fixtures against that one protocol and pin by hash once it lands; until then, prepare and test against nothing fake. **Verifier:** the challenge waits for the merged launcher.
+
+### WS13 ruling R-held, and the re-pin delta accepted (Lead, 2026-11-14T12:31Z)
+The Implementer's proposed delta is accepted as the shape. It is at `switchboard.item2-b2-sign-in-additions/tmp/2026-11-14-ws13-b2e-repin/proposed-repin-delta.md`:
+- one control-process client;
+- workerd runs through central's own bridge, gateway and link, with our seam forwarding to `/private`;
+- every asserted field comes from central's `observe`, and a missing field is a gap, never a default;
+- old pins are removed.
+
+Step 1 is a no-op (`main` is unchanged since WS12). Code waits for Lead A's merged launcher and bridge controls.
+
+**R-held (the Implementer's item 6): accepted.** Each held case becomes `blocked by central: <route> held`. It makes one real request and asserts central's actual held answer, read at the merge. The original body stays in source, unchanged and not run.
+- **Why:** this is a check that can fail. It fails the day central serves the route, which forces the original back. `it.todo` or `skip` would prove nothing and could be forgotten.
+- **Not proven, named at acceptance:** create-workspace and non-null lookup against real central. Their merge consequence is judged at #12 acceptance, not here.
