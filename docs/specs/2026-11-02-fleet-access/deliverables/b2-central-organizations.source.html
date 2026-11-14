@@ -205,7 +205,7 @@ The **stamp record** is extra columns on Better Auth's organization row (`additi
 3. **Answers.**
    - *Swapped* or *already done:* the sent stamp becomes the confirmed one, the sent column is cleared, and the renewal time is set.
    - *No answer or an unclear one:* one unanswered try, keep the sent stamp.
-   - *Refused:* one refused try with its reason. If the refusal says the named stamp isn't the current one, sign-in reads central's current stamp while it is valid, reconciles, and clears the sent column only once that's settled.
+   - *Refused:* one refused try with its reason. If the refusal says the named stamp isn't the current one, sign-in reads central's current stamp, adopts it when its digest differs (even when it has expired, so a drifted and expired organization recovers: owner R29 change, 14 Nov), reconciles, and clears the sent column only once that's settled. An adopted expired stamp is due at once, so the next pass replaces it. Admin calls and revision pushes still require a valid stamp.
 4. **The call itself.**
    - If the current stamp is still valid, the call goes ahead whatever renewal did.
    - If it has expired and renewal didn't land, the caller gets "try again shortly" (the existing unavailable answer). It is never treated as success.

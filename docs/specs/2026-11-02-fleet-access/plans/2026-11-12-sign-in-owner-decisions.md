@@ -1079,3 +1079,11 @@ The workspace id equals the operation id.
   - Questions: no product code; real paths, not stand-ins presented as proof; F asserts the adopted C2=B behaviour; nothing can pass silently; the portability fix is correct on both OSes.
   - Return READY or findings at their anchors.
 - **Then:** merge #13 → `main` (Lead).
+- **WS14 ruling R-adopt (Lead, 2026-11-14T21:44Z; the Implementer's break, confirmed from main `organization-stamp-renewal.ts`).**
+  - **Assumed** (my line in `fe48f346`): R29 needed no product change. **That was my inference, and it was wrong.**
+  - **Found:** a drifted organization has a confirmed stamp, so it takes sign → stale → `reconcileStale`, not `seedFromCentral`. `reconcileStale` adopts central only while `current.expiresAt > now`, so an expired central stamp loops through keep-sent and resend for ever.
+  - **Authorized outcome:** the owner approved R29 so that this case recovers.
+  - **Ruling: option 1, a product change at Rule 3's owner.** `reconcileStale` adopts central's facts when the digest differs, whether or not they have expired. The adopted expired stamp is then due, so the next pass signs a Replace of central's digest, and central applies it (its Replace path doesn't need a valid stored stamp).
+  - **Kept:** `renewOrganizationStampForUse`'s final readiness check. Admin calls and revision pushes still need a valid stamp.
+  - **Implementer:** make the two-line change plus the unit and storage-case updates. The B2e R29 case proves stale → expired facts → adopt → Replace through central's `observe`. Include a red: the old rule must fail that case.
+  - **Design text updated:** B2 Rule 3 ("Refused") in `deliverables/b2-central-organizations.source.html`.
