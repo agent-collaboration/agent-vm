@@ -841,3 +841,8 @@ A public request to a private path keeps `401 RouteRefused`.
   - The Implementer prepares the Node side, but doesn't build a central launcher in switchboard and doesn't run against a stand-in.
 - **Held-route cases:** the "admin page: owner create, lookup and records" and "owner CLI through relay: create, same-key refresh, lookup" cases are reported as blocked by central's held routes. Not faked and not silently skipped.
 - **Done for WS13 now:** workerd green on every non-held case, plus the native gap and the held cases named. The native rerun follows Lead A's launcher. #12 merges only after both pairings pass.
+- **Lead A's answer (2026-11-14T12:28Z, push 01a1da07-e484):** central is building both controls before its C1:
+  - **native:** a test-only native launcher in the dev-only `codex-router-debug-hosts` crate, with the `e847a888` contract (`--socket` 0600, a readiness line, stdin `{setTimeMs}`/`{observe}` answered on stderr, SIGTERM removes the socket, a fresh store = restart);
+  - **workerd:** the bridge gets the same three controls on stdin.
+
+  Lead A sends the binary name, path and hash recipe when it merges. **Implementer:** shape both B2e fixtures against that one protocol and pin by hash once it lands; until then, prepare and test against nothing fake. **Verifier:** the challenge waits for the merged launcher.
