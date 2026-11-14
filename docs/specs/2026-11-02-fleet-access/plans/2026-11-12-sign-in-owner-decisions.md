@@ -891,3 +891,12 @@ Read from source: central `9efca56f8` and #12 `b277be05`.
   - **Follow-up for the Implementer when central's setup PR lands** (WS13 scope, with the held-route restore):
     1. Update the stale comment in `organization-stamp-renewal.ts` `seedFromCentral` ("central still refuses an expired stamp").
     2. Add one B2e case: a diverged confirmed digest plus an expired stored stamp → stale → probe answers the expired facts → seed → renew → Replace, read back through central's `observe`.
+
+### WS13 ruling R-observe (Lead, 2026-11-14T13:09Z; Lead A's heads-up from the launcher lane, push 01a1da2c)
+Central's launcher `observe` will show only real modern columns. B2e changes to that shape:
+- **workspaces:** read `{workspaceId, name}` only.
+- **`decisions`: dropped.** Its only promise ("a refusal leaves no domain row") is carried by workspaces, records, floors and usedRequests all staying unchanged.
+- **request_log** is never compared across a refusal (central writes a ledger-only row by design).
+- **Kept:** statement, stamp `{digest,keyId,expiresAt}`, records (`organization_change_records` `{kind,requestId,targetId,createdAtMillis}`), organizationFloor, personFloors, usedRequests.
+
+**Raised with Lead A (R13):** the held create-workspace cases expect a `workspaceCreated` change record. Its home in the new model is asked; it's expected in `organization_change_records`, in the same batch as the directory insert. B2e follows Lead A's answer.
