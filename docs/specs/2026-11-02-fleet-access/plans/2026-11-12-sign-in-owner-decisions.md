@@ -986,3 +986,9 @@ codex-router draft PR #270 (`feat/signin-launcher` @`d08b9351f`; central's paire
   - Questions: does each case still exercise real central, is anything faked or seeded, could a held sentinel pass silently, and are the pins exact.
   - Return READY or findings at their anchors.
 - **Then:** CI on #12 → merge `item2/b2-central-organizations` → #12 (stack order). #11 stays held for 4b.
+- **WS13 R-code: READY, zero findings (2026-11-14T16:40Z; Reviewer 01a1cda2-c280, bounded source/evidence review of `b277be05..26da35e7`).**
+- **Merge route (Lead decision):** #12 was retargeted from `item2/b2-central-organizations` (no PR) to `main`, then closed and reopened to start CI (run 43616854910). CI runs only on PRs into main.
+  - **Why one PR:** the base's 17 commits (`main..6d924013`) were Lead-accepted on 6 Nov (Sunclaw green: check, unit 2165, integration 304) and independently reviewed with no actionable findings (`tmp/2026-11-06-b2-component-review/review.md`). #12 already contains them.
+  - The base branch is left unchanged. #11 and #13 still stack on #12's branch.
+  - Merging to main deploys nothing: switchboard's workflows are CI plus a release keyed to `master`.
+- **Merge waits on:** CI green and mergeable, plus WS13 condition 5 (#270 merged, then the merge tree's build inputs compared with `3c259ef9d`).
