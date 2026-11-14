@@ -992,3 +992,22 @@ codex-router draft PR #270 (`feat/signin-launcher` @`d08b9351f`; central's paire
   - The base branch is left unchanged. #11 and #13 still stack on #12's branch.
   - Merging to main deploys nothing: switchboard's workflows are CI plus a release keyed to `master`.
 - **Merge waits on:** CI green and mergeable, plus WS13 condition 5 (#270 merged, then the merge tree's build inputs compared with `3c259ef9d`).
+
+### #12 merged (Lead, 2026-11-14T19:57Z)
+- **Condition 5 closed** by a Lead source comparison. Central #270 merged as `e2c4619e8` (a squash; `3c259` isn't in main's history but stays reachable via PR #270's refs).
+  - `git diff --name-only 3c259ef9d e2c4619e8` = `.config/nextest.toml`, `.github/workflows/ci.yml`, `scripts/cargo_debug_signing_runner.sh` and its test, `verification/tooling/worker-legacy-ci.test.ts`.
+  - The runner change only alters identity selection (it keeps draining the listing after the first match). The signature it produces is unchanged.
+  - No launcher, bridge, Worker-bundle or verification-lockfile input changed, so the `3c259` receipts stand.
+  - B2e pins move to central main at the next re-pin (central's setup PR, which needs one anyway).
+- **Merged:** #12 `26da35e7` → switchboard `main` as **`7e599dd9`** (merge commit, `--match-head-commit`). CI was green (Validation, E2E host, check); mergeable and clean; 0 open threads; R-code READY; Lead acceptance § WS13.
+- **Merge risk, as stated before merging:** nothing deploys from main. If sign-in were deployed before central's setup PR, the admin page's create-workspace would get central's held 404. Every other #12 route is served by central main.
+- **Stack after the merge:**
+  - #11 and #13 are retargeted to `main` (still drafts). #14 stays on #11.
+  - #11 stays held for central 4b.
+  - #13 (`f9ca8011`) predates WS12/WS13 and needs `main` merged before its CI means anything (Verifier scope; scheduled with the next upkeep).
+- **Next:** central's setup PR → the #12 follow-up on main (a new PR):
+  - drop `alreadyExisted`, add `nameInUse`;
+  - restore the held cases;
+  - add the duplicate-name and replay cases;
+  - add the R29 expired-digest case;
+  - re-pin to central main.
