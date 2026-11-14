@@ -900,3 +900,7 @@ Central's launcher `observe` will show only real modern columns. B2e changes to 
 - **Kept:** statement, stamp `{digest,keyId,expiresAt}`, records (`organization_change_records` `{kind,requestId,targetId,createdAtMillis}`), organizationFloor, personFloors, usedRequests.
 
 **Raised with Lead A (R13):** the held create-workspace cases expect a `workspaceCreated` change record. Its home in the new model is asked; it's expected in `organization_change_records`, in the same batch as the directory insert. B2e follows Lead A's answer.
+- **Lead A agreed (2026-11-14T13:10Z, push 01a1da2e).**
+  - `workspaceCreated` goes in `organization_change_records` (the kind is already on main), in the same batch as the directory insert and the request_log row: `request_id` = operation id, `target_id` = workspace id. A replay writes no second record, and a refusal writes none. This is in central's setup PR, with cases on both hosts.
+  - The launcher's `observe` returns exactly the kept list, without `decisions`.
+  - B2e reads change records from `organization_change_records`, as it does today.
