@@ -904,3 +904,4 @@ Central's launcher `observe` will show only real modern columns. B2e changes to 
   - `workspaceCreated` goes in `organization_change_records` (the kind is already on main), in the same batch as the directory insert and the request_log row: `request_id` = operation id, `target_id` = workspace id. A replay writes no second record, and a refusal writes none. This is in central's setup PR, with cases on both hosts.
   - The launcher's `observe` returns exactly the kept list, without `decisions`.
   - B2e reads change records from `organization_change_records`, as it does today.
+- **R-observe qualification accepted (2026-11-14T13:11Z; the Verifier's challenge).** In the revoked-token case, the guard delivers the person floor and its ACK *before* the refusal, by design. So "floors unchanged" is not part of that case's no-effect comparison: it keeps its existing expected floor change, and the other sets (workspaces, records, usedRequests) stay unchanged.
