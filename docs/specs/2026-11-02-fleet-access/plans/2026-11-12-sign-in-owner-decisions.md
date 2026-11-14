@@ -1087,3 +1087,4 @@ The workspace id equals the operation id.
   - **Kept:** `renewOrganizationStampForUse`'s final readiness check. Admin calls and revision pushes still need a valid stamp.
   - **Implementer:** make the two-line change plus the unit and storage-case updates. The B2e R29 case proves stale → expired facts → adopt → Replace through central's `observe`. Include a red: the old rule must fail that case.
   - **Design text updated:** B2 Rule 3 ("Refused") in `deliverables/b2-central-organizations.source.html`.
+- **#13 merged (2026-11-14T21:46Z):** R-code READY / 0 findings → merged `51fbd461` to switchboard `main` as `18cd339c`. CI green (Ubuntu E2E host incl. F on both hosts); CLEAN; 0 threads. Risk stated before the merge: apparatus only, no product or workflow change. Remaining stack: #11 (held for 4b) and #14 (on #11). WS14 continues.
