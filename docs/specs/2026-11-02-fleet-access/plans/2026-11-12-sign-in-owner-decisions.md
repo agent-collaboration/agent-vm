@@ -1021,3 +1021,34 @@ codex-router draft PR #270 (`feat/signin-launcher` @`d08b9351f`; central's paire
   - Record the resulting socket path length on both platforms (under 104 bytes on macOS, under 108 on Linux).
   - Re-run the check, the Node F journey locally, and CI.
 - **Deferred, with a reason:** the same `/private/tmp` literal is in four B2e files on main (`b2e-launcher-teardown`, `joint-node-central`, `joint-workerd-central`, `link-fault-proxy`). B2e runs only on Sunclaw (macOS), and CI skips it without artifacts, so nothing fails today. They move to the same `/tmp` base in the setup follow-up PR, which re-pins B2e anyway.
+
+### WS14: the setup follow-up on main, against central #275 (Lead, 2026-11-14T21:29Z; Lead A push 01a1dbf6)
+**Central:** draft PR codex-router #275 "signed workspace setup, unique names and stored stamp facts" @`2a78e3dd5`, in review. It carries:
+- create-workspace with `nameInUse` and no `alreadyExisted`;
+- the `workspaceCreated` change record;
+- non-null lookup;
+- the R29 expired-digest facts.
+
+**Late-retry behaviour (Lead A, from the #275 review).** Replay is retained for 24 h (R31). After that:
+- the same operation + same name answers `nameInUse` for the caller's own workspace;
+- the same operation id with a changed name answers a typed conflict.
+
+The workspace id equals the operation id.
+
+**Implementer (claude-local 20c2febb): a new branch and PR off `main` (`7e599dd9`).** One PR covering:
+1. **Wire cutover.** Remove `alreadyExisted` from `fleet-admin-client.ts`, the `OrganizationAdminResult` fixtures and schema (mirror #275's produced schema), the admin page's "already existed" branch, and the tests. Add `nameInUse`: the page and CLI say "A workspace with that name already exists." Take the typed-conflict wire name from #275.
+2. **Late `nameInUse` resolution.** When a create answers `nameInUse`, the page and CLI run one `WorkspaceLookup` with `workspaceId = operationId`.
+   - Found with the same name → report "Workspace created".
+   - Otherwise → show the `nameInUse` text.
+   - No other retry.
+3. **B2e re-pin to #275 `2a78e3dd5`.** Rebuild on Sunclaw, sign a copy of the native launcher with the repository runner, and pin every hash. Move the four B2e `/private/tmp` literals to `/tmp` (deferred from the #13 ruling).
+4. **B2e cases:**
+   - restore both held originals (create, lookup, records, member refusal; CLI create, refresh, non-null lookup) and remove the sentinels;
+   - duplicate name → `nameInUse`; workspaces and records unchanged;
+   - replay within 24 h → a byte-identical answer, one `workspaceCreated` record;
+   - replay after 24 h (controlled clock) → `nameInUse`, which the client resolves to the created workspace through the lookup;
+   - the R29 expired-plus-diverged digest → stale → probe facts → seed → Replace, with the `seedFromCentral` comment fixed.
+5. **Gates:** check, unit, and the full host lane on both hosts. B2e on both pairings, with no skips and no held sentinels.
+6. **If #275 merges with a different tree,** compare build inputs, as in WS13 condition 5.
+
+**Verifier (codex-local 01a1cda2-c16d):** challenge the re-pin and the new cases (real central, nothing seeded, every asserted field from `observe`), then run independently on Sunclaw. Acceptance waits for #275 to merge.
