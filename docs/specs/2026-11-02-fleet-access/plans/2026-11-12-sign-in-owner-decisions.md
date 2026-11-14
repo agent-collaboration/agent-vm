@@ -795,3 +795,39 @@ So the mapping goes back to the owner on Lead A's page; I offered the machine-lo
 **Proposed (Lead), pending Lead A's confirmation:** drop `formerServiceId` and the re-key on both sides, because the new central starts empty (R29). On #11 this means removing it from `DecideDeviceLogin` and removing the /device former-linked state, once central's shapes are final.
 
 **Workspace list:** out of slice 4. #11 approves with no workspaces. The list call is proposed after the owner's workspaces-table decision.
+
+### WS13: #12's B2e joint against central main (Lead, 2026-11-14T12:23Z; Lead A's trigger, push 01a1da02)
+
+**Trigger.** Central slice 4a is merged to codex-router `main` at `9efca56f8` (PR #268). It serves #12's private routes on the new org-scoped central, with contracts unchanged per R29:
+- `/internal/organization-provisioning`
+- `/internal/organization-statement-digest` (404 = no stamp; #12 already maps 404 to `none`, `organization-provisioning-client.ts:83`)
+- `/internal/organization-authorization-revisions`
+- `/organization-admin/v1/workspace-lookup` (unknown gives null)
+- `/organization-admin/v1/change-records`
+
+A public request to a private path keeps `401 RouteRefused`.
+
+**Held at central (owner):**
+- `create-workspace` and a non-null lookup (the workspace description and unique-name decision);
+- all of #11's 4b routes (machine-login storage, `ml-choice` on Lead A's page).
+
+**Found.** B2e pins old-central artifacts by hash (`joint-central-pins.ts`: `e847a888`, `central_sign_in_launcher`, `central-faults/*`, `central-link/*`). None of those build targets exists at `9efca56f8`; the new central's sign-in link is `collaboration-central-cloudflare/src/organization_signin_link.rs`. So the rerun needs the harness re-pinned first.
+
+**Implementer (claude-local 20c2febb), on #12 `item2/b2-sign-in-additions`:**
+1. Merge `origin/main` into #12, then #12 into #11 (read both sides).
+2. Re-pin B2e to central `9efca56f8`:
+   - find how the new central is started on each host (workerd: the gateway plus link bundle topology from #268; native Tokio: its launcher or test host);
+   - adapt `joint-central-pins.ts`, `joint-workerd-central`, `joint-node-central` and `tokio-central-launcher` to it.
+   This is test-support only, with no product change. It keeps every existing B2e case, including both empty-restart cases, and pins every artifact by hash.
+3. Cases that need held routes (create-workspace, non-null lookup) are reported as **blocked by central**, never skipped silently or faked.
+4. **If** the new central has no runnable native or workerd entry for these routes, stop and return the gap with evidence. The Lead takes it to Lead A; no stand-in central.
+5. Gates at each merged head: check, unit, and the full sign-in host lane on both hosts. Push; both stay draft.
+
+**Verifier (codex-local 01a1cda2-c16d):**
+- Challenge the re-pin before the run: does each case still drive the real central routes, and is anything faked?
+- Run B2e on Sunclaw (standing permission), both pairings, both empty-restart cases, against `9efca56f8` artifacts it builds or audits by hash.
+- Hand back receipts.
+
+**Ending check:** B2e on both pairings green against `9efca56f8`, or each blocked case named with its held central route.
+
+**Then:** Lead acceptance → Reviewer (#12 delta) → CI → merge in stack order (`item2/b2-central-organizations` → #12). #11 stays held for 4b.
