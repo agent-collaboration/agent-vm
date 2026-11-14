@@ -934,3 +934,14 @@ codex-router draft PR #270 (`feat/signin-launcher` @`d08b9351f`; central's paire
 - **Correction to "WS13 go" (2026-11-14T14:59Z; the Verifier, read from `d08b9351f`):** my line that the workerd controls are "not stdin" was wrong. `WorkerdStorage` owns `TEST_SIGNIN_CLOCK` and `/test/raw-signin-observe`. `tests/support/workerd-bridge.mts` **also** accepts stdin `{setTimeMs}` and `{observe}` and passes them through to those real controls. So the one shared control-process client from the accepted delta drives both hosts; there's no second transport. The Verifier also returned two items to the Implementer:
   - the initial time is set before provisioning, and again at each restart;
   - an honest nullable `expiresAt`.
+
+### Create-workspace wire with Lead A (2026-11-14T15:01Z; Lead A push 01a1da93)
+- **Replay** of the same operation id returns the retained first answer byte-for-byte. Agreed: no B2e assertion needs `alreadyExisted:true`.
+- **Duplicate name** (a different operation id) is refused, ledger only, no change. Agreed on the behaviour.
+  - **Wire asked:** a distinct reason (e.g. `nameInUse`, so the page says "A workspace with that name already exists") instead of the generic `rejected`.
+  - Lead A's call. If `rejected` stays, it's logged as a UX limit.
+- **Proposed cleanup, Lead A's call:** drop the now-always-false `alreadyExisted` from Applied. #12 would then remove the field, its fixtures and the page's "already existed" branch.
+- **WS13 follow-up when setup lands:**
+  - add a B2e duplicate-name case (refused; workspaces and change records unchanged);
+  - add a replay case (byte-identical answer; exactly one `workspaceCreated` record);
+  - plus whichever wire changes Lead A confirms.
