@@ -886,3 +886,8 @@ Read from source: central `9efca56f8` and #12 `b277be05`.
   - an expired stored stamp still renews (the Replace path doesn't require it to be valid).
 - **The cold alarm reads its org from `organization_identity`: confirmed to Lead A** under three conditions: identity only, never authority; no row means no alarm work; sign-in never deletes or re-orgs the row.
 - **Edge raised (not blocking):** the digest read answers 503 for an expired stamp, so a diverged and expired org can't reconcile. Proposed to Lead A: answer the stored facts even when expired, and keep 503 for signature or configuration failure. Otherwise it's named as an accepted limit.
+- **Owner approved the R29 change (2026-11-14T12:44Z, via Lead A, push 01a1da15).** The digest read answers the stored stamp's facts even when it has expired. 503 is only for signature or configuration failure, and nothing is authorized on that answer. It lands in central's setup PR, after the launcher.
+  - **Effect on #12: no product change.** `seedFromCentral` already treats a 200 as `current` and seeds from it. Renewal is then due at once and replaces the stored stamp.
+  - **Follow-up for the Implementer when central's setup PR lands** (WS13 scope, with the held-route restore):
+    1. Update the stale comment in `organization-stamp-renewal.ts` `seedFromCentral` ("central still refuses an expired stamp").
+    2. Add one B2e case: a diverged confirmed digest plus an expired stored stamp → stale → probe answers the expired facts → seed → renew → Replace, read back through central's `observe`.
