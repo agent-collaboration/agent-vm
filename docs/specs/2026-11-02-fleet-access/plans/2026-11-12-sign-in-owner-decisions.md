@@ -1011,3 +1011,13 @@ codex-router draft PR #270 (`feat/signin-launcher` @`d08b9351f`; central's paire
   - add the duplicate-name and replay cases;
   - add the R29 expired-digest case;
   - re-pin to central main.
+
+### #13 CI: the macOS-only temp path (Lead, 2026-11-14T20:53Z)
+- **Failure:** CI run 43635754608 at #13 `70c11acd`. Validation passed. E2E (host) had 469 pass / 1 fail / 13 skip: `F native Better Auth browser journey on node` failed with `ENOENT: mkdtemp '/private/tmp/2026-11-central-link-…'` on Ubuntu.
+  - The path is hardcoded in `packages/sign-in-test-support/src/test-fixtures/controlled-central-unix-peer.ts:14`, which is already on `main`.
+  - `/private/tmp` exists only on macOS. It was chosen to keep the Unix socket path under macOS's limit, since `os.tmpdir()` there is long.
+- **Ruling: smallest fix at the owning boundary.** The Verifier makes it on #13, under the Implementer's conditional approval.
+  - Change that one helper to `mkdtemp('/tmp/2026-11-central-link-')`. `/tmp` exists on Linux and links to `/private/tmp` on macOS, so the path stays short.
+  - Record the resulting socket path length on both platforms (under 104 bytes on macOS, under 108 on Linux).
+  - Re-run the check, the Node F journey locally, and CI.
+- **Deferred, with a reason:** the same `/private/tmp` literal is in four B2e files on main (`b2e-launcher-teardown`, `joint-node-central`, `joint-workerd-central`, `link-fault-proxy`). B2e runs only on Sunclaw (macOS), and CI skips it without artifacts, so nothing fails today. They move to the same `/tmp` base in the setup follow-up PR, which re-pins B2e anyway.
