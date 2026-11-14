@@ -1069,3 +1069,4 @@ The workspace id equals the operation id.
   - the gate proves parsing against central's type, not central's cases.
 
   A is then logged as a central follow-up. Nothing else waits on this.
+- **WS14 provenance: A confirmed (2026-11-14T21:36Z, Lead A push 01a1dbfd).** #275's review-fix batch registers OrganizationAdminResult, CreateWorkspaceRequest, WorkspaceLookupRequest, ReadChangeRecordsRequest and OrganizationAdminIntent in central's schemars contract export (schema, fixtures, negatives, and an export-test drift check). **Fallback B is withdrawn.** WS14 copies central's bytes at that frozen commit and keeps the mirror claim. Lead A sends the commit.
