@@ -964,3 +964,15 @@ codex-router draft PR #270 (`feat/signin-launcher` @`d08b9351f`; central's paire
   4. If signing fails (no certificate or a locked keychain), return the access gap. Never run it unsigned.
 
   Don't freeze with `0ea9eee5` as the native identity.
+- **#270 moved to `3c259ef9d` and is ready for review (2026-11-14T15:53Z).** The commit is "Isolate launcher clock controls and close review proof gaps", 21 files. One contract change matters to B2e:
+  - `workerd-bridge.mts` now takes `--launcher-time-ms <ms>` at start. Without it, every `setTimeMs` is refused.
+  - A partly applied clock push answers `failed` ("bridge time may be partly applied") instead of retrying.
+  - The native launcher also refuses unknown or malformed commands and keeps serving.
+  - The binaries and bundles change too.
+
+  **Implementer:**
+  1. Re-pin #12's candidate (`87018ee5`) to `3c259ef9d` now: pass `--launcher-time-ms` with the initial clock (at first start and each fresh restart), and treat `failed` as a fixture failure, never a retry.
+  2. Rebuild on Sunclaw, sign a copy of the native launcher with the repository runner (as before), and re-pin every hash.
+  3. If #270 merges with a different tree, re-pin once more to the merge commit before acceptance.
+
+  **Verifier:** challenge and run at the new pin.
