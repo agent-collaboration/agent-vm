@@ -905,3 +905,29 @@ Central's launcher `observe` will show only real modern columns. B2e changes to 
   - The launcher's `observe` returns exactly the kept list, without `decisions`.
   - B2e reads change records from `organization_change_records`, as it does today.
 - **R-observe qualification accepted (2026-11-14T13:11Z; the Verifier's challenge).** In the revoked-token case, the guard delivers the person floor and its ACK *before* the refusal, by design. So "floors unchanged" is not part of that case's no-effect comparison: it keeps its existing expected floor change, and the other sets (workspaces, records, usedRequests) stay unchanged.
+
+### WS13 go: central's launcher is up (Lead, 2026-11-14T14:54Z; Lead A push 01a1da8d)
+codex-router draft PR #270 (`feat/signin-launcher` @`d08b9351f`; central's paired Verifier passed; independent review in progress). Per its PR body:
+- **Native:** `central_sign_in_launcher` in `codex-router-debug-hosts`, behind the non-default `signin-test-support` feature.
+  - Private Unix socket, 0600, unlinked on exit; one injected clock shared by all orgs.
+  - One readiness line; time and observe commands on stdin; SIGTERM/SIGINT exit.
+- **workerd:** feature-gated bridge controls. **They are not stdin:** one `TEST_SIGNIN_CLOCK` binding drives every org object, and `/test/raw-signin-observe` reads state. Production Workers are unchanged.
+- **observe** (`collaboration-central-core::signin_test_observation`): statement, stamp, change records, org and person floors, used requests, workspaces, plus `complete:true`. An org never opened returns an empty, complete observation and creates no store.
+
+**Implementer: start the re-pin now** against `d08b9351f`, per the accepted delta plus R-held, R-observe and its floor qualification.
+- workerd controls follow #270's actual binding and route, not the earlier stdin assumption.
+- Read the launcher's arguments, readiness and observe schema from #270's source, and pin every artifact by SHA-256.
+- Build on Sunclaw (standing permission).
+- **If #270 merges with a different tree,** re-pin to the merge commit before the acceptance run. Hand back the diff and the gates.
+
+**Verifier:** run the challenge as soon as the Implementer freezes a head.
+- Real routes, real controls, nothing seeded or fabricated.
+- Every asserted field comes from `observe`.
+- Then B2e on both pairings, against the pinned `d08b9351f` artifacts (or the merge commit's).
+
+**Ending check, unchanged:**
+- 8 executable cases green on both pairings;
+- 2 held sentinels asserting central's real held answer;
+- receipts.
+
+**Acceptance waits for #270 to merge,** with the run at the merged commit.
