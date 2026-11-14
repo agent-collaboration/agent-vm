@@ -976,3 +976,13 @@ codex-router draft PR #270 (`feat/signin-launcher` @`d08b9351f`; central's paire
   3. If #270 merges with a different tree, re-pin once more to the merge commit before acceptance.
 
   **Verifier:** challenge and run at the new pin.
+
+### WS13 accepted for review; R-code (Lead, 2026-11-14T16:30Z)
+- **Lead acceptance** at #12 `26da35e7`: `tmp/2026-11-12-ws1-handbacks/lead-acceptance.md` § WS13. It rests on the Verifier's independent run, SUPPORTED 25/25: 8 + 2 per pairing, no skips, both empty restarts, teardown 2/2.
+- **Open condition before merge:** central #270 merges. The Verifier then compares the merge commit's tree with `3c259ef9d` over the build inputs the pins use:
+  - only CI or docs differ (today `3c259..edc6f521` = `.github/workflows/ci.yml` only) → the receipts stand, with the comparison recorded;
+  - anything else → re-pin and run again.
+- **Reviewer (codex-local 01a1cda2-c280), R-code:** an independent review of #12's delta `b277be05..26da35e7` against WS13, R-native, R-held, R-observe (with the floor qualification) and the signed-launcher rule.
+  - Questions: does each case still exercise real central, is anything faked or seeded, could a held sentinel pass silently, and are the pins exact.
+  - Return READY or findings at their anchors.
+- **Then:** CI on #12 → merge `item2/b2-central-organizations` → #12 (stack order). #11 stays held for 4b.
