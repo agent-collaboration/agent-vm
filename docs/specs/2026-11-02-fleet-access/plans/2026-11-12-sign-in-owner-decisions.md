@@ -768,3 +768,7 @@ I read the new `device-user-code.ts`. There is no copied alphabet or length any 
   - The Verifier audited the originals (`/private/tmp/2026-11-ws12-b2e-verifier/handback.md`).
   - Upkeep: #12 `b277be05` and #11 `997d4245` gates are green.
   - Both stay held until B3 central.
+- **Parked until central (Lead, 14 Nov 01:58Z):**
+  - Lead A clarifies: "B3 starting" is central's slice 3 (mail, drains, wakes, automations), not our B3a. Our B2 and B3a routes land in central's **slice 4 (sign-in)**, after slice 3. The inputs are at `codex-router.feat-sqlx-do-clean/tmp/2026-11-14-b4-signin-inputs.md`.
+  - Lead A will message this session when a central branch serves them, or at once if any shape departs from R29.
+  - The 55-min wake is cancelled (owner: compact and wait for the trigger).
