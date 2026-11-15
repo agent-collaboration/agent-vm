@@ -187,6 +187,28 @@ flowchart TB
   <li><code>onSignInTurnstileReady</code> sets <code>ready</code> and dispatches <code>sign-in-turnstile-ready</code>;</li>
   <li><strong>a script load failure:</strong> an <code>error</code> event on <code>#sign-in-turnstile-script</code> sets <code>failed</code> and dispatches <code>sign-in-turnstile-failed</code>. A token request pending at that moment rejects, and so does every later one, at once.</li>
   </ul></li>
+<li><strong>Hegel family for the token queue</strong> (owner rule, 15 Nov):
+  <ul>
+  <li><strong>The test:</strong> <code>packages/sign-in-core/src/pages/islands/passkey-sign-in-turnstile-queue.hegel.unit.test.ts</code>, in the unit lane. <code>@hegeldev/hegel</code> 0.4.10, the version <code>sign-in-test-support</code> already pins, is added as a dev dependency of <code>sign-in-core</code>, because the island module isn't exported and there are no test-only exports. Settings: <code>derandomize: true</code>, <code>hegel.Database.disabled</code>.</li>
+  <li><strong>Generators:</strong> sequences of 1 to 40 <code>QueueEvent</code>s. Request ids are fresh and increasing. <code>scriptReady</code> and <code>scriptFailed</code> appear at most once, in any position. Tokens are distinct generated strings.</li>
+  <li><strong>The model:</strong> a plain list-and-flag model written in the test, independently of the code. After each event, the transition's next state and effects equal the model's.</li>
+  <li><strong>Invariants after every step:</strong> the seven on the <a href="program-design.html#turnstile-machine">Program Design</a>:
+    <ul>
+    <li>at most one executing;</li>
+    <li>never both executing and waiting;</li>
+    <li>each id settles exactly once by the end, given a final script outcome and enough widget outcomes;</li>
+    <li>no token resolves two ids;</li>
+    <li>first in, first out;</li>
+    <li>no <code>resetAndExecute</code> after <code>scriptFailed</code>;</li>
+    <li><code>resetAndExecute</code> only from idle.</li>
+    </ul></li>
+  <li><strong>Wrong builds Hegel must find,</strong> each run by the Verifier on its own, then reverted:
+    <ul>
+    <li>start the next request without waiting for the current one to settle. Expected shrunk case: two <code>tokenRequested</code> events, then one <code>widgetToken</code>, which resolves both;</li>
+    <li>forget to reject waiting requests on <code>scriptFailed</code>. Expected shrunk case: <code>tokenRequested</code>, <code>tokenRequested</code>, <code>scriptFailed</code>, which leaves an id unsettled;</li>
+    <li>serve the queue last in, first out. Expected shrunk case: three requests, then two tokens, out of order.</li>
+    </ul></li>
+  </ul></li>
 <li><strong>Click only, your 15 Nov choice:</strong> V8 counts the browser's network events while the sign-in page loads, on Chrome, which supports autofill. With <code>passkeyPlugin({ autoFill: false })</code>, loading sends no challenge request. This runs through the real island and Better Auth UI's own hook, not a fake.
   <ul>
   <li><strong>Fails on:</strong> a deliberate break that leaves the plugin at its default (<code>passkeyPlugin()</code>): loading sends one challenge request.</li>

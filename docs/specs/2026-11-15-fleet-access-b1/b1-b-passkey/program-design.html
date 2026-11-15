@@ -309,6 +309,68 @@ export async function attachPasskeySignInTurnstile(context: RequestContext): Pro
   </ul></li>
 <li><strong>A rejection</strong> makes the client's request fail before it's sent. The button shows Better Auth UI's error notice and is enabled again. The next click starts a new attempt; after a script failure, every attempt fails at once until the page is reloaded.</li>
 </ul>
+<h3 id="turnstile-machine">The queue as a pure, exhaustive transition (owner rule, 15 Nov)</h3>
+<p>The owner, on 15 Nov: <em>"make srue we use hegel then an dpure transiton fucitons with exatsutiveness"</em>, and <em>"make srue even in current prs and designs that we are usign x satfisvers enver"</em>. So the token helper is split in two:</p>
+<ul>
+<li>a pure state machine, <code>pages/islands/passkey-sign-in-turnstile-queue.ts</code>;</li>
+<li>a thin DOM runner, <code>passkey-sign-in-turnstile.ts</code>, that performs its effects.</li>
+</ul>
+<ex-code lang="ts"><script type="text/plain">
+type TokenRequestId = number; // a counter local to the page; never stored, not a UUID
+type QueueState = {
+	readonly script: 'loading' | 'ready' | 'failed';
+	readonly executing: TokenRequestId | null;
+	readonly waiting: readonly TokenRequestId[];
+};
+type QueueEvent =
+	| { readonly kind: 'scriptReady' }
+	| { readonly kind: 'scriptFailed' }
+	| { readonly kind: 'tokenRequested'; readonly id: TokenRequestId }
+	| { readonly kind: 'widgetToken'; readonly token: string }
+	| { readonly kind: 'widgetFailed'; readonly cause: 'error' | 'expired' | 'timeout' };
+type QueueEffect =
+	| { readonly kind: 'renderWidgetOnce' }
+	| { readonly kind: 'resetAndExecute' }
+	| { readonly kind: 'resolve'; readonly id: TokenRequestId; readonly token: string }
+	| { readonly kind: 'reject'; readonly id: TokenRequestId; readonly reason: 'verification-unavailable' };
+
+export function turnstileQueueTransition(
+	state: QueueState,
+	event: QueueEvent,
+): { readonly state: QueueState; readonly effects: readonly QueueEffect[] } {
+	switch (event.kind) {
+		case 'scriptReady': /* start the head of `waiting`, if any */
+		case 'scriptFailed': /* reject executing and every waiting request */
+		case 'tokenRequested': /* failed: reject now; ready and idle: execute; otherwise enqueue */
+		case 'widgetToken': /* resolve executing; start the next waiting request */
+		case 'widgetFailed': /* reject executing; start the next waiting request */
+			// …each case returns its next state and effects
+		default:
+			return event satisfies never;
+	}
+}
+</script></ex-code>
+<ul>
+<li><strong>Exhaustive:</strong> the <code>switch</code> over <code>QueueEvent</code> ends in <code>event satisfies never</code>, the codebase convention (<code>owner-page.tsx:105</code>). The runner's <code>switch</code> over <code>QueueEffect</code> ends the same way. Adding an event or effect without handling it fails to compile.</li>
+<li><strong>Pure:</strong> no DOM, no <code>window</code>, no Turnstile calls. B1-A's allowed-globals rule doesn't reach islands, but this module uses none anyway.</li>
+<li><strong>The runner</strong> (<code>passkey-sign-in-turnstile.ts</code>) does the work, and nothing else:
+  <ul>
+  <li>holds the current state;</li>
+  <li>turns the window events, widget callbacks and <code>attachPasskeySignInTurnstile</code> calls into <code>QueueEvent</code>s;</li>
+  <li>performs each <code>QueueEffect</code>: render, <code>reset</code> then <code>execute</code>, or settle the pending promise for that id.</li>
+  </ul></li>
+<li><strong>Invariants after every step:</strong>
+  <ul>
+  <li>at most one request is executing;</li>
+  <li>a request is never both executing and waiting;</li>
+  <li>every request settles exactly once;</li>
+  <li>no token goes to two requests;</li>
+  <li>requests are served in arrival order;</li>
+  <li>once the script has failed, no <code>resetAndExecute</code> is emitted;</li>
+  <li><code>resetAndExecute</code> is emitted only when nothing was executing before.</li>
+  </ul></li>
+</ul>
+
 <p><strong>Why two widgets:</strong> Turnstile fixes a widget's action when it's rendered, and the service checks the action (<code>expectedAction: 'passkey_sign_in'</code>, <code>turnstile-captcha.ts:136–137</code>). The Google and GitHub widget's tokens carry <code>sign_in_social</code> and would be refused.</p>
 
 <h2 id="harness">Test harness changes</h2>
@@ -343,7 +405,9 @@ export async function attachPasskeySignInTurnstile(context: RequestContext): Pro
 <tr><td><code>sign-in-core/src/pages/owner-page-document.tsx</code></td><td>Passes <code>continueLocation</code>; loads the island on the sign-in page; an id on the Turnstile script tag</td><td>S7</td></tr>
 <tr><td><code>sign-in-core/src/pages/islands/sign-in-island-state.tsx</code></td><td>Kind <code>passkey-sign-in</code></td><td>S7</td></tr>
 <tr><td><code>sign-in-core/src/pages/islands/sign-in-pages-island.tsx</code></td><td>Renders <code>PasskeyButton</code>; <code>passkeyPlugin({ autoFill })</code>; <code>redirectTo</code>; the client's <code>onRequest</code></td><td>S2, S7</td></tr>
-<tr><td><code>sign-in-core/src/pages/islands/passkey-sign-in-turnstile.ts</code> (new)</td><td>Fresh token per challenge request; fails at once after a script failure</td><td>S2, S7</td></tr>
+<tr><td><code>sign-in-core/src/pages/islands/passkey-sign-in-turnstile.ts</code> (new)</td><td>The DOM runner: fresh token per challenge request; fails at once after a script failure</td><td>S2, S7</td></tr>
+<tr><td><code>sign-in-core/src/pages/islands/passkey-sign-in-turnstile-queue.ts</code> (new)</td><td>The pure, exhaustive queue transition and its closed state, event and effect unions</td><td>S2, S7</td></tr>
+<tr><td><code>sign-in-core/package.json</code></td><td><code>@hegeldev/hegel</code> 0.4.10 as a dev dependency, for the queue's Hegel family</td><td>S7</td></tr>
 <tr><td><code>sign-in-core/src/better-auth/owner-page-script.ts</code></td><td>Page-wide Turnstile state; <code>sign-in-turnstile-ready</code> and <code>sign-in-turnstile-failed</code></td><td>S7</td></tr>
 <tr><td><code>auth-ui/src/components/auth/passkey/passkey-button.tsx</code> (new)</td><td>Better Auth UI's button, imports mapped</td><td>S7</td></tr>
 <tr><td><code>auth-ui/src/index.ts</code></td><td>Exports <code>PasskeyButton</code></td><td>S7</td></tr>
