@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B1-1 · Host supplies cryptography · Plan</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
+  <a href="../../index.html">B1 home</a>
+  <a href="requirements.html">B1-1 Requirements</a>
+  <a href="specification.html">B1-1 Specification</a>
+  <a href="program-design.html">B1-1 Program Design</a>
+  <a href="verification-design.html">B1-1 Verification Design</a>
+  <a href="brief.html">B1-1 Plan</a>
+  <a href="reviewer-packet.html">B1-1 Reviewer packet</a>
+  <a href="acceptance.html">B1-1 Acceptance</a>
+</nav></ex-nav>
+<ex-document id="doc">
+<h1>B1-1 · The host supplies all cryptography: Plan</h1>
+
+<ex-callout title="Status: designed, not started" tone="question" icon="clock">
+<p>It waits on your go-ahead for B1. Under your stop, nothing is built. When you give the go-ahead, the Implementer and Verifier sessions are created and their addresses are filled in <a href="#roles">below</a>.</p>
+</ex-callout>
+
+<p>This page is the process for B1-1. It covers who gets what, which files may change, the gate, decisions and inventory. The design itself is in the four documents in the menu. The Implementer and the Verifier both get this page and those four documents. The reviewer gets its own <a href="reviewer-packet.html">packet</a>.</p>
+
+<h2 id="flow">From go-ahead to the gate</h2>
+<ex-mermaid id="flow-pic" label="B1-1 from go-ahead to the gate" data-width="canvas"><script type="text/plain">
+flowchart TB
+  go["You give B1 its go-ahead"] --> impl["Implementer builds on a branch<br/>returns implementer-handback.md"]
+  impl --> ver["Verifier runs V1 to V5 on the pinned commit<br/>returns verifier-observation.md"]
+  ver --> check["Lead checks the code and evidence<br/>lead-check.html"]
+  check --> rev["Fresh reviewer from its packet<br/>reviewer-report.html"]
+  rev --> acc["Lead acceptance<br/>acceptance.html"]
+  acc --> gate{"Anything not delivered?"}
+  gate -->|"yes"| you["Comes to you first"]
+  gate -->|"no"| next["Gate passes: B1-2 may start"]
+  class go,you,next slot6
+  class impl slot3
+  class ver slot4
+  class check,acc slot2
+  class rev slot1
+</script></ex-mermaid>
+<p><strong>Key:</strong> green is you and the gate, teal the Implementer, violet the Verifier, amber me, blue the independent reviewer.</p>
+
+<h2 id="checks">What must be shown</h2>
+<p>These are the five checks on the <a href="verification-design.html">Verification Design</a>. Each must pass on the pinned commit and fail on its named wrong build:</p>
+<ul>
+<li><a href="verification-design.html#V1">V1</a>: the page nonce comes from the host.</li>
+<li><a href="verification-design.html#V2">V2</a>: the recording run sees every crypto call.</li>
+<li><a href="verification-design.html#V3">V3</a>: known answers are unchanged.</li>
+<li><a href="verification-design.html#V4">V4</a>: the architecture check catches planted slips and passes the real tree.</li>
+<li><a href="verification-design.html#V5">V5</a>: both hosts pass their real journeys.</li>
+</ul>
+
+<h2 id="scope">What the Implementer may change</h2>
+<p>All paths are in switchboard (<code>/Users/shravansunder/code/projects/switchboard</code>), on a new branch from <code>main</code> in an Agent Studio worktree. The full list, with every signature, is the <a href="program-design.html#changes">Program Design's change table</a>:</p>
+<ul>
+<li><code>packages/sign-in-core/src/contracts/sign-in-platform.ts</code>; new <code>packages/sign-in-core/src/pages/page-nonce.ts</code>;</li>
+<li>the six call sites and their direct callers in <code>sign-in-core</code>;</li>
+<li><code>packages/sign-in-platform-web/src/index.ts</code> and its README line;</li>
+<li><code>packages/sign-in-owner-cli/src/fleet/</code> callers of the proof and digest functions;</li>
+<li><code>packages/sign-in-test-support/</code>: the new <code>recording-sign-in-crypto.ts</code> fixture, the new <code>host-crypto-recording.integration.test.ts</code>, and the platform builders and callers that need <code>crypto</code>;</li>
+<li>existing unit tests that call the changed functions (argument only, assertions unchanged);</li>
+<li><code>scripts/audit-portal-architecture.ts</code> and <code>scripts/audit-portal-architecture.unit.test.ts</code>, for the rule and the <code>.tsx</code> collection under <code>packages/sign-in-core/src/</code> only.</li>
+</ul>
+<p><strong>Must not change:</strong> any other check script, CI workflow, public contract, storage, token or proof format. <strong>Stop and come back</strong> if a fix needs anything outside this list.</p>
+
+<h2 id="gate">The gate: all must pass before B1-2 starts</h2>
+<ol>
+<li>V1–V5 pass, each observed by the Verifier, and each fails on its wrong build.</li>
+<li><code>pnpm check</code>, <code>pnpm test:unit</code>, <code>pnpm test:integration</code> and <code>pnpm test:e2e:host</code> are green.</li>
+<li>CI is green on the PR.</li>
+<li>My check (<code>lead-check.html</code>) is written.</li>
+<li>The reviewer says READY (<code>reviewer-report.html</code>).</li>
+<li>My <a href="acceptance.html">acceptance</a> is written, and anything not delivered has been brought to you.</li>
+</ol>
+
+<h2 id="returns">What comes back, and where</h2>
+<table>
+<thead><tr><th>From</th><th>File, in this folder</th><th>Holds</th></tr></thead>
+<tbody>
+<tr><td>Implementer</td><td><code>implementer-handback.md</code></td><td>PR number and head commit; gate commands with counts and exit codes; what it couldn't do; anywhere it thinks the design is wrong</td></tr>
+<tr><td>Verifier</td><td><code>verifier-observation.md</code> and <code>evidence/</code></td><td>The build pin (commit, Node 24.7.0, <code>better-auth</code> 1.7.11, the Chrome version); each check with what was seen and its wrong build failing; logs, counts, exit codes and file hashes, with no secrets</td></tr>
+</tbody>
+</table>
+
+<h2 id="roles">Roles</h2>
+<ul>
+<li><strong>Implementer:</strong> Opus high, a new session at go-ahead. Address: <em>filled in at go-ahead</em>.</li>
+<li><strong>Verifier:</strong> Sol high, a different model, a new session at go-ahead. Address: <em>filled in at go-ahead</em>. It observes and never repairs product code.</li>
+<li><strong>Lead:</strong> me (claude-local <code>cd5902e2</code>).</li>
+</ul>
+
+<h2 id="decisions">Decisions</h2>
+<table>
+<thead><tr><th>Decision</th><th>Whose</th><th>Where it comes from</th></tr></thead>
+<tbody>
+<tr><td>The core reaches cryptography only through host capabilities</td><td><strong>Yours</strong></td><td>R30 and need U23, with your words on the <a href="requirements.html#three">Requirements</a> page; approved 4 Nov (Fleet transcript line 71230)</td></tr>
+<tr><td>The architecture check points at <code>packages/sign-in-core/src/</code> and fails on a platform global there</td><td><strong>Yours</strong>, in your approved proof row U23</td><td><code>docs/specs/2026-11-02-fleet-access/verification-design.source.html:278</code>. This is why extending the check to <code>.tsx</code> core files needs no new approval: it's what U23 asks for.</td></tr>
+<tr><td>Pass <code>crypto</code> explicitly rather than through a helper object</td><td>Mine</td><td><a href="program-design.html#choice">Program Design</a>. It's reversible, and stays within R30.</td></tr>
+<tr><td>The new check also covers <code>better-auth/</code></td><td>Mine: stricter than U23's wording, following R30</td><td><a href="program-design.html#scan">Program Design</a></td></tr>
+</tbody>
+</table>
+<p><strong>Open for you: none.</strong></p>
+
+<h2 id="inventory">Inventory: how the six sites got in</h2>
+<table>
+<thead><tr><th>Site</th><th>First commit</th><th>Reached <code>main</code> in</th><th>Accepted as</th></tr></thead>
+<tbody>
+<tr><td><code>page-document.tsx</code> nonce</td><td><code>66f478e6</code>, 5 Nov</td><td>PR #10 (sign-in pages), 13 Nov</td><td>the pages' design work; the boundary rule wasn't checked</td></tr>
+<tr><td><code>fleet-admin-forwarding.ts</code>, <code>fleet-admin-proof.ts</code>, <code>fleet-admin-operation.ts</code></td><td><code>9c93dbfb</code>, 8 Nov</td><td>PR #12 (B2 sign-in side), 14 Nov</td><td>the B2 admin forwarding; R30 wasn't checked</td></tr>
+<tr><td><code>canonical-json.ts</code></td><td><code>96457cb0</code>, 8 Nov</td><td>PR #12, 14 Nov</td><td>same</td></tr>
+<tr><td><code>organization-stamp-renewal.ts</code></td><td><code>531a0408</code>, 11 Nov</td><td>PR #12, 14 Nov</td><td>same</td></tr>
+</tbody>
+</table>
+<p><strong>What went wrong:</strong> the host contract never got a crypto capability, so each new feature reached for the runtime's crypto. The check that should have stopped it doesn't look for shared globals or <code>.tsx</code> files. My acceptances of #10 and #12 didn't check R30. The independent audit later caught one of the six. <strong>What replaces it:</strong> this deliverable.</p>
+</ex-document>
+</body>
+</html>

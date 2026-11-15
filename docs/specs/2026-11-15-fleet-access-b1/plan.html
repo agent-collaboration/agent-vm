@@ -116,7 +116,7 @@ flowchart TB
 
 <section id="review"><h2>3. The packets: what each role gets, from whom, and where</h2>
 <p>B1's remaining work is cut into seven <a href="#order">deliverable items</a>. Each is something tangible the roles can finish in 2–4 hours, and each has a gate that must pass before the next one starts. Every item gets one folder, and everything for it lives there: the brief, what the Implementer hands back, what the Verifier saw, my check, the reviewer's report and my acceptance. Open the folder and you see exactly what each role was given and what it returned.</p>
-<p><strong>The folder:</strong> <code>docs/specs/2026-11-15-fleet-access-b1/work/&lt;item&gt;/</code>, for example <code>work/b1-1-honest-tests/</code>. None is created yet: your stop holds.</p>
+<p><strong>The folder:</strong> <code>docs/specs/2026-11-15-fleet-access-b1/work/&lt;item&gt;/</code>, for example <code>work/b1-1-host-crypto/</code>. None is created yet: your stop holds.</p>
 
 <ex-mermaid id="packet-flow" label="One deliverable item, from brief to the gate" data-width="canvas"><script type="text/plain">
 flowchart TB
@@ -224,41 +224,38 @@ flowchart TB
 </ol>
 </section>
 
-<section id="order"><h2>4. The deliverable items: 2–4 hours each, gate and go</h2>
-<p>Each item is one PR, run by the Implementer and Verifier pair, then my check, the reviewer and my acceptance. Its gate is the exact list of checks that must pass before the next item starts. Every gate also includes:</p>
-<ul>
-<li>the item's new checks fail on the base commit and pass on the item;</li>
-<li><code>pnpm check</code>, <code>pnpm test:unit</code> and <code>pnpm test:e2e:host</code> are green;</li>
-<li>CI is green;</li>
-<li>the reviewer says READY;</li>
-<li>anything not delivered has been brought to you.</li>
-</ul>
-<ex-mermaid id="work-order" label="B1 deliverable items in order" data-width="canvas"><script type="text/plain">
+<section id="order"><h2>4. The deliverables: 2–4 hours each, gate and go</h2>
+<p>Each deliverable is one PR, run by the Implementer and Verifier pair, then my check, the reviewer and my acceptance. Its gate is the exact list of checks that must pass before the next one starts. <strong>Each gets its own complete design</strong> (Requirements, Specification, Program Design, Verification Design) plus its Plan, reviewer packet and acceptance record. They're written one at a time. B1-1 is written in full. The rest aren't written yet.</p>
+<ex-mermaid id="work-order" label="B1 deliverables in order" data-width="canvas"><script type="text/plain">
 flowchart TB
-  i1["B1-1 Honest tests<br/>about 3 hours"] --> i2["B1-2 Membership lookup<br/>about 3 hours"]
-  i2 --> i3["B1-3 Keep the organization choice<br/>about 2 hours"]
-  i3 --> i4["B1-4 Prove the passkey check<br/>about 2 hours"]
-  i4 --> i5["B1-5 Passkey sign-in on<br/>about 3 hours"]
-  i5 --> i6["B1-6 Identifiers and agent path<br/>about 2 hours"]
-  i6 --> i7["B1-7 Release check on staging<br/>after BG's staging item"]
-  class i1 slot5
-  class i2,i3,i5 slot2
-  class i4,i6 slot3
-  class i7 slot1
+  i1["B1-1 Host supplies cryptography<br/>about 3-4 hours, designed"] --> i2["B1-2 No wall clock in tests<br/>about 2 hours"]
+  i2 --> i3["B1-3 Real flood counter<br/>about 2 hours"]
+  i3 --> i4["B1-4 Membership lookup<br/>about 3 hours"]
+  i4 --> i5["B1-5 Keep the organization choice<br/>about 2 hours"]
+  i5 --> i6["B1-6 Prove the passkey check<br/>about 2 hours"]
+  i6 --> i7["B1-7 Passkey sign-in on<br/>about 3 hours"]
+  i7 --> i8["B1-8 Identifiers and agent path<br/>about 2 hours"]
+  i8 --> i9["B1-9 Release check on staging<br/>after BG's staging deliverable"]
+  class i1 slot6
+  class i2,i3,i4,i5,i6,i7,i8 slot2
+  class i9 slot1
 </script></ex-mermaid>
+<p><strong>Key:</strong> green is designed in full, amber is cut but not designed yet, blue waits on BG.</p>
 <div class="ex-table-scroll" data-width="canvas"><table>
-<thead><tr><th>Item and folder</th><th>What it delivers</th><th>Design rows</th><th>Its gate (on top of the common ones)</th></tr></thead>
+<thead><tr><th>Deliverable</th><th>What it delivers</th><th>Design rows</th><th>Design</th></tr></thead>
 <tbody>
-<tr><td><strong>B1-1 Honest tests</strong><br><code>work/b1-1-honest-tests/</code><br><strong>Ready:</strong> <a href="work/b1-1-honest-tests/brief.html">brief</a> · <a href="work/b1-1-honest-tests/reviewer-packet.html">reviewer packet</a> · <a href="work/b1-1-honest-tests/acceptance.html">acceptance</a></td><td>The host supplies page randomness and the boundary scan covers page files. The browser harness waits on events with the controlled clock. The flood threshold runs through Miniflare's rate-limit binding.</td><td><a href="specification.html#R30">R30</a>, <a href="specification.html#R33">R33</a>, <a href="specification.html#R52">R52</a></td><td>A planted global call in a page file fails the scan. The source scan finds no real timer in tests or helpers. Past the limit on the binding: 429 with nothing changed, while another address passes.</td></tr>
-<tr><td><strong>B1-2 Membership lookup</strong><br><code>work/b1-2-membership-lookup/</code></td><td>The owner looks up a person's membership in the requested organization.</td><td><a href="specification.html#R14">R14</a></td><td>On both hosts, the owner gets the answer, and a member or stranger learns nothing.</td></tr>
-<tr><td><strong>B1-3 Keep the organization choice</strong><br><code>work/b1-3-organization-choice/</code></td><td>The account page keeps the choose-organization control.</td><td><a href="specification.html#R5">R5</a></td><td>On real served pages: choose an organization, and the CLI's waiting login returns.</td></tr>
-<tr><td><strong>B1-4 Prove the passkey check</strong><br><code>work/b1-4-passkey-proof/</code></td><td>Evidence that Better Auth 1.7.11 refuses a passkey sign-in without user verification. Nothing is switched on yet.</td><td><a href="specification.html#R5">R5</a></td><td>In real Chrome with a virtual authenticator, unverified is refused on both hosts. If it can't be proven, it comes to you, and passkey sign-in stays off.</td></tr>
-<tr><td><strong>B1-5 Passkey sign-in on</strong><br><code>work/b1-5-passkey-sign-in/</code></td><td>The passkey sign-in route and button, with Turnstile checked before the challenge.</td><td><a href="specification.html#R5">R5</a>, <a href="specification.html#R52">R52</a></td><td>A verified passkey signs in and can make a change. A missing Turnstile token creates nothing. Checked in real Chrome on both hosts.</td></tr>
-<tr><td><strong>B1-6 Identifiers and agent path</strong><br><code>work/b1-6-ids-and-agent-path/</code></td><td>Every stored ID is read back, and the agent path is re-observed at the final build.</td><td><a href="specification.html#R32">R32</a>, <a href="specification.html#R38">R38</a></td><td>Every ID reads back as UUIDv7 on both databases. Today's agent gets its token and one tool call, and a person is refused a tool credential.</td></tr>
-<tr><td><strong>B1-7 Release check on staging</strong><br><code>work/b1-7-release-check/</code></td><td>One real Google sign-in with the real Turnstile check, on staging after deploy, with no action from you.</td><td><a href="specification.html#R52">R52</a></td><td>Can't start until BG's staging item exists. Then the real sign-in passes and the real siteverify is recorded.</td></tr>
+<tr><td><strong>B1-1 Host supplies cryptography</strong></td><td>The core takes all randomness, hashing, keys and signing from a capability the host hands in, and the architecture check catches any slip, including in <code>.tsx</code> pages.</td><td><a href="specification.html#R30">R30</a> (U23, U16)</td><td><strong>Written:</strong> <a href="work/b1-1-host-crypto/requirements.html">Requirements</a> · <a href="work/b1-1-host-crypto/specification.html">Specification</a> · <a href="work/b1-1-host-crypto/program-design.html">Program Design</a> · <a href="work/b1-1-host-crypto/verification-design.html">Verification Design</a> · <a href="work/b1-1-host-crypto/brief.html">Plan</a> · <a href="work/b1-1-host-crypto/reviewer-packet.html">Reviewer packet</a> · <a href="work/b1-1-host-crypto/acceptance.html">Acceptance</a></td></tr>
+<tr><td><strong>B1-2 No wall clock in tests</strong></td><td>The browser test waits on events with the controlled clock. The real 20/30-second timers, and the kill deadlines in <code>auth-proof-process.ts</code>, are gone.</td><td><a href="specification.html#R33">R33</a> (U25)</td><td>Not written yet</td></tr>
+<tr><td><strong>B1-3 Real flood counter</strong></td><td>The flood threshold runs through Cloudflare's real counter in Miniflare. <strong>Known conflict:</strong> Miniflare's counter keeps time on the real clock, which your rule (no wall clock in tests) forbids. It comes to you as a decision with B1-3's design.</td><td><a href="specification.html#R52">R52</a> (U42)</td><td>Not written yet</td></tr>
+<tr><td><strong>B1-4 Membership lookup</strong></td><td>The owner looks up a person's membership in the requested organization.</td><td><a href="specification.html#R14">R14</a></td><td>Not written yet</td></tr>
+<tr><td><strong>B1-5 Keep the organization choice</strong></td><td>The account page keeps the choose-organization control.</td><td><a href="specification.html#R5">R5</a></td><td>Not written yet</td></tr>
+<tr><td><strong>B1-6 Prove the passkey check</strong></td><td>Evidence that Better Auth 1.7.11 refuses a passkey sign-in without user verification.</td><td><a href="specification.html#R5">R5</a></td><td>Not written yet</td></tr>
+<tr><td><strong>B1-7 Passkey sign-in on</strong></td><td>The passkey sign-in route and button, with Turnstile checked first.</td><td><a href="specification.html#R5">R5</a>, <a href="specification.html#R52">R52</a></td><td>Not written yet</td></tr>
+<tr><td><strong>B1-8 Identifiers and agent path</strong></td><td>Every stored ID read back as UUIDv7. The agent path re-observed at the final build.</td><td><a href="specification.html#R32">R32</a>, <a href="specification.html#R38">R38</a></td><td>Not written yet</td></tr>
+<tr><td><strong>B1-9 Release check on staging</strong></td><td>One real Google sign-in with the real Turnstile check on staging, with no action from you.</td><td><a href="specification.html#R52">R52</a></td><td>Not written yet; waits on BG</td></tr>
 </tbody>
 </table></div>
-<p>The hours are estimates for the agent roles. If an item turns out bigger, I split it before it starts and tell you, rather than letting it run long.</p>
+<p>The hours are estimates for the agent roles. If a deliverable turns out bigger, I split it before it starts and tell you.</p>
 </section>
 </ex-document>
 </body>

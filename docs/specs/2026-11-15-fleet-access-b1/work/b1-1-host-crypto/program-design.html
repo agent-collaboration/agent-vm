@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B1-1 · Host supplies cryptography · Program Design</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
+  <a href="../../index.html">B1 home</a>
+  <a href="requirements.html">B1-1 Requirements</a>
+  <a href="specification.html">B1-1 Specification</a>
+  <a href="program-design.html">B1-1 Program Design</a>
+  <a href="verification-design.html">B1-1 Verification Design</a>
+  <a href="brief.html">B1-1 Plan</a>
+  <a href="reviewer-packet.html">B1-1 Reviewer packet</a>
+  <a href="acceptance.html">B1-1 Acceptance</a>
+</nav></ex-nav>
+<ex-document id="doc">
+<h1>B1-1 · The host supplies all cryptography: Program Design</h1>
+<p>How rules S1–S6 of the <a href="specification.html">Specification</a> are built, file by file, in switchboard at <code>main</code> <code>f3b2b88b</code>. In short: the host contract gets one new capability, <code>crypto</code>, shaped like the standard Web Crypto. Six call sites take it instead of the runtime global. The shared web capabilities builder hands it in for both hosts and the CLI, and the architecture check gains one rule.</p>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What you should check" tone="note" icon="shield-check">
+<p><strong>The dependency picture</strong> (<a href="#parts">below</a>): the core defines what it needs, and the hosts supply it. Nothing in the core points at a runtime. <strong>The new rule in the architecture check</strong> (<a href="#scan">below</a>) rejects the runtime's crypto, clock and timers anywhere in the core.</p>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p><strong>None.</strong> The one structural choice, passing <code>crypto</code> explicitly rather than through a helper object, is mine within your rule, and is explained <a href="#choice">below</a>.</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
+<p>It's the same pattern your approved design already uses for the clock, IDs and deadlines: an interface in the core, with each runtime injecting its own. Your words: <em>"you inject stukff not pkul out engines"</em> (U23). The <a href="#trace">trace table</a> maps every rule to its owner and proof.</p>
+</ex-callout>
+
+<h2 id="parts">The parts and which way they depend</h2>
+<p>Arrows point from the package that depends to the package it depends on. The core depends on no runtime. Hosts depend on the core, never the reverse (R30). Only the shared web capabilities builder touches the runtime's <code>globalThis.crypto</code>.</p>
+<ex-mermaid id="deps" label="Packages and dependency direction after B1-1" data-width="canvas"><script type="text/plain">
+flowchart TB
+  core["sign-in-core<br/>defines SignInCrypto, uses only platform.crypto"]
+  web["sign-in-platform-web<br/>createWebSignInCapabilities hands in globalThis.crypto"]
+  cf["sign-in-host-cloudflare<br/>worker-configuration.ts"]
+  node["sign-in-host-node<br/>sign-in-node-host.ts"]
+  cli["sign-in-owner-cli<br/>fleet commands"]
+  ts["sign-in-test-support<br/>recording crypto for tests"]
+  web --> core
+  cf --> web
+  cf --> core
+  node --> web
+  node --> core
+  cli --> web
+  cli --> core
+  ts --> core
+  class core slot2
+  class web slot6
+  class cf,node,cli slot1
+  class ts slot4
+</script></ex-mermaid>
+<p><strong>Key:</strong> amber is the core, green is the only place the runtime's crypto is read, blue are the hosts, violet is test support. The edges are unchanged from today. B1-1 adds no package and no dependency.</p>
+
+<h2 id="contract">The new capability</h2>
+<p>It's added to the host contract in <code>packages/sign-in-core/src/contracts/sign-in-platform.ts</code>, beside <code>SignInClock</code>, <code>SignInIdSource</code> and <code>SignInDeadlines</code>. It's a subset of the standard Web Crypto, so both runtimes satisfy it with their own <code>globalThis.crypto</code>, and a test can wrap it to record calls or return fixed bytes. The page nonce gets a branded type, so a page can't be built without one minted from the capability.</p>
+<ex-code id="contract-code" title="packages/sign-in-core/src/contracts/sign-in-platform.ts (added)" lang="typescript"><script type="text/plain">
+/**
+ * The runtime's Web Crypto, handed in by the host (R30). The core never reads `crypto`
+ * itself; tests hand in a recording or fixed-bytes version.
+ */
+export interface SignInCrypto {
+	readonly getRandomValues: <T extends Uint8Array>(array: T) => T;
+	readonly subtle: Pick<SubtleCrypto, 'digest' | 'generateKey' | 'exportKey' | 'importKey' | 'sign'>;
+}
+
+export interface SignInPlatform {
+	readonly requestLimiter: SignInRequestLimiter;
+	readonly centralClient: CentralLinkClient;
+	readonly clock: SignInClock;
+	readonly crypto: SignInCrypto; // new, required (S3)
+	readonly deadlines: SignInDeadlines;
+	readonly ids: SignInIdSource;
+	readonly runAtomically: AtomicRunner;
+	readonly log: (observation: SignInObservation) => void;
+}
+</script></ex-code>
+<ex-code id="nonce-code" title="packages/sign-in-core/src/pages/page-nonce.ts (new)" lang="typescript"><script type="text/plain">
+import { z } from 'zod';
+import type { SignInCrypto } from '#sign-in-core/contracts/sign-in-platform';
+
+/** 16 random bytes as 32 lowercase hex characters (S1). */
+export const pageNonceSchema = z.string().regex(/^[0-9a-f]{32}$/u).brand<'PageNonce'>();
+export type PageNonce = z.infer<typeof pageNonceSchema>;
+
+export function mintPageNonce(crypto: SignInCrypto): PageNonce {
+	const bytes = crypto.getRandomValues(new Uint8Array(16));
+	return pageNonceSchema.parse(Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join(''));
+}
+</script></ex-code>
+
+<h2 id="choice">The one structural choice</h2>
+<table>
+<thead><tr><th>Option</th><th>What changes</th><th>Verdict</th></tr></thead>
+<tbody>
+<tr><td><strong>A. Pass <code>crypto: SignInCrypto</code> explicitly</strong> to every function that needs it</td><td>Each changed function gains a first parameter. About 16 production call sites and the tests that call them are updated.</td><td><strong>Chosen.</strong> It's the pattern the core already uses for <code>clock: SignInClock</code>. Every dependency is visible at the call, and there's no new abstraction to learn.</td></tr>
+<tr><td>B. One helper object, built once from the capability (for example <code>createSignInCryptoOperations(crypto)</code>), passed around</td><td>Fewer parameters deep in call chains</td><td>Rejected for now. A second way of reaching crypto adds a layer no rule needs.</td></tr>
+<tr><td>C. Keep the globals and call Web Crypto "standard enough"</td><td>Nothing</td><td>Rejected. It contradicts R30 and proof row U23 ("every … crypto … call is recorded").</td></tr>
+</tbody>
+</table>
+<p><strong>What would reopen it:</strong> if threading the parameter touches so many call sites that the PR can't be reviewed in one pass (more than about 40 production sites), switch to B and say so.</p>
+
+<h2 id="paths">How a request reaches crypto, before and after</h2>
+<h3 id="path-page">Serving a sign-in page (S1, the nonce)</h3>
+<ex-mermaid id="page-seq" label="Serving a sign-in page, after B1-1" data-width="canvas"><script type="text/plain">
+sequenceDiagram
+  participant B as Browser
+  participant H as sign-in-http-handler.ts
+  participant N as page-nonce.ts
+  participant C as platform.crypto (host)
+  participant P as owner-page-document.tsx / factor-page-document.tsx
+  participant D as page-document.tsx
+  B->>H: GET /owner-ready (or a factor page)
+  H->>N: mintPageNonce(configuration.platform.crypto)
+  N->>C: getRandomValues(16 bytes)
+  C-->>N: bytes
+  N-->>H: PageNonce (32 hex)
+  H->>P: minimalOwnerPage({ ..., nonce })
+  P->>D: pageDocument({ ..., nonce })
+  D-->>B: HTML, nonce on every script tag; CSP header with the same nonce
+</script></ex-mermaid>
+<p><strong>Before:</strong> <code>page-document.tsx:181</code> minted the nonce itself with <code>crypto.randomUUID()</code>. <strong>After:</strong> <code>pageDocument</code> requires a <code>nonce: PageNonce</code> prop and no longer mints anything. The two renderers that call it, <code>renderOwnerPage</code> and <code>renderFactorPage</code>, take <code>nonce</code> from their callers: <code>minimalOwnerPage</code> (called at <code>sign-in-http-handler.ts:272</code>) and <code>renderFactorFormResponse</code> (called at lines 346 and 391). Each caller already holds <code>configuration.platform</code>, and mints with <code>mintPageNonce(configuration.platform.crypto)</code>. <code>pageContentSecurityPolicy(nonce, challenge)</code> is unchanged.</p>
+
+<h3 id="path-admin">Forwarding an admin action to central (S1, S2)</h3>
+<ex-mermaid id="admin-seq" label="Forwarding an admin action, after B1-1" data-width="canvas"><script type="text/plain">
+sequenceDiagram
+  participant H as fleet-admin-forwarding.ts
+  participant C as platform.crypto (host)
+  participant F as fleet-admin-proof.ts
+  participant O as fleet-admin-operation.ts
+  participant X as central
+  H->>F: createFleetAdminProofKey(crypto)
+  F->>C: subtle.generateKey(ES256), exportKey(jwk)
+  H->>C: getRandomValues(32): PKCE verifier
+  H->>O: base64UrlSha256(crypto, verifier): code challenge
+  O->>C: subtle.digest(SHA-256)
+  H->>F: fleetAdminProofKeyThumbprint(crypto, key)
+  H->>O: fleetAdminIntentDigest(crypto, operation)
+  H->>F: signFleetAdminProof(crypto, ...)
+  F->>C: subtle.sign(ECDSA P-256, SHA-256)
+  H->>X: request with DPoP proof (format unchanged, S5)
+</script></ex-mermaid>
+<p><code>obtainPersonFleetCredential</code> widens its <code>platform</code> pick from <code>'clock' | 'ids'</code> to <code>'clock' | 'ids' | 'crypto'</code>. The line <code>globalThis.crypto.getRandomValues(verifierBytes)</code> (<code>fleet-admin-forwarding.ts:156</code>) becomes <code>props.platform.crypto.getRandomValues(verifierBytes)</code>.</p>
+
+<h3 id="path-stamp">Reading a signed organization statement (S2)</h3>
+<p><code>readOrganizationStatementFacts(statement)</code> becomes <code>readOrganizationStatementFacts(crypto, statement)</code>. Its two callers in <code>organization-stamp-renewal.ts</code> (lines 306 and 346) already receive the platform's clock, so they also receive <code>crypto</code> from the same platform.</p>
+
+<h2 id="changes">Every signature that changes</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>File (today's line)</th><th>Before</th><th>After</th><th>Production callers</th></tr></thead>
+<tbody>
+<tr><td><code>pages/page-document.tsx:172</code></td><td><code>pageDocument(props)</code>, mints its own nonce</td><td><code>pageDocument({ ..., nonce: PageNonce })</code></td><td><code>pages/owner-page-document.tsx</code>, <code>pages/factor-page-document.tsx</code></td></tr>
+<tr><td><code>pages/owner-page-document.tsx:14</code>, <code>pages/factor-page-document.tsx:25</code></td><td><code>renderOwnerPage(props)</code>, <code>renderFactorPage(props)</code></td><td>props gain <code>nonce: PageNonce</code></td><td><code>better-auth/minimal-owner-pages.ts</code>, <code>better-auth/factor-enrollment-page.ts</code></td></tr>
+<tr><td><code>better-auth/minimal-owner-pages.ts:40</code>, <code>better-auth/factor-enrollment-page.ts:14</code></td><td>no nonce</td><td>props gain <code>nonce: PageNonce</code>, minted by their caller from <code>platform.crypto</code></td><td><code>better-auth/sign-in-http-handler.ts</code> (lines 272, 346 and 391)</td></tr>
+<tr><td><code>organizations/fleet-admin-operation.ts:128,133</code></td><td><code>fleetAdminIntentDigest(op)</code>, <code>base64UrlSha256(text)</code></td><td><code>(crypto, op)</code>, <code>(crypto, text)</code></td><td><code>fleet-admin-forwarding.ts</code>, <code>fleet-admin-proof.ts</code>; owner CLI <code>fleet-admin-command.ts</code></td></tr>
+<tr><td><code>contracts/canonical-json.ts:35</code></td><td><code>canonicalJsonSha256Hex(value)</code></td><td><code>(crypto, value)</code></td><td>none in production (tests only)</td></tr>
+<tr><td><code>organizations/organization-stamp-renewal.ts:420</code></td><td><code>readOrganizationStatementFacts(statement)</code></td><td><code>(crypto, statement)</code></td><td>same file, lines 306 and 346</td></tr>
+<tr><td><code>central-link/fleet-admin-proof.ts:50–126</code></td><td><code>createFleetAdminProofKey(options)</code>, <code>exportFleetAdminPrivateJwk(key)</code>, <code>importFleetAdminProofKey(jwk, options)</code>, <code>fleetAdminProofKeyThumbprint(key)</code>, <code>signFleetAdminProof(props)</code></td><td>each takes <code>crypto: SignInCrypto</code> first</td><td><code>fleet-admin-forwarding.ts</code>; owner CLI <code>proof-key-store.ts</code>, <code>fleet-credential.ts</code>, <code>fleet-admin-command.ts</code></td></tr>
+<tr><td><code>better-auth/fleet-admin-forwarding.ts:149,156</code></td><td>platform pick <code>'clock' | 'ids'</code>; global <code>getRandomValues</code></td><td>pick adds <code>'crypto'</code>; <code>props.platform.crypto.getRandomValues</code></td><td>its existing callers pass the full platform</td></tr>
+</tbody>
+</table></div>
+<p>The names exported from <code>packages/sign-in-core/src/index.ts</code> are unchanged. Only their parameters change, and the owner CLI is the one consumer outside the core.</p>
+
+<h2 id="hosts">What each host does</h2>
+<ul>
+<li><strong><code>packages/sign-in-platform-web/src/index.ts</code>:</strong> <code>createWebSignInCapabilities(clock?, deadlines?, crypto?)</code> returns <code>Pick&lt;SignInPlatform, 'clock' | 'ids' | 'deadlines' | 'crypto'&gt;</code>. Its default <code>crypto</code> is the runtime's <code>globalThis.crypto</code>, typed as <code>SignInCrypto</code>. This file is the one place a production package reads it, and it adds no rule (S4). Its README line changes to say it also supplies crypto.</li>
+<li><strong>Cloudflare host</strong> (<code>worker-configuration.ts:26</code>) and <strong>Node host</strong> (<code>sign-in-node-host.ts:75</code>): no change of their own. They already spread <code>createWebSignInCapabilities(...)</code> into the platform, so <code>crypto</code> arrives with it.</li>
+<li><strong>Owner CLI</strong> (<code>fleet-cli-commands.ts:61</code>): it already builds <code>createWebSignInCapabilities()</code>. It passes <code>capabilities.crypto</code> to the proof-key store and the credential and admin commands.</li>
+<li><strong>Test support:</strong> a new fixture <code>packages/sign-in-test-support/src/test-fixtures/recording-sign-in-crypto.ts</code> wraps a real Web Crypto. It records each call (operation name and argument sizes, never key material) and can return fixed random bytes. Every place a test builds a <code>SignInPlatform</code> (for example <code>storage-cases/storage-case-context.ts</code>) adds <code>crypto</code>, using this fixture or the web default.</li>
+</ul>
+
+<h2 id="scan">The architecture check's new rule</h2>
+<p>In <code>scripts/audit-portal-architecture.ts</code>, two changes, both limited to <code>packages/sign-in-core/src/</code> as your proof row U23 asks:</p>
+<ol>
+<li><strong>Read <code>.tsx</code> too:</strong> <code>collectFilesUnderDirectory</code> also returns <code>.tsx</code> files under <code>packages/sign-in-core/src/</code>. Other packages' file lists stay as they are, so no other check widens.</li>
+<li><strong>Reject runtime globals:</strong> <code>collectAuthCoreViolations</code> adds a rule that walks the TypeScript syntax tree of each non-test core file and reports:
+  <ul>
+  <li>the identifier <code>crypto</code> used as a free global (not a property such as <code>platform.crypto</code>, and not a local binding or parameter);</li>
+  <li><code>globalThis.crypto</code>;</li>
+  <li><code>Math.random</code>, <code>Date.now</code>, <code>performance.now</code>, <code>setTimeout</code> and <code>setInterval</code>;</li>
+  <li><code>new Date()</code> with no argument.</li>
+  </ul>
+  String and template-literal contents are never walked, so browser scripts written as text aren't flagged. Test files (<code>*.test.ts</code>, <code>*.test.tsx</code>) are skipped here; their own time rule is B1-2's.</li>
+</ol>
+<p>The rule applies inside <code>better-auth/</code> too, which is stricter than proof row U23's wording ("outside the Better Auth boundary module"). That module's exemption exists so it can import Better Auth. Our own code in it, such as <code>fleet-admin-forwarding.ts</code>, still follows R30. On <code>main</code> today this rule reports exactly the six sites listed on the <a href="requirements.html#today">Requirements</a> page.</p>
+
+<h2 id="failure">Failure and concurrency</h2>
+<ul>
+<li><strong>No new state, store or background work.</strong> Every capability call is a pure request-scoped computation, the same as the global it replaces.</li>
+<li><strong>A capability that throws</strong> propagates out of the page render or the admin forwarding, the same way a throwing global did. The existing handler turns it into its generic server-error response. Page rendering writes nothing, and admin forwarding writes nothing itself: it calls central and the sign-in service's own routes, so a throw before the call leaves no change.</li>
+<li><strong>Concurrent requests</strong> each call the capability independently. Web Crypto is safe to call concurrently on both runtimes, so there's no shared mutable state to guard.</li>
+</ul>
+
+<h2 id="tests-become">What existing tests become</h2>
+<table>
+<thead><tr><th>Tests</th><th>Change</th></tr></thead>
+<tbody>
+<tr><td><code>central-link/fleet-admin-proof.unit.test.ts</code>, <code>organizations/fleet-admin-operation.unit.test.ts</code>, <code>contracts/canonical-json.unit.test.ts</code>, <code>better-auth/fleet-permission-policy.unit.test.ts</code></td><td>Pass a crypto (web default) as the new first argument. Their expected values stay the same, which is part of S5's proof.</td></tr>
+<tr><td><code>better-auth/factor-enrollment-page.unit.test.ts</code>, <code>owner-page-organization-slug.unit.test.ts</code>, <code>served-page-appearance.unit.test.ts</code></td><td>Pass a nonce minted from a fixed-bytes crypto. Assertions are unchanged.</td></tr>
+<tr><td>Test-support fixtures and storage cases that build a platform or call the changed functions (<code>controlled-central-admin.ts</code>, <code>organization-stamp-*-cases.ts</code>, <code>organization-central-*-cases.ts</code>, <code>storage-case-context.ts</code>)</td><td>Add <code>crypto</code>. Behavior is unchanged.</td></tr>
+<tr><td>Host e2e: <code>fleet-admin-relay.host.e2e.test.ts</code>, <code>fleet-cli.host.e2e.test.ts</code></td><td>Pass crypto where they call the changed functions directly. Both still run on both hosts.</td></tr>
+<tr><td>Owner CLI tests (<code>fleet-admin-command.unit.test.ts</code>, <code>fleet-command-no-credential-files.integration.test.ts</code>, <code>macos-keychain-proof-key-store.host.e2e.test.ts</code>)</td><td>Pass the CLI's capabilities' crypto. Behavior is unchanged.</td></tr>
+<tr><td><code>scripts/audit-portal-architecture.unit.test.ts</code></td><td>New cases for the rule (see the <a href="verification-design.html#V4">Verification Design</a>).</td></tr>
+</tbody>
+</table>
+
+<h2 id="trace">Trace: each rule to its owner and proof</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Need</th><th>Rule</th><th>Owner</th><th>Interface</th><th>Shape and home</th><th>State</th><th>Failure</th><th>Proof</th></tr></thead>
+<tbody>
+<tr><td>U23</td><td><a href="specification.html#S1">S1</a> random from the host</td><td>sign-in-core (<code>page-nonce.ts</code>, <code>fleet-admin-forwarding.ts</code>)</td><td><code>mintPageNonce(crypto)</code>; <code>platform.crypto.getRandomValues</code></td><td><code>PageNonce</code> (32 hex, branded) in <code>pages/page-nonce.ts</code>; verifier string</td><td>none: per request</td><td>throws to the handler's generic error; nothing stored</td><td><a href="verification-design.html#V1">V1</a>, <a href="verification-design.html#V2">V2</a></td></tr>
+<tr><td>U23</td><td><a href="specification.html#S2">S2</a> hashing, keys and signing via the host</td><td>sign-in-core (<code>fleet-admin-proof.ts</code>, <code>fleet-admin-operation.ts</code>, <code>canonical-json.ts</code>, <code>organization-stamp-renewal.ts</code>)</td><td>the changed functions in <a href="#changes">the table above</a></td><td><code>SignInCrypto.subtle</code> subset in <code>contracts/sign-in-platform.ts</code></td><td>none</td><td>throws to the caller as today</td><td><a href="verification-design.html#V2">V2</a></td></tr>
+<tr><td>U23</td><td><a href="specification.html#S3">S3</a> the capability is required</td><td>sign-in-core contract</td><td><code>SignInPlatform.crypto</code> required; explicit parameters, no defaults</td><td><code>contracts/sign-in-platform.ts</code></td><td>none</td><td>doesn't compile without it</td><td><a href="verification-design.html#V4">V4</a> (type-check in <code>pnpm check</code>)</td></tr>
+<tr><td>U23, U16</td><td><a href="specification.html#S4">S4</a> hosts hand it in, add no rule</td><td>sign-in-platform-web</td><td><code>createWebSignInCapabilities(clock?, deadlines?, crypto?)</code></td><td>returns <code>Pick&lt;SignInPlatform, 'clock' | 'ids' | 'deadlines' | 'crypto'&gt;</code></td><td>none</td><td>none new</td><td><a href="verification-design.html#V5">V5</a></td></tr>
+<tr><td>U23</td><td><a href="specification.html#S5">S5</a> formats unchanged</td><td>sign-in-core (same functions)</td><td>unchanged algorithms</td><td>digests, thumbprint, DPoP, CSP as today</td><td>none</td><td>a format change fails V3</td><td><a href="verification-design.html#V3">V3</a>, <a href="verification-design.html#V5">V5</a></td></tr>
+<tr><td>U23</td><td><a href="specification.html#S6">S6</a> the check catches a slip</td><td><code>scripts/audit-portal-architecture.ts</code></td><td><code>collectAuthCoreViolations</code> + <code>.tsx</code> collection</td><td>violation strings as today's</td><td>none</td><td>check fails with the file and name</td><td><a href="verification-design.html#V4">V4</a></td></tr>
+</tbody>
+</table></div>
+
+<h2 id="open">Deviations and open decisions</h2>
+<p><strong>None open.</strong> One deliberate reading, noted above: the new check also covers <code>better-auth/</code>, which is stricter than proof row U23's wording but follows R30.</p>
+</ex-document>
+</body>
+</html>

@@ -24,7 +24,7 @@
 <p>Every decision that shaped B1, in three groups. <strong>Yours:</strong> each linked to your own words, with transcript line and time. <strong>Mine:</strong> each with a verdict on whether it was mine to make and whether it was right. <strong>Open:</strong> what's still undecided.</p>
 
 <ex-callout id="answer" title="The short version" tone="tldr">
-<p>You made seven decisions that shape B1 after the design. They cover the Better Auth UI, wrong-code display, jitless, the Vitest layout, no wall clock in tests, a separate pages package, and the Bridge design system. I made ten calls. <strong>Five were wrong, three were reversed by you, two stand.</strong> <strong>One thing is open for you:</strong> whether B1-1 may change the scan script (<a href="#scan">below</a>). You confirmed the second-factor SQL on 15 Nov. Every other gap is already decided by your design or by one of your decisions.</p>
+<p>You made seven decisions that shape B1 after the design. They cover the Better Auth UI, wrong-code display, jitless, the Vitest layout, no wall clock in tests, a separate pages package, and the Bridge design system. I made ten calls. <strong>Five were wrong, three were reversed by you, two stand.</strong> <strong>Nothing is open for you now.</strong> The scan-script change is already covered by your design (<a href="#scan">below</a>). You confirmed the second-factor SQL on 15 Nov. Every other gap is already decided by your design or by one of your decisions.</p>
 </ex-callout>
 
 <ex-mermaid data-width="canvas" id="who-decided" label="Who decided what in B1"><script type="text/plain">
@@ -34,7 +34,7 @@ flowchart TB
   L --> W["5 wrong: become fixes"]:::wrong
   L --> R["3 reversed by you"]:::rev
   L --> K["2 stand"]:::ok
-  Y --> N["Open for you: the scan script change<br/>SQL confirmed 15 Nov"]:::lead
+  Y --> N["Open for you: none now<br/>B1-3 will bring one"]:::ok
   classDef owner fill:#dbe8f7,stroke:#2f5b8f,color:#0d2340
   classDef lead fill:#fff3cd,stroke:#b8860b,color:#3d2b00
   classDef wrong fill:#f8d7da,stroke:#b02a37,color:#3d0a0f
@@ -119,8 +119,8 @@ flowchart TB
   classDef dec fill:#d9f2d9,stroke:#2e7d32,color:#0b2e13
 </script></ex-mermaid>
 <p><strong>The flood counter, in plain words:</strong> on Cloudflare, the sign-in Worker slows a flood using Cloudflare's built-in request counter. Tests run on Miniflare, Cloudflare's local simulator, which includes that same counter. Your Verification Design (row U42) says the flood test must use it. The test used a hand-made stand-in counter instead, so it never showed the real counter slowing anything. The fix is to run the same test against Miniflare's counter.</p>
-<h3 id="scan">One open: may B1-1 change the scan script?</h3>
-<p>The architecture scan (<code>scripts/audit-portal-architecture.ts</code>) only reads <code>.ts</code> files, so it never sees the <code>.tsx</code> page that takes randomness from the global. Extending it changes a check script, and that's yours to approve. <a href="work/b1-1-honest-tests/brief.html#scan-question">Answer on the B1-1 brief</a>. <strong>Recommended:</strong> A, extend it.</p>
+<h3 id="scan">The scan script: already decided by your design</h3>
+<p>Extending the architecture check to <code>.tsx</code> files in the core needs no new approval. Your approved proof row U23 already says the check is "pointed by B1 at <code>packages/sign-in-core/src/</code>", and fails on a platform global there (<code>docs/specs/2026-11-02-fleet-access/verification-design.source.html:278</code>). B1-1 does exactly that.</p>
 <p>What's yours beyond that is <strong>whether this design is what you meant</strong>. If something on pages 2–5 isn't, say so there or here, and it becomes an open decision on this page with options and a picker.</p>
 <p>Open choices in other deliverables: CLI <code>--device</code> sits with B2 additions, and machine-login storage and #11 sit with B3. BG's choices stay with BG. They appear on those sets' Decisions pages, not here.</p>
 </section>
