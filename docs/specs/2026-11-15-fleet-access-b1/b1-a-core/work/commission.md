@@ -28,6 +28,13 @@
   - Address: serviceId `8b61218b-d5f3-4ae9-a2db-d2fb4075dbc2`, endpoint `codex-local`, session `01a1b755-5c31-7690-b2b4-5b116d355a7a`.
   - Each packet gives the commit, exact commands, its own working root and what to report.
   - No SSH to Sunclaw.
+  - **Install fix on Sunclaw, with no global install** (Lead ruling, 15 Nov). `pnpm install --frozen-lockfile` fails there because better-sqlite3 runs `node-gyp rebuild` and there's no `node-gyp` on PATH. The packet adds a shim inside its own working root that points at the npm-bundled node-gyp of the same Node:
+    1. make `<root>/bin/node-gyp` a script that runs `node "$(dirname "$(dirname "$(command -v node)")")/lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js" "$@"`;
+    2. run `PATH="<root>/bin:$PATH" pnpm install --frozen-lockfile`.
+
+    better-sqlite3 ships a prebuilt darwin-arm64 binary, which then loads. This is the same fix recorded for this repo on 20 Oct. The packet records the Node and pnpm versions. If npm's bundled node-gyp isn't present, the packet reports that and stops; nothing gets installed.
+  - **On Sunclaw (Darwin),** every `pnpm test:e2e:host` command excludes `packages/sign-in-owner-cli/src/fleet/macos-keychain-proof-key-store.host.e2e.test.ts`. That one test runs only on the owner's Mac, by the Verifier.
+  - **Heavy runs never move to the owner's Mac.** Only the single Keychain test does.
 - macOS Keychain test (V11's "the keychain test still runs"): **the owner said yes on 15 Nov.** The Verifier may run that one test, and only that one, on the owner's Mac:
   - the test: `packages/sign-in-owner-cli/src/fleet/macos-keychain-proof-key-store.host.e2e.test.ts`;
   - where: this Mac, in the PR worktree at the pinned commit;
