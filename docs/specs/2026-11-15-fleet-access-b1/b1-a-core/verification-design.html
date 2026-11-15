@@ -147,13 +147,16 @@ flowchart TB
     <li><code>`${crypto.randomUUID()}`</code> inside a template;</li>
     <li>each of <code>Date.now()</code>, <code>new Date()</code>, <code>performance.now()</code>, <code>setTimeout</code>, <code>setInterval</code> and <code>Math.random()</code>;</li>
     <li><code>globalThis['crypto']</code>;</li>
-    <li>names not on the allowed list, each in a core file: <code>fetch(url)</code>, <code>console.log(x)</code>, <code>navigator.userAgent</code>, <code>process.env.X</code>, <code>queueMicrotask(f)</code>, <code>new WebSocket(u)</code>;</li>
+    <li>names not on the allowed list, each in a core file: <code>fetch(url)</code>, <code>console.log(x)</code>, <code>navigator.userAgent</code>, <code>queueMicrotask(f)</code>, <code>new WebSocket(u)</code>;</li>
+    <li>the compiler's own <code>globalThis</code>, in each form: <code>globalThis.crypto</code>, <code>globalThis['fetch']</code>, and <code>const g = globalThis</code>;</li>
+    <li>an unresolved runtime-only name under the core's <code>types: []</code>: <code>process.env.X</code>;</li>
     <li>a Node import (<code>import 'node:fs'</code>) in a core file, the mutant your proof row U23 names.</li>
     </ul></li>
   <li><strong>Accepted:</strong>
     <ul>
     <li><code>platform.crypto.getRandomValues(…)</code>;</li>
-    <li>a parameter or local named <code>crypto</code> or <code>fetch</code>;</li>
+    <li>a parameter or local named <code>crypto</code>, <code>fetch</code>, <code>globalThis</code> or <code>process</code>, and an imported name;</li>
+    <li>the language value <code>undefined</code>, as in <code>value === undefined</code>;</li>
     <li>the same calls as literal text inside a browser-script template;</li>
     <li><code>new Date(now)</code>;</li>
     <li>each allowed global in use, for example <code>new URL(x)</code>, <code>new Response(body)</code>, <code>JSON.stringify(v)</code>, <code>Math.floor(n)</code>, <code>btoa(s)</code>;</li>
@@ -323,7 +326,7 @@ flowchart TB
   <li><strong>Accepted:</strong> <code>import { v7 as uuid7 } from 'uuid'</code> in <code>sign-in-platform-web</code>; <code>platform.ids.nextId()</code>; the text <code>randomUUID</code> inside a string.</li>
   </ul></li>
 <li><strong>The base tree:</strong> the PR's checker, run over the base commit the same way as <a href="#V4">V4</a>, reports exactly <code>page-document.tsx:181</code> and <code>macos-keychain-proof-key-store.host.e2e.test.ts:1, 17</code>. Over the PR's tree, it reports nothing.</li>
-<li><strong>The keychain test still runs:</strong> on a Mac, <code>macos-keychain-proof-key-store.host.e2e.test.ts</code> passes with its v7 service name.</li>
+<li><strong>The keychain test still runs, without the real clock:</strong> on a Mac, <code>macos-keychain-proof-key-store.host.e2e.test.ts</code> passes with its v7 service name. That name comes from <code>createWebSignInCapabilities(keychainTestClock)</code> with the fixed clock. The reviewer reads the test and confirms the builder is never called without a clock, so <code>webClock</code>'s <code>Date.now()</code> is never reached.</li>
 <li><strong>Fails on:</strong> today's checker, which has no UUID rule.</li>
 <li><strong>Reference:</strong> R32 and U24; your 15 Nov restatement.</li>
 <li><strong>Unverified:</strong> the macOS keychain test runs only on a Mac, as today.</li>

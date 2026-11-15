@@ -82,7 +82,11 @@ flowchart TB
   <li>collect <code>.tsx</code> under <code>packages/sign-in-core/src/</code>;</li>
   <li>add the core allowed-globals rule, with the type checker and the <code>signInCoreAllowedGlobals</code> list exactly as <a href="program-design.html#scan">the Program Design</a> gives it (including inside <code>${…}</code>);</li>
   <li>add the test-time rule for the sign-in tests;</li>
-  <li>add the UUIDv7-only rule across <code>packages/sign-in-*/src/</code> and <code>scripts/verify-auth/</code>, tests included. Change the keychain test's <code>randomUUID()</code> (<code>macos-keychain-proof-key-store.host.e2e.test.ts:1, 17</code>) to <code>createWebSignInCapabilities().ids.nextId()</code>.</li>
+  <li>add the UUIDv7-only rule across <code>packages/sign-in-*/src/</code> and <code>scripts/verify-auth/</code>, tests included. Change the keychain test's <code>randomUUID()</code> (<code>macos-keychain-proof-key-store.host.e2e.test.ts:1, 17</code>) to <code>createWebSignInCapabilities(keychainTestClock).ids.nextId()</code>.
+  <ul>
+  <li><code>keychainTestClock</code> is a fixed clock constant in the test: <code>{ now: () =&gt; epochMillisecondsSchema.parse(1_763_164_800_000) }</code>.</li>
+  <li>Never call the builder without a clock in a test: its default reads <code>Date.now()</code>.</li>
+  </ul></li>
   </ul>
   Add their cases to <code>scripts/audit-portal-architecture.unit.test.ts</code>.</li>
 <li><strong>No wall clock in tests.</strong> Turn the five bounds in <code>native-browser-protocol.ts</code> into event waits, as <a href="program-design.html#time-protocol">the table</a> says. Build the <code>authorization-fence.host.e2e.test.ts</code> rows from <code>controlledSignInClock</code>. Take the evidence folder's date in <code>native-browser-scenario.ts:43</code> from <code>controlledSignInClock</code> instead of <code>performance.timeOrigin</code> (<a href="program-design.html#time-evidence">Program Design</a>).</li>

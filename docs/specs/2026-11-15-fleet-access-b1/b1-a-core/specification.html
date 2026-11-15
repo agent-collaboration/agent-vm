@@ -133,7 +133,8 @@ flowchart TB
 <li>the language's own: <code>Array</code>, <code>Boolean</code>, <code>Date</code> (only as <code>new Date(value)</code>), <code>Error</code>, <code>RangeError</code>, <code>SyntaxError</code>, <code>TypeError</code>, <code>JSON</code>, <code>Map</code>, <code>Set</code>, <code>Math</code> (not <code>Math.random</code>), <code>Number</code>, <code>Object</code>, <code>Promise</code>, <code>String</code>, <code>Uint8Array</code>;</li>
 <li>web data types: <code>Headers</code>, <code>Request</code>, <code>Response</code>, <code>URL</code>, <code>URLSearchParams</code>, <code>TextEncoder</code>, <code>AbortController</code>, <code>atob</code>, <code>btoa</code>, <code>encodeURIComponent</code>.</li>
 </ul>
-<p><strong>Everything else fails,</strong> including <code>crypto</code>, <code>globalThis</code>, <code>fetch</code>, <code>setTimeout</code>, <code>setInterval</code>, <code>performance</code>, <code>process</code>, <code>navigator</code>, <code>console</code>, <code>Date.now()</code>, a zero-argument <code>new Date()</code> and <code>Math.random()</code>. Adding a name to the allowed list is a reviewed change to the check, with its reason.</p>
+<p><strong>Also allowed:</strong> the language value <code>undefined</code>.</p>
+<p><strong>Everything else fails,</strong> including <code>crypto</code>, <code>globalThis</code> in any form, a runtime-only name that doesn't resolve under the core's settings (such as <code>process</code>), <code>fetch</code>, <code>setTimeout</code>, <code>setInterval</code>, <code>performance</code>, <code>process</code>, <code>navigator</code>, <code>console</code>, <code>Date.now()</code>, a zero-argument <code>new Date()</code> and <code>Math.random()</code>. Adding a name to the allowed list is a reviewed change to the check, with its reason.</p>
 <p>Your proof row U23 already asks for this check to point at <code>packages/sign-in-core/src/</code>.</p>
 <p><strong>Edge cases:</strong></p>
 <ul>
@@ -224,7 +225,7 @@ flowchart TB
 <li><strong>Today's two v4s go:</strong>
   <ul>
   <li>the page nonce, <code>crypto.randomUUID()</code> at <code>page-document.tsx:181</code>, becomes 16 random bytes from the host (S1). It's a secret, not an identifier, so it isn't a UUID at all. A v7 would be weaker: it starts with a timestamp.</li>
-  <li>the keychain test's service name, <code>randomUUID()</code> from <code>node:crypto</code> at <code>sign-in-owner-cli/src/fleet/macos-keychain-proof-key-store.host.e2e.test.ts:1, 17</code>, uses a v7 from the shared builder's ID source instead.</li>
+  <li>the keychain test's service name, <code>randomUUID()</code> from <code>node:crypto</code> at <code>sign-in-owner-cli/src/fleet/macos-keychain-proof-key-store.host.e2e.test.ts:1, 17</code>, uses a v7 from the shared builder's ID source instead, given a fixed clock. The builder's default clock reads the real time, which S7 forbids in tests.</li>
   </ul></li>
 <li><strong>A check enforces it:</strong> the architecture check fails on any of these, in every file under <code>packages/sign-in-*/src/</code> (tests included) and <code>scripts/verify-auth/</code>:
   <ul>
