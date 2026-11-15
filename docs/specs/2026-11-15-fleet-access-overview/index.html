@@ -15,46 +15,51 @@
 <ex-document id="home">
 <h1>Fleet access: overview</h1>
 
-<h2 id="sequence">Sequence: what comes first, and what runs in parallel</h2>
-<p>Each arrow means the next feature builds on the one before. Features after the same arrow can run in parallel. <strong>Key:</strong> amber has its design written, blue doesn't yet.</p>
-<ex-mermaid id="order" label="Fleet access features: sequence and parallel work" data-width="canvas"><script type="text/plain">
+<h2 id="order">The order I'll work in, and what blocks what</h2>
+<ex-mermaid id="order-pic" label="Fleet access features in order, with blockers" data-width="canvas"><script type="text/plain">
 flowchart TB
-  A["B1-A One sign-in core,<br/>injected and honestly tested"] --> B["B1-B Passkey sign-in"]
-  A --> C["B1-C Organizations finished"]
-  A --> B2["B2 Central organizations"]
-  B2 --> B2X["B2 additions<br/>person tokens, revocation"]
-  B2 --> BG["BG Getting in<br/>setup pages, staging proof"]
-  B2X --> B3["B3 Machine login, locked link"]
-  B3 --> B4["B4 Sessions through their machine"]
-  B3 --> B5["B5 Authenticated CLI"]
-  BG --> SW(["Your switch: every machine logs in again"])
-  B4 --> SW
-  B5 --> SW
-  SW --> B6["B6 to B9"]
+  you1["Your approval of B1-A"] --> A["1 · B1-A One sign-in core,<br/>injected and honestly tested"]
+  A --> B["2 · B1-B Passkey sign-in"]
+  A --> C["3 · B1-C Organizations finished"]
+  A --> B2["4 · B2 Central organizations"]
+  B2 --> B2X["5 · B2 additions"]
+  B2 --> BG["6 · BG Getting in, staging proof"]
+  BG -. "staging exists" .-> B
+  B2X --> B3["7 · B3 Machine login, locked link"]
+  LA4["Lead A · 4 Router to central link"] --> B3
+  B3 --> B45["8 · B4 and B5"]
+  class you1 slot4
   class A slot2
-  class B,C,B2,B2X,BG,B3,B4,B5,SW,B6 slot1
+  class B,C,B2,B2X,BG,B3,B45 slot1
+  class LA4 slot3
 </script></ex-mermaid>
-<ul>
-<li><strong>In parallel:</strong> after B1-A, three can run side by side: B1-B, B1-C and B2. After B2, B2 additions and BG can run in parallel, and after B3, B4 and B5.</li>
-<li><strong>B1-A comes first</strong> because it changes the core's host contract and the tests every later feature builds on.</li>
-<li><strong>Still to regroup:</strong> B2, B2 additions, BG and B3 will be regrouped into whole features the same way as B1, so their names here may change.</li>
-</ul>
+<p><strong>Key:</strong> violet waits on you, amber has its design written, blue comes later, teal is another Lead's deliverable.</p>
+<ol>
+<li><strong>B1-A</strong> One sign-in core, injected and honestly tested. Designed; its Sol review findings are fixed, and the recheck is next.</li>
+<li><strong>B1-B</strong> Passkey sign-in.</li>
+<li><strong>B1-C</strong> Organizations finished: choose your organization, look up members.</li>
+<li><strong>B2</strong> Central organizations.</li>
+<li><strong>B2 additions</strong> Person tokens, revocation.</li>
+<li><strong>BG</strong> Getting in: setup pages, staging proof.</li>
+<li><strong>B3</strong> Machine login, locked link.</li>
+<li><strong>B4, B5</strong> Sessions through their machine; authenticated CLI. B6 to B9 follow later.</li>
+</ol>
+<p>B2, B2 additions, BG and B3 will be regrouped into whole features the way B1 was, so their names may change. Their designs come one at a time, after B1-A.</p>
 
-<h2 id="deliverables">Features and approval</h2>
-<p>You approved the overall design, B1 and B2 on 4 Nov (<a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl">Fleet transcript</a> lines 71226 and 71230). Your stop on 15 Nov paused all development until you understand each design, so nothing has a go-ahead now. Each feature gets one when you approve its design.</p>
-<table>
-<thead><tr><th>Feature</th><th>Design</th><th>Approved with go-ahead</th></tr></thead>
+<h2 id="table">Blockers, parallel work, what each unblocks, approval</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Feature</th><th>Blocked by</th><th>Runs in parallel with</th><th>Unblocks</th><th>Approved with go-ahead?</th></tr></thead>
 <tbody>
-<tr><td><strong>B1-A</strong> One sign-in core, injected and honestly tested</td><td><a href="../2026-11-15-fleet-access-b1/b1-a-core/audit.html">B1-A design</a>: written; Terra and Sol reviews next</td><td>Not yet</td></tr>
-<tr><td><strong>B1-B</strong> Passkey sign-in</td><td>Not written yet</td><td>Not yet</td></tr>
-<tr><td><strong>B1-C</strong> Organizations finished: choose your organization, look up members</td><td>Not written yet</td><td>Not yet</td></tr>
-<tr><td><strong>B2</strong> Central organizations</td><td>Not written yet</td><td>Not yet</td></tr>
-<tr><td><strong>B2 additions</strong> Person tokens, revocation</td><td>Not written yet</td><td>Not yet</td></tr>
-<tr><td><strong>BG</strong> Getting in</td><td>Not written yet</td><td>Not yet</td></tr>
-<tr><td><strong>B3</strong> Machine login, locked link</td><td>Not written yet</td><td>Not yet</td></tr>
-<tr><td><strong>B4</strong>, <strong>B5</strong>, <strong>B6–B9</strong></td><td>After B3's design</td><td>Not yet</td></tr>
+<tr><td><strong>B1-A</strong> One sign-in core (<a href="../2026-11-15-fleet-access-b1/b1-a-core/audit.html">design</a>)</td><td>Its Sol and Terra recheck, then your approval</td><td>None: it goes first</td><td>B1-B, B1-C and B2 (they build on its core contract and test changes)</td><td>No</td></tr>
+<tr><td><strong>B1-B</strong> Passkey sign-in</td><td>B1-A merged; your approval of its design. Its one real release sign-in also needs BG's staging.</td><td>B1-C, B2</td><td>Nothing else in this lane</td><td>No: not designed</td></tr>
+<tr><td><strong>B1-C</strong> Organizations finished</td><td>B1-A merged; your approval of its design</td><td>B1-B, B2</td><td>Nothing else in this lane</td><td>No: not designed</td></tr>
+<tr><td><strong>B2</strong> Central organizations</td><td>B1-A merged; your approval of its design</td><td>B1-B, B1-C</td><td>B2 additions, BG</td><td>No: not designed</td></tr>
+<tr><td><strong>B2 additions</strong> Person tokens, revocation</td><td>B2 merged; your answer on CLI <code>--device</code> login (on its Decisions page); your approval</td><td>BG</td><td>B3</td><td>No: not designed</td></tr>
+<tr><td><strong>BG</strong> Getting in, staging proof</td><td>B2 merged; your answers to the 30 Oct BG choices; your approval</td><td>B2 additions</td><td>B1-B's release sign-in; your switch to the new login</td><td>No: not designed</td></tr>
+<tr><td><strong>B3</strong> Machine login, locked link</td><td>B2 additions merged; <strong>Lead A's deliverable 4, "Router to central link"</strong>; your decision on machine-login storage and the frozen #11 and #14; your approval</td><td>None</td><td>B4 and B5</td><td>No: not designed</td></tr>
+<tr><td><strong>B4, B5</strong></td><td>B3 merged; their designs</td><td>Each other</td><td>Your switch to the new login; then B6 to B9</td><td>No: not designed</td></tr>
 </tbody>
-</table>
+</table></div>
 </ex-document>
 </body>
 </html>
