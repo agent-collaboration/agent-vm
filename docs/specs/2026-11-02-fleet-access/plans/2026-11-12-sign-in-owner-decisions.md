@@ -1139,3 +1139,17 @@ The workspace id equals the operation id.
   - no test asserts a per-org lifetime;
   - the only stray is the `machine:setTokenLifetime` string in `person-fleet-token.host.e2e.test.ts:49`, which goes with the #11 permission removal;
   - pages updated to D.
+
+### WS14 final re-pin: central #275 merged (Lead, 2026-11-15T01:05Z; Lead A push 01a1dcbb)
+#275 is merged to codex-router `main` as **`ea030e513`** (squash). Since `e56c6345`, three of the five contract triplets changed (`CreateWorkspaceRequest`, `OrganizationAdminIntent`, `OrganizationAdminResult`): the description bound and unknown retained fields refused. The workerd bridge script changed too (#277).
+
+**Implementer, per `be1be449`, on #17 (`item2/b2-central-setup`):**
+1. Merge switchboard `origin/main` (it now has #13 `18cd339c`).
+2. Copy all 15 contract files from `ea030e513`. The README names the producer commit and hashes. Align the client's description bound with central's.
+3. Re-pin B2e to `ea030e513`: rebuild on Sunclaw, sign a copy of the native launcher with the repository runner, and pin every hash.
+4. Gates: check, unit, and the full host lane on both hosts on Sunclaw. B2e on both pairings, with no skips and no held sentinels.
+5. Freeze and hand back.
+
+**Verifier:** check the changed anchors (contracts, bridge, description bound), audit the build and signing, then run B2e independently at the frozen head.
+
+**Then:** Lead acceptance → R-code → CI → merge #17.
