@@ -1307,3 +1307,16 @@ The workspace id equals the operation id.
   2. Run the independent observation at the frozen heads: the B2e machine journey with central rows on both pairings.
   3. Drive the published #14 `verify-auth` machine recipe end to end (ruling 4).
 - **Then:** Lead acceptance → R-code (#11 and #14) → CI → merge #11 → #14.
+
+### Central design redo by segment (owner, 15 Nov; relayed by Lead A, push 01a1df75)
+- **The owner's redo:** central is redesigned per segment (S1 machines and sign-in … S8 runtime), four documents each, starting from an inventory and test parity.
+  - The 2026-11-12 workspace-storage set is superseded; only its owner decisions stay.
+  - Merged central code stays, and gaps get fixes. C2 is paused.
+  - Page: `owner-pages/2026-11-15-central-design-redo.html`.
+- **Effect on this lane:** none on what's in flight. #11/#14 depend only on merged central (`e7b709f6`), so the final round and the merges continue.
+- **Sent to Lead A for the inventories:**
+  - S1 contracts to keep stable;
+  - S2: the machine-JWT profile as the issuer contract, revocation close, and the real-Router end-to-end;
+  - S6: the workspace list call for the `/device` picker;
+  - the deployment cutover's policy-rollout gap.
+- **Pointed Lead A at this design set** as S1's existing four documents and owner decisions.
