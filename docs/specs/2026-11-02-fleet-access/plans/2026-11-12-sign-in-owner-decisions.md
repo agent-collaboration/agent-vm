@@ -1156,3 +1156,10 @@ The workspace id equals the operation id.
 - **WS14 description bound, made exact (2026-11-15T01:07Z; the Verifier's anchor check at `ea030e513`).** `fleet-admin-operation.ts` already caps the create description at 2048 UTF-8 bytes, but `fleet-admin-client.ts:23` still accepts **result** descriptions up to 16 384. Central's `WorkspaceView` now decodes with `x-maxUtf8Bytes` 2048.
   - **Implementer:** set the response parser's bound to 2048 UTF-8 bytes. Copying central's new result negatives (2049-byte ASCII, é and emoji; 513 emoji) into the existing result tests must turn the old 16 384 bound red.
   - Also confirmed by the Verifier: unknown retained fields are already refused by our strict objects; the bridge's time and observe protocol is unchanged; `Cargo.lock` changed (rustix), so all five artifacts come from `ea030e513`.
+
+### WS14 accepted for review; R-code (Lead, 2026-11-15T02:08Z)
+- **Lead acceptance** at #17 `116e499e` against central main `ea030e513`: `lead-acceptance.md` § WS14. The Verifier's final run is SUPPORTED 30/30. CI is green, and the PR is MERGEABLE and CLEAN.
+- **Reviewer (codex-local 01a1cda2-c280), R-code:** an independent review of `main..116e499e` (36 files) against WS14 and its rulings (R-adopt, proof rules 1–5, provenance A, conflict and late-`nameInUse` copy, description bound).
+  - Questions: correct wire cutover; R-adopt safe (rule 4 still gates calls); late-lookup can't claim someone else's workspace; tests can fail; contract mirror exact.
+  - Return READY or findings at their anchors.
+- **Then:** merge #17 → `main`.
