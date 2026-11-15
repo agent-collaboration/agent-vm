@@ -1410,3 +1410,9 @@ The workspace id equals the operation id.
   - **Order:** B1 → B2 → B2-additions → BG → B3, one at a time with the owner.
   - **Design and review only** (owner stop in force).
   - **Authority:** this relay has the owner's quoted words but no first-hand record of mine yet. The audit-first instruction is first-hand in my session.
+- **OWNER, first-hand (2026-11-15T14:57Z): every deliverable gets a separate Plan page** explaining the process:
+  1. how verification fully happens and what's verified (per VD row: proof, boundary, journey, who runs it, versions, the wrong build it catches, retained evidence, named unverified);
+  2. how acceptance happens, with the map (obligation → verification → evidence → accepted / not; against the approved design and VD only; gaps go to the owner before acceptance);
+  3. the reviewer's packet (approved design, the owner's first-hand words per decision, PRs and versions, evidence, review skills, the shared format; Lead records only as claims), and how the reviewer validates against what the owner said and the design.
+
+  **Relayed to all Leads** and the Leads thread. Each Fleet access deliverable set is now: **Audit · Requirements · Specification · Program Design · Verification Design · Plan.**
