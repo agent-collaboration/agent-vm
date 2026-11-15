@@ -62,7 +62,7 @@ flowchart TB
 <ul>
 <li>Cases: no cookie; expired session (controlled clock); verified person with no memberships; one; two; a stored choice that is no longer a membership. Empty available and unavailable must differ.</li>
 <li>Each choice has exactly ID, name and role, only the caller's. A <code>personId</code> query key gets 400.</li>
-<li>Session and membership rows are unchanged by the read. An old second-factor confirmation doesn't block it and isn't touched.</li>
+<li>For a live session, session and membership rows are unchanged by the read. For the expired case, Better Auth's own cleanup is expected (session row deleted, cookie cleared) and nothing else changes. An old second-factor confirmation doesn't block the read and isn't touched.</li>
 <li><strong>The session read fails</strong> (fault seam on the session select): 503 <code>unavailable</code>, not 401. The memberships read fails: 503, not an empty list.</li>
 </ul>
 <p><strong>Wrong builds that must fail:</strong> acquire the session with <code>getSessionFromCtx</code> (session-fault case returns 401); return the stored choice without checking memberships (stale case); turn a membership-read failure into <code>[]</code>. <strong>Lasting:</strong> new <code>packages/sign-in-test-support/src/people-organization-context.host.e2e.test.ts</code> plus unit cases beside the reader.</p>
@@ -82,10 +82,11 @@ sequenceDiagram
   P->>C: Continue to CLI
   C-->>P: CLI token names O2
 </script></ex-mermaid>
-<p><strong>Proven by:</strong> extending <code>people-owner-page.host.e2e.test.ts:65–115</code>, keeping its real-CLI and foreign-refusal assertions.</p>
+<p><strong>Proven by:</strong> real Chrome on both hosts (the V6 harness), because the served-page driver behind <code>people-owner-page.host.e2e.test.ts</code> runs only classic inline scripts (<code>test-fixtures/served-owner-browser.ts:218–222</code>) and can't run the island that now owns switching. Its chooser cases move here; its other continuation cases stay where they are. The real CLI helper from that test is reused, with its state, PKCE and signature assertions.</p>
 <ol>
-<li>Two organizations, one person in both. Choose O1; read <code>session.activeOrganizationId</code>: O1. The page still offers the switcher; the title is not “Choose your organization”; Continue is enabled.</li>
-<li>Choose O2 in the same session; stored value is O2.</li>
+<li>Two organizations, one person in both, started from a waiting CLI with no current choice: title “Choose your organization”, Continue disabled.</li>
+<li>Choose O1 through the switcher; after settlement the page re-renders: stored value O1, title no longer “Choose your organization”, Continue enabled, switcher still offered.</li>
+<li>Choose O2 in the same session; stored value is O2; the setup card is O2's.</li>
 <li>Press Continue to CLI; the real CLI completes and its token names O2.</li>
 <li>From O1, submit a foreign organization: 403; stored value null; self-context shows no current choice; memberships and roles unchanged.</li>
 <li>Advance the clock past the confirmation window, inside session expiry: switching works and confirmation fields are unchanged; a protected invite is still refused.</li>
@@ -125,12 +126,12 @@ sequenceDiagram
 </script></ex-mermaid>
 <ul>
 <li>As a member of O1, owner of O2 only, removed owner, ended session, expired session, no cookie, and agent, bot and Fleet-session bearer tokens: the documented 401 or 403 body, and the facts query never runs (seam counter is zero).</li>
-<li>Hold the real subject read; end the session through fixture Drizzle; release: 401, no subject. Repeat changing the role row so <code>organization:view</code> is lost: 403. Changing the role row is a fixture, not a claim the public API can demote an owner.</li>
+<li>Hold the real subject read, then in turn: delete the session through fixture Drizzle (release: 401); move the controlled clock past the session's expiry (401); change the stored session's current organization to O2 (403); change the role row so <code>organization:view</code> is lost (403). No subject in any case. Changing rows is a fixture, not a claim the public API can do it.</li>
 <li>Permission name: a forwarding spy around the real <code>checkOrganizationPermission</code> records <code>organization:view</code> at both checks. Changing the literal to <code>organization:readAudit</code> must fail that assertion even though owners hold both.</li>
 <li>Fail the permission's role read, the session read and the facts read in turn: 503, no subject.</li>
 <li>With an old second-factor confirmation the lookup succeeds while an invite is refused.</li>
 </ul>
-<p><strong>Wrong builds:</strong> skip the first check (facts counter is nonzero); compare the role name instead of calling the permission check; skip the second check (held case returns the subject); swallow a store error as not-member. <strong>Lasting</strong>, same host file as V3, both hosts.</p>
+<p><strong>Wrong builds:</strong> skip the first check (facts counter is nonzero); compare the role name instead of calling the permission check; skip the second check (held case returns the subject); run the second check against the cached context session (deleted-session case returns the subject); swallow a store error as not-member. <strong>Lasting</strong>, same host file as V3, both hosts.</p>
 
 <h2 id="V5">V5 · Shipped switcher: the two native reads are cut down (S10)</h2>
 <p><strong>Proven by:</strong> seeding real members, invitations and metadata containing canary strings, then calling native <code>list</code> and <code>get-full-organization</code> through the public service as owner and as member, and inspecting the serialized HTTP body.</p>
@@ -138,6 +139,7 @@ sequenceDiagram
 <li>Bodies contain only <code>id</code>, <code>name</code>, <code>slug</code>, <code>logo</code>, <code>createdAt</code>; no canary appears anywhere. Owners get no more than members.</li>
 <li>Any query key (an organization ID, a slug, a member limit, for a real O2 and for a nonexistent ID): identical 400 before Better Auth runs; the session and membership rows unchanged.</li>
 <li>Session read fault on these paths: 503. Signed out: 401.</li>
+<li>Stale current membership: the stored session names O1 after the person was removed from O1; a query-free full read gets Better Auth's 403 and the stored choice becomes null; the page then shows no current choice.</li>
 <li>A server-internal <code>provider.api.getFullOrganization</code> call still returns the full native shape.</li>
 <li>Unit cases for the projection: null, one, array, extra future fields, bad UUID, bad date, bad JSON. A malformed success becomes 503. Cookies survive; content-length is removed.</li>
 </ul>
@@ -147,8 +149,8 @@ sequenceDiagram
 <p><strong>Proven by:</strong> one new browser file run against both hosts with <code>startLocalAuthHarness</code>, <code>startHeadlessChrome</code> and B1-A's event-driven DevTools helper. No Playwright, no timers.</p>
 <ol>
 <li>Open the delivered page as a person in two organizations. Use the actual switcher by label and keyboard; creation, personal account and settings are absent; the summary shows roles.</li>
-<li>Choose O1 then O2; after network settlement, the page and the stored session agree. Captured native bodies pass V5's check; no <code>list-members</code> request is ever sent.</li>
-<li><strong>Lost reply:</strong> pause the O1→O2 set-active response at the response stage, let the server commit, fail the request. Without any focus change or reload, the summary, switcher and stored session all show O2.</li>
+<li>Run V2's full scenario here: from a waiting CLI, choose O1 then O2, then Continue, and the real CLI token names O2. Captured native bodies pass V5's check; no <code>list-members</code> request is ever sent.</li>
+<li><strong>Lost reply:</strong> pause the O1→O2 set-active response at the response stage, let the server commit, fail the request. With no user action, the fresh read triggers the page's own re-render: summary, switcher, title, setup card and stored session all show O2.</li>
 <li>Foreign switch: refusal, then no current choice shown; reload; nothing restored from local storage.</li>
 <li>Open the lookup from its entry; look up a member, an invited email and an absent email through the field; then make the next read fail: the old result disappears and “unavailable” shows.</li>
 <li>Hold the first lookup reply after the server computed it, submit a second, let it land, release the first: only the second shows. Repeat with an edit before release.</li>
@@ -170,7 +172,7 @@ sequenceDiagram
 <thead><tr><th>Family</th><th>Invariants after every step</th><th>Wrong builds and the shrunk counterexample expected</th></tr></thead>
 <tbody>
 <tr><td><code>invitation-view.hegel.unit.test.ts</code> (M1)</td><td>pending exactly when the last row was pending and expiry &gt; now; the clock never changes accepted, cancelled or rejected</td><td><code>&gt;=</code> for expiry → one pending row at expiry = now; sticky expired → [pending at T, clock T−1]; expiring an accepted row → [accepted, clock after expiry]</td></tr>
-<tr><td><code>membership-lookup-transitions.hegel.unit.test.ts</code> (M2)</td><td>only answered carries an answer; candidate needs a passed first check and a read; refused and unavailable carry none; no event revives a finished state</td><td>answer released at candidate → [first-check, facts(member)]; only first invitation used → [first-check, facts([cancelled, pending])]; second check skipped → [first-check, facts(member), check-failed] must end refused</td></tr>
+<tr><td><code>membership-lookup-transitions.hegel.unit.test.ts</code> (M2)</td><td>candidate and answered may hold an answer internally, but only answered is releasable; candidate needs a passed first check and a read; refused and unavailable hold none; no event revives a finished state</td><td>early answered at facts-read → [first-check, facts(member)] reaches answered; only first invitation used → [first-check, facts([cancelled, pending])]; second check skipped → [first-check, facts(member), check-failed] must end refused. Actual premature HTTP release is V4's to catch.</td></tr>
 <tr><td><code>lookup-request-transitions.hegel.unit.test.ts</code> (M3)</td><td>generation never decreases; only answered shows a result; only the current pending generation settles; disposed is final; edits and failures clear results</td><td>no generation check → [submit A, edit, submit B, reply A]; result kept after a refusal → [submit A, reply A member, edit, submit B, reply B refused]; settle after unmount → [submit A, unmounted, reply A]</td></tr>
 </tbody></table></div>
 <p><strong>Exhaustiveness:</strong> add one new literal to each state union and each event union, one at a time; <code>pnpm typecheck</code> must fail at that machine's <code>satisfies never</code>; restore. That's six receipts. Each semantic wrong build is run to its shrunk red, restored, and rerun green. A type or setup failure never counts as a semantic red.</p>
