@@ -1180,3 +1180,26 @@ The workspace id equals the operation id.
   - workspace setup, `nameInUse`, R-adopt, and the contract mirror of central `ea030e513` (#17).
 - **Remaining:** #11 (machine login; waits for central 4b), with #14 on it.
   - #11 scope: drop `formerServiceId`; remove `machine:setTokenLifetime`; merge main; re-pin to 4b.
+
+### WS15: #11 machine login against central 4b (Lead, 2026-11-15T03:05Z; Lead A push 01a1dd2a)
+**Central:** 4b is draft PR codex-router #281 @`722d8a406`. Its review says changes are required, so **don't re-pin to that head yet**; Lead A sends the refrozen head. The coming changes:
+1. `TokenLifetimeSeconds` and its contract files are deleted (a private 600 s constant);
+2. idle expiry advances the generation, so a pre-idle approval answers `Refuse{superseded}` at its first grant;
+3. a replayed approval with a different installation answers `NotPermitted`;
+4. an approval whose `code_expires_at` has already passed is refused;
+5. a retried first grant rebuilds `superseded` from stored state.
+
+`SetTokenLifetime`, `machine:setTokenLifetime` and `formerServiceId` are already gone at `722d8a406`. Production revocation routing stays with C.
+
+**Implementer, now (independent of the refreeze), on #11 `item2/b3a-device-grant` then #14:**
+1. Merge switchboard `origin/main` (`f3b2b88b`: #12, #13, #17) into #11, then #11 into #14. Read both sides on any conflict.
+2. **Drop `formerServiceId`** (31 refs): the `DecideDeviceLogin` field, the `formerServiceLinkedElsewhere` refusal, the /device "former-linked" state and copy, the Router-side request field, and the tests and fixtures.
+3. **Drop `machine:setTokenLifetime`:** access control, permission check, `fleet-permission.ts`, tests, the page and client, and the e2e owner-permission list.
+4. Gates at each merged head: check, unit, and the full host lane on Sunclaw. Push; both stay draft.
+
+**At the refrozen 4b head (later):**
+- re-copy central's contract files (including `person-identity/K5` without `setTokenLifetime`, and without the `TokenLifetimeSeconds` files);
+- re-pin the machine-login journeys;
+- add or adjust cases for 2–5 where sign-in observes them (`Refuse{superseded}` after idle; `NotPermitted` on a different-installation replay; refused expired code; first-grant retry).
+
+**Verifier:** challenge and observe at the refrozen head.
