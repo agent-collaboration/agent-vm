@@ -90,7 +90,17 @@ flowchart TB
 <h3 id="V2">V2 · Every crypto call goes through the capability (S1, S2), and so do clock, IDs and central (U23)</h3>
 <p><strong>Proven by:</strong> driving each of the six sites with known inputs on recording capabilities, and finding each site's own operation <em>and input</em> in the record. Several calls are SHA-256, so the check matches the input digested, not just the operation name.</p>
 <ul>
-<li><strong>Test:</strong> new <code>packages/sign-in-test-support/src/host-crypto-recording.integration.test.ts</code>, in the integration lane (<code>pnpm test:integration</code>). It uses the new <code>recording-sign-in-capabilities.ts</code> fixture.</li>
+<li><strong>Tests:</strong> two files, both using the new <code>recording-sign-in-capabilities.ts</code> fixture.
+  <ul>
+  <li><strong>Integration lane:</strong> <code>packages/sign-in-test-support/src/host-crypto-recording.integration.test.ts</code> (<code>pnpm test:integration</code>) covers the page nonce, statement digest, private key export and import, and canonical-JSON rows.</li>
+  <li><strong>Node host-e2e lane:</strong> the forwarding rows (admin verifier, proof key and signature, intent digest) are in <code>packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts</code>, run with <code>SIGN_IN_TEST_HOST=node pnpm test:e2e:host &lt;file&gt;</code>. Forwarding isn't exported from the core and needs a signed-in owner, an organization, the bootstrap's clients and a central link, which only the real harness provides.
+    <ul>
+    <li>The test starts that harness with a new test-only option. The option wraps the in-process Node platform's <code>crypto</code>, <code>clock</code>, <code>ids</code> and <code>centralClient</code> with the recording fixture. It's added in <code>test-fixtures/local-auth-harness.ts</code> and <code>test-fixtures/node-auth-proof-host.ts</code>, where the Node handler already runs in the test process (<code>node-auth-proof-host.ts:168–191</code>).</li>
+    <li>The option is refused on the Cloudflare host.</li>
+    <li>It drives the real self-call, Better Auth's PKCE and the controlled central admin.</li>
+    </ul></li>
+  </ul>
+  No new public export is added for a test: the Lead's call on 15 Nov, from the Implementer's three options.</li>
 <li><strong>Pinned process clock:</strong> the whole file runs with the process clock pinned (Vitest fake timers with a fixed system time, far from the injected clock's time). Any output carrying the pinned process time shows a real-clock read. Your proof row U23 asks for this "pinned process clock".</li>
 </ul>
 <table>
