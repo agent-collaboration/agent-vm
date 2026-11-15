@@ -1102,3 +1102,18 @@ The workspace id equals the operation id.
     2. Re-pin B2e from `2a78e3dd5` to `e56c63459` (rebuild on Sunclaw, sign the launcher copy, re-hash).
     3. Freeze with gates. At #275's merge, compare the merge tree's build and contract inputs, as in WS13 condition 5.
   - **Verifier:** independent collection at the frozen head.
+
+### Owner decision: machine token lifetime goes in the stamp, fixed (2026-11-15T00:20Z; relayed by Lead A, push 01a1dc92)
+**Owner:** "ok so we could have c, and no changing of lifetime". This supersedes Q3's per-organization `SetTokenLifetime` and my `tl-choice` recommendation A.
+- **Wire (Lead's call, sent to Lead A):**
+  - a new required stamp claim `machine_token_lifetime_seconds` (integer, 60..=3600);
+  - the statement profile goes to `version: 2` (central refuses v1 after this; hard cutover);
+  - sign-in always signs 600 (OD2);
+  - central computes `grant_expires_at = decided_at + claim`.
+- **Removed on both sides:** `SetTokenLifetime`, its route, its export, `tokenLifetimeSet`, and the `machine:setTokenLifetime` permission. On switchboard main, that permission is in about 10 files (access control, permission check, `fleet-permission.ts`, tests).
+- **Where it lands: #11, together with central 4b.** Central refuses v1 after the change, so main's B2e must never meet a central that disagrees. #17 stays as frozen.
+- **#11 scope, once 4b's shapes are final:**
+  1. drop `formerServiceId`;
+  2. stamp v2 with the claim: profile, signer, fixtures and reds (v1 refused; a missing claim refused);
+  3. remove `machine:setTokenLifetime`;
+  4. re-pin B2e/B3e to 4b.
