@@ -1361,3 +1361,17 @@ The workspace id equals the operation id.
 - **Audit A1 report received (2026-11-15T14:20Z):** `tmp/2026-11-15-assumption-audit/report.md`. Findings: five P1 (A1-01 revocation, A1-02 workspaces/allowances, A1-03 BG dropped, A1-04 CLI --device, A1-05 the sign-in machine connection moved to B4); P2 A1-06 the workspace list reads one page, A1-07 summaries overstated completion, A1-08 relayed authority (storage A qualified), A1-09 key retirement has no workflow, A1-10 stale governing documents; A1-11/12 historical.
   - **All accepted.** The owner page with dispositions, the outcome register and four owner decisions (D1 the #11 merge boundary; D2 confirm storage A; D3 CLI --device A/B/C; D4 BG choices next) is at `~/dev/memory-logs/projects/2026/2026-11-codex-router/owner-pages/2026-11-15-fleet-access-audit.html`.
   - **Lead fixes:** workspace-list paging; a key-retirement owner and gate; document reconciliation; revocation, allowances and connection as the next B3 work (with central needs sent to S1/S2); first-hand authority links in the decision register.
+
+### OWNER STOP: no development, only verification and review (2026-11-15T14:37Z)
+**Owner, first-hand in the Lead's session:** "no more development until i fully understand design. only verification and review".
+- **Stopped:**
+  - all product or test code changes on every switchboard branch (#11, #14 and anything new);
+  - all merges and PR state changes;
+  - the Lead's planned fixes (workspace-list paging, key-retirement work, revocation, allowances, connection, `--device`, BG);
+  - design-document edits that change obligations.
+- **Allowed:**
+  - the Verifier's observation of existing frozen heads (no product writes);
+  - the independent reviews R1, R2, R3 and the integration (read-only);
+  - the Lead explaining the design to the owner.
+- **Helpers:** the Implementer holds (no commits, pushes or builds). The Verifier does verification only.
+- **Resumes only** when the owner says the design is understood, and on the owner's explicit go.
