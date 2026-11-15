@@ -27,7 +27,7 @@
 <p>Rules S1–S3: <strong>every random value and every crypto operation the sign-in rules use comes from the host</strong>, and none is taken from the runtime. Rule S6: <strong>the architecture check fails</strong> if anyone puts the runtime's crypto, clock or timers back into the core, including in a page file.</p>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p><strong>None.</strong> Rule S5 requires every page, token, proof and digest to keep its exact format, so nothing a person or central sees changes.</p>
+<p><strong>None for people.</strong> Rule S5 requires every page, token, proof and digest to keep its exact format, so nothing a person or central sees changes. One decision for code outside this repository: the published package's functions gain a <code>crypto</code> parameter (<a href="brief.html#d1">D1 on the Plan</a>).</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
 <p>Your rule R30, word for word: <em>"The core MUST reach storage, time, identifiers, cryptography and outbound requests only through capabilities its host supplies, and each capability is required. The Cloudflare host and the Node host MUST each supply them and add no sign-in rule."</em></p>
@@ -71,7 +71,8 @@ flowchart TB
 </ul>
 <p><strong>Edge cases:</strong></p>
 <ul>
-<li>Each served page gets its own nonce, and two pages never share one, because the capability is asked once per page.</li>
+<li>Each rendered page asks the capability once, and its nonce is exactly the bytes it got back. Two pages getting different nonces depends on the host's randomness (each runtime's secure random source), not on a promise in the core.</li>
+<li>A reply that isn't a rendered page (JSON, a redirect, a passed-through response) asks for no random bytes.</li>
 <li>The nonce on every script tag of a page equals the nonce in that page's security policy header.</li>
 </ul>
 <p><strong>Wrong if:</strong> a page's nonce or the verifier comes from anywhere other than the capability. With a capability that returns fixed bytes, the nonce or verifier would then differ from those bytes.</p>
@@ -92,6 +93,7 @@ flowchart TB
 <h3 id="S3">S3 · The capability is required</h3>
 <p>The core MUST NOT fall back to the runtime's crypto when a host doesn't hand one in. Every function that needs it takes it explicitly, and a host that leaves it out does not build: it fails type-checking.</p>
 <p><strong>Wrong if:</strong> any core function has a default that reads the runtime's crypto.</p>
+<p><strong>Outside effect:</strong> this changes eight functions and two types the published <code>@agent-collaboration/sign-in-core</code> package exports. Whether to release that breaking change is <a href="brief.html#d1">D1</a>.</p>
 
 <h3 id="S4">S4 · Each host hands it in and adds no rule</h3>
 <p>The Cloudflare host, the Node host and the owner CLI MUST each hand in a crypto capability built from their runtime's standard Web Crypto. The host adds no sign-in rule while doing so: no extra checks, no format choices.</p>
@@ -103,6 +105,7 @@ flowchart TB
 <li><strong>Digests and thumbprints:</strong> SHA-256, base64url without padding or lowercase hex as today, and RFC 7638 for the thumbprint. Central computes the same digests.</li>
 <li><strong>Proofs:</strong> DPoP proofs (RFC 9449), with header <code>typ: dpop+jwt</code>, <code>alg: ES256</code> and the public JWK, the same claims, and an IEEE P1363 signature.</li>
 <li><strong>Page security policy:</strong> the same policy text, with only the nonce value varying.</li>
+<li><strong>The nonce itself</strong> stays 32 lowercase hex characters. Today it's a version-4 UUID with the hyphens removed (122 random bits and fixed version bits). After B1-1 it's 16 random bytes (128 random bits). Only its value and internal bit layout change. It's used once and never parsed.</li>
 </ul>
 <p><strong>Wrong if:</strong> a fixed input gives a different digest or thumbprint than <code>main</code> at <code>f3b2b88b</code>, central refuses a proof it accepts today, or the page policy text changes.</p>
 
@@ -126,8 +129,10 @@ flowchart TB
 
 <h2 id="failure">When something fails</h2>
 <ul>
-<li><strong>The capability throws</strong> (it never does on Cloudflare or Node, but a test can make it): the request fails the way any unexpected server error fails today. Nothing is stored, and no half-written page or proof is sent.</li>
-<li><strong>A host is built without the capability:</strong> it does not compile (S3). There is no runtime fallback to discover.</li>
+<li><strong>The capability throws while a page is being rendered:</strong> the handler's existing error handling (<code>sign-in-http-handler.ts:168–404</code>) deletes the sessions issued in this request, cleans up people created without a linked account, and replies <code>503 {"error":"sign-in-unavailable"}</code>. No page is sent. Anything already written earlier in the same request stands, as it does today for any error at that point. For example, a factor just enabled, or a recorded sign-in.</li>
+<li><strong>The capability throws during admin forwarding:</strong> the steps after it don't happen. Steps already completed (an earlier token exchange or call to central) stand. The admin page shows its existing failure.</li>
+<li><strong>The capability throws during stamp renewal:</strong> that renewal attempt ends the way a failed central read ends today.</li>
+<li><strong>A host is built without the capability:</strong> it doesn't compile (S3). There's no runtime fallback to discover.</li>
 </ul>
 
 <h2 id="trace">Where each rule comes from, and how it's proven</h2>
@@ -136,8 +141,8 @@ flowchart TB
 <tbody>
 <tr><td><a href="#S1">S1</a></td><td>R30 "cryptography … only through capabilities"; audit R1-X7</td><td><a href="verification-design.html#V1">V1</a>, <a href="verification-design.html#V2">V2</a></td></tr>
 <tr><td><a href="#S2">S2</a></td><td>R30; proof row U23 "every … crypto … call is recorded"</td><td><a href="verification-design.html#V2">V2</a></td></tr>
-<tr><td><a href="#S3">S3</a></td><td>R30 "each capability is required"</td><td><a href="verification-design.html#V4">V4</a> (type-check), source read</td></tr>
-<tr><td><a href="#S4">S4</a></td><td>R30 "each supply them and add no sign-in rule"</td><td><a href="verification-design.html#V5">V5</a></td></tr>
+<tr><td><a href="#S3">S3</a></td><td>R30 "each capability is required"</td><td><a href="verification-design.html#V4">V4</a> (type mutation), source read</td></tr>
+<tr><td><a href="#S4">S4</a></td><td>R30 "each supply them and add no sign-in rule"</td><td>the Verifier's source read of the host diffs; <a href="verification-design.html#V5">V5</a> as regression</td></tr>
 <tr><td><a href="#S5">S5</a></td><td>R30 (no behavior change is authorized); central's digest contract</td><td><a href="verification-design.html#V3">V3</a>, <a href="verification-design.html#V5">V5</a></td></tr>
 <tr><td><a href="#S6">S6</a></td><td>Proof row U23 "a Node or Worker import placed in a sign-in-core source file makes the audit fail"</td><td><a href="verification-design.html#V4">V4</a></td></tr>
 </tbody>

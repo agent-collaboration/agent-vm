@@ -20,6 +20,16 @@
 </nav></ex-nav>
 <ex-document id="doc">
 <h1>B1-1 · The host supplies all cryptography: Plan</h1>
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What you should check" tone="note" icon="shield-check">
+<p><strong>The gate</strong> (<a href="#gate">below</a>): five checks observed by the Verifier, each failing on its wrong build, then a fresh reviewer and my acceptance. Anything not delivered comes to you first. <strong>The scope list</strong> (<a href="#scope">below</a>) names every file the Implementer may touch.</p>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p><strong>None for people.</strong> One for code outside this repository: <a href="#d1">D1, the published package's breaking change</a>.</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
+<p>Built against your rule R30 and need U23, with your words on the <a href="requirements.html#three">Requirements</a> page. You approved the overall design, B1 and B2 on 4 Nov: I asked "Still waiting on you: approve the overall design, B1 and B2", and you answered "yes you need anytnhign?" (<a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl">Fleet transcript</a> lines 71226 and 71230).</p>
+</ex-callout>
 
 <ex-callout title="Status: designed, not started" tone="question" icon="clock">
 <p>It waits on your go-ahead for B1. Under your stop, nothing is built. When you give the go-ahead, the Implementer and Verifier sessions are created and their addresses are filled in <a href="#roles">below</a>.</p>
@@ -57,21 +67,32 @@ flowchart TB
 </ul>
 
 <h2 id="scope">What the Implementer may change</h2>
-<p>All paths are in switchboard (<code>/Users/shravansunder/code/projects/switchboard</code>), on a new branch from <code>main</code> in an Agent Studio worktree. The full list, with every signature, is the <a href="program-design.html#changes">Program Design's change table</a>:</p>
+<p>All paths are in switchboard (<code>/Users/shravansunder/code/projects/switchboard</code>), on a new branch from <code>main</code>, in an Agent Studio worktree. Each change is described in the <a href="program-design.html#changes">Program Design's change table</a>.</p>
 <ul>
-<li><code>packages/sign-in-core/src/contracts/sign-in-platform.ts</code>; new <code>packages/sign-in-core/src/pages/page-nonce.ts</code>;</li>
-<li>the six call sites and their direct callers in <code>sign-in-core</code>;</li>
-<li><code>packages/sign-in-platform-web/src/index.ts</code> and its README line;</li>
-<li><code>packages/sign-in-owner-cli/src/fleet/</code> callers of the proof and digest functions;</li>
-<li><code>packages/sign-in-test-support/</code>: the new <code>recording-sign-in-crypto.ts</code> fixture, the new <code>host-crypto-recording.integration.test.ts</code>, and the platform builders and callers that need <code>crypto</code>;</li>
-<li>existing unit tests that call the changed functions (argument only, assertions unchanged);</li>
-<li><code>scripts/audit-portal-architecture.ts</code> and <code>scripts/audit-portal-architecture.unit.test.ts</code>, for the rule and the <code>.tsx</code> collection under <code>packages/sign-in-core/src/</code> only.</li>
+<li><strong><code>packages/sign-in-core/src/</code>:</strong>
+  <ul>
+  <li><code>contracts/sign-in-platform.ts</code>; <code>contracts/page-nonce.ts</code> (new); <code>contracts/canonical-json.ts</code>;</li>
+  <li><code>pages/page-document.tsx</code>, <code>pages/owner-page-document.tsx</code>, <code>pages/factor-page-document.tsx</code>;</li>
+  <li><code>better-auth/minimal-owner-pages.ts</code>, <code>better-auth/factor-enrollment-page.ts</code>, <code>better-auth/sign-in-http-handler.ts</code>, <code>better-auth/fleet-admin-forwarding.ts</code>, <code>better-auth/organization-statement-plugin.ts</code>;</li>
+  <li><code>organizations/fleet-admin-operation.ts</code>, <code>organizations/organization-stamp-renewal.ts</code>;</li>
+  <li><code>central-link/fleet-admin-proof.ts</code>.</li>
+  </ul></li>
+<li><strong><code>packages/sign-in-platform-web/</code>:</strong> <code>src/index.ts</code> and <code>README.md</code>.</li>
+<li><strong><code>packages/sign-in-owner-cli/src/fleet/</code>:</strong> <code>fleet-credential.ts</code>, <code>fleet-cli-commands.ts</code>, <code>fleet-admin-command.ts</code>, <code>proof-key-store.ts</code>.</li>
+<li><strong><code>packages/sign-in-test-support/src/</code>:</strong> <code>test-fixtures/recording-sign-in-capabilities.ts</code> (new); <code>host-crypto-recording.integration.test.ts</code> (new); the platform builders and callers that need <code>crypto</code> (<code>storage-cases/*</code>, <code>test-fixtures/controlled-central-admin.ts</code>, <code>fleet-admin-relay.host.e2e.test.ts</code>, <code>fleet-cli.host.e2e.test.ts</code>).</li>
+<li><strong>Existing tests that call changed functions,</strong> with the argument changed only and assertions unchanged:
+  <ul>
+  <li>in the core: <code>fleet-admin-proof</code>, <code>fleet-admin-operation</code>, <code>canonical-json</code>, <code>fleet-permission-policy</code>, <code>factor-enrollment-page</code>, <code>owner-page-organization-slug</code>, <code>served-page-appearance</code> and <code>turnstile-widget</code> unit tests;</li>
+  <li>in the CLI: <code>fleet-admin-command.unit.test.ts</code>, <code>fleet-command-no-credential-files.integration.test.ts</code>, <code>macos-keychain-proof-key-store.host.e2e.test.ts</code>.</li>
+  </ul></li>
+<li><strong>New core test:</strong> <code>packages/sign-in-core/src/contracts/page-nonce.unit.test.ts</code>.</li>
+<li><strong>The check:</strong> <code>scripts/audit-portal-architecture.ts</code> and <code>scripts/audit-portal-architecture.unit.test.ts</code>, for the rule and the <code>.tsx</code> collection under <code>packages/sign-in-core/src/</code> only.</li>
 </ul>
-<p><strong>Must not change:</strong> any other check script, CI workflow, public contract, storage, token or proof format. <strong>Stop and come back</strong> if a fix needs anything outside this list.</p>
+<p><strong>Must not change:</strong> any other check script or CI workflow, storage, or any token, proof or digest format. The published package's function parameters change only as <a href="#d1">D1</a> decides. <strong>Stop and come back</strong> if a fix needs anything outside this list.</p>
 
 <h2 id="gate">The gate: all must pass before B1-2 starts</h2>
 <ol>
-<li>V1–V5 pass, each observed by the Verifier, and each fails on its wrong build.</li>
+<li>V1–V5 pass, each observed by the Verifier, each failing on its wrong build, including V4's type mutations and the source read of the host diffs.</li>
 <li><code>pnpm check</code>, <code>pnpm test:unit</code>, <code>pnpm test:integration</code> and <code>pnpm test:e2e:host</code> are green.</li>
 <li>CI is green on the PR.</li>
 <li>My check (<code>lead-check.html</code>) is written.</li>
@@ -96,16 +117,41 @@ flowchart TB
 </ul>
 
 <h2 id="decisions">Decisions</h2>
+<h3 id="d1">D1 · Open: release a breaking change to the published package?</h3>
+<p><code>@agent-collaboration/sign-in-core</code> is published to npm (version 0.0.153, <code>publishConfig</code> public). Your rule R30 can only be met by handing <code>crypto</code> in, so eight of its exported functions gain a <code>crypto</code> parameter, and two exported types (<code>SignInPlatform</code>, <code>OrganizationStampRenewalProps</code>) gain a required <code>crypto</code>. Inside this repository, every caller is updated in the same PR. Outside it, I found no consumer: codex-router and agent-vm don't depend on the package.</p>
+<ex-mermaid id="d1-pic" label="Who is affected by the parameter change" data-width="canvas"><script type="text/plain">
+flowchart TB
+  pkg["sign-in-core 0.0.153 on npm"] --> inrepo["Callers in switchboard<br/>all updated in the same PR"]
+  pkg --> out["Callers outside switchboard<br/>none found"]
+  class pkg slot2
+  class inrepo slot6
+  class out slot1
+</script></ex-mermaid>
+<p><strong>Key:</strong> amber is the package, green is updated with it, blue is outside it.</p>
+<table>
+<thead><tr><th>Option</th><th>Gain</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><td><strong>A. Release it as a breaking change in the next 0.0.x version</strong> (recommended)</td><td>R30 holds everywhere, with one way to call each function. Pre-1.0 versions allow breaking changes, and it matches your "no backward compatibility" rule.</td><td>Any outside consumer, if one exists, must pass <code>crypto</code> when it upgrades.</td></tr>
+<tr><td>B. Keep the old signatures as wrappers that read the runtime's crypto</td><td>Outside code keeps compiling.</td><td>The wrappers break R30 inside the core and add a second path, which is the kind of compatibility shim you don't allow. The new check would also have to exempt them.</td></tr>
+</tbody>
+</table>
+<ex-choice id="d1-choice" title="Release the published package's breaking change?">
+  <ex-option id="d1-a" title="**A.** Breaking change in the next 0.0.x (recommended)"><template slot="summary">One way to call each function; R30 holds everywhere.</template></ex-option>
+  <ex-option id="d1-b" title="**B.** Keep wrappers for the old signatures"><template slot="summary">Outside code keeps compiling; R30 is broken in the wrappers.</template></ex-option>
+</ex-choice>
+<p><strong>If you defer:</strong> B1-1 can't merge, because the PR changes the exported signatures. Nothing else in B1 waits on it.</p>
+
+<h3 id="other-decisions">The rest</h3>
 <table>
 <thead><tr><th>Decision</th><th>Whose</th><th>Where it comes from</th></tr></thead>
 <tbody>
-<tr><td>The core reaches cryptography only through host capabilities</td><td><strong>Yours</strong></td><td>R30 and need U23, with your words on the <a href="requirements.html#three">Requirements</a> page; approved 4 Nov (Fleet transcript line 71230)</td></tr>
-<tr><td>The architecture check points at <code>packages/sign-in-core/src/</code> and fails on a platform global there</td><td><strong>Yours</strong>, in your approved proof row U23</td><td><code>docs/specs/2026-11-02-fleet-access/verification-design.source.html:278</code>. This is why extending the check to <code>.tsx</code> core files needs no new approval: it's what U23 asks for.</td></tr>
+<tr><td>The core reaches cryptography only through host capabilities</td><td><strong>Yours</strong></td><td>R30 and need U23, with your words on the <a href="requirements.html#three">Requirements</a> page</td></tr>
+<tr><td>The architecture check points at <code>packages/sign-in-core/src/</code> and fails on a platform global there</td><td><strong>Yours</strong>, in proof row U23</td><td><code>docs/specs/2026-11-02-fleet-access/verification-design.source.html:278</code>. That's why extending the check to <code>.tsx</code> core files needs no new approval.</td></tr>
 <tr><td>Pass <code>crypto</code> explicitly rather than through a helper object</td><td>Mine</td><td><a href="program-design.html#choice">Program Design</a>. It's reversible, and stays within R30.</td></tr>
 <tr><td>The new check also covers <code>better-auth/</code></td><td>Mine: stricter than U23's wording, following R30</td><td><a href="program-design.html#scan">Program Design</a></td></tr>
+<tr><td>The nonce helper lives in <code>contracts/</code></td><td>Mine</td><td>The package's import map (<a href="program-design.html#contract">Program Design</a>)</td></tr>
 </tbody>
 </table>
-<p><strong>Open for you: none.</strong></p>
 
 <h2 id="inventory">Inventory: how the six sites got in</h2>
 <table>

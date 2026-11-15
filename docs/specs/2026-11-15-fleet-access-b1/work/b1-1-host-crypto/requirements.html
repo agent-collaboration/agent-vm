@@ -28,16 +28,16 @@
 <p><strong>The check that should catch a slip actually catches it.</strong> That includes the <code>.tsx</code> page files the scan skips today.</p>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p><strong>None.</strong> Sign-in pages, tokens and the admin page look and behave exactly as today. This is a structure fix: every signature, digest and page nonce keeps its exact format.</p>
+<p><strong>None for people.</strong> Sign-in pages, tokens and the admin page look and behave exactly as today. Every signature and digest keeps its exact format. One decision for code outside this repository: eight functions and two types the published package exports gain a required <code>crypto</code> (<a href="brief.html#d1">D1 on the Plan</a>).</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
-<p><strong>Yes: your need U23 in the approved design.</strong> Your words, recorded in the approved Requirements:</p>
+<p><strong>Yes: your need U23 in the approved design.</strong> Your words, recorded in the <a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/requirements.source.html">approved Requirements</a> (line 174):</p>
 <ul>
 <li><em>"it shoudl be runtime seperated like fuckign codex router"</em></li>
 <li><em>"you inject stukff not pkul out engines"</em></li>
 <li><em>"lets maek sure teh runtime (cloudfare, local node) vs logic is seggrated liek fleet (tokio vs clodufalre wokrer rs)"</em></li>
 </ul>
-<p>Also U16, <em>"maqke sure clodufalre is one runtiem and we decokuple yes? same design"</em>. The approved Specification turned them into rule R30, and the approved Verification Design into proof row U23. You approved the design on 4 Nov (Fleet transcript line 71230).</p>
+<p>Also U16 (line 172), <em>"maqke sure clodufalre is one runtiem and we decokuple yes? same design"</em>. The approved Specification turned them into rule R30, and the approved Verification Design into proof row U23. You approved the overall design, B1 and B2 on 4 Nov: I asked "Still waiting on you: approve the overall design, B1 and B2", and you answered "yes you need anytnhign?" (<a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl">Fleet transcript</a> lines 71226 and 71230).</p>
 </ex-callout>
 
 <h2 id="today">What's wrong today</h2>
@@ -70,7 +70,7 @@ flowchart TB
 <tr><td><code>packages/sign-in-core/src/organizations/organization-stamp-renewal.ts:424</code></td><td>SHA-256 inside stamp renewal</td></tr>
 </tbody>
 </table>
-<p><strong>Why the check didn't catch it:</strong> <code>scripts/audit-portal-architecture.ts</code> blocks runtime imports and Cloudflare-only names. It doesn't block the standard globals both runtimes share (<code>crypto</code>, <code>Date.now</code>, <code>setTimeout</code>, <code>Math.random</code>), and it only reads <code>.ts</code> files (line 185), not <code>.tsx</code>.</p>
+<p><strong>Why the check didn't catch it:</strong> <code>scripts/audit-portal-architecture.ts</code> blocks runtime imports and Cloudflare-only names. It doesn't block the standard globals both runtimes share (<code>crypto</code>, <code>Date.now</code>, <code>setTimeout</code>, <code>Math.random</code>), and its file collector (<code>collectFilesUnderDirectory</code>, lines 1272–1288) gathers only <code>.ts</code> files, not <code>.tsx</code>.</p>
 
 <h2 id="who">Who needs this, and why</h2>
 <ul>
@@ -83,7 +83,7 @@ flowchart TB
 <table>
 <thead><tr><th>Need</th><th>In the approved design</th><th>What this deliverable delivers of it</th></tr></thead>
 <tbody>
-<tr><td id="U23"><strong>U23</strong> One runtime-free core; each runtime is a host that injects storage, clock, IDs, crypto and outbound calls</td><td><code>docs/specs/2026-11-02-fleet-access/requirements.source.html:174</code>, rule R30 (<code>specification.source.html:277</code>), proof row U23 (<code>verification-design.source.html:278</code>)</td><td>The crypto part, which is the only part missing. Plus the scan coverage that proof row U23 asks for.</td></tr>
+<tr><td id="U23"><strong>U23</strong> One runtime-free core; each runtime is a host that injects storage, clock, IDs, crypto and outbound calls</td><td><code>docs/specs/2026-11-02-fleet-access/requirements.source.html:174</code>, rule R30 (<code>specification.source.html:277</code>), proof row U23 (<code>verification-design.source.html:278</code>)</td><td>The crypto part of R30, the scan coverage proof row U23 asks for, and U23's recording of clock, ID and central calls on the same paths. <strong>Not here:</strong> U23's "device-code approval rule is in the core" (B3, machine login); the full SO2 set on both hosts stays with each journey's deliverable. <a href="verification-design.html#u23">See the U23 split.</a></td></tr>
 <tr><td id="U16"><strong>U16</strong> One design on any host</td><td><code>requirements.source.html:172</code></td><td>Nothing in the core depends on which runtime it runs on for crypto.</td></tr>
 </tbody>
 </table>
@@ -94,7 +94,7 @@ flowchart TB
 <li><strong>The real flood counter</strong> (R52): its own deliverable, B1-3.</li>
 <li><strong>Better Auth's own internal crypto</strong> (session tokens, sign-in state, two-factor codes): your design keeps Better Auth as shipped, and R30 governs our rules, not the library's internals.</li>
 <li><strong>Scripts that run in the browser</strong> (the admin page's and sign-in pages' inline scripts): they run in the person's browser, not in the service, so they keep using the browser's crypto and <code>fetch</code>.</li>
-<li><strong>No format change:</strong> no change to tokens, proofs, digests, the page security policy, or any public contract.</li>
+<li><strong>No format change:</strong> no change to tokens, proofs, digests or the page security policy. The one outside change, the published package's function parameters, is <a href="brief.html#d1">D1</a>.</li>
 </ul>
 </ex-document>
 </body>

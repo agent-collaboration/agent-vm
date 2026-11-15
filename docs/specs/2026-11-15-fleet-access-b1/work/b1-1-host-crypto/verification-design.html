@@ -20,32 +20,30 @@
 </nav></ex-nav>
 <ex-document id="doc">
 <h1>B1-1 · The host supplies all cryptography: Verification Design</h1>
-<p>How each rule on the <a href="specification.html">Specification</a> will be shown to hold, and what stays unproven. <strong>This is a plan: nothing here has been run yet.</strong> The paired Verifier runs these checks on the pinned PR commit, and each must fail on its named wrong build.</p>
+<p>How each rule on the <a href="specification.html">Specification</a> will be shown to hold, and what stays unproven. <strong>This is a plan: nothing here has been run.</strong> The paired Verifier runs these checks on the pinned PR commit, and each must fail on its named wrong build.</p>
 
 <h2 id="three">The three things for you</h2>
 <ex-callout title="1 · What you should check" tone="note" icon="shield-check">
-<p>Two checks carry the weight:</p>
-<ul>
-<li><strong><a href="#V2">V2</a>, the recording run:</strong> it watches every crypto call go through the host's capability. Your proof row U23 asks for exactly this.</li>
-<li><strong><a href="#V4">V4</a>, the architecture check:</strong> planted slips, including one in a <code>.tsx</code> page, must fail it.</li>
-</ul>
-<p>The real Chrome pages and the admin journey also keep passing on both hosts (<a href="#V5">V5</a>).</p>
+<p>Two checks carry the weight.</p>
+<p><strong><a href="#V2">V2</a>, the recording run</strong>, does what your proof row U23 asks. It drives each of the six sites with known inputs and checks that each one's exact operation and input appears in the record. So any one site left on the runtime's crypto fails it. The same run also records clock, ID and central calls.</p>
+<p><strong><a href="#V4">V4</a>:</strong> planted slips, including one inside a <code>.tsx</code> page and one hidden in a <code>${…}</code> template expression, must fail the architecture check.</p>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p><strong>None.</strong> <a href="#V3">V3</a> checks against fixed reference values, including central's own shared vectors, that nothing anyone sees has changed.</p>
+<p><strong>None for people.</strong> <a href="#V3">V3</a> checks against fixed known values, including central's own shared vectors, that nothing anyone sees has changed.</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
-<p>Every check traces to your rule R30 and your proof row U23: <em>"Run SO2 on both hosts; run the core with recording capabilities and a pinned process clock … every clock, identifier, crypto and central call is recorded; no platform global in the core outside the Better Auth boundary module, and a Node or Worker import placed in a sign-in-core source file makes the audit fail."</em></p>
+<p>Every check traces to your rule R30 and your proof row U23 (<a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/verification-design.source.html">approved Verification Design</a>, line 278): <em>"Run SO2 on both hosts; run the core with recording capabilities and a pinned process clock … every clock, identifier, crypto and central call is recorded; no platform global in the core outside the Better Auth boundary module, and a Node or Worker import placed in a sign-in-core source file makes the audit fail; the device-code approval rule is in the core."</em></p>
+<p>What this deliverable proves of that row, and what it leaves to others, is in <a href="#u23">the U23 split</a> at the end.</p>
 </ex-callout>
 
 <h2 id="paths">Where each check looks</h2>
 <ex-mermaid id="obs-paths" label="What each check drives and where it looks" data-width="canvas"><script type="text/plain">
 flowchart TB
-  v1["V1 render a page<br/>with fixed random bytes"] --> n["The nonce in the header<br/>and on every script tag"]
-  v2["V2 run page, admin forwarding,<br/>statement read on a recording crypto"] --> r["The record of crypto calls"]
+  v1["V1 render pages with fixed or counting random bytes"] --> n["The nonce in the header and on every script tag"]
+  v2["V2 drive the six sites with known inputs<br/>on recording capabilities, pinned process clock"] --> r["Each site's exact operation and input in the record"]
   v3["V3 fixed inputs"] --> k["Known values: published SHA-256,<br/>central's vectors, RFC 7638, jose verify"]
-  v4["V4 planted slips and the real tree"] --> a["Architecture check result"]
-  v5["V5 real Chrome and the admin journey<br/>on local workerd and Node"] --> h["Pages run, proofs accepted"]
+  v4["V4 planted slips, the base tree, a type mutation"] --> a["Architecture check and type-check results"]
+  v5["V5 real Chrome, relay, CLI, organization journey"] --> h["Pages run, proofs accepted, per host"]
   class v1,v2,v3,v4,v5 slot2
   class n,r,k,a,h slot6
 </script></ex-mermaid>
@@ -53,103 +51,150 @@ flowchart TB
 
 <h2 id="checks">The checks</h2>
 
-<h3 id="V1">V1 · The page nonce comes from the host (S1)</h3>
-<p><strong>Proven by:</strong> rendering an owner page and a factor page with a crypto that returns the bytes 00 to 0f, and seeing that exact nonce in the page's security header and on every script tag.</p>
+<h3 id="V1">V1 · The page nonce is the host's bytes, and only rendered pages ask (S1)</h3>
+<p><strong>Proven by:</strong> rendering pages with a crypto that returns known bytes, and seeing exactly those bytes as the nonce. A reply that isn't a rendered page must ask for none.</p>
 <ul>
-<li><strong>Test:</strong> new focused tests in <code>sign-in-core</code> (<code>pages/page-nonce.unit.test.ts</code>, plus a case in <code>better-auth/served-page-appearance.unit.test.ts</code>), in the unit lane.</li>
-<li><strong>Passes when:</strong> the header contains <code>'nonce-000102030405060708090a0b0c0d0e0f'</code> and every <code>&lt;script nonce&gt;</code> equals it. Two renders with a counting crypto get two different nonces.</li>
-<li><strong>Fails on:</strong> today's <code>page-document.tsx</code>, which mints its own nonce, so the header doesn't match the fixed bytes.</li>
-<li><strong>Reference:</strong> S1's format (16 bytes, 32 lowercase hex).</li>
-<li><strong>Unverified:</strong> nothing beyond V5's limits.</li>
-</ul>
-
-<h3 id="V2">V2 · Every crypto call goes through the capability (S1, S2)</h3>
-<p><strong>Proven by:</strong> running three real core paths with a recording crypto, and seeing each expected operation in the record.</p>
-<ul>
-<li><strong>The three paths:</strong>
-  <ol>
-  <li>serving an owner page through <code>sign-in-http-handler</code>;</li>
-  <li>forwarding an admin operation against the existing controlled central admin fixture (<code>test-fixtures/controlled-central-admin.ts</code>);</li>
-  <li>reading a signed organization statement in stamp renewal.</li>
-  </ol></li>
-<li><strong>Test:</strong> new <code>packages/sign-in-test-support/src/host-crypto-recording.integration.test.ts</code>, in the integration lane, using the new <code>recording-sign-in-crypto.ts</code> fixture.</li>
+<li><strong>Tests:</strong>
+  <ul>
+  <li>new <code>packages/sign-in-core/src/contracts/page-nonce.unit.test.ts</code>;</li>
+  <li>new cases in <code>better-auth/served-page-appearance.unit.test.ts</code> (owner page) and <code>better-auth/factor-enrollment-page.unit.test.ts</code> (factor page and pass-through).</li>
+  </ul>
+  All run in the unit lane (<code>pnpm test:unit</code>).</li>
 <li><strong>Passes when:</strong>
   <ul>
-  <li>path 1 records <code>getRandomValues(16)</code>;</li>
-  <li>path 2 records <code>generateKey(ECDSA P-256)</code>, <code>exportKey(jwk)</code>, <code>getRandomValues(32)</code>, <code>digest(SHA-256)</code> for the challenge, the thumbprint and the intent, and <code>sign(ECDSA SHA-256)</code>;</li>
-  <li>path 3 records <code>digest(SHA-256)</code>;</li>
-  <li>a crypto that throws makes path 1 return the handler's generic error response, with no row written.</li>
+  <li>with bytes 00…0f, the security header contains <code>'nonce-000102030405060708090a0b0c0d0e0f'</code>, and every <code>&lt;script nonce&gt;</code> equals it;</li>
+  <li>with a counting crypto, each rendered page asks exactly once, and its nonce equals that call's bytes;</li>
+  <li>a factor POST that returns JSON, a 303 redirect, or a pass-through makes zero <code>getRandomValues</code> calls.</li>
   </ul></li>
-<li><strong>Fails on:</strong> any of the six sites left on the runtime global, because its operation never appears in the record.</li>
+<li><strong>Fails on:</strong>
+  <ul>
+  <li>today's <code>page-document.tsx</code>, whose nonce isn't the fixed bytes;</li>
+  <li>a build that mints in the handler before it knows HTML is needed, which makes a call on the JSON path.</li>
+  </ul></li>
+<li><strong>Reference:</strong> S1 (16 bytes as 32 lowercase hex; a draw only for a rendered page).</li>
+</ul>
+
+<h3 id="V2">V2 · Every crypto call goes through the capability (S1, S2), and so do clock, IDs and central (U23)</h3>
+<p><strong>Proven by:</strong> driving each of the six sites with known inputs on recording capabilities, and finding each site's own operation <em>and input</em> in the record. Several calls are SHA-256, so the check matches the input digested, not just the operation name.</p>
+<ul>
+<li><strong>Test:</strong> new <code>packages/sign-in-test-support/src/host-crypto-recording.integration.test.ts</code>, in the integration lane (<code>pnpm test:integration</code>). It uses the new <code>recording-sign-in-capabilities.ts</code> fixture.</li>
+<li><strong>Pinned process clock:</strong> the whole file runs with the process clock pinned (Vitest fake timers with a fixed system time, far from the injected clock's time). Any output carrying the pinned process time shows a real-clock read. Your proof row U23 asks for this "pinned process clock".</li>
+</ul>
+<table>
+<thead><tr><th>Site</th><th>How it's driven</th><th>Expected in the record (operation and input)</th></tr></thead>
+<tbody>
+<tr><td>Page nonce</td><td>An owner page request through the sign-in handler</td><td><code>getRandomValues(16)</code>; the returned bytes equal the page's nonce (as V1)</td></tr>
+<tr><td>Admin verifier</td><td>An admin operation forwarded against the controlled central admin fixture (<code>test-fixtures/controlled-central-admin.ts</code>), with fixed 32 bytes</td><td><code>getRandomValues(32)</code>; and the <code>code_challenge</code> the token endpoint receives equals base64url(SHA-256(base64url(those 32 bytes))). A build that discards the bytes fails this.</td></tr>
+<tr><td>Proof key and signature</td><td>The same forwarding</td><td><code>generateKey(ECDSA P-256)</code>; <code>exportKey(jwk)</code> of the public key; <code>digest</code> of the canonical JWK (thumbprint); <code>digest</code> of the access token (<code>ath</code>); <code>sign(ECDSA SHA-256)</code> of the exact signing input</td></tr>
+<tr><td>Intent digest</td><td>The same forwarding</td><td><code>digest</code> of the canonical intent text</td></tr>
+<tr><td>Statement digest</td><td>Stamp renewal reading a signed statement</td><td><code>digest</code> of the statement text</td></tr>
+<tr><td>Private key export and import</td><td>The CLI's Keychain store logic driven with an in-memory item store, or the core functions called directly</td><td><code>exportKey(jwk)</code> of the private key; <code>importKey(jwk, ECDSA P-256)</code></td></tr>
+<tr><td>Canonical-JSON digest</td><td>Called directly (no production caller)</td><td><code>digest</code> of the canonical text</td></tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Also recorded (U23):</strong> every clock read, ID mint and central call made along these paths goes through its capability, and none is missing from the record.</li>
+<li><strong>Failure cases:</strong>
+  <ul>
+  <li>a crypto that throws on the owner page path gives <code>503 {"error":"sign-in-unavailable"}</code>, with no session left from that request;</li>
+  <li>on the forwarding path, the steps after the throw don't happen.</li>
+  </ul></li>
+<li><strong>Fails on, one per site:</strong> leaving any one site on the runtime global removes that site's specific operation-and-input entry from the record. Each site has its own assertion, so the failure names it.</li>
 <li><strong>Reference:</strong> R30 and proof row U23's recording run.</li>
-<li><strong>Unverified:</strong> this runs on Node in the test process. It proves which code calls the capability, not how each runtime behaves, which is V5's job.</li>
+<li><strong>Unverified:</strong> this runs on Node in the test process. It proves which code calls the capability; how each runtime behaves is V5's job.</li>
 </ul>
 
 <h3 id="V3">V3 · Nothing anyone sees changes (S5)</h3>
-<p><strong>Proven by:</strong> the existing tests with known answers, updated only to hand in a crypto, still producing exactly the same values. Plus one new check that the page security policy text is unchanged.</p>
+<p><strong>Proven by:</strong> the existing tests with known answers, updated only to hand in a crypto, producing exactly the same values. Plus one new check that the page security policy text is unchanged.</p>
 <table>
 <thead><tr><th>Check</th><th>Known answer</th><th>Where</th></tr></thead>
 <tbody>
-<tr><td>Canonical-JSON digest</td><td>SHA-256 of <code>{}</code> is the published constant <code>44136fa3…aff8a</code></td><td><code>contracts/canonical-json.unit.test.ts</code> (existing)</td></tr>
-<tr><td>Admin intent digest</td><td>Central's shared producer vectors (<code>vector.intentDigest</code>)</td><td><code>organizations/fleet-admin-operation.unit.test.ts</code> (existing)</td></tr>
-<tr><td>Key thumbprint</td><td>RFC 7638</td><td><code>central-link/fleet-admin-proof.unit.test.ts</code> (existing)</td></tr>
-<tr><td>DPoP proof</td><td>The header is exactly <code>{ typ, alg: ES256, jwk }</code>, the claims are exact, and it verifies with the <code>jose</code> library against the public key</td><td><code>central-link/fleet-admin-proof.unit.test.ts</code> (existing)</td></tr>
-<tr><td>Page security policy</td><td>The policy text on <code>main</code> <code>f3b2b88b</code>, with the nonce substituted</td><td>new case beside V1</td></tr>
+<tr><td>Canonical-JSON digest</td><td>SHA-256 of <code>{}</code> is the published constant <code>44136fa3…aff8a</code></td><td><code>contracts/canonical-json.unit.test.ts:23–27</code></td></tr>
+<tr><td>Admin intent digest</td><td>Central's shared producer vectors (<code>vector.intentDigest</code>)</td><td><code>organizations/fleet-admin-operation.unit.test.ts:62–75</code></td></tr>
+<tr><td>Key thumbprint</td><td>RFC 7638</td><td><code>central-link/fleet-admin-proof.unit.test.ts:58–69</code></td></tr>
+<tr><td>DPoP proof</td><td>The header is exactly <code>{ typ, alg: ES256, jwk }</code>, the claims are exact, and it verifies with <code>jose</code> against the public key</td><td><code>central-link/fleet-admin-proof.unit.test.ts:17–43</code></td></tr>
+<tr><td>Page security policy</td><td>The policy text from <code>pageContentSecurityPolicy</code> on <code>main</code> <code>f3b2b88b</code>, with the nonce substituted</td><td>new case beside V1</td></tr>
 </tbody>
 </table>
 <ul>
 <li><strong>Passes when:</strong> every value is identical.</li>
-<li><strong>Fails on:</strong> a changed algorithm, encoding, key curve, claim or policy directive.</li>
-<li><strong>Unverified:</strong> central itself isn't run here. Its vectors are the reference, and the live exchange is V5's admin journey.</li>
+<li><strong>Fails on:</strong> a changed algorithm, encoding, curve, claim or policy directive.</li>
+<li><strong>Unverified:</strong> central itself doesn't run here. Its vectors are the reference.</li>
 </ul>
 
 <h3 id="V4">V4 · The check catches a slip, and the capability is required (S3, S6)</h3>
-<p><strong>Proven by:</strong> planting slips in test sources and seeing the architecture check reject each one and accept the allowed look-alikes. Then running the check on the real tree.</p>
+<p><strong>Proven by:</strong> planting slips in test sources and seeing the architecture check reject each one and accept the allowed look-alikes. Then running the new check over today's core source, and a deliberate type mutation.</p>
 <ul>
-<li><strong>Tests:</strong> new cases in <code>scripts/audit-portal-architecture.unit.test.ts</code>, run by <code>pnpm test:unit</code>:
+<li><strong>Tests:</strong> new cases in <code>scripts/audit-portal-architecture.unit.test.ts</code> (unit lane):
   <ul>
-  <li><strong>Rejected:</strong> a <code>.tsx</code> core file using <code>crypto.randomUUID()</code>; a <code>.ts</code> core file using <code>globalThis.crypto.subtle.digest</code>; each of <code>Date.now()</code>, <code>new Date()</code>, <code>performance.now()</code>, <code>setTimeout</code>, <code>setInterval</code> and <code>Math.random()</code>.</li>
-  <li><strong>Accepted:</strong> <code>platform.crypto.getRandomValues(…)</code>; a parameter named <code>crypto</code>; the same calls inside a template-string browser script; <code>new Date(now)</code> with an argument; a <code>*.unit.test.ts</code> file.</li>
+  <li><strong>Rejected:</strong>
+    <ul>
+    <li>a <code>.tsx</code> core file using <code>crypto.randomUUID()</code>;</li>
+    <li>a <code>.ts</code> core file using <code>globalThis.crypto.subtle.digest</code>;</li>
+    <li><code>`${crypto.randomUUID()}`</code> inside a template;</li>
+    <li>each of <code>Date.now()</code>, <code>new Date()</code>, <code>performance.now()</code>, <code>setTimeout</code>, <code>setInterval</code> and <code>Math.random()</code>;</li>
+    <li><code>globalThis['crypto']</code>;</li>
+    <li>a Node import (<code>import 'node:fs'</code>) in a core file, the mutant your proof row U23 names.</li>
+    </ul></li>
+  <li><strong>Accepted:</strong> <code>platform.crypto.getRandomValues(…)</code>; a parameter named <code>crypto</code>; the same calls as literal text inside a browser-script template; <code>new Date(now)</code>; a <code>*.unit.test.ts</code> file.</li>
   </ul></li>
-<li><strong>The real tree:</strong> <code>pnpm test:portal-architecture</code> reports exactly the six sites on <code>main</code>, and nothing on the PR.</li>
-<li><strong>Required capability (S3):</strong> a type-level case, a <code>SignInPlatform</code> literal without <code>crypto</code> marked <code>@ts-expect-error</code>, compiled by <code>pnpm check</code>. If <code>crypto</code> were optional, the marker would be unused and the type-check would fail.</li>
-<li><strong>Fails on:</strong> the check as it is today, which passes the planted <code>.tsx</code> and global slips.</li>
-<li><strong>Reference:</strong> proof row U23 and S6.</li>
-<li><strong>Unverified:</strong> an obscure aliasing trick, such as <code>const c = globalThis; c['cry' + 'pto']</code>, can evade a syntax check. The Verifier's source read of the changed files covers it.</li>
+<li><strong>The base tree:</strong> the PR's checker, run over the base commit's <code>packages/sign-in-core/src/</code>, reports exactly the six sites. Run over the PR's tree, it reports none. (Today's checker on <code>main</code> doesn't have the rule, so it reports nothing either way.)</li>
+<li><strong>Capability required (S3):</strong> two deliberate mutations, run by the Verifier and then reverted:
+  <ul>
+  <li>removing <code>crypto</code> from <code>createWebSignInCapabilities</code>' return must make <code>pnpm typecheck</code> fail in the hosts;</li>
+  <li>making <code>SignInPlatform.crypto</code> optional must make the core's call sites fail to type-check.</li>
+  </ul>
+  The core's test files aren't type-checked by <code>pnpm typecheck</code> (the package excludes <code>src/**/*.test.ts</code>), so this proof is a mutation, not a test file.</li>
+<li><strong>Fails on:</strong> today's checker, which passes the planted slips.</li>
+<li><strong>Unverified:</strong> exotic aliasing (for example <code>const g = globalThis; g[name]</code> built at run time) can evade a syntax check. The Verifier's and the reviewer's source reads cover it.</li>
 </ul>
 
-<h3 id="V5">V5 · Both hosts still work, unchanged (S4, S5)</h3>
-<p><strong>Proven by:</strong> the existing real-path journeys passing on local workerd with D1 and on the Node host with better-sqlite3.</p>
+<h3 id="V5">V5 · Both hosts still work (S4, S5): a regression check</h3>
+<p><strong>Proven by:</strong> the existing real-path journeys passing on the hosts they actually cover.</p>
+<table>
+<thead><tr><th>Journey</th><th>Command</th><th>Hosts it covers</th></tr></thead>
+<tbody>
+<tr><td>Served sign-in pages in real Chrome</td><td><code>pnpm test:e2e:host</code> (<code>sign-in-native-browser.host.e2e.test.ts</code>)</td><td>Both: local workerd with D1, and Node with better-sqlite3 (the test is parameterized over both)</td></tr>
+<tr><td>Admin relay; the owner CLI</td><td><code>pnpm test:e2e:host</code> (<code>fleet-admin-relay.host.e2e.test.ts</code>, <code>fleet-cli.host.e2e.test.ts</code>)</td><td>One: the local auth harness that <code>setupFleetCli()</code> starts</td></tr>
+<tr><td><code>verify-auth</code> <code>organization</code> journey (lasting; read in <code>.agents/skills/verify-auth/references/organization-statements.md</code>)</td><td><code>pnpm exec tsx scripts/verify-auth/verify-auth.ts organization --target-file "$AUTH_VERIFY_TARGET_FILE"</code>, run once with a <code>local-workerd</code> target and once with a <code>local-node</code> target</td><td>Each run covers its own target</td></tr>
+</tbody>
+</table>
 <ul>
-<li><strong>Served sign-in pages:</strong> real Chrome runs a page's scripts only when their nonce matches the page's security policy, so a wrong or missing nonce breaks the page.</li>
-<li><strong>Admin forwarding and relay:</strong> real proofs and digests are accepted by the controlled central.</li>
-<li><strong>Tests:</strong> reused as they are, in <code>pnpm test:e2e:host</code>:
-  <ul>
-  <li><code>sign-in-native-browser.host.e2e.test.ts</code>: both storage hosts, headless Chrome;</li>
-  <li><code>fleet-admin-relay.host.e2e.test.ts</code>;</li>
-  <li><code>fleet-cli.host.e2e.test.ts</code>;</li>
-  <li>the <code>verify-auth</code> <code>organization</code> journey on <code>local-workerd</code> and <code>local-node</code> (journey read: <code>.agents/skills/verify-auth/SKILL.md</code>, "Organization statements"; lasting).</li>
-  </ul></li>
-<li><strong>Passes when:</strong> every case passes on both hosts.</li>
-<li><strong>Fails on:</strong> a host that computes its own nonce format (Chrome blocks the scripts), or one that changes a proof (the relay refuses it). A host that doesn't hand in <code>crypto</code> doesn't compile.</li>
+<li><strong>Passes when:</strong> every case passes on the hosts in the table.</li>
+<li><strong>What it can and can't catch:</strong> V5 catches a host or capability that breaks pages or proofs outright, for example a crypto that throws or returns the wrong length. It doesn't, by itself, prove a host "adds no rule".</li>
+<li><strong>How S4 is decided:</strong> the Verifier reads the host diffs. The Cloudflare and Node hosts must have no crypto edits of their own, and <code>sign-in-platform-web</code> must only hand in <code>globalThis.crypto</code>.</li>
+<li><strong>How S5's formats are decided:</strong> by V3.</li>
 <li><strong>Unverified:</strong>
   <ul>
   <li>deployed Cloudflare and Node hosts;</li>
-  <li>the real central, which the controlled central stands in for, as today;</li>
-  <li>the macOS Keychain CLI test, which runs only on a Mac.</li>
+  <li>the real central (the controlled central stands in, as today);</li>
+  <li>the macOS Keychain CLI test, which runs only on a Mac;</li>
+  <li>the relay and CLI journeys on the second host.</li>
   </ul>
   The browser test still carries B1-2's real-timer defect until B1-2 lands. That affects how it waits, not what it checks here.</li>
 </ul>
+
+<h2 id="u23">The U23 split: what this deliverable proves, and what it leaves</h2>
+<table>
+<thead><tr><th>Part of proof row U23</th><th>Here?</th></tr></thead>
+<tbody>
+<tr><td>Crypto calls recorded; no runtime crypto in the core</td><td>Yes: V2, V4</td></tr>
+<tr><td>Clock, ID and central calls recorded on the same paths; a pinned process clock</td><td>Yes: V2, for the paths it drives</td></tr>
+<tr><td>A Node or Worker import in a core file fails the check</td><td>Yes: V4 (the existing rule, now planted as a case)</td></tr>
+<tr><td>SO2 on both hosts</td><td>Partly: V5 covers the served pages on both hosts, and the organization journey per target. The full SO2 journey set on both hosts belongs with each journey's own deliverable.</td></tr>
+<tr><td>"The device-code approval rule is in the core"</td><td><strong>Not here.</strong> It's about machine login and belongs to B3.</td></tr>
+</tbody>
+</table>
 
 <h2 id="coverage">Coverage, for the Verifier and the reviewer</h2>
 <div class="ex-table-scroll" data-width="canvas"><table>
 <thead><tr><th>Need</th><th>Rules</th><th>Seam (Program Design)</th><th>Checks</th><th>Target</th><th>Passes when</th><th>Unverified</th></tr></thead>
 <tbody>
-<tr><td><strong>U23</strong> one runtime-free core, injected</td><td><a href="specification.html#S1">S1</a>, <a href="specification.html#S2">S2</a>, <a href="specification.html#S3">S3</a>, <a href="specification.html#S5">S5</a>, <a href="specification.html#S6">S6</a></td><td><code>SignInPlatform.crypto</code>, <code>mintPageNonce</code>, the changed functions, <code>collectAuthCoreViolations</code></td><td>V1, V2, V3, V4, V5</td><td>switchboard PR head; Node 24.7.0; <code>better-auth</code> 1.7.11; local workerd + D1 and Node + better-sqlite3; Chrome version recorded</td><td>As each check above, each failing on its wrong build</td><td>Deployed hosts; real central; Better Auth's internal crypto (out of scope); syntax-check evasion beyond the source read</td></tr>
-<tr><td><strong>U16</strong> one design on any host</td><td><a href="specification.html#S4">S4</a></td><td><code>createWebSignInCapabilities</code></td><td>V5, V4 (type-check)</td><td>Both local hosts as above</td><td>Both hosts pass unchanged with the capability handed in by the shared builder</td><td>Deployed hosts</td></tr>
+<tr><td><strong>U23</strong> one runtime-free core, injected</td><td><a href="specification.html#S1">S1</a>, <a href="specification.html#S2">S2</a>, <a href="specification.html#S3">S3</a>, <a href="specification.html#S5">S5</a>, <a href="specification.html#S6">S6</a></td><td><code>SignInPlatform.crypto</code>, <code>mintPageNonce</code>, the changed functions and props, <code>collectAuthCoreViolations</code></td><td>V1, V2, V3, V4, V5</td><td>switchboard PR head; Node 24.7.0; <code>better-auth</code> 1.7.11; hosts per V5's table; Chrome version recorded</td><td>As each check, each failing on its wrong build</td><td>Deployed hosts; real central; the parts of U23 named in <a href="#u23">the split</a>; exotic aliasing beyond source reads</td></tr>
+<tr><td><strong>U16</strong> one design on any host</td><td><a href="specification.html#S4">S4</a></td><td><code>createWebSignInCapabilities</code></td><td>V5, the source read, V4's type mutation</td><td>As V5</td><td>The hosts pass with the capability handed in by the shared builder, and add no crypto code</td><td>Deployed hosts</td></tr>
 </tbody>
 </table></div>
-<p><strong>Journeys needed:</strong> none new. The <code>verify-auth</code> <code>organization</code> journey and the existing host e2e tests are reused, and the recording run (V2) is a new permanent integration test.</p>
+<p><strong>Journeys needed:</strong> none new. The recording run (V2) is a new permanent integration test.</p>
 </ex-document>
 </body>
 </html>
