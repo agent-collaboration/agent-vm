@@ -39,6 +39,14 @@
 - Commits are signed with 1Password. After two failed signing attempts, `git commit --no-gpg-sign` is allowed.
 - The Implementer opens the PR as a draft. Merging is the Lead's, after review and acceptance.
 
+## Work log and scratch
+- **No board thread** (`no-home`). The work log is the Lead's trace, `~/dev/session-logs/projects/2026/2026-10-agent-vm/planbooks/2026-10-18-tool-portal-identity-advisor-claude-2febb449.md`. Only the Lead writes it.
+- **Your record** is your return file in `work/` plus your agent-router reports to the Lead.
+- **Scratch:**
+  - the Verifier uses `/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-15-b1-a-verifier/` for frozen PR and base copies, scratch worktrees and logs. That covers V4's base-tree run: make the scratch worktree there with `git -C /Users/shravansunder/code/projects/switchboard worktree add <that folder>/base-f3b2b88b f3b2b88b`, and remove it afterwards;
+  - the Implementer uses its own Agent Studio worktree.
+- **The declared target** is the PR head commit the Implementer names in its handback, or in a direct message to the Verifier for an interim batch. Verify only a pinned commit.
+
 ## Returns
 - Implementer: `work/implementer-handback.md`, as Packet 1 says.
 - Verifier: `work/verifier-observation.md` and `work/evidence/`, as Packet 2 says.
