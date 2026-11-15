@@ -1133,3 +1133,9 @@ The workspace id equals the operation id.
     2. remove `machine:setTokenLifetime` from sign-in (access control, permission check, `fleet-permission.ts`, tests, and any mirrored permission fixtures, to match central's export);
     3. re-pin to 4b when its shapes are final.
   - No stamp or profile change. #17 is unaffected.
+- **D confirmed in full with Lead A (2026-11-15T00:39Z, push 01a1dca3).** Owner: "aaah lets just use always 10 mintues you are right is taht d?", "yes to d, clarify with the auth lead please fully". Q3 (per-org) is dropped. Checked from source:
+  - sign-in never computes the lifetime; it stamps central's `grant_expires_at` and keeps only the 3600 s outer sanity bound;
+  - device-code `10m` and issuer `accessTokenSeconds` are separate values;
+  - no test asserts a per-org lifetime;
+  - the only stray is the `machine:setTokenLifetime` string in `person-fleet-token.host.e2e.test.ts:49`, which goes with the #11 permission removal;
+  - pages updated to D.
