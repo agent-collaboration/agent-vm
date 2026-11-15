@@ -20,14 +20,14 @@
 </nav></ex-nav>
 <ex-document id="doc">
 <h1>B2 · Central organizations: Decisions</h1>
-<p>Your decisions, my calls with whether they should have been yours, what was there before, and three choices.</p>
+<p>Your decisions, my calls with whether they should have been yours, what was there before, and four choices.</p>
 
 <h2 id="three">The three things for you</h2>
 <ex-callout title="1 · What to check" tone="note" icon="shield-check">
 <p>The <a href="#calls">calls table</a>, especially: the engine permission now rolls out with one revision per organization, not the earlier two-step with an issuance pause; and how production maintenance is run.</p>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p>Three open: <a href="#retry">lost create replies</a>, <a href="#retire">key retirement pause</a>, <a href="#console">engine console scope</a>.</p>
+<p>Four open: <a href="#retry">lost create replies</a>, <a href="#retire">key retirement pause</a>, <a href="#console">engine console scope</a>, <a href="#maintenance">how production maintenance runs</a>.</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
 <p>Decided cards quote you with transcript lines. Nothing here is built.</p>
@@ -57,8 +57,8 @@
 <div class="ex-table-scroll" data-width="canvas"><table>
 <thead><tr><th>Call</th><th>Why</th><th>Should it have been yours?</th></tr></thead>
 <tbody>
-<tr><td>Engine permission rolls out with one fence revision per organization; the earlier draft's stop-then-resume and issuance pause are dropped</td><td>Lead A confirmed Central never admits on a mismatched digest and a repairWork token is inert until the engine routes exist (<code>request_admission.rs:135–137,182–196</code>; push <code>01a1e186-03f8</code>). The window refuses, it doesn't leak.</td><td>Possibly: during the window people get “refresh required” until Central acknowledges, usually seconds.</td></tr>
-<tr><td>Production maintenance (key retirement, digest roll) runs through a separate server-only entry: a Cloudflare <code>WorkerEntrypoint</code> no public route binds, and a Node CLI subcommand</td><td>Keeps maintenance off every public path.</td><td><strong>Yes:</strong> how you run production steps is yours. Disagree and I change the entry.</td></tr>
+<tr><td>Engine permission rolls out with one fence revision per organization; the earlier draft's stop-then-resume and issuance pause are dropped</td><td>Lead A confirmed Central never admits on a mismatched digest and a repairWork token is inert until the engine routes exist (<code>request_admission.rs:135–137,182–196</code>; push <code>01a1e186-03f8</code>). The window refuses, it doesn't leak.</td><td>Possibly: until Central acknowledges, new tokens get “authorization sync required” and clients retry; the length of that window hasn't been measured.</td></tr>
+<tr><td>Key retirement signs with exactly the key you name, and a crash is handled by running the same phase again</td><td>The default key could otherwise be a third key; nothing about a run is stored.</td><td>No.</td></tr>
 <tr><td>Status shows facts, not advice: expiry, pending, counts, last outcome</td><td>Rule 5 says the record keeps the condition for the page; notifications come later.</td><td>No.</td></tr>
 <tr><td>Ready organizations without a local record are seeded on first use and by key retirement, as today</td><td>Existing behaviour and test (<code>organization-statement.host.e2e.test.ts:624–654</code>).</td><td>No.</td></tr>
 <tr><td>Settlement of a send ignores the clock</td><td>An answer to bytes already sent is still true after they expire; dropping it would strand the organization.</td><td>No.</td></tr>
@@ -73,7 +73,7 @@
 <li>A draft rollout with two revisions and a pause; replaced by one revision.</li>
 </ul>
 
-<h2 id="open">Open: your three choices</h2>
+<h2 id="open">Open: your four choices</h2>
 <ex-mermaid id="current-model" label="Where the choices land" data-width="canvas"><script type="text/plain">
 flowchart TB
   page["Admin page"] --> create["Create workspace: choice 1, lost replies"]
@@ -180,6 +180,35 @@ flowchart TB
 <ex-choice id="choice-console" title="Where does the engine console land?">
 <ex-option id="console-a" title="A · Permission now, console later (recommended)"><template slot="summary">Smallest B2.</template></ex-option>
 <ex-option id="console-b" title="B · Whole console in B2"><template slot="summary">Designed and reviewed first.</template></ex-option>
+</ex-choice>
+
+<h3 id="maintenance">4 · How do you run production maintenance?</h3>
+<p>Key retirement and the digest roll need Better Auth's keys and the sign-in store, so they must run inside the sign-in service. Today there is no way to invoke such an operation (the Node host has no CLI; the Cloudflare host has only the gateway's management binding).</p>
+<ex-compare label="Maintenance invocation" data-width="canvas">
+<section id="mt-route" label="A · Owner-only endpoint and page on sign-in" icon="lock">
+<section data-compare-row="sees"><p><strong>What you do</strong></p><p>Sign in as the deployment owner, confirm a second factor, open the maintenance page, run a phase, read the report.</p></section>
+<section data-compare-row="changes"><p><strong>What changes</strong></p><p>One project Better Auth endpoint and page, same code on both hosts; everyone but the configured owner gets 404.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>A deployment-wide operation reachable on the public sign-in origin, guarded by owner identity and a fresh factor.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="mt-route-pic" label="Option A"><script type="text/plain">
+flowchart TB
+  owner["Owner, fresh factor"] --> ep["/api/auth/maintenance/*"] --> op["Retire key / roll digest"]
+</script></ex-mermaid></section>
+</section>
+<section id="mt-private" label="B · Private entrypoint through a maintenance Worker" icon="gear">
+<section data-compare-row="sees"><p><strong>What you do</strong></p><p>Deploy a small maintenance Worker bound to a private sign-in entrypoint for the window, call it, then delete it; on Node, run a new host command on the server.</p></section>
+<section data-compare-row="changes"><p><strong>What changes</strong></p><p>A private WorkerEntrypoint, a maintenance Worker config, and a new Node host command.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Two invocation paths and a deploy-and-delete step each time; nothing on the public origin.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="mt-private-pic" label="Option B"><script type="text/plain">
+flowchart TB
+  mw["Maintenance Worker (temporary)"] --> pe["Private entrypoint"] --> op["Retire key / roll digest"]
+  node["Node host command"] --> op
+</script></ex-mermaid></section>
+</section>
+</ex-compare>
+<ex-callout title="Recommendation: A" tone="decision" icon="lock"><p>One path on both hosts, behind the strongest identity you have (deployment owner plus fresh factor). Choose B if you want nothing deployment-wide on the public origin.</p></ex-callout>
+<ex-choice id="choice-maintenance" title="How do you run production maintenance?">
+<ex-option id="maintenance-a" title="A · Owner-only endpoint and page (recommended)"><template slot="summary">Same on both hosts.</template></ex-option>
+<ex-option id="maintenance-b" title="B · Private entrypoint via a maintenance Worker"><template slot="summary">Off the public origin; more steps.</template></ex-option>
 </ex-choice>
 </ex-document>
 </body>

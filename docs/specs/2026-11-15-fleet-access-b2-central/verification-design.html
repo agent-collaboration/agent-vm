@@ -88,14 +88,15 @@ sequenceDiagram
   participant G as Fleet-call guard
   participant P as Link fault proxy
   participant C as Real Central
-  G->>P: send statement A
-  P-->>P: hold
-  Note over G: controlled clock moves past A's expiry
-  P->>C: release
-  C-->>G: answer
+  G->>P: send statement A (still valid)
+  P->>C: forward
+  C-->>P: answer, Central committed
+  P-->>P: hold the reply
+  Note over G: controlled sign-in clock moves past A's expiry
+  P-->>G: release the exact reply bytes
   G->>G: settle by A's bytes, not the clock
 </script></ex-mermaid>
-<p>For each answer while A has expired in flight: provisioned → confirmed; unknown → A kept, unanswered +1; non-stale refusal → A cleared, refused +1; stale with differing expired facts → adopted, then the next pass replaces them, and no Fleet call runs under expired facts. A late answer for A after A was replaced by B: the write loses; B untouched. Two callers at once: one statement in doubt. Kept: <code>organization-statement.host.e2e.test.ts:339–622</code>, the R29 joint case.</p>
+<p>The existing proxy holds requests before forwarding and drops replies (<code>b2e/link-fault-proxy.ts:55–77,150–201</code>); a request held past expiry would be refused by Central (<code>fleet_statement.rs:67–74</code>). So the proxy gains a test-only <code>holdNextReply</code>: Central processes A while valid, the proxy keeps its reply, the sign-in clock alone moves past expiry (the joint fixture's clocks are separated for this case), then the same reply bytes are released. The guard's deadline is controlled so it doesn't time out first. For each answer while A has expired in flight: provisioned → confirmed; unknown → A kept, unanswered +1; non-stale refusal → A cleared, refused +1; stale with differing expired facts → adopted, then the next pass replaces them, and no Fleet call runs under expired facts. A late answer for A after A was replaced by B: the write loses; B untouched. Two callers at once: one statement in doubt. Kept: <code>organization-statement.host.e2e.test.ts:339–622</code>, the R29 joint case.</p>
 <p><strong>Wrong builds:</strong> check expiry in settlement (late answers dropped); settle without the bytes condition.</p>
 
 <h2 id="V7">V7 · Key retirement (S11, S12)</h2>
@@ -104,14 +105,19 @@ sequenceDiagram
 <li>Run retirement with real native keys: setting up blocks; the record-less one is seeded from Central and re-signed; idle is re-signed. Try Again on the setting-up one, run again: ready to withdraw.</li>
 <li>Withdraw the old key from the published key set; cold-start each Central over preserved data; an authorized read succeeds for every organization.</li>
 <li>Lose one confirmation answer mid-run: that organization is unfinished and withdrawal is refused.</li>
+<li>Three real keys: old A, requested new B, and a different default C. Every replacement statement's header names B.</li>
+<li>Equal keys, an unknown key and an expired new key are refused before any work.</li>
+<li>Interrupt and invoke the same phase again: before the sent-slot claim, after Central committed, after source confirmation, after withdrawal and before the restart check, after the restart. Each re-invocation reaches the same end; <code>check-after-withdrawal</code> completes only after the preserved Central stores really cold-started and served reads.</li>
+<li>All through the maintenance endpoint on both pairings: the configured owner with a fresh factor succeeds; a member, another owner, a stale factor and the gateway's management binding get nothing.</li>
 </ol>
-<p><strong>Wrong builds:</strong> count the outer loop finishing as success; skip ready organizations with no record; ignore setting-up ones.</p>
+<p><strong>Wrong builds:</strong> count the outer loop finishing as success; skip ready organizations with no record; ignore setting-up ones; sign with the default key instead of the requested one.</p>
 
 <h2 id="V8">V8 · Engine permission (S15)</h2>
 <ul>
 <li>Unit: the owner holds <code>organization:repairWork</code>, the member nothing; the digest equals the expected value computed from the map.</li>
 <li>Run the digest roll on both pairings: each organization's revision rises by one with the new digest; a second run changes nothing; deleted organizations are untouched.</li>
-<li>Before Central's ACK: a new-digest token gets RefreshRequired; after: admitted. An old-digest token after the ACK: RefreshRequired. An old process (old loaded digest) refuses issuance with <code>policy-mismatch</code>.</li>
+<li>Before Central's ACK: a new token (revision N+1) gets AuthorizationSyncRequired; after: admitted. An old token (revision N) after the ACK: RefreshRequired. An old process (old loaded digest) refuses issuance with <code>policy-mismatch</code>.</li>
+<li>Same revision with different content is Conflict, and no ACK is recorded; drop the ACK, then the next invocation or Fleet call pushes the pending revision.</li>
 <li>Admission order cases on Central: token above a stopped floor → AuthorizationSyncRequired; deleted floor → NotPermitted.</li>
 </ul>
 
@@ -119,14 +125,15 @@ sequenceDiagram
 <p>Diff read: no history-derived list, no <code>freshOperationId</code>, no three-kind parser, no hand-written page; joint pins moved. B1-A's architecture check over new files with a planted bare crypto call and a non-v7 ID, both failing. Full gates as on <a href="plan.html#gates">Plan</a>.</p>
 
 <h2 id="V10">V10 · The machines (S16)</h2>
-<p>Hegel families in <code>packages/sign-in-test-support/src/core-tests/</code>: <code>organization-setup-transitions.hegel.unit.test.ts</code>, <code>organization-stamp-transitions.hegel.unit.test.ts</code>, <code>key-retirement-transitions.hegel.unit.test.ts</code>, <code>organization-admin-create.hegel.unit.test.ts</code>. Settings <code>{ testCases: 1000, derandomize: true, database: hegel.Database.disabled }</code>. Sequences of 0–40 events from a finite catalogue; clock offsets around expiry; retries and duplicated answers. Each family's reference model is written in the test; after every prefix compare next state and proposed effects in full.</p>
+<p>Hegel families in <code>packages/sign-in-test-support/src/core-tests/</code>: <code>organization-setup-transitions.hegel.unit.test.ts</code>, <code>organization-stamp-transitions.hegel.unit.test.ts</code>, <code>key-retirement-transitions.hegel.unit.test.ts</code>, <code>organization-admin-create.hegel.unit.test.ts</code>. Settings <code>{ testCases: 1000, derandomize: true, database: hegel.Database.disabled }</code>. Sequences of 0–40 events from a finite catalogue; clock offsets around expiry; retries and duplicated answers. Each family's reference model is written in the test; after every prefix compare next state and proposed effects in full. Besides random sequences, each family includes one fixed witness sequence per legal transition in its table, so every transition is reached by construction. The M4 page path is also driven in real Chrome on both pairings for success after step-up, retry after an unknown reply, and the 24-hour reconciliation (the existing <code>b2e-joint-journey.host.e2e.test.ts:1021–1063</code> case, retargeted).</p>
 <div class="ex-table-scroll" data-width="canvas"><table>
 <thead><tr><th>Family</th><th>Invariants</th><th>Wrong builds to shrink</th></tr></thead>
 <tbody>
 <tr><td>M1</td><td>ready only after provisioned; no send effect once ready</td><td>ready on unknown → [attempt, signed, answer(unknown)]</td></tr>
 <tr><td>M2</td><td>settlement independent of now; at most one statement in doubt; no send for an expired statement</td><td>clock in settlement → [send A, clock past A, answer(provisioned)]; resend after expiry → [send A, clock past A, use]</td></tr>
 <tr><td>M3</td><td>ready-to-withdraw only when every organization names the new key with nothing pending and Central agrees</td><td>skip record-less → [listed(ready: X with no record)]; ignore setting up → [listed(settingUp: Y)]</td></tr>
-<tr><td>M4</td><td>a new operation ID only after a definite refusal; at most one retry after step-up</td><td>new ID after unknown → [submit, reply(unknown), submit]; loop → [submit, step-up, confirmed, step-up]</td></tr>
+<tr><td>M4</td><td>a new operation ID only after a definite refusal or a reconciliation that found no own workspace; at most one retry after step-up; every forward effect carries the retained operation and content</td><td>new ID after unknown → [submit, reply(unknown), submit]; loop → [submit, step-up, confirmed, step-up]; rotate before reconciling → [submit, reply(nameInUse)]; no resend → [submit, reply(unknown), submit]; drop retrying+applied → [submit, step-up, confirmed, reply(applied)]</td></tr>
+<tr><td>M5 (<code>policy-digest-roll.hegel.unit.test.ts</code>)</td><td>a push only after a won write; finished only when every non-deleted organization is acknowledged; Conflict never counts as done; deleted never touched</td><td>push after a lost write → [roll, write-lost]; Conflict as done → [roll, write-won, conflict]</td></tr>
 </tbody></table></div>
 <p><strong>Runner tests:</strong> with a store whose conditional write loses, the production runner executes zero sends or seeds (recording ports); a runner mutated to send before claiming fails. <strong>Exhaustiveness:</strong> add one literal to each state, event and effect union in turn; <code>pnpm typecheck</code> fails at its <code>satisfies never</code>. <strong>Real races:</strong> two guards claiming the sent slot at once on D1 and better-sqlite3; exactly one wins.</p>
 </ex-document>

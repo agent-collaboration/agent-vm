@@ -62,7 +62,7 @@ flowchart TB
 <tr><td><code>organizations/organization-stamp-renewal.ts</code></td><td>Changed</td><td>Becomes the M2 runner: performs effects, writes conditionally.</td></tr>
 <tr><td><code>organizations/key-retirement-transitions.ts</code>, <code>organizations/organization-key-change.ts</code></td><td>New / changed</td><td>M3 and its runner.</td></tr>
 <tr><td><code>organizations/policy-digest-roll.ts</code>, <code>storage/authorization-fence-mutations.ts</code></td><td>New / changed</td><td>Per-organization conditional digest write.</td></tr>
-<tr><td><code>better-auth/sign-in-maintenance.ts</code>; <code>packages/sign-in-host-cloudflare/src/index.ts</code>; <code>packages/sign-in-host-node/src/</code> CLI</td><td>New / changed</td><td>The trusted maintenance entry on both hosts.</td></tr>
+<tr><td><code>better-auth/sign-in-maintenance.ts</code>, <code>better-auth/maintenance-plugin.ts</code>, <code>pages/maintenance-page.tsx</code>; <code>contracts/deployment-configuration.ts</code></td><td>New / changed</td><td>The owner-only maintenance endpoint and page on both hosts; the <code>SIGN_IN_ISSUANCE_PAUSED</code> setting.</td></tr>
 <tr><td><code>organizations/fleet-permission.ts</code>, <code>better-auth/fleet-permission-policy.ts</code>, <code>organizations/fleet-permission-policy-digest.ts</code></td><td>Changed</td><td>Adds <code>organization:repairWork</code> to the owner; new digest.</td></tr>
 </tbody></table></div>
 
@@ -127,28 +127,51 @@ type OrganizationStatus =
 <tr><td>withdrawn</td><td><code>restart-checked(ok | failed)</code></td><td>done / failed (no rollback claimed)</td></tr>
 <tr><td>blocked, failed</td><td>any</td><td>refused (<code>blocked</code>)</td></tr>
 </tbody></table></div>
-<p>The runner (<code>organization-key-change.ts</code>) reuses <code>renewOrganizationStampForUse</code> for each <code>renew(id)</code>, as today. Withdrawal is an owner step, outside the runner: the report says ready-to-withdraw; the owner withdraws; the runner is invoked again to check.</p>
+<p><strong>Key binding.</strong> An invocation takes <code>{ oldKeyId, newKeyId }</code>. Before any work it refuses <code>same-key</code> if they're equal, <code>unknown-key</code> if either isn't in Better Auth's JWKS, and <code>new-key-unusable</code> if the new key is expired or its algorithm differs. For the whole invocation the runner passes <code>signingKeyId: newKeyId</code> to Better Auth's native <code>signJWT</code> (supported in 1.7.11, <code>dist/plugins/jwt/sign.mjs:17–33</code>), through <code>signOrganizationStatement</code> (<code>organization-statement-signing.ts</code>, which today passes no key override), and uses <code>newKeyId</code> as the <code>currentSigningKeyId</code> for M2's decision. So the replacement statement names the requested key even when Better Auth's default is a third key.</p>
+<p><strong>Phases and reconstruction.</strong> Closed phases: <code>prepare</code> (re-sign and verify; ends in ready-to-withdraw or blocked) and <code>check-after-withdrawal</code> (ends in done or failed). Nothing about a run is stored. Each invocation rebuilds its state from facts: the JWKS (is <code>oldKeyId</code> still published?), every organization's fleet state and stamp record, and Central's facts read for each. <code>prepare</code> with the old key already withdrawn is refused (<code>already-withdrawn</code>); <code>check-after-withdrawal</code> with the old key still published is refused (<code>not-withdrawn</code>). A crash at any point is handled by invoking the same phase again: re-signing repeats safely through M2's conditional writes, and the check repeats its cold-restart and reads. The runner reuses <code>renewOrganizationStampForUse</code> for each <code>renew(id)</code>, with the key override. Withdrawal itself is an owner step between the two phases.</p>
 
 <h3 id="m4">M4 · The page's create operation</h3>
 <div class="ex-table-scroll" data-width="canvas"><table>
 <thead><tr><th>From</th><th>Event</th><th>Next and effects</th></tr></thead>
 <tbody>
 <tr><td>idle(op)</td><td><code>submit(content)</code></td><td>sending(op, content); [forward(op, content)]</td></tr>
-<tr><td>sending</td><td><code>reply(applied)</code></td><td>created; [reload-lists]</td></tr>
-<tr><td>sending</td><td><code>reply(secondFactorRequired)</code></td><td>confirming; [show-confirmation]</td></tr>
-<tr><td>confirming</td><td><code>confirmed</code> / <code>cancelled</code></td><td>retrying; [forward(op, content)] / idle(op), nothing sent</td></tr>
-<tr><td>retrying</td><td><code>reply(secondFactorRequired)</code></td><td>failed (no loop)</td></tr>
-<tr><td>sending, retrying</td><td><code>reply(nameInUse | conflict, nextOperationId)</code></td><td>refused; then idle(nextOperationId)</td></tr>
-<tr><td>sending, retrying</td><td><code>reply(unknown)</code> or network failure</td><td>unknown(op, content); same op kept</td></tr>
-<tr><td>unknown</td><td><code>submit(same content)</code></td><td>sending(op, content)</td></tr>
+<tr><td>sending, retrying</td><td><code>reply(applied)</code></td><td>created; [reload-lists]</td></tr>
+<tr><td>sending</td><td><code>reply(secondFactorRequired)</code></td><td>confirming(op, content); [show-confirmation]</td></tr>
+<tr><td>confirming</td><td><code>confirmed</code></td><td>retrying(op, content); [forward(op, content)]</td></tr>
+<tr><td>confirming</td><td><code>cancelled</code> / <code>confirmation-failed</code></td><td>idle(op), content kept, nothing sent</td></tr>
+<tr><td>retrying</td><td><code>reply(secondFactorRequired)</code></td><td>failed(<code>step-up-again</code>); no loop</td></tr>
+<tr><td>sending, retrying</td><td><code>reply(nameInUse, nextOperationId)</code></td><td>reconciling(op, content, next); [lookup(workspaceId = op)]</td></tr>
+<tr><td>reconciling</td><td><code>lookup(found, same name)</code></td><td>created; [reload-lists]</td></tr>
+<tr><td>reconciling</td><td><code>lookup(not found or different)</code></td><td>refused(<code>nameInUse</code>); then idle(next)</td></tr>
+<tr><td>reconciling</td><td><code>lookup(unavailable)</code></td><td>unknown(op, content); op kept (no rotation on an uncertain lookup)</td></tr>
+<tr><td>sending, retrying</td><td><code>reply(conflict, nextOperationId)</code></td><td>refused(<code>conflict</code>); then idle(next)</td></tr>
+<tr><td>sending, retrying</td><td><code>reply(refused: other closed reason)</code></td><td>refused(reason); op kept (no new ID: not a definite name or content clash)</td></tr>
+<tr><td>sending, retrying</td><td><code>reply(unknown)</code> or network failure</td><td>unknown(op, content)</td></tr>
+<tr><td>unknown</td><td><code>submit(same content)</code></td><td>sending(op, content); [forward(op, content)]</td></tr>
+<tr><td>unknown</td><td><code>submit(changed content)</code></td><td>refused(<code>finish-or-reload</code>): an uncertain operation can't change content</td></tr>
+<tr><td>any settled state</td><td>late or duplicate reply</td><td>refused (<code>stale</code>), nothing assigned</td></tr>
 </tbody></table></div>
 
 <h2 id="policy">The engine permission rollout</h2>
 <p>Add <code>'organization:repairWork'</code> to <code>fleetPermissionSchema</code> and to the owner's native role and permission maps; the member role gets nothing. Accept Central's new closed refusals in <code>fleetAdminRefusalReasonSchema</code>. Recompute the version-1 digest from the actual map with injected crypto; the expected value with only this addition is <code>aa2fc571158408fdcdcf1d8d0319f0a0886f5570bc60cc52f85a45005fc75f91</code> (from <code>2d31b5d72716e64e255d8858c231f593155289fb03ed354c4b762890667a3c22</code>), checked by a test.</p>
-<p><code>organizations/policy-digest-roll.ts</code>, run from the maintenance entry right after deploy: for each organization, one Drizzle update on <code>organization_authorization_revisions</code> setting <code>permission_policy_digest = new</code> and <code>revision = revision + 1</code>, conditional on <code>permission_policy_digest = old</code> and the state being active or stopped (deleted untouched). The existing delivery path pushes the new revision. It is idempotent: a second run matches no rows. Between deploy and the run, issuance refuses with <code>policy-mismatch</code> (<code>person-fleet-issuance.ts:76–78</code>); until Central acknowledges, Central refuses with RefreshRequired. Nothing is admitted on a mismatch.</p>
+<p><code>organizations/policy-digest-roll.ts</code>, run from the maintenance entry right after deploy: for each organization, one Drizzle update on <code>organization_authorization_revisions</code> setting <code>permission_policy_digest = new</code> and <code>revision = revision + 1</code>, conditional on <code>permission_policy_digest = old</code> and the state being active or stopped (deleted untouched). The existing delivery path pushes the new revision. Between deploy and the run, issuance refuses with <code>policy-mismatch</code> (<code>person-fleet-issuance.ts:76–78</code>). After the run, a new token names revision N+1 while Central's floor is still N, so Central answers <strong>AuthorizationSyncRequired</strong> (token above the floor, <code>request_admission.rs:182–196</code>) until the floor push is acknowledged; then it admits. Old tokens at N get RefreshRequired once the floor is N+1. Nothing is admitted on a mismatch.</p>
+<h3 id="m5">M5 · The digest roll, per organization</h3>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>From</th><th>Event</th><th>Next and effects</th></tr></thead>
+<tbody>
+<tr><td>old-digest(N)</td><td><code>roll</code></td><td>writing; [conditional-write(digest old→new, N→N+1)]</td></tr>
+<tr><td>writing</td><td><code>write-won</code></td><td>pending(N+1); [push(fence at N+1)] (through M1-style delivery)</td></tr>
+<tr><td>writing</td><td><code>write-lost</code></td><td>re-read: new-digest → pending or acknowledged as the facts say; deleted → skipped</td></tr>
+<tr><td>pending(N+1)</td><td><code>ack(N+1)</code></td><td>acknowledged</td></tr>
+<tr><td>pending(N+1)</td><td><code>conflict</code> / <code>unknown</code> / <code>refused</code></td><td>pending (deferred with reason; never counted as done)</td></tr>
+<tr><td>deleted</td><td>any</td><td>skipped</td></tr>
+</tbody></table></div>
+<p>State is rebuilt from the fence row (digest, revision, state) and its delivery ACK; nothing new is stored. A crash after the write is recovered by the next invocation or the next Fleet call's drain, which push the pending revision. The roll's report counts acknowledged, pending (with reasons) and skipped per organization; it finishes only when every non-deleted organization is acknowledged.</p>
 
 <h2 id="maintenance">The maintenance entry</h2>
-<p><code>better-auth/sign-in-maintenance.ts</code> exposes two operations over the injected configuration: <code>retireSigningKey({ oldKeyId, newKeyId, phase })</code> (M3) and <code>rollPolicyDigest()</code>. Hosts: on Cloudflare, a separate <code>WorkerEntrypoint</code> class in <code>sign-in-host-cloudflare/src/index.ts</code>, never bound by the gateway or a public route; on Node, a subcommand of the existing host CLI. Both return a nonsecret report. The owner runs them in production.</p>
+<p><code>better-auth/sign-in-maintenance.ts</code> defines two operations over the injected configuration: <code>retireSigningKey({ oldKeyId, newKeyId, phase: 'prepare' | 'check-after-withdrawal' })</code> (M3) and <code>rollPolicyDigest()</code> (M5), each returning a closed nonsecret report.</p>
+<p><strong>Invocation (recommended, your choice on Decisions):</strong> a project Better Auth plugin endpoint <code>POST /api/auth/maintenance/{operation}</code> on the existing sign-in service, on both hosts, so it runs inside the native endpoint context that owns the keys and the injected store. It admits only the deployment's configured owner (<code>configuration.ownerEmail</code>, verified) with a second factor from the last 15 minutes; everyone else gets 404, and the gateway's management binding has no path to it. The owner runs it from the browser while signed in (a small page) or with the owner CLI's existing session. No new Worker, CLI package or binding is needed. Correcting the earlier draft: <code>sign-in-host-node</code> has no CLI today.</p>
+<p><strong>The maintenance window (S12 A)</strong> needs a control that pauses new issuance. None exists today. Add a deployment setting <code>SIGN_IN_ISSUANCE_PAUSED</code> read into the configuration: when true, Better Auth's token, sign-in and device endpoints answer 503 <code>maintenance</code> while the maintenance endpoint stays available. Pausing and reopening are owner deploys. In-flight requests drain because the setting only affects new requests; deferred after-response work drains by waiting for the deploy's old instances to end.</p>
 
 <h2 id="branches">What changes for each alternative</h2>
 <div class="ex-table-scroll" data-width="canvas"><table>
