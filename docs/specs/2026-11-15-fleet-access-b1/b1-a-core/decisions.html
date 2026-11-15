@@ -107,7 +107,7 @@ flowchart TB
 <tr><td>Delete the flood stand-in</td><td>No test needs it after the change; your feature rule says old code goes</td><td>No: it follows your rule.</td></tr>
 <tr><td>The test-time scan covers <code>sign-in-test-support</code>, the sign-in <code>*.test.ts</code> files, and <code>scripts/verify-auth/</code></td><td>Proof row U25 names "the sign-in tests, helpers or harness"</td><td>No. It's what U25 asks.</td></tr>
 <tr><td>Treat U25's "<code>auth-proof-process.ts</code> kill deadlines" as already done</td><td>The file already waits on an <code>AbortController</code> and the controlled clock</td><td>No. It's a fact from the code.</td></tr>
-<tr><td>The design is written as if Better Auth's own internal crypto (its session tokens, sign-in state, two-factor codes) is outside R30</td><td>R30 governs "every sign-in rule … in one runtime-free core", our code. Better Auth is the library that code is built on (R29), and changing its internals would mean patching it, which your rule on following Better Auth's own way avoids.</td><td><strong>Yes.</strong> No decision of yours settles it, so it's <a href="#open">open for you below</a>. Until you answer, the design assumes option A.</td></tr>
+<tr><td>The design is written as if Better Auth's own internal crypto (its session tokens, sign-in state, two-factor codes) is outside R30</td><td>R30 governs "every sign-in rule … in one runtime-free core", our code. Better Auth is the library that code is built on (R29), and changing its internals would mean patching it, which your rule on following Better Auth's own way avoids.</td><td><strong>Yes.</strong> No decision of yours settles it, so it's <a href="#open">open for you below</a>. The pages are written for option A, but nothing is built until you answer.</td></tr>
 <tr><td>Regroup B1's nine slivers into three features (B1-A, B1-B, B1-C)</td><td>Your rules: "a feature done properly", "cannot be some bite size nonsense"</td><td>The grouping is mine; the rule is yours. Correct it on the overview if it's wrong.</td></tr>
 </tbody>
 </table></div>
@@ -223,7 +223,7 @@ flowchart TB
 <p>R30 is about our sign-in rules, and you've asked to follow Better Auth's own way rather than patch it. <strong>Not decided.</strong></p>
 </ex-callout>
 <ex-callout title="If you defer" tone="risk" icon="clock">
-<p>B1-A's design stands as written (option A). If you later pick B, it becomes its own feature.</p>
+<p>Nothing is built: B1-A's packets go out only after you answer this and give the go-ahead. The pages are written for A, so answering A needs no further change. Answering B means I revise the affected design and proof first.</p>
 </ex-callout>
 <ex-choice id="d-ba-choice" title="Does R30 cover Better Auth's own internal crypto?">
   <ex-option id="d-ba-choice-a" title="**A.** Our code only (recommended)"><template slot="summary">Better Auth stays as shipped; our code's crypto goes through the host.</template></ex-option>
