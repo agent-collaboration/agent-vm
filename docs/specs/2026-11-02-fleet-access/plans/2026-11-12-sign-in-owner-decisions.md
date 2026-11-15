@@ -1266,3 +1266,14 @@ The workspace id equals the operation id.
   - So a lost central reply throws 503 **before** any rotation, and the machine's refresh token stays valid for the retry. No design finding.
   - **Not covered** (different paths): revoked-token reuse, opaque grants, and loss of the issuer's own final response. Evidence: `/private/tmp/2026-11-ws15-verifier/refresh-token-order.md`.
   - **Possible lasting check, the Implementer's choice:** a refresh with the central reply dropped is followed by a successful retry with the same refresh token.
+
+### WS15: central #281 merged (Lead, 2026-11-15T08:04Z; Lead A push 01a1de3b)
+#281 is merged to codex-router `main` as **`1bf1a97d4`**: issuer-mirror vectors equal #11's `b1c9f6f6` bytes; policy digest `af40ec7f…`; `AuthorizationRevision*` exported; no `TokenLifetimeSeconds`; idle expiry advances the generation.
+- **Since the frozen `956fb4cbc`:** no contract files changed (`git diff --name-only 956fb4cbc 1bf1a97d4 -- …/contracts` is empty). `device_login_decision.rs` and the supersession lookup changed (review fixes: overflowing approval deadlines refused, bounded supersession lookup), and main was merged. So the build inputs changed.
+- **Implementer, now:** re-pin B2e and the machine journey on #11 (then #14) to `1bf1a97d4`: rebuild on Sunclaw, sign the launcher copy, re-hash. Re-run B2e on both pairings plus the full host lane. Report any behaviour change from the review fixes.
+- **Final:** the launcher-`observe` machine-rows follow-up is starting at central, and its Implementer messages ours. When it merges:
+  1. one last re-pin to that commit;
+  2. add the central-row assertions (closed schema, parser negative), with existing journeys still parsing empty arrays;
+  3. freeze.
+
+  Then: the Verifier's independent run, Lead acceptance, R-code, CI, and merge #11, then #14.
