@@ -1331,3 +1331,30 @@ The workspace id equals the operation id.
 - **Status:** #11 is "login and refresh, proven against real central; revocation not built". B3 is **not** done.
 - **Owner decision pending:** merge #11 as login-only now (Lead recommends) vs hold until revocation exists end to end. Revocation becomes the next workstream: sign-in commands, pages and client disable, plus a central handler from central's owner.
 - **Re-check owed to the owner:** every claim taken from Lead A, against code. That's the central contracts actually served, and the owner decisions relayed only via Lead A: machine-login storage A, workspace (a), link admission (a), the R29 change.
+
+### Audit A1: an independent assumption audit of the Fleet access Lead (owner request, 2026-11-15T13:53Z)
+**Owner:** "do an audit with sol xhigh on your side too what assumptioend did you made? i dont what these kidn of issues". The trigger was machine revocation (owner-approved B3) found unbuilt on both sides, after the Lead accepted a split from Lead A without bringing it to the owner.
+
+**Auditor:** a fresh Sol (`gpt-6.1-sol`) at **xhigh**, with no history in this work. It reviews only; it writes nothing outside `tmp/2026-11-15-assumption-audit/`.
+
+**Goal:** find every assumption the Fleet access Lead made (2 Nov to now) that isn't grounded in (a) a first-hand owner decision, (b) an existing contract, or (c) source or runtime the Lead or a Verifier actually checked. Also find every owner-approved outcome that was missed, partly delivered or silently re-scoped. **Don't take the Lead's framing in the plan, trace or pages as true; check it against the design and the code.**
+
+**Sources (read-only):**
+- **Owner-approved design:** `docs/specs/2026-11-02-fleet-access/`: `index`, `requirements`, `specification`, `program-design` and `verification-design` `.source.html`, and every `deliverables/*.source.html` (b1, b2, b2-additions, b3, bg).
+- **This plan file:** the rulings, and the "owner decision" entries with quotes.
+- **Acceptances:** `tmp/2026-11-12-ws1-handbacks/lead-acceptance.md`.
+- **Owner pages:** `tmp/2026-11-12-lead-pages/*.html`, and `~/dev/memory-logs/projects/2026/2026-11-codex-router/owner-pages/2026-11-1[45]-fleet-access-show-my-work.html`.
+- **Trace:** `~/dev/session-logs/projects/2026/2026-10-agent-vm/planbooks/2026-10-18-tool-portal-identity-advisor-claude-2febb449.md`.
+- **Code:** switchboard (`~/code/projects/switchboard`) `origin/main` (#10, #12, #13, #15, #16, #17 merged); drafts #11 `origin/item2/b3a-device-grant` and #14 `origin/item2/b3a-verify-auth`. codex-router (`~/code/projects/codex-router`) `origin/main` (#268, #270, #275, #281, #288).
+
+**Questions:**
+1. For each owner-approved outcome in the design and deliverables (B1, B2, B2-additions, B3, BG): is it delivered, partial or missing in code? Where partial or missing, was it **brought to the owner** as such, or deferred or re-scoped by the Lead without that?
+2. For each "Lead's call", ruling or "decision without asking" in the plan and trace: was it inside Lead authority (reversible, in scope), or did it change an owner-approved outcome, a public contract, ownership, a persisted format, a security boundary or required proof (the owner's call)?
+3. Each claim the Lead accepted from another agent (Lead A, Implementer, Verifier, Reviewer) and built on: verified against source or runtime, or taken on trust? Specifically, for decisions **relayed** as the owner's (machine-login storage A, workspace shape (a), link admission (a), the R29 change, token lifetime C then D, wakes, the redo): is there a first-hand owner record?
+4. Statements to the owner (pages, chat summaries in the trace) that said done, proven, aligned or "nothing waiting on you": does the evidence support them at the stated scope?
+5. Stand-ins, held items and "unverified" lists: are all named and tracked, or did any become silent assumptions? Are there design obligations (e.g. revocation, the workspace picker, the connection guard, who-is-logged-in, allowances) with no owner?
+
+**Output:** `tmp/2026-11-15-assumption-audit/report.md`.
+- A findings table ranked by severity: id, the assumption or claim, where it was made (file:line or trace timestamp), the authority claimed, evidence status (verified / unverified / false / owner-decision-needed), impact, recommended action.
+- Then a short list of process causes.
+- Then what the auditor could not check.
