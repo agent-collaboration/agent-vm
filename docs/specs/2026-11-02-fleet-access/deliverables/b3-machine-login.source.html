@@ -95,7 +95,7 @@ flowchart LR
 | the device-code token handler: one public client per enrollment, `DecideMachineToken` before every mint, the revoke-endpoint before-hook | the authenticated command-line tool (B5) |
 | machine tokens (C9) and central's check of them; connection admission over the link; `RenewMachineToken` on the open connection | who is logged in, presence and its `machine_presence` table (B7); remote start (B8) |
 | enrollments, allowances (`machine_allowance` by scope, installation and workspace), idle expiry at 30 days, change records | switching production to step 2 (yours, later) and removing Cloudflare Access (step 3) |
-| admin commands `AllowMachine`, `WithdrawMachineAllowance`, `RevokeMachineEnrollment`, `SetTokenLifetime`, and their pages | notices to the Switchboard about revocations and allowances (step 3) |
+| admin commands `AllowMachine`, `WithdrawMachineAllowance`, `RevokeMachineEnrollment`, and their pages | notices to the Switchboard about revocations and allowances (step 3) |
 | revocation: one transaction, then the old connection closed as a design-2 local action, and the sign-in service disabling the client | "one machine, one organization" across organizations (you deferred it) |
 | **BA1**: the enrollment-generation fence | remote create's trip (the D2 Lead's) |
 | **the UUIDv7 re-key**: carry the retained former service (routing) id, v4 or v7, when present; central converts the same machine once and accepts repeats of the same mapping | |
@@ -118,7 +118,7 @@ Names marked *proposed* are B3 additions. `organization_authority/` is supplied 
     - `machine_token_decision.rs` *proposed*: `DecideMachineToken`, the first Grant (activate and supersede) and every later Grant with live checks
     - `machine_token.rs` *proposed*: the machine token check (C9), reusing B2's key cache and verifier
     - `machine_connection.rs` *proposed*: `AdmitMachineConnection`, `RenewMachineToken`, closing on revocation or supersession
-    - `machine_commands.rs` *proposed*: `AllowMachine`, `WithdrawMachineAllowance`, `RevokeMachineEnrollment`, `SetTokenLifetime` (the existing contracts in `identity_contract/organization_commands.rs`)
+    - `machine_commands.rs` *proposed*: `AllowMachine`, `WithdrawMachineAllowance`, `RevokeMachineEnrollment` (the existing contracts in `identity_contract/organization_commands.rs`)
     - the re-key, inside `device_login_decision.rs`: link a former service id to the machine's peer UUIDv7 once
   - `identity_contract.rs`: the B3 shapes (the Program Design's `DeviceLoginDecision`, `MachineTokenDecision`, `MachineConnectionAdmission`, `EndedMachineClient`), plus `base_generation` on the enrollment
   - `fleet-identity-protocol`: `MachineTokenRenewal`, so the Router can read it
@@ -395,7 +395,7 @@ Every central check runs on **both builds** (workerd Durable Objects and native 
 **Your decisions of 9 Nov (from the B3 questions page):**
 - **The code's real deadline (N10, Q1).** `DecideDeviceLogin` carries `codeExpiresAt`, the device code record's own expiry. Central stores it in `machine_enrollments` (one column, `code_expires_at`) and refuses the first Grant at or after it. Until B3 central lands, sign-in builds against the contract with a stand-in central.
 - **The same request number with different contents (N03, Q2): return the first approval.** Central answers a repeated `DecideDeviceLogin` with the approval it already stored, and ignores the changed contents. No fingerprint column. So the admin always sees the truth, `Approved` carries what central stored (`enrollmentId`, `label`, `allowedWorkspaces`, exactly Program Design's `DeviceLoginDecision`), and the sign-in approval page shows those rather than the form it submitted.
-- **Token lifetime (Q3): one per organization,** central's configured lifetime set by `SetTokenLifetime`. That was already the design, and no issuer copy is added.
+- **Token lifetime (Q3): one per organization,** central's configured lifetime set by `SetTokenLifetime`. **Superseded 15 Nov by owner D:** "lets just use always 10 minutes". It's a fixed 600 s private constant in central, with no setting, no command and no stamp field. `SetTokenLifetime` and `machine:setTokenLifetime` are removed.
 - **The stamp pin: dropped** (row above).
 - **N11 and N07** were decided earlier: a short outage answers "try again", and idle expiry records an automatic cause with no person named.
 
