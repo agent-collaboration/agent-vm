@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B2 · Central organizations · Program Design</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head><body>
+<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
+<a href="../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
+<a href="audit.html">B2 · 1 Audit</a><a href="requirements.html">B2 · 2 Requirements</a>
+<a href="specification.html">B2 · 3 Specification</a><a href="program-design.html">B2 · 4 Program Design</a>
+<a href="verification-design.html">B2 · 5 Verification Design</a><a href="plan.html">B2 · 6 Plan</a><a href="decisions.html">B2 · 7 Decisions</a>
+</nav></ex-nav>
+<ex-document id="doc">
+<h1>B2 · Central organizations: Program Design</h1>
+<p><strong>Keep the existing authority and renewal path; finish its consumers and operator entry.</strong> B2 changes sign-in, its page and the producer mirrors. Central implements the directory read and retired-contract cleanup in the named Lead A slice. This design builds on B1-A's merged crypto/clock/ID contract.</p>
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What you should check" tone="note" icon="shield-check"><p>The page reads the authoritative directory, and history has its own cursor. Status is a sanitized authorized projection. Definite refusals supply replacement IDs from the server. Actual native key preparation is server-only, with per-organization confirmation and state-preserving cold restart proof.</p></ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users"><p><a href="decisions.html#open">Three choices</a> remain open: retry, key retirement and engine-console scope. Key maintenance is conditional on selecting it; a live fence or whole console here needs its additional complete design. P9 includes required native engine compatibility and policy rollout either way. Accepted directory/corruption implementation remains a named dependency.</p></ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open"><p>Approved B2's setup, renew-on-use and key-change outcomes remain the yardstick. The Lead approved Stage 1 on 15 Nov and confirmed the private maintenance capability, production owner step and exact dependency name. The owner's 4 Nov approval and later backup/unique-name answers are quoted on <a href="requirements.html">Requirements</a>. New paths below are proposed code, not source already on main.</p></ex-callout>
+
+<h2 id="composition">The parts and their responsibilities</h2>
+<ex-mermaid id="composition-map" label="B2 target composition and owned boundaries" data-width="canvas"><script type="text/plain">
+flowchart TB
+  browser["Browser island<br/>forms, typed answers, two cursors"] --> handler["Existing sign-in handler<br/>cookie, origin and release fences"]
+  handler --> state["Admin state endpoint<br/>authorized sanitized status and initial ID"]
+  handler --> forward["Existing forwarding<br/>fresh key/token/proof per attempt"]
+  forward --> guard["Existing Fleet-call guard<br/>stamp then pending revisions"]
+  guard --> client["Existing private-link clients<br/>closed producer contracts"]
+  client --> central["Lead A: central workspace directory read<br/>and existing Central admin authority"]
+  state --> db["Existing injected sign-in Drizzle store<br/>people, organization and stamp facts"]
+  operator["Owner's private maintenance tooling"] --> maintenance["Server-only key maintenance<br/>native Better Auth context"]
+  maintenance --> db
+  maintenance --> guard
+  class browser,state,maintenance slot2
+  class handler,forward,guard,client,db slot3
+  class central slot4
+  class operator slot1
+</script></ex-mermaid>
+<p><strong>Key:</strong> amber is changed/new sign-in behavior, teal existing owners being extended, violet Central's separate lane, blue the owner. Neither page code nor the ordinary gateway management binding receives the maintenance capability.</p>
+<div class="ex-table-scroll" data-width="canvas"><table><thead><tr><th>Truth or effect</th><th>One owner</th><th>Reader and lifetime</th></tr></thead><tbody>
+<tr><td>Workspace existence, unique name, retained answer and change record</td><td>Central's organization directory/request ledger/atomic admin path</td><td>Sign-in/browser receive current pages; no sign-in directory table is added.</td></tr>
+<tr><td>Person, session, membership, role and revision fence</td><td>Existing Better Auth and fenced Drizzle store</td><td>Each request takes a fresh coherent snapshot; this feature preserves token/revision semantics.</td></tr>
+<tr><td>Confirmed stamp and one pending statement</td><td>Existing organization stamp record with conditional updates</td><td>Renewal consumes it; page receives a derived DTO, never pending bytes.</td></tr>
+<tr><td>Operation identity</td><td>Injected server ID capability</td><td>Page retains it for one uncertain creation; each definite refusal may supply a replacement.</td></tr>
+<tr><td>Native signing keys</td><td>Better Auth's native key model and helpers</td><td>Private maintenance capability invokes the native context. No key material enters a report.</td></tr>
+<tr><td>Restart and traffic controls</td><td>Host/deployment operator, test harness locally</td><td>Injected maintenance control; production is an owner action, never a public parameter that grants authority.</td></tr>
+</tbody></table></div>
+
+<h2 id="directory">P1 · Directory and record contracts</h2>
+<ex-mermaid id="directory-paging" label="Directory paging and the failure that keeps the cursor" data-width="canvas"><script type="text/plain">
+flowchart TB
+  ask["Read directory page<br/>organization, cursor and limit"] --> answer{"Closed answer?"}
+  answer -->|valid page| rows["Append ascending workspace IDs"]
+  rows --> more{"Next cursor?"}
+  more -->|present| next["Load more reads after the last ID"]
+  next --> ask
+  more -->|null| done["Traversal complete for this live read"]
+  answer -->|corrupt row| corrupt["Show row and column<br/>no partial success or recovery"]
+  answer -->|refused or unknown| failed["Keep prior rows and cursor<br/>show incomplete"]
+  class ask,next slot1
+  class rows,done slot6
+  class corrupt,failed slot5
+  class answer,more slot2
+</script></ex-mermaid>
+<p>The arrows follow the directory cursor. History has its own traversal and never supplies directory membership. Failure keeps the current cursor so the owner can retry that page.</p>
+<p><strong>Accepted by Lead A, 15 Nov:</strong> add <code>ListWorkspaces</code> to the current private admin family. <strong>Lead A: central workspace directory read</strong> lands after its engine deliverable 1 merges and includes the retired people-command cleanup and accepted test-only failure/mutation controls. B2 consumes that producer after it lands; it does not edit Central.</p>
+<ex-code lang="typescript" title="New closed consumer shapes, beside the existing admin schema"><script type="text/plain">
+const listWorkspacesRequestSchema = z.strictObject({
+  organizationId: centralUuid7Schema,
+  after: centralUuid7Schema.nullable(),
+  limit: z.number().int().min(1).max(100),
+});
+const listWorkspacesResultSchema = z.union([
+  z.strictObject({
+    result: z.literal('workspaces'),
+    workspaces: z.array(workspaceSchema),
+    next: centralUuid7Schema.nullable(),
+  }),
+  refusedSchema,
+]);
+type ListWorkspacesRequest = z.infer<typeof listWorkspacesRequestSchema>;
+type ListWorkspacesResult = z.infer<typeof listWorkspacesResultSchema>;
+</script></ex-code>
+<p>Reuse <code>workspaceSchema</code> and <code>refusedSchema</code> in <a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b/packages/sign-in-core/src/central-link/fleet-admin-client.ts#L15">fleet-admin-client.ts:15–44</a>. Mirror the producer's exported schemas/positive/negative fixtures, recording the exact producer commit. The accepted contract is the target; those exports bind the actual implementation and are compared against this agreement.</p>
+<div class="ex-table-scroll" data-width="canvas"><table><thead><tr><th>Field or route</th><th>Contract</th></tr></thead><tbody>
+<tr><td>Central route and permission</td><td><code>POST /organization-admin/v1/workspaces</code>, private link, <code>organization:view</code>. Same person/proof/admission path as lookup; reads require no recent factor.</td></tr>
+<tr><td>Request</td><td>Lowercase organization UUIDv7; exclusive lowercase workspace UUIDv7 cursor or null; integer limit 1–100; unknown fields rejected.</td></tr>
+<tr><td>Success</td><td><code>{result:'workspaces', workspaces: WorkspaceView[], next: Uuid7|null}</code>. All directory states, strictly ascending workspace ID. Producer reads one extra row; next is the last emitted ID only when another row exists. Empty/final page has null. No cross-page snapshot; Refresh starts again.</td></tr>
+<tr><td>Failures</td><td>200 existing Refused vocabulary; 400 malformed request; 401 bad credential/proof; bare 503 unavailable/stamp gate. A corrupt directory row has the accepted closed 503 body below. Lost/malformed reply uses the existing unknown outcome. No partial body is accepted.</td></tr>
+<tr><td>Sign-in forwarding</td><td><code>POST /api/auth/organization-admin/workspaces</code>, cookie-only and same-origin as existing forwarders. Add the operation to the request union, route map, canonical intent and client response parser. Intent: version 1, operation ListWorkspaces, organization and target both the organization, operationId null, params after/limit.</td></tr>
+<tr><td>Permission mapping</td><td>ListWorkspaces extends the exhaustive operation mapping with existing <code>organization:view</code>; this read causes no permission or digest change. The separate engine compatibility in P9 does change the owner policy. The CLI relay recognizes the directory route union; no new directory CLI command is required.</td></tr>
+<tr><td>Consumer checks after schema parse</td><td>Count at most limit, IDs strictly increase beyond after, no duplicate, next null or exactly last emitted ID on a full page. Reject a non-null cursor on an empty/short page. Preserve prior rows and current cursor on failure, with a visible incomplete state.</td></tr>
+</tbody></table></div>
+<ex-code lang="typescript" title="Accepted corruption schema and client result; types derive from these schemas"><script type="text/plain">
+const directoryCorruptionSchema = z.union([
+  z.strictObject({ error: z.literal('corrupt'),
+    row: z.strictObject({ workspaceId: centralUuid7Schema }),
+    column: z.enum(['workspace_id', 'name', 'description', 'state']) }),
+  z.strictObject({ error: z.literal('corrupt'),
+    row: z.strictObject({ rawKey: z.string()
+      .refine((key) => Array.from(key).length <= 128)
+      .refine((key) => !centralUuid7Schema.safeParse(key).success) }),
+    column: z.literal('workspace_id') }),
+]);
+type DirectoryCorruption = z.infer<typeof directoryCorruptionSchema>;
+// Add to FleetAdminAnswer:
+// { readonly kind: 'corrupt-row'; readonly diagnosis: DirectoryCorruption }
+</script></ex-code>
+<p>The raw-key variant is producer-authorized only when workspace_id itself cannot parse; it is never relabelled as a valid UUID. On 503, read the body once: empty means existing answered-unavailable; a nonempty body must parse as the closed corruption schema, otherwise unknown/malformed-reply. Only the directory operation admits this diagnosis. Cookie forwarding/CLI relay preserve the typed 503 diagnostic to an already-authorized caller; their exhaustive switches must handle it. The Fleet-call wrapper's empty-Central predicate applies only to answered-unavailable, so corruption never triggers provisioning/recovery. Display the row identity/column as text and retain incomplete paging state; no raw row value or partial array is exposed.</p>
+<p><strong>History:</strong> extend the current closed record kind enum to all seven Central kinds and the origin union to <code>signInProvisioning</code>, <code>automatic</code>, <code>person</code>. Person has its two existing required fields; the other two have none. Use an exhaustive rendering switch and text nodes. Unknown fields/kinds/origins still fail the whole page as malformed. The existing <code>ReadChangeRecords</code> wire stays unchanged: after exclusive record ID, limit 1–100, ascending IDs; a short page ends traversal, and an exactly full final page needs the next empty read. Directory and history keep independent cursor state.</p>
+
+<h2 id="admin-state">P2 · An authorized, sanitized status snapshot</h2>
+<ex-mermaid id="status-read-path" label="Authorize the snapshot before exposing the derived status" data-width="canvas"><script type="text/plain">
+sequenceDiagram
+  participant B as Browser
+  participant N as Native authorized endpoint
+  participant D as Injected primary Drizzle store
+  participant P as Pure status projection
+  B->>N: same-origin cookie read
+  N->>D: live session, membership, organization and stamp in one read
+  D-->>N: coherent facts or unavailable
+  N->>N: native permission and session-expiry check
+  alt admitted
+    N->>P: known facts and injected clock sample
+    P-->>B: sanitized validity, pending state and last attempt
+  else refused
+    N-->>B: no protected metadata
+  end
+</script></ex-mermaid>
+<p>The stored pending statement stays inside the service. Its bytes are used only to derive expiry; they never enter the browser DTO.</p>
+<p>Add <code>organizations/organization-stamp-status.ts</code> for pure derivation, and <code>better-auth/organization-admin-state-plugin.ts</code> for a server-only <code>readOrganizationAdminState</code> endpoint. It accepts the selected organization ID from the handler plus request headers, verifies the cookie-bound live session with caching disabled, and performs a coherent primary Drizzle join of session/person/membership/organization and stamp fields. The read proves the session still belongs to the selected organization and has not expired. Use <code>hasPermission</code> with the joined live role, <code>organization:view</code> and <code>useMemoryCache:false</code>, as <a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b/packages/sign-in-core/src/better-auth/organization-permission-check.ts#L24">organization-permission-check.ts:24–55</a> does. No permission engine is added.</p>
+<p>The existing stamp store gains a joined-facts read under its current injected database boundary. Extend its own parsed row schema rather than duplicate stamp columns in another schema. Authorization is taken from that one fresh read; the handler rechecks session expiry on its injected clock before response release. A missing/ended session is 401, missing permission 403 with no status, unavailable storage 503. The page does not read status first and check permission later. Ordinary GET to the server-only endpoint is 404.</p>
+<ex-code lang="typescript" title="Sanitized DTO states; derive the runtime schema and type together"><script type="text/plain">
+type PendingStampView =
+  | { readonly kind: 'none' }
+  | { readonly kind: 'awaiting-answer'; readonly expiresAt: number }
+  | { readonly kind: 'expired-pending' };
+type OrganizationStampStatus =
+  | { readonly kind: 'setting-up' }
+  | { readonly kind: 'unconfirmed'; readonly lastAttempt: StampAttemptView | null }
+  | { readonly kind: 'known'; readonly validity: 'valid' | 'expired';
+      readonly expiresAt: number; readonly renewedAt: number | null;
+      readonly pending: PendingStampView; readonly lastAttempt: StampAttemptView | null }
+  | { readonly kind: 'unavailable' };
+</script></ex-code>
+<p><code>StampAttemptView</code> contains only the stored last attempt time/outcome and separate unanswered/refused counts. Use the existing outcome enum, not a new list of guessed errors. Implement the DTO as strict Zod discriminated unions and derive its type; the display above explains its states, not a parallel interface to maintain.</p>
+<p>Derivation samples the injected clock once. Setting-up takes precedence; an absent confirmed digest yields unconfirmed. For a known stamp, compare confirmed expiry to now; derive pending expiry from the locally stored statement's parsed claims, treating invalid pending bytes as expired-pending. No signature or secret bytes enter the DTO. Last refusal remains a historical attempt even if the confirmed stamp is valid; show “Stamp valid until …; last renewal refused …”. The page says “Central work is unavailable” only when current readiness requires it. It must not claim the stamp alone proves the separate revision fence is synchronized.</p>
+<p><strong>Units:</strong> confirmed and pending <code>expiresAt</code> are Unix seconds, as the signed <code>exp</code> claim is. <code>renewedAt</code> and <code>lastAttempt.at</code> are Unix milliseconds. Derive validity with <code>Math.floor(clock.now() / 1000)</code>; render expiry through <code>new Date(expiresAt * 1000)</code>, with the UTC label. Strict schemas require safe nonnegative integer times and the existing last-outcome enum. Do not compare an exp value directly with the millisecond clock.</p>
+<p>The server initial page state contains organization ID/name, sanitized status and <code>platform.ids.nextId()</code>. Status refresh uses a cookie-only same-origin read endpoint <code>POST /api/auth/organization-admin/status</code>, whose implementation calls the same native authorized read; it performs no Fleet call or renewal. This endpoint returns only the same DTO, with <code>cache-control:no-store</code>. Its public allowlist entry is exact POST only. History and directory continue to authorize at Central as well.</p>
+
+<h2 id="operation-ids">P3 · Replace browser ID minting at the existing forwarder</h2>
+<ex-mermaid id="operation-identity-path" label="What keeps an operation and what supplies the next one" data-width="canvas"><script type="text/plain">
+flowchart TB
+  send["Submit captured operation and content"] --> result{"Create answer"}
+  result -->|unknown| keep["Keep operation and body<br/>retry without browser mint"]
+  keep --> send
+  result -->|name refusal| lookup["Look up original workspace ID once"]
+  lookup -->|own exact match| created["Display created workspace"]
+  lookup -->|unknown| keep
+  lookup -->|definite nonmatch| next["Install server-supplied next ID"]
+  result -->|conflict| next
+  result -->|applied| created
+  created --> again["Create another uses page GET<br/>new injected initial ID"]
+  class send,lookup,again slot1
+  class keep,next slot2
+  class created slot6
+</script></ex-mermaid>
+<p>A delivery attempt and an operation have different lifetimes. Fresh proof for a retry does not change the operation it is trying to settle.</p>
+<p>After a definite Central create refusal of <code>nameInUse</code> or <code>conflict</code>, the cookie-only forwarder returns that existing answer plus <code>nextOperationId</code>, minted once from <code>platform.ids.nextId()</code>. The private Central answer and CLI relay remain byte/shape unchanged. Define the browser's strict create-response schema by extending the existing refusal variants for these two reasons; other refusal variants and applied answers remain their current shapes. <code>nextOperationId</code> is required and UUIDv7 only on those two cookie response variants.</p>
+<p>A name refusal first triggers one lookup at the old operation's workspace ID. If it finds that ID with the exact requested name, report created and refresh. A null/different-name result displays duplicate-name and installs the supplied next ID for the next submit. An unavailable/malformed lookup displays unavailable and keeps the old operation/content. Conflict displays its own message and installs the supplied next ID. Missing/malformed replacement ID fails closed as unavailable and keeps the old ID. No ID is minted for a transport uncertainty or second-factor refusal. Remove <code>freshOperationId</code> entirely.</p>
+<p>An explicit retry reuses its captured submitted body and operation. Editing fields under an uncertain operation follows the existing changed-body conflict contract; it never silently mints another operation. No new field-locking policy or durable browser storage is added. A reload starts a newly rendered operation; it is not claimed to recover an abandoned tab's ID. Branch A's durable original-answer lookup is Central's obligation; Branch B follows the described 24-hour fallback.</p>
+
+<h2 id="page">P4 · Put the page on the existing shell and island</h2>
+<ex-mermaid id="page-path" label="Actual browser administration and confirmation flow" data-width="canvas"><script type="text/plain">
+sequenceDiagram
+  participant B as Browser island
+  participant H as Sign-in handler
+  participant A as Native authority and release
+  participant C as Central
+  B->>H: create with cookie and operation ID
+  H->>A: obtain fresh bound authority
+  H->>C: guarded create and proof
+  C-->>B: applied or second-factor refusal
+  alt factor required
+    B->>B: shipped confirmation component
+    alt confirmed
+      B->>H: same create once more
+      H->>A: fresh authority and proof
+      H->>C: same operation, new admitted attempt
+      C-->>B: final answer
+    else cancelled or failed
+      B->>B: settle without retry
+    end
+  end
+</script></ex-mermaid>
+<p>Participants are colored for identification only. The page has one pending action; repeated clicks while it is pending are disabled. Confirmation is a separate state carrying the original create body; a successful callback consumes it once. A repeated callback cannot send a third create.</p>
+<p>Replace the old <code>better-auth/organization-admin-page.ts</code> HTML-string controller with <code>pages/organization-admin-page.tsx</code>, rendering through existing <code>pageDocument</code>, with B1-A's injected nonce and <code>challenge:'none'</code>. Use existing server primitives/stylesheet and an island root. Those patterns exist in <a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b/packages/sign-in-core/src/pages/owner-page.tsx#L3">owner-page.tsx:3–25</a> and <a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b/packages/sign-in-core/src/pages/owner-page-document.tsx#L14">owner-page-document.tsx:14–36</a>. Keep the shell's existing width/typography/CSP; no new third-party source or inline-style exception.</p>
+<p>Add <code>organization-admin</code> to the existing strict island-state union and render <code>pages/islands/organization-admin-island.tsx</code> from the existing island entry. It owns create/paging/refresh state and parses every response once. Use existing Button/Input/Field/Card primitives. Use the already-exported <code>ConfirmSecondFactorStep</code> unchanged under the existing <code>AuthProvider</code>; <code>onConfirmed</code> resumes the saved action, a separate Cancel action clears it. The component's built-in app/recovery controls keep their own validation and notices. No custom passkey or factor verifier is added.</p>
+<p>Directory and history each use <code>idle | loading | page | failed</code> states carrying their cursor/rows only when applicable. An explicit Load more advances one page; a failed page retains prior rows and shows “Incomplete; try this page again.” Empty is shown only after a successful first empty page. Refresh clears that collection and starts at null. A successful create keeps a <code>created</code> state displaying the actual returned workspace and refreshes the two collections. “Create another workspace” navigates to the existing authorized page GET, which supplies a fresh initial injected ID. No new ID-mint endpoint or applied-answer extension is introduced. Status refresh returns only status and mints no operation. It never means “all revisions synchronized”.</p>
+<p>All user content is rendered as React text, not HTML. A no-script message says administration needs JavaScript and links back to the account; no unsafe parallel form controller remains. This does not change BG's setup fallback. Retarget the old DOM cases to the delivered island through the repository's existing DOM environment, and retain the stronger real-browser observation below.</p>
+
+<h2 id="renewal">P5 · Preserve the renewal owner</h2>
+<p>Retain <code>ensureOrganizationProvisioned</code>, the statement signer and <code>runOrganizationFleetCall</code>. New directory requests go through the same forwarder/guard as create/lookup/history. The stamp guard runs first, then the existing pending-revision drain; no new path may bypass either. Retain one pending statement, conditional claim/settlement, exact-byte resend and expired-facts recovery. B1-A supplies crypto explicitly to digest/proof callers. The new status derivation reads clock through the host; browser code uses no ID/clock source for service decisions.</p>
+<p>Central's engine deliverable 1 is now owner-authorized for build, as relayed by the Lead on 15 Nov; it is still not claimed built by this design. Its <code>StatementRejected</code>/<code>AlarmPublication</code>, once-per-event stamp gate and shared <code>after_event()</code> belong to Lead A. The directory slice uses them. The proposed <code>central_work_attempts</code> is Central's engine table; B2 adds no failure/attempt columns and does not migrate its existing stamp counters. Owed sends remain Lead A deliverable 4.</p>
+
+<h2 id="keys">P6 · The trusted maintenance capability</h2>
+<ex-mermaid id="maintenance-path" label="Conditional maintenance-window flow and its stop points" data-width="canvas"><script type="text/plain">
+flowchart TB
+  window["Owner's exclusive maintenance window<br/>pause, drain requests and deferred signers"] --> inventory["All known organizations<br/>setting-up or unconfirmed blocks"]
+  inventory --> prepare["Prepare actual native key<br/>verify current selection"]
+  prepare --> resign["Re-sign every confirmed organization<br/>independent Central agreement"]
+  resign --> safety["Credential-safety deadline<br/>recheck key and whole inventory"]
+  safety --> withdraw["Withdraw explicit old native key<br/>actual JWKS readback"]
+  withdraw --> cold["Preserve state, cold restart Central<br/>compare stamps and directory"]
+  cold -->|all verified| reopen["Trusted runner may reopen admission"]
+  resign -->|unfinished| before["Keep old published key<br/>report blocked"]
+  cold -->|failure| after["Withdrawn but unverified<br/>remain in maintenance"]
+  class window,inventory,prepare,safety slot1
+  class resign,withdraw,cold slot3
+  class reopen slot6
+  class before,after slot5
+</script></ex-mermaid>
+<p>This is the conditional window branch. The native RPC handles serializable key operations; the trusted runner owns admission and restart controls. Green is verified completion, rose an explicit stop. Choice B needs its separate live-fence design.</p>
+<p><strong>Conditional A design, pending the owner's retirement choice.</strong> Add <code>organizations/organization-key-maintenance.ts</code> for the operation/report and <code>better-auth/organization-key-maintenance-plugin.ts</code> for native context. These are composed only by a new private maintenance factory. Node exports the factory for the owner's trusted deployment runner; Cloudflare exposes a distinct named <code>OrganizationKeyMaintenance</code> entrypoint with no public fetch route and no binding to the ordinary gateway. Existing <code>AgentClientManagement</code> is unchanged. Access to that named entrypoint is a deployment credential/capability, not a browser-supplied token or boolean.</p>
+<p>The public Better Auth seams were opened in installed 1.7.11: <code>dist/plugins/jwt/index.mjs:214</code> exports <code>createJwk</code>/<code>resolveSigningKey</code>/<code>signJWT</code>; <code>utils.mjs:43–61</code> creates and encrypts the native key; <code>adapter.mjs:9–13,52–53</code> selects live keys by creation time. <code>index.mjs:124–129</code> filters published expiry plus its default 30-day grace. <code>native-jwt-options.ts:6–10</code> currently sets EdDSA only, with no rotation interval. Server-only endpoints are native supported API (<code>@better-auth/core/dist/api/index.mjs:86–106</code>). No private adapter import, custom signing format or library patch is needed.</p>
+<ex-code lang="typescript" title="Trusted capability, not a public HTTP schema"><script type="text/plain">
+interface OrganizationNativeKeyMaintenance {
+  readonly prepare: (request: { readonly expectedOldKeyId: string }) => Promise<KeyPreparation>;
+  readonly reSign: (request: { readonly expectedCurrentKeyId: string }) => Promise<KeyPreparationCheck>;
+  readonly withdraw: (request: {
+    readonly oldKeyId: string; readonly expectedCurrentKeyId: string;
+  }) => Promise<NativeKeyWithdrawal>;
+}
+type KeyPreparation =
+  | { readonly kind: 'prepared'; readonly oldKeyId: string; readonly newKeyId: string }
+  | { readonly kind: 'key-changed'; readonly currentKeyId: string }
+  | { readonly kind: 'unknown'; readonly stage: 'create' | 'resolve' };
+type ConfirmedOrganizationStamp = {
+  readonly organizationId: string; readonly digest: string;
+  readonly expiresAt: number; readonly signingKeyId: string;
+};
+type KeyPreparationCheck =
+  | { readonly kind: 'confirmed'; readonly currentKeyId: string;
+      readonly organizations: readonly ConfirmedOrganizationStamp[] }
+  | { readonly kind: 'unfinished'; readonly organizations: readonly OrganizationKeyChangeResult[] }
+  | { readonly kind: 'unavailable' };
+type NativeKeyWithdrawal =
+  | { readonly kind: 'withdrawn'; readonly oldKeyId: string; readonly currentKeyId: string }
+  | { readonly kind: 'blocked';
+      readonly reason: 'invalid-key-pair' | 'unknown-old-key' | 'key-changed' | 'organization-unconfirmed' }
+  | { readonly kind: 'unknown'; readonly stage: 'expiry-write' | 'jwks-readback' };
+</script></ex-code>
+<p><code>runOrganizationKeyMaintenance</code> is the runtime-free orchestration in the same new organization module. Its ports are <code>OrganizationNativeKeyMaintenance</code> and <code>QuiescedMaintenanceControl</code>. The native capability above has serializable requests/results and is what the separate Worker entrypoint exposes. Host-control callbacks never cross Worker RPC as JSON or function arguments. Node supplies the same native capability in process.</p>
+<p><code>QuiescedMaintenanceControl</code> belongs to the owner's trusted runner, outside ordinary sign-in. It checks current admission/drain state and the inventoried credential-safety deadline, then drives preserving-state restart/read probes. Results are <code>quiesced | not-quiesced | unavailable</code>, and each restart/read is <code>verified</code> with compared identities or <code>failed</code> with a bounded reason. Locally the runner controls actual harness admission/processes. Production's owner must supply the deployment controls and original observations before invoking the native capability; a caller's boolean is not proof. The private capability grants native key power to that trusted runner, so it must never be exposed to the gateway or public route.</p>
+<p>Drain includes deferred after-response signing and renewal work, including Worker waitUntil work and Node's tracked deferred tasks. A completed HTTP response is not proof its signing work settled. A held request or deferred signer keeps the trusted runner not-quiesced; no native key mutation is invoked while that state holds.</p>
+<p>The window is exclusive to one maintenance runner for this deployment, including its private key operations. Native withdrawal rejects identical old/current IDs, an absent old row, a nonlive replacement or a current-key mismatch before writing. The trusted runner must keep other maintenance invocations out of the window; this procedure does not claim the live multi-writer guarantee that choice B would add.</p>
+<p>The composed runner returns <code>blocked</code> with its failing precondition before withdrawal, <code>unknown</code> for an unsettled native result, <code>withdrawn-unverified</code> after a failed post-withdrawal probe, or <code>withdrawn-verified</code> with the compared key/org/directory identities. Each is a strict schema-derived variant. Only the trusted runner reopens admission after a verified result.</p>
+<ol>
+<li><strong>Prepare:</strong> while maintenance traffic is quiesced, check the expected current key. Call native <code>createJwk</code>; Better Auth's existing injected <code>generateId</code> supplies its UUIDv7 (<a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b/packages/sign-in-core/src/better-auth/provider-configuration.ts#L152">provider-configuration.ts:152–153</a>). Resolve again and require the returned new ID to be current and both public keys visible. Same-time ordering that leaves the old key selected is unfinished, not success. A lost create result returns unknown: inspect current key metadata and explicitly resume using that ID; never mint another key automatically.</li>
+<li><strong>Re-sign:</strong> add a readonly key-maintenance inventory to the existing organization-membership store, selecting every organization's ID/fleetState through injected Drizzle, with no ready-only filter. The current helper filters ready rows (<a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b/packages/sign-in-core/src/storage/organization-membership-store.ts#L48">organization-membership-store.ts:48–57</a>); a settingUp organization can already hold an old Central stamp after a lost reply. Any setting-up/unconfirmed row blocks retirement and names the existing explicit setup retry as the required action. Do not provision it automatically. Once all are confirmed ready, require the expected new key still current and call existing <code>reSignOrganizationsForKeyChange</code> with injected deadlines/pending rules. Independently read every Central digest/expiry/key ID; require no pending statement and agreement with the new key. An outer complete with an unfinished item is blocked. Re-read the all-organization inventory/current key; any set/state/key change requires another pass.</li>
+<li><strong>Credential-safety gate:</strong> the trusted runner inventories all key-dependent credential families and their maximum expiry. Record the last possible old-key issue after traffic drains. Withdrawal must not precede that expiry. Current configured person/m2m access tokens are at most 300 seconds (<code>deployment-configuration.ts:76</code>; <code>provider-configuration.ts:366–377</code>). That is not a bound for every future client, ID token or machine profile. An unknown family blocks withdrawal; no invented grace interval.</li>
+<li><strong>Withdraw and recheck:</strong> reassert quiescence, credential safety, new current key, unchanged all-organization inventory with no setting-up/unconfirmed row, and Central agreement. Retire only the explicit old native key through its existing public adapter model's expiry field; use the same explicit grace-period value as native JWT options, preserving today's default of 30 days, so <code>expiresAt + gracePeriod</code> is at or before the current injected instant. The native JWKS endpoint must actually omit the old key, and key selection must keep the new one. The native provider retains its encryption/serialization; B2 never writes raw key bytes.</li>
+<li><strong>Cold proof before reopen:</strong> restart Central preserving each organization's existing store and clearing runtime/key caches. Read the stored stamp facts and authorized directory again, with only the new key available from the actual JWKS endpoint. Compare organization/directory identities before and after. Failure after withdrawal returns <code>withdrawn-unverified</code>; keep maintenance closed and hand control to the owner. No automatic rollback or false completed report. Success is <code>withdrawn-verified</code>, with nonsecret per-org facts and target identity.</li>
+</ol>
+<p>The native expiry write is isolated in the Better Auth boundary through its supported adapter; all backing storage still uses the injected Drizzle adapter. A current-key/old-key mismatch or absent key is a typed refusal before mutation. Repeating an already-withdrawn old key rechecks public JWKS and the cold proof; it does not create a key or repeat stamp effects. This is an operator flow with explicit preparation, verification and withdrawal, not a scheduled key manager.</p>
+<p><strong>Choice B:</strong> a live issuer key epoch would fence every sign/release and stamp writer and require Central to reject stale epochs after handover. It needs a persisted issuer epoch and a compatible closed stamp/admission format, plus race proof for all credential paths. Those contracts are not approved here. If selected, hold this operation's implementation, return to Program/Verification Design and obtain the schema/contract approval before any code depends on it.</p>
+
+<h2 id="proof-seams">P7 · Proof seams and cutover</h2>
+<ex-mermaid id="restart-proof" label="Cold restart preserves the storage identity rather than creating a new store"><script type="text/plain">
+flowchart TB
+  before["Observe organization stamps<br/>and authoritative directory IDs"] --> stop["Captured Central process exits"]
+  stop --> root["Same persistence root<br/>fresh runtime and verifier cache"]
+  root --> read["Real link reads after restart<br/>old JWKS key absent"]
+  read --> compare["Same organization and workspace IDs<br/>new stamp key and digest verified"]
+  class before,stop,root,read slot1
+  class compare slot6
+</script></ex-mermaid>
+<p>The old empty-store restart stays as recovery proof. This path must retain the original data, so a re-provisioned empty organization fails the identity comparison.</p>
+<p>The existing joint fixture pins source and artifact hashes (<a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b/packages/sign-in-test-support/src/test-fixtures/b2e/joint-central-pins.ts#L17">joint-central-pins.ts:17–60</a>). Rebuild/re-pin to the checked current producer after the directory slice lands; retain its full commit and all artifact hashes. Never remove the pin checks to consume a convenient binary.</p>
+<p>Add <code>restartCentralPreservingState()</code> beside the existing empty restart. Node closes the captured launcher and relaunches over the same Central root/socket; workerd closes and relaunches its pinned bridge over the same persistence root. Await exit/readiness events; compare stamp/directory IDs and confirm a fresh process/runtime with an empty verifier cache. Existing <code>restartCentralEmpty</code> stays for recovery and is never substituted. The current Node empty restart explicitly selects a different root (<code>joint-node-central.ts:118–123</code>).</p>
+<p>Lead A accepted two test-support-only roles into the directory-read slice on 15 Nov: a one-shot fault failing the actual organization-admin batch's next workspaceCreated record insert, and an owned stored-column mutation capable of writing a malformed workspace_id in the organization object's directory. Final control names/exports come from that slice; B2 refers to their roles rather than guessing its protocol. Reuse Central's existing one-shot batch hook/raw store-call facilities where possible. Both host implementations and production absence, including <code>cargo tree -e features</code>, are Central-owned proof.</p>
+<p>The real-browser scenario reuses the existing Chrome/CDP driver and both actual joint pairings. It runs the served island, shipped confirmation component and real service paths. Controlled provider/Turnstile edges remain explicit. Status secret-sentinel tests inspect full HTML/state/JSON and logs. Unit tests cover DTO derivation and response/cursor decisions; host and real-browser tests retain real deciding boundaries.</p>
+<div class="ex-table-scroll" data-width="canvas"><table><thead><tr><th>File group, relative to Switchboard</th><th>Change and reason</th><th>Rules</th></tr></thead><tbody>
+<tr><td><code>sign-in-core/src/central-link/fleet-admin-client.ts</code>, <code>organizations/fleet-admin-operation.ts</code>, <code>organizations/fleet-permission.ts</code>, producer fixture folder</td><td>Closed directory operation, all record variants, intent, routing, exact producer mirrors</td><td>S2, S6–S7</td></tr>
+<tr><td><code>better-auth/fleet-admin-forwarding.ts</code>, public route inventory, relay route consumers</td><td>New read route; sign-in-only next operation ID on two definite create refusals; preserve raw private/CLI answers</td><td>S2, S4, S6</td></tr>
+<tr><td><code>organizations/organization-stamp-status.ts</code> and <code>better-auth/organization-admin-state-plugin.ts</code> (new); stamp store's joined read</td><td>Pure status derivation and native authorized response; no schema migration</td><td>S2, S9</td></tr>
+<tr><td><code>pages/organization-admin-page.tsx</code>, <code>pages/islands/organization-admin-island.tsx</code> (new); island state/entry and handler</td><td>Existing shell and upstream confirmation; independent cursors; remove old HTML-string page/controller and browser ID mint</td><td>S4, S6, S8–S9, S13</td></tr>
+<tr><td><code>organizations/organization-key-maintenance.ts</code>, <code>better-auth/organization-key-maintenance-plugin.ts</code> (new), <code>storage/organization-membership-store.ts</code>, native JWT options and package exports</td><td>Trusted native-key capability, all-organization inventory, explicit unchanged grace value, per-org report, gated withdrawal</td><td>S10–S12</td></tr>
+<tr><td>Both host packages' private maintenance composition/exports, separate named Worker entrypoint</td><td>Supply host controls and call the same core; public handler and gateway management remain without the capability</td><td>S11–S12</td></tr>
+<tr><td>Existing joint fixtures/pins, admin/statement tests, served-page driver, native-browser scenario and verify-auth organization guidance</td><td>Retarget old cases, preserving-state restart, actual keys/page, newer producer and explicit proof limits</td><td>S1–S14</td></tr>
+</tbody></table></div>
+<p><strong>Central dependency only:</strong> directory handler/storage, its exported fixtures and retired people contracts are Lead A's changes. Its engine table/alarm/error changes stay in that lane. There is no sign-in migration, new workspace store, cron, DI framework, library patch or new CI gate in B2's maintenance-window branch.</p>
+<h2 id="machines">P8 · Pure machines, committed state, effects as data</h2>
+<p>The owner's 15 Nov correction makes setup, renewal and key retirement explicit machines. Their pure decisions live in the core; injected effect runners interpret closed effect data after the applicable state commit and return results as new events. Retarget the existing owners to this path and remove their imperative decision branches. No XState, other machine library, extra workflow store or parallel implementation is introduced.</p>
+<ex-mermaid id="machine-boundary" label="The pure decision does not perform its emitted effect" data-width="canvas"><script type="text/plain">
+flowchart TB
+  facts["Parsed state, typed event<br/>injected time and facts"] --> decide["Pure exhaustive transition"]
+  decide --> refusal["Typed refusal<br/>no write or effect"]
+  decide --> next["Next state and closed effect data"]
+  next --> commit["Conditional durable write<br/>or local invocation-phase commit"]
+  commit -->|won| run["Injected host-side runner<br/>exhaustive effect switch"]
+  commit -->|lost| lost["Superseded refusal<br/>no effect executed"]
+  run --> event["Typed result event"]
+  event --> facts
+  class facts,decide,next slot1
+  class commit,run,event slot3
+  class refusal,lost slot5
+</script></ex-mermaid>
+<p>The shared helper is <code>contracts/state-machine-exhaustiveness.ts:assertNeverMachineVariant(value:never):never</code>, which throws a generic unreachable-variant error without printing payloads. Every state switch, event switch and runner effect switch ends with that helper; no default success/catch-all handles future variants. Stored values are parsed at the owning store using strict Zod schemas; unknown fleet state, stamp fields or native metadata fail with the field named, never a default ready/current value. Types derive from those schemas.</p>
+<ex-code lang="typescript" title="Common result pattern; specialize each machine's closed unions"><script type="text/plain">
+type TransitionResult<TState, TEffect, TReason> =
+  | { readonly kind: 'next'; readonly state: TState; readonly effects: readonly TEffect[] }
+  | { readonly kind: 'refused'; readonly reason: TReason };
+// Context carries injected nowMilliseconds/nowSeconds and already-observed facts.
+// No transition reads a clock, storage, crypto, network or a runtime global.
+// Each concrete state/event/effect/refusal union is closed and schema-derived.
+</script></ex-code>
+
+<h3 id="setup-machine">M1 · Organization setup</h3>
+<ex-mermaid id="setup-transitions" label="Only confirmation advances setup; uncertainty emits no retry"><script type="text/plain">
+stateDiagram-v2
+  [*] --> SettingUp: native insert committed
+  SettingUp --> SettingUp: explicit attempt / one send
+  SettingUp --> SettingUp: unknown or refused / observe
+  SettingUp --> Ready: confirmed / guarded write then seed
+  Ready --> Ready: retry / no send
+</script></ex-mermaid>
+<p><strong>Current home:</strong> <code>organization.fleetState</code> is settingUp/ready (<code>sign-in-schema.ts:335–353</code>); parsed in <code>organization-membership-store.ts:94–110</code>. <code>ensureOrganizationProvisioned</code> moves it today (<code>organization-provisioning.ts:76–148</code>); its mark-ready write currently guards only the ID (membership store:112–126). New <code>organizations/organization-setup-machine.ts</code> owns the pure transition; <code>organization-setup-effects.ts</code> owns injected effect interpretation. The existing ensure function becomes their single facade.</p>
+<ex-code lang="typescript" title="Setup's closed inventory"><script type="text/plain">
+type SetupState =
+  | { readonly kind: 'setting-up'; readonly organizationId: OrganizationId }
+  | { readonly kind: 'ready'; readonly organizationId: OrganizationId };
+type SetupEvent =
+  | { readonly kind: 'created-committed' }
+  | { readonly kind: 'manual-retry' }
+  | { readonly kind: 'provision-result'; readonly answer: ProvisionOrganizationAnswer }
+  | { readonly kind: 'signing-failed' }
+  | { readonly kind: 'seed-finished' }
+  | { readonly kind: 'observation-finished' };
+type SetupEffect =
+  | { readonly kind: 'attempt-provision'; readonly organizationId: OrganizationId }
+  | { readonly kind: 'seed-from-central'; readonly organizationId: OrganizationId }
+  | { readonly kind: 'observe-unconfirmed'; readonly outcome: SetupUnconfirmedOutcome };
+// SetupUnconfirmedOutcome = signing-unavailable or the existing closed refusal/uncertainty reasons.
+// SetupRefusal = wrong-state | superseded | store-unavailable.
+// transitionOrganizationSetup(state: SetupState, event: SetupEvent, context: SetupContext)
+//   -> TransitionResult<SetupState, SetupEffect, SetupRefusal>.
+</script></ex-code>
+<div class="ex-table-scroll" data-width="canvas"><table><thead><tr><th>State + event</th><th>Next state / emitted effects</th><th>Commit before effects</th></tr></thead><tbody>
+<tr><td>setting-up + created-committed/manual-retry</td><td>setting-up; one attempt-provision</td><td>The initial native organization insert is committed. Retry performs a conditional settingUp→settingUp guard update; absent/ready row refuses the attempt. Concurrent explicit retries may both pass this unchanged-state guard; Central's organization-ID idempotence owns the duplicate effect.</td></tr>
+<tr><td>setting-up + provision-result(provisioned)</td><td>ready; seed-from-central</td><td>UPDATE fleetState=ready WHERE id and fleetState=settingUp, through Drizzle; exactly one matched row. A lost race returns superseded, then the facade may freshly observe already-ready; it never fabricates a ready commit.</td></tr>
+<tr><td>setting-up + unknown/refused/signing-failed</td><td>setting-up; observe-unconfirmed, no send</td><td>Conditional existing-state guard; preserve the public typed reason. No new attempt column. Existing observation/log records the unconfirmed outcome.</td></tr>
+<tr><td>ready + manual-retry, seed-finished or observation-finished</td><td>ready; no effects</td><td>No durable change. Already-ready is an observed terminal state, not another provisioning attempt.</td></tr>
+<tr><td>Other known state/event pairs</td><td>Typed wrong-state refusal; no effects</td><td>Implement every known pair explicitly under exhaustive switches. New variants must fail compilation.</td></tr>
+</tbody></table></div>
+<p><strong>Runner:</strong> attempt-provision calls the existing native signer and private provisioning client once, then emits provision-result or signing-failed. Seed-from-central reads Central's actual digest and conditionally seeds the existing stamp record, then emits seed-finished. Observe-unconfirmed uses the existing injected observation port. No read/page-refresh/unknown-result event emits another send. Invariants after every step: ready only follows confirmation, no read-driven retry, same organization ID, no half ready write, and Central retains one stamp/setup record despite concurrent permitted retry attempts.</p>
+
+<h3 id="renewal-machine">M2 · Organization stamp renewal</h3>
+<ex-mermaid id="renewal-transitions" label="The pending claim commits before its bytes can be sent"><script type="text/plain">
+flowchart TB
+  confirmed["Confirmed, due"] --> sign["Emit sign replacement"]
+  sign --> claim["Signed result: conditional pending claim"]
+  claim -->|won| send["Send exact committed bytes"]
+  claim -->|lost| no["Superseded; no send"]
+  send --> unknown["Unknown: retain pending"]
+  unknown -->|later use| send
+  send --> settled["Matching definite reply<br/>conditional settlement"]
+  class confirmed,sign,claim slot1
+  class send,settled slot3
+  class unknown slot2
+  class no slot5
+</script></ex-mermaid>
+<p><strong>Current home:</strong> the existing confirmed digest/expiry/key, pending bytes, renewal time and guarded outcome counters on the organization row (<code>sign-in-schema.ts:343–352</code>). <code>organization-stamp-renewal.ts:122–139</code> is a pure step chooser today; its remaining result handling is imperative at 182–413. New <code>organization-stamp-renewal-machine.ts</code> owns the full pure state/event/effect decision; <code>organization-stamp-renewal-effects.ts</code> runs the same native/client/store capabilities. The existing entry and bounded driver remain, with old decision branches removed.</p>
+<ex-code lang="typescript" title="Renewal's closed inventory; facts/bytes derive from existing parsed records"><script type="text/plain">
+type RenewalState =
+  | { readonly kind: 'not-ready' }
+  | { readonly kind: 'unconfirmed'; readonly record: UnconfirmedStampRecord }
+  | { readonly kind: 'confirmed'; readonly record: ConfirmedStampRecord }
+  | { readonly kind: 'pending'; readonly record: PendingStampRecord }
+  | { readonly kind: 'sent-expired'; readonly record: PendingStampRecord };
+type RenewalEvent =
+  | { readonly kind: 'use' }
+  | { readonly kind: 'key-change'; readonly currentKeyId: string }
+  | { readonly kind: 'signed'; readonly predecessorDigest: string; readonly pending: SignedStampAndFacts }
+  | { readonly kind: 'answer'; readonly sentBytes: string; readonly answer: ProvisionOrganizationAnswer }
+  | { readonly kind: 'central-facts'; readonly sentBytes: string | null; readonly facts: OrganizationStatementDigestAnswer }
+  | { readonly kind: 'effect-failed'; readonly failure: RenewalEffectFailure }
+  | { readonly kind: 'observation-finished' }
+  | { readonly kind: 'clock-moved' };
+type RenewalEffectFailure =
+  | { readonly kind: 'signing-unavailable'; readonly predecessorDigest: string }
+  | { readonly kind: 'send'; readonly sentBytes: string; readonly reason: CentralLinkUncertainty }
+  | { readonly kind: 'read'; readonly sentBytes: string | null; readonly reason: CentralLinkUncertainty }
+  | { readonly kind: 'store-unavailable' };
+type RenewalEffect =
+  | { readonly kind: 'read-central-facts' }
+  | { readonly kind: 'sign-replacement'; readonly predecessorDigest: string }
+  | { readonly kind: 'send-pending'; readonly bytes: string }
+  | { readonly kind: 'recover-confirmed-empty-central' }
+  | { readonly kind: 'observe-renewal'; readonly outcome: OrganizationStampRenewal };
+// transitionOrganizationStampRenewal(state: RenewalState, event: RenewalEvent, context: RenewalContext)
+//   -> TransitionResult<RenewalState, RenewalEffect, RenewalRefusal>.
+</script></ex-code>
+<p>Fact record schemas are derived projections of the existing strict stamp-row schema. The pending record carries exact bytes plus parsed digest/expiry/key facts. sent-expired is a time-derived phase over those same columns; no new stored state string is added. RenewalEffectFailure is the closed existing signing/store/timeout/transport set. Refusals are wrong-state, superseded and invalid-result; existing domain renewal answers remain the facade's public result.</p>
+<div class="ex-table-scroll" data-width="canvas"><table><thead><tr><th>State + event/guard</th><th>Next state / effect</th><th>Persistence and invariant</th></tr></thead><tbody>
+<tr><td>not-ready + use/key-change</td><td>No stamp mutation/send; existing not-ready result</td><td>Central still owns refusal. Do not auto-provision a setting-up organization.</td></tr>
+<tr><td>unconfirmed + use</td><td>Unconfirmed; read-central-facts</td><td>Guard the existing record before the read; actual returned facts seed only when the confirmed field is still empty.</td></tr>
+<tr><td>unconfirmed + central-facts(current/none/unavailable)</td><td>Current: seed confirmed then next bounded pass; none: recover-confirmed-empty-central; unavailable/timeout: retain unconfirmed and record the existing unsent-try outcome</td><td>Conditional seed/unsent outcome over the existing empty record. Recovery keeps the current deadline/forget-ACK sequence. No facts are fabricated from the setup bytes.</td></tr>
+<tr><td>confirmed + use, >60 days and current key</td><td>Confirmed; no renewal effect</td><td>The original call may proceed only through its existing revision fence.</td></tr>
+<tr><td>confirmed + use due/key-change mismatch</td><td>Confirmed; sign-replacement naming its digest</td><td>No pending bytes are invented. On signed event, claim exact returned bytes only if pending is empty and predecessor still matches; commit before send-pending.</td></tr>
+<tr><td>confirmed + signed matching predecessor</td><td>Pending with exact signed bytes; send-pending</td><td>Claim and validate facts before send. A mismatched predecessor or competing pending returns superseded; the bounded driver re-reads and can resend the winner's bytes, never the loser's.</td></tr>
+<tr><td>pending valid + use/key-change</td><td>Same pending; send-pending with identical bytes</td><td>Guard the same pending claim before the effect. No signing effect while a statement is in doubt.</td></tr>
+<tr><td>pending/sent-expired + provisioned answer for the same bytes</td><td>Confirmed new facts, clear pending; observe renewed</td><td>A reply to a previously sent request can settle after time moved. Conditional settlement only while those bytes match; expired confirmed facts still authorize no work. Late results cannot clear a successor claim.</td></tr>
+<tr><td>pending + unknown/timeout for same bytes</td><td>Same pending, unanswered count/last outcome; no resend until next use</td><td>One guarded outcome write; refused count unchanged. CAS loss returns superseded, not a partial outcome.</td></tr>
+<tr><td>pending + definite nonstale refusal</td><td>Confirmed predecessor, clear pending; refused count/last outcome</td><td>Same pending guard; no unexplained fallback to a different statement.</td></tr>
+<tr><td>pending + stale refusal</td><td>Pending; read-central-facts</td><td>Same-digest sent facts confirm it; different verified facts are adopted even if expired, then a later pass signs against that digest. Unknown read keeps pending. Authoritative none uses existing empty-Central recovery and revision reset.</td></tr>
+<tr><td>pending/sent-expired + central-facts tied to those sent bytes</td><td>Same digest: confirm; different current: adopt and clear sent; none: forget-central then existing recovery; unavailable: keep pending and record the current refused-stale outcome; deadline timeout: keep pending and record unanswered-timeout</td><td>Guard exact pending bytes for the whole settlement and separate counts. The bound event includes the sent bytes; no stale read clears a successor. This preserves current reconcileStale, including its distinct timeout handling.</td></tr>
+<tr><td>pending + clock reaches pending expiry</td><td>sent-expired; no send/sign</td><td>Derived from stored bytes/clock; preserve the recovery limit and visible condition. Moving the clock follows the declared expiry rules, not a hidden timer.</td></tr>
+<tr><td>sent-expired + use/key-change; any valid phase + clock-moved</td><td>Expired pending remains retained without send/sign; clock reprojects the same durable facts under the injected time and emits no I/O</td><td>Unreadable pending claims derive the existing sent-expired recovery limit. No new automatic recovery follows a clock change.</td></tr>
+<tr><td>Effect failure in its matching phase</td><td>Signing failure: unchanged confirmed, observe signing-unavailable. Send failure: pending, guarded unanswered outcome. Read/deadline failure: the existing seed/stale timeout/unavailable branch. Store failure: typed store-unavailable</td><td>Failure data includes effect kind and predecessor/sent identity where applicable; a result for a superseded effect refuses. No failure changes to a new signed proposal or causes an immediate resend.</td></tr>
+<tr><td>Any phase + observation-finished</td><td>Same state; no effects</td><td>Observation is complete; it never starts another attempt or changes stored facts.</td></tr>
+<tr><td>Other known state/event pairs or mismatched sent bytes</td><td>Typed wrong-state/invalid-result refusal</td><td>No write/effect. All known cases enumerated; defaults only prove never.</td></tr>
+</tbody></table></div>
+<p>Apply each durable next state as one existing Drizzle conditional write over organization ID, expected digest/pending bytes and any counters read into the decision. Counter increments are atomic; when a pure expected snapshot loses a race, re-read/reapply that same still-matching result within the existing bounded driver, or report superseded. Never overwrite a cumulative counter with a stale computed value. The runner executes no effect after a failed guard. Existing seed, empty-Central recovery and deadline semantics stay explicit typed outcomes; no second recovery mechanism is added. After every step: at most one pending statement, predecessor binding, byte-identical resend, late settlement isolation, separate counts, and no expired authority for work.</p>
+
+<h3 id="key-machine">M3 · Ephemeral key-retirement invocation</h3>
+<ex-mermaid id="key-reconstruction" label="A crash loses phase memory, while real key/stamp facts select the remaining work"><script type="text/plain">
+flowchart TB
+  write["Native key or stamp write commits"] --> crash["Runner crashes<br/>ephemeral phase lost"]
+  crash --> facts["Read actual keys, all source/Central stamps<br/>and independently held admission pause"]
+  facts --> reconstruct["Pure reconstruction"]
+  reconstruct --> remaining["Only unsatisfied organizations remain"]
+  reconstruct --> absent["Old key absent: repeat cold check"]
+  class write,facts,reconstruct slot1
+  class crash slot2
+  class remaining,absent slot3
+</script></ex-mermaid>
+<p><strong>Current home:</strong> <code>organization-key-change.ts:30–68</code> is an invocation/report over native jwks metadata (<code>sign-in-schema.ts:87–95</code>) and organization stamp rows. There is no durable run-phase row. The Lead confirmed on 15 Nov that phases remain ephemeral: commit the local phase before its effect, keep real key/stamp changes conditional at their owners, and reconstruct after interruption. No new table/columns.</p>
+<ex-code lang="typescript" title="Key-retirement machine inventory"><script type="text/plain">
+type KeyRunState =
+  | { readonly kind: 'inventory' }
+  | { readonly kind: 'preparing'; readonly oldKeyId: string }
+  | { readonly kind: 're-signing'; readonly target: KeyTarget; readonly remaining: readonly OrganizationId[] }
+  | { readonly kind: 'checking'; readonly target: KeyTarget }
+  | { readonly kind: 'withdrawing'; readonly target: KeyTarget }
+  | { readonly kind: 'cold-checking'; readonly target: KeyTarget }
+  | { readonly kind: 'verified'; readonly report: NonsecretKeyReport }
+  | { readonly kind: 'blocked'; readonly reason: KeyRunBlockReason }
+  | { readonly kind: 'withdrawn-unverified'; readonly target: KeyTarget };
+type KeyRunEvent =
+  | { readonly kind: 'inventory-result'; readonly facts: KeyAndStampInventory }
+  | { readonly kind: 'prepared'; readonly result: KeyPreparation }
+  | { readonly kind: 'organization-result'; readonly result: OrganizationKeyChangeResult }
+  | { readonly kind: 'checks-result'; readonly result: KeyPreparationCheck }
+  | { readonly kind: 'withdrawal-result'; readonly result: NativeKeyWithdrawal }
+  | { readonly kind: 'cold-result'; readonly result: ColdKeyCheck }
+  | { readonly kind: 'clock-moved' }
+  | { readonly kind: 'host-control-changed'; readonly facts: MaintenanceControlFacts };
+type KeyRunEffect =
+  | { readonly kind: 'read-key-and-stamp-inventory' }
+  | { readonly kind: 'prepare-native-key'; readonly expectedOldKeyId: string }
+  | { readonly kind: 're-sign-organization'; readonly organizationId: OrganizationId }
+  | { readonly kind: 'read-all-central-stamps' }
+  | { readonly kind: 'withdraw-explicit-key'; readonly target: KeyTarget }
+  | { readonly kind: 'preserving-state-cold-check'; readonly target: KeyTarget };
+</script></ex-code>
+<p>KeyTarget, inventory, host-control facts, block reasons, cold result and nonsecret report are strict schemas composing the native/result schemas already defined in P6. They carry explicit deployment/old/new keys, all known organization IDs and compared digests, credential deadline and current control observations; no token/key bytes or free reason strings. The pure functions are <code>transitionOrganizationKeyRetirement(state,event,context)</code> and <code>reconstructOrganizationKeyRetirement(keys,stamps,context)</code> in <code>organization-key-retirement-machine.ts</code>; the existing P6 runner becomes its exhaustive effect interpreter.</p>
+<div class="ex-table-scroll" data-width="canvas"><table><thead><tr><th>Observed state/event</th><th>Next phase/effect</th><th>Safety condition</th></tr></thead><tbody>
+<tr><td>Initial/reconstructed inventory</td><td>Read actual keys/stamps/control facts</td><td>Any settingUp/unconfirmed org, nonexclusive/nonquiesced control or unknown credential lifetime blocks mutation.</td></tr>
+<tr><td>Old key current, no replacement yet</td><td>preparing; prepare-native-key</td><td>Commit local phase first. Native key creation is observed before selecting its ID; a lost reply reconstructs from actual key selection and never blindly creates twice.</td></tr>
+<tr><td>Replacement current; orgs still old or pending</td><td>re-signing; one re-sign-organization per unsatisfied ID</td><td>Already-confirmed current-key orgs are not re-signed. Pending bytes are settled/resend-identical through M2; no duplicate applied stamp/record.</td></tr>
+<tr><td>All organizations settled</td><td>checking; independent all-Central facts read</td><td>No pending statement, stable all-org inventory/current key and credential safety are required.</td></tr>
+<tr><td>Independent checks and trusted controls pass</td><td>withdrawing; withdraw-explicit-key</td><td>Native expiry write is conditional; any pending/unconfirmed org or target drift refuses. No old/current-ID equality.</td></tr>
+<tr><td>Old key actually absent</td><td>cold-checking; preserving-state-cold-check</td><td>Local phase can be reconstructed; never create or withdraw again just because the prior local phase was lost.</td></tr>
+<tr><td>Cold success/failure</td><td>verified report / withdrawn-unverified</td><td>Only verified may reopen. Failure or crash leaves the owner's admission gate closed.</td></tr>
+<tr><td>Any phase + control drift, unavailable result or wrong-state result</td><td>Before withdrawal: blocked; after actual withdrawal: withdrawn-unverified; known inapplicable events: typed wrong-state refusal with no effects</td><td>Re-observe inventory/controls on explicit invocation; never reuse an old readiness report. Clock movement updates pure guards only and emits no automatic mutation. State/event/effect switches enumerate all known variants before the never helper.</td></tr>
+</tbody></table></div>
+<p><strong>Reconstruct, purely:</strong> parsed key selection/publication and all stamp facts decide the next work. Old-only current means prepare; a known new current key with old/pending stamps means re-sign those unsatisfied IDs; all source and Central facts new/settled means check credential/control guards; old key already withdrawn means cold-check again. Inconsistent/unknown facts block. A verified phase is never inferred from durable key expiry alone: after restart cold-check is repeated. Crash-anywhere equality concerns the final durable key/stamp/directory state and one applied re-sign per org; harmless repeated reads/cold probes and byte-identical pending resends are allowed.</p>
+
+<h2 id="engine-policy">P9 · Engine permission compatibility and its rollout</h2>
+<p>New dependency: <strong>Lead A deliverable 1, Central engine, P8</strong>, not the directory slice. Its current design adds EngineHealth and EngineListRetired reads under organization:readAudit, and EngineRetry/EngineDiscard changes under the new owner-only organization:repairWork with a recent factor. Add that permission to the closed Fleet permission schema, native organization actions/owner role and native permission-request mapping; member remains empty. Extend the shared closed refusal parser with wire <code>notFound</code>, <code>notRetired</code>, <code>discardUnsupported</code> and <code>stale</code>, matching the producer's exported camelCase variants. Unknown values remain malformed.</p>
+<div class="ex-table-scroll" data-width="canvas"><table><thead><tr><th>Producer operation / private path</th><th>Closed request</th><th>Closed success</th></tr></thead><tbody>
+<tr><td>EngineHealth · <code>/organization-admin/v1/engine-health</code></td><td><code>{organizationId}</code></td><td><code>{result:'engineHealth', kinds:[{kind,failing,retired,oldestFirstFailedAt:null|time,lastFailure:null|failure}], alarm:null|time}</code>; every registered kind, zeros included.</td></tr>
+<tr><td>EngineListRetired · <code>/organization-admin/v1/engine-retired</code></td><td><code>{organizationId,after:attemptId|null,limit:1..100}</code></td><td><code>{result:'engineRetired',items:[{attemptId,kind,subjectKey,failureClass,count,retiredAt,lastFailure}],next:attemptId|null}</code>; ascending UUIDv7 attemptId, exclusive after, one-row lookahead.</td></tr>
+<tr><td>EngineRetry · <code>/organization-admin/v1/engine-retry</code></td><td><code>{organizationId,attemptId}</code>, existing admitted change/operation-ID envelope</td><td><code>{result:'engineRetried'}</code> or NotFound/NotRetired.</td></tr>
+<tr><td>EngineDiscard · <code>/organization-admin/v1/engine-discard</code></td><td><code>{organizationId,attemptId}</code>, existing admitted change/operation-ID envelope</td><td><code>{result:'engineDiscarded'}</code> or NotFound/NotRetired/DiscardUnsupported/Stale.</td></tr>
+</tbody></table></div>
+<p>These are dependency shapes read from <a href="file:///Users/shravansunder/code/projects/codex-router.feat-sqlx-do-clean/docs/specs/2026-11-15-central-f1-engine/program-design.html#p8-summary">engine P8</a>, not new sign-in forwarding authority. Final exported fixtures define time/failure/kind types and the exact operation-ID envelope; copy no guessed schema. Retry atomically deletes the guarded retired row and updates the alarm; a concurrent second attempt is NotFound. Discard runs the machine's finishing event and deletes the retired row in the same guarded batch; a stale subject changes nothing. Both changes replay their operation's retained answer. Scope B requires the complete consumer design after these exact exports; scope A exposes none.</p>
+<p><strong>Digest consequence:</strong> <code>fleet-permission-policy.ts:10–30</code> derives and sorts the native role map; its pinned SHA-256 is checked by <code>fleet-permission-policy.unit.test.ts:10–29</code>. The current artifact hashes to <code>2d31b5d72716e64e255d8858c231f593155289fb03ed354c4b762890667a3c22</code>. Adding only owner repairWork, keeping member empty/version 1, hashes to <code>aa2fc571158408fdcdcf1d8d0319f0a0886f5570bc60cc52f85a45005fc75f91</code>. These were independently calculated from the ASCII canonical artifact, reproducing the old pinned digest first; the implementation must recompute using the real native-derived policy and B1-A crypto port. If another permission changes, this expected artifact must be reviewed again.</p>
+<ex-code lang="json" title="Expected canonical artifact; ten owner permissions, empty member"><script type="text/plain">
+{"roles":{"member":[],"owner":["machine:enroll","machine:revoke","machine:setTokenLifetime","organization:readAudit","organization:repairWork","organization:view","workspace:create","workspaceAdmin:allowMachine","workspaceAdmin:removeSession","workspaceAdmin:withdrawMachine"]},"version":1}
+</script></ex-code>
+<p>The signed <code>person-fleet</code> claims carry permissions and permission_policy_digest (<code>person-fleet-token.ts:14–24</code>); loaded-map versus source-fence mismatch already refuses issuance (<code>person-fleet-issuance.ts:77–78</code>). The closed organization-stamp claims contain no policy digest (<code>organization-statement.ts:25–39</code>); this change needs no stamp format/key/lifetime change. ListWorkspaces still uses an existing permission: the engine mapping is the separate cause of the new policy hash.</p>
+<ex-mermaid id="policy-rollout" label="Each policy payload belongs to a strictly newer organization revision" data-width="canvas"><script type="text/plain">
+flowchart TB
+  old["Active N<br/>old digest"] --> stop["Stopped N+1<br/>old digest"]
+  stop --> ack1["Stopped floor acknowledged<br/>compatible map available"]
+  ack1 --> resume["Active source N+2, new digest<br/>derived resuming phase while ACK pending"]
+  resume --> ack2["New active floor acknowledged"]
+  ack2 --> issue["Rollout admission may reopen<br/>new-digest credentials"]
+  stop -->|same revision with changed payload| conflict["Central Conflict<br/>never mutate that revision"]
+  class old,stop,resume slot1
+  class ack1,ack2,issue slot6
+  class conflict slot5
+</script></ex-mermaid>
+<p>Central already stores the digest in its organization floor and compares it: <code>authorization_revision_plans.rs:64–78</code>, <code>person_request/floor_delivery.rs:60–81</code> and <code>person_request/request_admission.rs:182–196</code> at e7b709f6. Same revision with identical state/digest is Acknowledged; either changed is Conflict. Lower revision is Acknowledged without replacement; higher revision stores its state/digest unless the stored floor is Deleted, which is acknowledged and kept. Stopped gives NotPermitted, old token revision/digest gives RefreshRequired, a newer undelivered revision gives AuthorizationSyncRequired. No Central code change is needed for the digest rollout itself.</p>
+<h3 id="policy-machine">M4 · Policy stop, resume and ACK</h3>
+<p>Add <code>organizations/organization-policy-machine.ts</code>, <code>storage/organization-policy-store.ts</code> and a separate private policy-maintenance capability under the same owner-only deployment tooling boundary. This is the approved r3 stop/activate lifecycle over existing organization_authorization_revisions fields, not a new permission mechanism or migration. Current delivery-store interface has no lifecycle writer (<code>authorization-revision-delivery-store.ts:55–101</code>); the new writer is explicit.</p>
+<p><strong>Private call path:</strong> <code>organizations/organization-policy-maintenance.ts</code> is the exhaustive effect runner/facade; <code>better-auth/organization-policy-maintenance-plugin.ts</code> supplies native context through the supported server-only extension. Node exports a private maintenance factory; Cloudflare composes a distinct named <code>OrganizationPolicyMaintenance</code> entrypoint, with no public fetch route or ordinary AgentClientManagement binding. Its <code>runPolicyRollout</code> accepts the serializable request below. Native/database/client/clock/control capabilities are constructor-injected, never RPC callback arguments. Owner tooling supplies the deployment-specific admission controller; absent or unobserved control returns blocked before a stop write.</p>
+<ex-code lang="typescript" title="Trusted policy request and nonsecret return; schemas and types stay together"><script type="text/plain">
+type PolicyRolloutTarget = {
+  readonly organizationId: OrganizationId;
+  readonly baseRevision: number; // active N; positive safe integer with room for N+2
+  readonly oldPolicyDigest: string; // strict lowercase SHA-256
+  readonly newPolicyDigest: string;
+};
+type PolicyRolloutRequest = {
+  readonly action: 'inspect' | 'stop' | 'resume' | 'retry-delivery';
+  readonly target: PolicyRolloutTarget;
+};
+type PolicyRolloutReport =
+  | { readonly kind: 'stopped-pending' | 'stopped-acked' | 'resuming' | 'completed';
+      readonly target: PolicyRolloutTarget; readonly source: OrganizationPolicyFacts }
+  | { readonly kind: 'blocked'; readonly reason: PolicyRolloutRefusal }
+  | { readonly kind: 'unknown'; readonly target: PolicyRolloutTarget };
+// All run arguments/results are strict serializable projections. No person token or stamp bytes.
+</script></ex-code>
+<p>Inspect re-observes and reports without a policy write or admission release. Stop/resume translate to the closed machine events only for the declared N/old and N+1/old tuples; a retry never increments again. Unknown write results are read back and reconstructed before another action. The store exposes <code>readPolicyFacts</code> and conditional <code>stopPolicy</code>/<code>resumePolicy</code> returning applied facts, superseded or store-unavailable. Each write guards organization ID/state/revision/digest; resume also guards the stopped ACK. They set state/revision/digest/nextAttemptAt/updatedAt together and preserve ACK, through injected Drizzle. No field or table is added. The target's two digests must differ and the loaded native map must match the declared target at resume; invalid IDs/digests/headroom fail strict parsing.</p>
+<ex-code lang="typescript" title="Policy phases and effects; resuming is derived, never stored as a new state"><script type="text/plain">
+type PolicyRolloutState =
+  | { readonly kind: 'active'; readonly fence: OrganizationPolicyFacts }
+  | { readonly kind: 'stopped'; readonly fence: OrganizationPolicyFacts }
+  | { readonly kind: 'resuming'; readonly fence: OrganizationPolicyFacts }
+  | { readonly kind: 'blocked'; readonly reason: PolicyRolloutRefusal };
+type PolicyRolloutEvent =
+  | { readonly kind: 'stop-requested'; readonly target: PolicyRolloutTarget }
+  | { readonly kind: 'compatible-map-observed'; readonly digest: string }
+  | { readonly kind: 'resume-requested'; readonly target: PolicyRolloutTarget }
+  | { readonly kind: 'delivery-result'; readonly sent: OrganizationRevisionPush; readonly result: AuthorizationRevisionPushAnswer }
+  | { readonly kind: 'target-ack-observed'; readonly fence: OrganizationPolicyFacts }
+  | { readonly kind: 'retry-delivery' }
+  | { readonly kind: 'target-pause-observed'; readonly control: TargetIssuanceControlFacts }
+  | { readonly kind: 'target-control-changed'; readonly control: TargetIssuanceControlFacts }
+  | { readonly kind: 'observation-finished' }
+  | { readonly kind: 'clock-moved' };
+type PolicyRolloutEffect =
+  | { readonly kind: 'hold-target-issuance'; readonly organizationId: OrganizationId }
+  | { readonly kind: 'push-organization-revision'; readonly payload: OrganizationRevisionPush }
+  | { readonly kind: 'read-target-ack'; readonly organizationId: OrganizationId; readonly revision: number }
+  | { readonly kind: 'release-target-issuance'; readonly organizationId: OrganizationId; readonly revision: number; readonly expectedPolicyDigest: string }
+  | { readonly kind: 'observe-policy-pending' };
+</script></ex-code>
+<p>OrganizationPolicyFacts parses existing ID/revision/state/digest/ACK/time fields; deleted is a valid terminal stored value and reconstructs blocked/deleted, never active. The target and action determine the expected tuple at N, N+1 or N+2. OrganizationRevisionPush derives from existing <code>organizationRevisionPushSchema</code>; AuthorizationRevisionPushAnswer is the actual client union (<code>authorization-revision-push-client.ts:9–48</code>), including answered-unavailable and unknown. Delivery-result carries the sent tuple so an old reply cannot complete a successor. <code>transitionOrganizationPolicy(state,event,context)</code> and <code>reconstructOrganizationPolicy(fence,context)</code> are pure functions in the machine module, returning the shared TransitionResult. Context contains the declared target and observed compatible-map/control facts. Effects use the existing client/drainer and guarded ACK writer; unknown/lost ACK stays pending and resends the immutable tuple on explicit retry, with no new timer. Known inapplicable state/event pairs return wrong-state; unexpected variants reach the never helper.</p>
+<div class="ex-table-scroll" data-width="canvas"><table><thead><tr><th>Phase/event</th><th>One conditional source write</th><th>Effect/result</th></tr></thead><tbody>
+<tr><td>active + stop, target pause not observed</td><td>No source fence write; commit local unchanged phase</td><td>Emit hold-target-issuance; its result is target-pause-observed. Re-evaluate the declared stop target only after actual host control confirms the pause. A claimed boolean without admission observation is insufficient.</td></tr>
+<tr><td>active N/old + stop</td><td>CAS expected ID, active, N and old digest; set stopped N+1/old, update existing nextAttemptAt/updatedAt. Preserve ACK. Require safe revision headroom.</td><td>After commit push stopped N+1; ACK read stays pending until source ACK reaches N+1.</td></tr>
+<tr><td>stopped N+1 + stopped ACK and matching compatible map</td><td>No policy change merely from an ACK. Record the existing guarded ACK normally.</td><td>Resume becomes eligible only with exact digest/code evidence; unrelated stopped/deleted state never auto-resumes.</td></tr>
+<tr><td>eligible stopped + resume</td><td>CAS stopped N+1/old with ACK at least N+1; set active N+2/new digest and pending delivery. No person-row fanout or ACK fabrication.</td><td>Derived resuming while ACK&lt;N+2; push the new active revision, then observe target ACK.</td></tr>
+<tr><td>resuming + exact target ACK</td><td>Existing guarded ACK update; state remains stored active N+2/new</td><td>Reconstruct active/completed; emit release-target-issuance only for this organization/target with matching compatible map. Failed release leaves the external pause held.</td></tr>
+<tr><td>Stopped/resuming + lost control or runner restart</td><td>Do not resume or rewrite the floor</td><td>Block/report; deployment control remains closed independently of the process. Reconstruction re-observes pause, source row, Central floor/ACK and loaded map before further effects. Completed source/ACK with a still-held pause may safely retry only release.</td></tr>
+<tr><td>Conflict, lower/stale ACK, CAS loss, overflow or deleted</td><td>No payload rewrite, reset or partial transition</td><td>Typed refusal/pending. A lower ACK cannot complete the target; same-version changed payload is a defect to report.</td></tr>
+<tr><td>Compatible-map/pause/ACK observation, retry or clock move</td><td>Validate against the exact declared target and reproject source facts; clock alone does not mutate</td><td>Observations are injected facts, not guessed writes. Explicit retry can re-emit the still-pending immutable push or completed target release. Observation-finished is a no-effect same-state event. Other known state/event pairs refuse wrong-state.</td></tr>
+</tbody></table></div>
+<p>Production policy rollout is owner-run. Stop and resume are both revision bumps: active N → stopped N+1 → active N+2. The runner keeps target-specific issuance admission held until the resumed floor ACK. The Lead explicitly confirmed on 15 Nov that this control fails closed on failure/restart, while ordinary issuance before synchronization remains allowed by r3:128. Do not add a global ACK gate to decidePersonFleetIssuance, which would change initial/lost-hint recovery. TargetIssuanceControlFacts is a strict nonsecret projection of the injected deployment control's observed target, admission and pause custody; it is not a new stored organization field. Both host fixtures prove this real admission boundary. Production tooling must supply its equivalent before the rollout runs. Old processes fail the existing digest check after the new source digest becomes active.</p>
+<p>Before interpreting release-target-issuance, freshly verify the source is still exactly the target's active N+2/new tuple, its ACK covers N+2, and the loaded map/control custody still match. A changed/deleted successor keeps the pause held and reports superseded; an old success report is no authority to reopen. Existing ACK recording advances only monotonically and never above the current source revision (<code>authorization-revision-delivery-store.ts:229–244</code>); neither a lower result nor an impossible future ACK completes this target. All effect results return through their named observation/delivery events, with no implicit transition in the interpreter.</p>
+<p><strong>Scope choice:</strong> while open, expose none of the four new engine routes through sign-in. Recommended A maps permission/refusals and rollout now; the whole page/CLI feature is named <strong>Engine operations: inspect and repair retired work</strong>. B brings all four routes and their typed results, guarded repair actions, list paging, one-retry factor UI and CLI routing into this B2 design before implementation. P8 of Lead A's engine owns their producer shapes; that choice requires the corresponding complete consumer/UI/proof revision, not a partial console.</p>
+
+<h2 id="trace">Each rule's owner, state, failure and proof seam</h2>
+<div class="ex-table-scroll" data-width="canvas"><table><thead><tr><th>Rule</th><th>Owner/interface</th><th>State and failure</th><th>Observation</th></tr></thead><tbody>
+<tr><td><a href="specification.html#S1">S1</a></td><td>Existing native create hook/provision client</td><td>settingUp → ready only on confirmed answer; uncertainty retains setup</td><td><a href="verification-design.html#V1">V1</a>, both real stores/link</td></tr>
+<tr><td><a href="specification.html#S2">S2</a></td><td>Native authorized read, forward/release/guard, Central admission</td><td>Live coherent authority or refusal before disclosure</td><td><a href="verification-design.html#V2">V2</a>, two-org sentinel and no-effect readbacks</td></tr>
+<tr><td><a href="specification.html#S3">S3</a></td><td>Lead A's existing atomic create/record path</td><td>One workspace plus record or neither; unique-name refusal</td><td><a href="verification-design.html#V3">V3</a>, real record-insert batch failure</td></tr>
+<tr><td><a href="specification.html#S4">S4</a></td><td>Cookie forwarder plus injected ID source and island response union</td><td>Unknown retains operation; definite refusal supplies next ID</td><td><a href="verification-design.html#V4">V4</a>, exact source/ID/body comparison</td></tr>
+<tr><td><a href="specification.html#S5">S5</a></td><td>Owner-selected ledger contract, Central; page/CLI consumers</td><td>Indefinite first answer or bounded replay/reconciliation; choice open</td><td><a href="verification-design.html#V5">V5</a>, selected exact cutoff/restart oracle</td></tr>
+<tr><td><a href="specification.html#S6">S6</a></td><td>Lead A ListWorkspaces; closed client and two island cursors</td><td>Page/failed/incomplete; corrupt-row diagnosis stays a typed failure</td><td><a href="verification-design.html#V6">V6</a>, exact directory/history sets and real corruption</td></tr>
+<tr><td><a href="specification.html#S7">S7</a></td><td>Producer fixtures, client record union, exhaustive renderer</td><td>Seven known kinds/three origins; genuine unknown is malformed</td><td><a href="verification-design.html#V7">V7</a>, actual fixture/message/display identity</td></tr>
+<tr><td><a href="specification.html#S8">S8</a></td><td>Existing shell/AuthProvider, new admin island, shipped confirmation</td><td>Pending action → confirmation → at most one retry; cancel clears</td><td><a href="verification-design.html#V11">V11</a>, actual browser/CSP/effects</td></tr>
+<tr><td><a href="specification.html#S9">S9</a></td><td>Joined stamp-store facts, pure status DTO/native endpoint</td><td>Separate validity/pending/last attempt; unavailable/refused; no statement bytes</td><td><a href="verification-design.html#V8">V8</a>, response sentinels and zero-send refresh</td></tr>
+<tr><td><a href="specification.html#S10">S10</a></td><td>Existing conditional stamp guard/revision drain</td><td>One pending byte string, CAS settlement, valid authority before work</td><td><a href="verification-design.html#V9">V9</a>, real renewal races and recovery</td></tr>
+<tr><td><a href="specification.html#S11">S11</a></td><td>Native private key capability and trusted runner</td><td>Prepared/confirmed/unfinished, withdrawn verified/unverified; no false outer completion</td><td><a href="verification-design.html#V10">V10</a>, actual keys and preserved-state cold reads</td></tr>
+<tr><td><a href="specification.html#S12">S12</a></td><td>Owner mode choice; host traffic/credential controls</td><td>Window branch gated by real drain/safety; live epoch branch requires design</td><td><a href="verification-design.html#V10">V10</a>, held old signer, expiry and restart controls</td></tr>
+<tr><td><a href="specification.html#S13">S13</a></td><td>Consumer cutover; Lead A retired-contract cleanup</td><td>Old controller/formatter/history directory/exports removed; no migration</td><td><a href="verification-design.html#V12">V12</a>, final two-repo diff/receipt</td></tr>
+<tr><td><a href="specification.html#S14">S14</a></td><td>B1-A host contract, existing gates and final target manifest</td><td>Injected effects/types/UUID/time rules; exact runnable target</td><td><a href="verification-design.html#V13">V13</a>, all required final gates and selected inventories</td></tr>
+<tr><td><a href="specification.html#S15">S15</a></td><td>Native role policy, private existing-fence CAS writer and revision delivery</td><td>Owner-only repairWork; new digest at newer revision; ACK/pending scope and engine-surface choice</td><td><a href="verification-design.html#V14">V14</a>, two-runtime policy rollout and closed new refusals</td></tr>
+<tr><td><a href="specification.html#S16">S16</a></td><td>M1–M4 pure modules and exhaustive injected effect runners</td><td>Commit before effects; stored unknown rejected; key/policy reconstruction uses existing durable facts</td><td><a href="verification-design.html#hegel">H1–H4</a>, reference-model histories, effects and crash/concurrency</td></tr>
+</tbody></table></div>
+</ex-document></body></html>
