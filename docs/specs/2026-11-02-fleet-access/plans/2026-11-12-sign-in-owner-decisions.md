@@ -1320,3 +1320,14 @@ The workspace id equals the operation id.
   - S6: the workspace list call for the `/device` picker;
   - the deployment cutover's policy-rollout gap.
 - **Pointed Lead A at this design set** as S1's existing four documents and owner decisions.
+
+### FOUND: machine revocation is not built on either side (Lead, 2026-11-15T13:51Z)
+- **What was promised:** the owner-approved B3 definition (index "Machine login" row; `deliverables/b3-machine-login` "Revoking a machine") says "a revoked machine is refused at once and at renewal, and its socket closes". Scope includes the admin commands `RevokeMachineEnrollment` (and `AllowMachine`, `WithdrawMachineAllowance`) with their pages, plus disabling the ended client.
+- **What exists:**
+  - **Central `main`:** `RevokeMachineEnrollment` is only a contract type (`identity_contract/organization_commands.rs`); no handler. Lead A said "production revocation routing stays with C". C2 is paused under the redo.
+  - **Sign-in #11:** only the `machine:revoke` permission strings; no admin command, page or forwarding.
+  - **The tests:** they revoke only through central's test control (`machine_login_test_control.rs`).
+- **Whose miss:** the Lead's. I accepted the split without bringing it to the owner as an approved outcome not delivered.
+- **Status:** #11 is "login and refresh, proven against real central; revocation not built". B3 is **not** done.
+- **Owner decision pending:** merge #11 as login-only now (Lead recommends) vs hold until revocation exists end to end. Revocation becomes the next workstream: sign-in commands, pages and client disable, plus a central handler from central's owner.
+- **Re-check owed to the owner:** every claim taken from Lead A, against code. That's the central contracts actually served, and the owner decisions relayed only via Lead A: machine-login storage A, workspace (a), link admission (a), the R29 change.
