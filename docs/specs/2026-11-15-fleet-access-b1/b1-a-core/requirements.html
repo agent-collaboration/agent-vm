@@ -28,7 +28,7 @@
 <li><strong>The core never reaches for the runtime itself.</strong> Its crypto comes from the host, like its clock and IDs already do, and the architecture check catches a slip.</li>
 <li><strong>No sign-in test reads the real clock or waits on real time,</strong> and a scan enforces it.</li>
 <li><strong>The flood limit is proven the way your design says:</strong> "limited" on Miniflare's real counter, the window reset on a controlled clock.</li>
-<li><strong>Every ID the service stores is a UUIDv7,</strong> checked across the whole database after a full run.</li>
+<li><strong>Every identifier the service generates is a UUIDv7,</strong> checked across the ten tables a full people journey fills. Derived keys, such as the client-assertion key, stay derived.</li>
 <li><strong>Today's agents still get their token and make one allowed call,</strong> and people still can't get a tool credential.</li>
 </ul>
 </ex-callout>
@@ -83,11 +83,11 @@ flowchart TB
 <h2 id="not">Not in this feature</h2>
 <ul>
 <li><strong>Passkey sign-in</strong> is B1-B. <strong>Organization choice and membership lookup</strong> are B1-C.</li>
-<li><strong>The device-code single-use Hegel family,</strong> and the "device-code approval rule is in the core" part of proof row U23, belong to machine login (B3).</li>
-<li><strong>Better Auth's own internal crypto</strong> (its session tokens, sign-in state, two-factor codes): your design keeps Better Auth as shipped, and R30 governs our rules, not the library's internals.</li>
+<li><strong>The device-code single-use Hegel family,</strong> and the "device-code approval rule is in the core" part of proof row U23: the device-code grant isn't on <code>main</code> (it's in the frozen PR #11), so both are built with machine login (B3). No choice was made; there's no code here to test.</li>
+<li><strong>Better Auth's own internal crypto</strong> (its session tokens, sign-in state, two-factor codes): it's outside this feature by my reading of R30, which governs our sign-in rules, while Better Auth is the library they're built on. That reading isn't your decision, and it's on the <a href="decisions.html#mine">Decisions</a> page for you to overrule.</li>
 <li><strong>Scripts that run in the browser</strong> keep using the browser's own crypto and <code>fetch</code>. They run in the person's browser, not in the service.</li>
 <li><strong>The real counter's reset, and counting across Cloudflare locations,</strong> are checked on the private stack, as your design says, not locally.</li>
-<li><strong>No format change:</strong> no token, proof, digest or page-policy format changes. Some exported function signatures change, but neither package is published (the npm registry returns 404 for both), so only switchboard's own callers are affected (<a href="decisions.html#published">Decisions</a>).</li>
+<li><strong>No format change:</strong> no token, proof, digest or page-policy format changes. Some exported function signatures change. Neither package is on the public npm registry, and every switchboard caller is updated in the same PR. Other consumers are unknown (<a href="decisions.html#published">Decisions</a>).</li>
 </ul>
 </ex-document>
 </body>

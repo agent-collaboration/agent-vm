@@ -41,7 +41,7 @@
 </ul>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p><strong>None.</strong> Rule S5 keeps every page, token, proof and digest format exactly as today. S9 and S11 keep the limits and the agent path as today. Some exported function signatures change, but neither package is published, so nothing outside switchboard breaks (<a href="decisions.html#published">Decisions</a>).</p>
+<p><strong>None.</strong> Rule S5 keeps every page, token, proof and digest format exactly as today. S9 and S11 keep the limits and the agent path as today. Some exported function signatures change. Neither package is on the public npm registry, and every switchboard caller is updated in the same PR. Other consumers are unknown (<a href="decisions.html#published">Decisions</a>).</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
 <p>Your rule R30, word for word: <em>"The core MUST reach storage, time, identifiers, cryptography and outbound requests only through capabilities its host supplies, and each capability is required. The Cloudflare host and the Node host MUST each supply them and add no sign-in rule."</em></p>
@@ -108,7 +108,7 @@ flowchart TB
 <h3 id="S3">S3 · The capability is required</h3>
 <p>The core MUST NOT fall back to the runtime's crypto when a host doesn't hand one in. Every function that needs it takes it explicitly, and a host that leaves it out does not build: it fails type-checking.</p>
 <p><strong>Wrong if:</strong> any core function has a default that reads the runtime's crypto.</p>
-<p><strong>Outside effect:</strong> this changes exported signatures of <code>@agent-collaboration/sign-in-core</code> and <code>@agent-collaboration/sign-in-owner-cli</code>. Neither is published (npm registry 404, 15 Nov), and every caller is in switchboard and updated in the same PR (<a href="decisions.html#published">Decisions</a>).</p>
+<p><strong>Outside effect:</strong> this changes exported signatures of <code>@agent-collaboration/sign-in-core</code> and <code>@agent-collaboration/sign-in-owner-cli</code>. Neither is on the public npm registry (404, 15 Nov), and every switchboard caller is updated in the same PR. Other consumers are unknown (<a href="decisions.html#published">Decisions</a>).</p>
 
 <h3 id="S4">S4 · Each host hands it in and adds no rule</h3>
 <p>The Cloudflare host, the Node host and the owner CLI MUST each hand in a crypto capability built from their runtime's standard Web Crypto. The host adds no sign-in rule while doing so: no extra checks, no format choices.</p>
@@ -147,7 +147,7 @@ flowchart TB
 <ul>
 <li><strong>Waits are on events only.</strong> A DevTools reply arrives, a socket opens, errors or closes, a process exits, a readiness line arrives, a promise settles.</li>
 <li><strong>Time comes from a controlled clock.</strong> Every timer runs on a controlled clock or on Vitest's fake timers. Any fixture value that depends on time, such as an invitation's expiry, is computed from the controlled clock, never from <code>Date.now()</code> or <code>new Date()</code>.</li>
-<li><strong>There's no real-time watchdog or "bound".</strong> If a browser or process hangs without an event, the test hangs. The test runner's own job limit, outside test code, ends the run. This follows your 31 Oct tightening: no hang-guard exception.</li>
+<li><strong>There's no real-time watchdog or "bound".</strong> If a browser or process hangs without an event, the test hangs. The test runner's own job limit, outside test code, ends the run. This follows from R33 itself: tests "wait only on events … and every timer runs on a controlled clock", so a real-time bound in a helper isn't allowed.</li>
 <li><strong>A scan enforces it:</strong> the same architecture check fails on <code>setTimeout</code>, <code>setInterval</code>, <code>Date.now()</code>, a zero-argument <code>new Date()</code> or <code>performance.now()</code> in those files. Vitest's own fake-timer APIs (<code>vi.useFakeTimers</code>, <code>vi.setSystemTime</code>, <code>vi.advanceTimersByTime</code>) and the names of timers passed as strings to them are allowed.</li>
 </ul>
 <p><strong>Wrong if:</strong> a planted <code>setTimeout</code> in a test helper passes the scan, or a fixture built with <code>Date.now()</code> passes.</p>
@@ -175,10 +175,13 @@ flowchart TB
 <h3 id="S10">S10 · Every stored ID is a UUIDv7</h3>
 <p>From R32: <em>"No UUID other than version 7 MAY be minted or stored by the sign-in service."</em></p>
 <ul>
-<li>After a full sign-in run on each database (D1 and better-sqlite3), every value stored in an identifier column (<code>id</code>, and every column whose name ends in <code>Id</code> or <code>_id</code>) that looks like a UUID must be version 7.</li>
-<li>Secrets and codes stay as they are: session tokens, client secrets, PKCE verifiers, signing keys, device codes and user codes are never UUIDs. A key Better Auth derives to make something single-use stays derived.</li>
+<li><strong>Generated identifiers are version 7.</strong> After a full people journey on each database (D1 and better-sqlite3), every value in an identifier column (<code>id</code>, and every column ending in <code>Id</code> or <code>_id</code>) of the tables that journey fills must be a version-7 UUID. Those tables are <code>user</code>, <code>session</code>, <code>account</code>, <code>organization</code>, <code>member</code>, <code>invitation</code>, <code>twoFactor</code>, <code>signInAudit</code>, <code>jwks</code> and <code>oauthClient</code>.</li>
+<li><strong>Each of those tables must hold at least one row,</strong> so an empty table can't pass by having nothing to check.</li>
+<li><strong>Derived keys stay derived.</strong> The client-assertion record's key (<code>oauthClientAssertion.id</code>) is a digest of the assertion's <code>jti</code>, which is what makes its replay refusable. It must stay that digest, not become a UUID, and a replay must be refused. The existing case in <code>storage-cases/provider-identifier-cases.ts</code> (lines 56–130) already proves this, and it stays.</li>
+<li><strong>Secrets and codes are never UUIDs:</strong> session tokens, client secrets, PKCE verifiers, signing keys, backup codes, device codes and user codes.</li>
+<li><strong>Not reached by this journey:</strong> <code>passkey</code> (B1-B), <code>deviceCode</code> (machine login, B3), and the agent-path tables <code>oauthResource</code> and <code>oauthClientResource</code>. They're listed as uncovered, not claimed.</li>
 </ul>
-<p><strong>Wrong if:</strong> a version-4 UUID written to any identifier column passes, or a secret is stored as a UUID.</p>
+<p><strong>Wrong if:</strong> a version-4 UUID in any of those columns passes; an expected table is empty and the test still passes; a secret is UUID-shaped; or the client-assertion key stops being the <code>jti</code> digest.</p>
 
 <h3 id="S11">S11 · People get no tool credential, and today's agents still work</h3>
 <p>From R38. On the final build of this feature:</p>

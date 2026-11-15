@@ -38,7 +38,7 @@
 <p><strong>The test changes</strong> (<a href="#time">time</a>, <a href="#hegel">Hegel</a>, <a href="#flood">flood</a>, <a href="#ids">IDs</a>) are each small and name their exact files.</p>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p><strong>None.</strong> Some exported signatures of <code>sign-in-core</code> and <code>sign-in-owner-cli</code> change, but neither is published, so only switchboard's own callers are affected, and they are updated in the same PR (<a href="decisions.html#published">Decisions</a>).</p>
+<p><strong>None.</strong> Some exported signatures of <code>sign-in-core</code> and <code>sign-in-owner-cli</code> change. Neither is on the public npm registry, and every switchboard caller is updated in the same PR. Other consumers are unknown (<a href="decisions.html#published">Decisions</a>).</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
 <p>It's the same pattern your approved design already uses for the clock, IDs and deadlines: an interface in the core, with each runtime injecting its own. Your words (<a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/requirements.source.html">approved Requirements</a>, line 174, U23): <em>"you inject stukff not pkul out engines"</em>. The <a href="#trace">trace table</a> maps every rule to its owner and proof.</p>
@@ -117,7 +117,7 @@ export function mintPageNonce(crypto: SignInCrypto): PageNonce {
 </tbody>
 </table>
 <p><strong>What would reopen it:</strong> if the production changes grow past about 40 call sites, so the PR can't be reviewed in one pass, switch to B and say so.</p>
-<p><strong>Published package:</strong> option A changes eight exported functions and two exported types (<a href="#changes">marked in the table</a>). Neither package is published, so this breaks no outside code (<a href="decisions.html#published">Decisions</a>).</p>
+<p><strong>Published package:</strong> option A changes eight exported functions and two exported types (<a href="#changes">marked in the table</a>). Neither package is on the public npm registry, and every switchboard caller is updated in the same PR. Other consumers are unknown (<a href="decisions.html#published">Decisions</a>).</p>
 
 <h2 id="paths">How a request reaches crypto, before and after</h2>
 <p>In the sequence diagrams, participants are coloured automatically. The colour carries no meaning.</p>
@@ -221,15 +221,37 @@ sequenceDiagram
 <ul>
 <li><strong>What it generates:</strong> a grant (<code>client_credentials</code>, <code>person</code>, <code>introspection</code>, <code>none</code>); an audience (a registered workspace resource with a policy, central's admin audience, the management audience, an unknown one); a client (a registered agent, the owner fleet CLI client, another person client); whether the response carries a refresh credential; and whether the issued sessions are still active.</li>
 <li><strong>What it runs:</strong> <code>releaseSignInResponse</code> (<code>response-release/sign-in-response-release.ts:53</code>), with in-memory ports built from those choices.</li>
-<li><strong>The model</strong> is a small pure function in the test, written from today's approved rules:
-  <ul>
-  <li>an inactive session is refused <code>not-allowed</code>;</li>
-  <li><code>client_credentials</code> is released only for a registered agent asking for one of its own workspace resources with a policy;</li>
-  <li>a refresh credential leaves only with a person-fleet token for central's admin audience, issued to the owner fleet CLI client;</li>
-  <li>a person token for central's admin audience needs an active organization session and a passing person-fleet release decision;</li>
-  <li>anything else is refused with the error the code returns today, or passed through for introspection and <code>none</code>.</li>
-  </ul></li>
-<li><strong>What it checks:</strong> the response's status and error code equal the model's, for every generated case.</li>
+<li><strong>The model</strong> is a pure function in the test, written independently of the code from the decision table below. Steps are taken in order, and the first that applies decides. "Refuse X" means status 400 with <code>{"error":"X"}</code>, or 403 for <code>not-allowed</code>, after deleting the request's issued sessions and cleaning up unlinked people. "Pass through" means the upstream response unchanged.</li>
+</ul>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Step</th><th>When</th><th>Decision</th></tr></thead>
+<tbody>
+<tr><td>0</td><td>Any session issued in this request is no longer active</td><td>Refuse <code>not-allowed</code> (403)</td></tr>
+<tr><td>1</td><td>Introspection, upstream OK, body says <code>active: false</code></td><td>Pass through</td></tr>
+<tr><td>2</td><td>Introspection, upstream OK, body active, and any of: <code>sub</code>, <code>sid</code> or <code>organization_id</code> missing; <code>aud</code> isn't the management audience; <code>exp</code> missing or already passed; the person's organization session is inactive</td><td>Return <code>{"active": false}</code></td></tr>
+<tr><td>3</td><td>Introspection, upstream OK, none of step 2</td><td>Return the body plus <code>checkedAt</code> (the injected clock's now)</td></tr>
+<tr><td>4</td><td>Introspection with upstream not OK; or grant <code>none</code>; or upstream not OK</td><td>Pass through</td></tr>
+<tr><td>5</td><td>The body has no <code>access_token</code></td><td>Refuse <code>invalid_client</code> for <code>client_credentials</code>, else <code>invalid_grant</code></td></tr>
+<tr><td>6</td><td>A refresh credential is present, unless the grant is <code>person</code> and <code>aud</code> is central's admin audience and the client is the owner fleet CLI</td><td>Refuse <code>invalid_grant</code></td></tr>
+<tr><td>7</td><td>Wrong issuer; <code>exp</code> passed; lifetime longer than <code>accessTokenSeconds</code>; or <code>exp</code> not after <code>iat</code></td><td>Refuse <code>invalid_client</code> for <code>client_credentials</code>, else <code>invalid_grant</code></td></tr>
+<tr><td>8</td><td><code>client_credentials</code> with any of: a <code>sid</code> present; <code>organization_id</code> or <code>workspace_id</code> missing; no requested resource; <code>aud</code> not the requested resource; <code>sub</code> or <code>azp</code> not the client</td><td>Refuse <code>invalid_client</code></td></tr>
+<tr><td>9</td><td><code>client_credentials</code>, and the agent is missing, disabled or not fully registered, or its client or organization differs from the claims</td><td>Refuse <code>invalid_client</code></td></tr>
+<tr><td>10</td><td><code>client_credentials</code>, and the requested resource is missing or has no issuance policy</td><td>Refuse <code>invalid_target</code></td></tr>
+<tr><td>11</td><td><code>client_credentials</code>, and the resource's identifier, organization or workspace doesn't match</td><td>Refuse <code>invalid_client</code></td></tr>
+<tr><td>12</td><td><code>client_credentials</code>, and the resource isn't one of the agent's own</td><td>Refuse <code>invalid_target</code></td></tr>
+<tr><td>13</td><td><code>client_credentials</code>, none of 8–12</td><td>Release (pass through)</td></tr>
+<tr><td>14</td><td><code>person</code>, and <code>aud</code> is a registered workspace resource</td><td>Refuse <code>invalid_target</code></td></tr>
+<tr><td>15</td><td><code>person</code> for central's admin audience, and the person-fleet decision refuses, names another person, or the organization session is inactive, or a second decision on a fresh clock sample refuses</td><td>Refuse <code>invalid_grant</code></td></tr>
+<tr><td>16</td><td><code>person</code> for central's admin audience, none of 15</td><td>Release</td></tr>
+<tr><td>17</td><td><code>person</code> for any other audience, and <code>sid</code> or <code>organization_id</code> is missing, <code>aud</code> isn't the management audience, or the organization session is inactive</td><td>Refuse <code>invalid_grant</code></td></tr>
+<tr><td>18</td><td><code>person</code> for the management audience, none of 17</td><td>Release</td></tr>
+<tr><td>19</td><td>Any port throws</td><td>Introspection: <code>{"active": false}</code>. Otherwise refuse <code>invalid_client</code> for <code>client_credentials</code>, else <code>invalid_grant</code>.</td></tr>
+</tbody>
+</table></div>
+<ul>
+<li><strong>Reference:</strong> the approved design names the dispatch's allowed and refused rows (journey SO2: people's admin tokens, today's agent path, a person refused a workspace audience, and so on), but not every refusal code. This table fixes today's codes as the reference, from <code>sign-in-response-release.ts:74–212</code> at <code>f3b2b88b</code>. A later change to any code is then a visible change to the model in review, never a silent one.</li>
+<li><strong>What it generates</strong>, so that every step can be reached: the grant; the upstream status; for introspection, the body's fields, <code>aud</code>, <code>exp</code> and session; for tokens, whether <code>access_token</code> and a refresh credential are present; issuer, expiry and lifetime validity; whether <code>sid</code>, <code>organization_id</code> and <code>workspace_id</code> are present, and <code>sub</code>/<code>azp</code> equality; the agent's state (missing, disabled, incomplete, mismatched, valid); the resource's state (missing, no policy, mismatched, not the agent's, valid); the audience (a workspace resource, central admin, management, another); the person-fleet decision (refused, wrong person, released then refused, released); each session's state; and a port that throws.</li>
+<li><strong>What it checks:</strong> for every generated case, the status, the error code or body, and whether cleanup ran, all equal the model's.</li>
 <li><strong>Settings:</strong> <code>derandomize: true</code> and <code>database: hegel.Database.disabled</code>, as the existing families use.</li>
 </ul>
 
@@ -250,7 +272,9 @@ sequenceDiagram
 <p>A new host test, <code>packages/sign-in-test-support/src/stored-identifier-readback.host.e2e.test.ts</code>, runs on both databases:</p>
 <ul>
 <li><strong>The run:</strong> it starts the local harness, then runs the people journey: owner sign-in and organization, an invitation, accept, remove, a second factor, and an admin forwarding.</li>
-<li><strong>The scan:</strong> it reads every table in the sign-in schema (<code>signInSchema</code>, <code>storage/sign-in-schema.ts:589</code>) through Drizzle. Every value in a column named <code>id</code>, or ending in <code>Id</code> or <code>_id</code>, that matches the UUID shape must parse as <code>z.uuidv7()</code>.</li>
+<li><strong>The scan:</strong> it reads, through Drizzle, the ten tables the journey fills, from the sign-in schema (<code>signInSchema</code>, <code>storage/sign-in-schema.ts:589</code>): <code>user</code>, <code>session</code>, <code>account</code>, <code>organization</code>, <code>member</code>, <code>invitation</code>, <code>twoFactor</code>, <code>signInAudit</code>, <code>jwks</code> and <code>oauthClient</code>. Each must have at least one row. Every value in a column named <code>id</code>, or ending in <code>Id</code> or <code>_id</code>, must parse as <code>z.uuidv7()</code>.</li>
+<li><strong>Checking the table list:</strong> the Implementer confirms it against the first run. Any further table the journey fills joins the list; a table it can't fill is named as uncovered.</li>
+<li><strong>The derived key</strong> (<code>oauthClientAssertion.id</code>, a digest of the assertion's <code>jti</code>) and its replay refusal are already proven by <code>storage-cases/provider-identifier-cases.ts:56–130</code>. That case stays, and V9 names it.</li>
 <li><strong>Secrets and codes</strong> (<code>token</code>, <code>secret</code>, <code>backupCodes</code>, device and user codes) must not match the UUID shape.</li>
 <li><strong>No raw SQL:</strong> rows are read with Drizzle's query builder, as R29 requires.</li>
 </ul>
@@ -281,7 +305,7 @@ sequenceDiagram
 </tbody>
 </table></div>
 <p>The time, Hegel, flood and ID changes are test code only, listed in <a href="#tests-become">what tests become</a>.</p>
-<p><strong>What the packages' exports change</strong> (neither package is published; see <a href="decisions.html#published">Decisions</a>). <code>@agent-collaboration/sign-in-core</code>, re-exported by <code>packages/sign-in-core/src/index.ts</code> lines 26 and 52–55:</p>
+<p><strong>What the packages' exports change</strong> (neither package is on the public npm registry; see <a href="decisions.html#published">Decisions</a>). <code>@agent-collaboration/sign-in-core</code>, re-exported by <code>packages/sign-in-core/src/index.ts</code> lines 26 and 52–55:</p>
 <ul>
 <li><strong>Eight functions:</strong> <code>fleetAdminIntentDigest</code>, <code>base64UrlSha256</code>, <code>readOrganizationStatementFacts</code>, and the five proof functions.</li>
 <li><strong>Two types:</strong> <code>SignInPlatform</code> and <code>OrganizationStampRenewalProps</code>, each with a new required <code>crypto</code>.</li>

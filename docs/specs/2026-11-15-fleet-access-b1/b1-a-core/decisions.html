@@ -37,6 +37,21 @@
 <p>Every decision of yours below is quoted with where you said it. Lines marked <strong>unconfirmed</strong> are ones I couldn't find in a transcript, and each has another line of yours that backs it up.</p>
 </ex-callout>
 
+<ex-mermaid id="decisions-pic" label="Where B1-A's decisions come from" data-width="canvas"><script type="text/plain">
+flowchart TB
+  words["Your words<br/>U16, U23, U24, U25"] --> design["Your approved design<br/>R30, R32, R33, R38, R52, SO2"]
+  design --> b1a["B1-A design"]
+  mine["My calls<br/>each marked: should it have been yours?"] --> b1a
+  assume["Assumptions<br/>each with: if it's wrong"] --> b1a
+  b1a --> open["Open for you: none"]
+  class words,design slot1
+  class mine slot2
+  class assume slot3
+  class b1a slot6
+  class open slot4
+</script></ex-mermaid>
+<p><strong>Key:</strong> blue is yours, amber is mine, teal the assumptions, green the design, violet what's open.</p>
+
 <h2 id="owner">Your decisions</h2>
 <p>Transcripts: <strong>F</strong> is the <a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl">Fleet access session</a>; <strong>P</strong> is the <a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portable-tool-portal-hosts/2febb449-db01-4859-8fdb-fdc41a74abfc.jsonl">earlier portal session</a>. The approved Requirements are <a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/requirements.source.html"><code>requirements.source.html</code></a>.</p>
 <div class="ex-table-scroll" data-width="canvas"><table>
@@ -49,7 +64,7 @@
 <tr><td>No hang guard, waits on events only</td><td>"no real clock and only events, mock timers in tests" (<strong>unconfirmed</strong>; backed by the line above)</td><td>31 Oct, in my memory record; line not found</td><td>The five real-time bounds go, with no replacement watchdog</td></tr>
 <tr><td>Only UUIDv7 (U24, rule R32)</td><td>"we ony use uuidv7"</td><td>Requirements line 175</td><td>The full ID readback</td></tr>
 <tr><td>How flood limits are proven (journey SO2)</td><td>Approved row: "Miniflare's binding keeps its own clock: locally it proves 'limited', the window reset is proven through the core's limiter on a controlled clock, and the binding's reset is checked once on the private stack"</td><td><code>verification-design.source.html</code>, journey SO2</td><td>"Limited" on Miniflare's real binding; the stand-in removed</td></tr>
-<tr><td>Better Auth used as shipped</td><td>"can we not just trust better akuth ui?"</td><td>F line 124460, 13 Nov</td><td>Better Auth's own internal crypto is out of this rule's scope</td></tr>
+<tr><td>Better Auth is the library the service is built on (R29: "Better Auth MUST reach it through its Drizzle adapter")</td><td>Approved rule R29, from your words in U22: "we kuse drizzle and sqlite"</td><td><code>specification.source.html</code> line 276</td><td>Better Auth runs inside the service as a library. Whether its own internal crypto is inside R30 is my reading, not your decision (<a href="#mine">below</a>).</td></tr>
 <tr><td>A deliverable is a whole feature</td><td>"when I see deliverable it means a feature done properly"; "the work cannot be some bite size nonsense" (relayed by Lead A, 15 Nov)</td><td>Lead A's relays, 15 Nov</td><td>B1-A groups the core, time, Hegel, flood, ID and agent work into one feature, with old code removed</td></tr>
 <tr><td>Heavy test runs go to Sunclaw</td><td>"yes run thsi stuff"</td><td>F line 122302, 13 Nov</td><td>The Verifier's heavy runs</td></tr>
 </tbody>
@@ -65,7 +80,8 @@
 <tr><td>Delete the flood stand-in</td><td>No test needs it after the change; your feature rule says old code goes</td><td>No: it follows your rule.</td></tr>
 <tr><td>The test-time scan covers <code>sign-in-test-support</code>, the sign-in <code>*.test.ts</code> files, and <code>scripts/verify-auth/</code></td><td>Proof row U25 names "the sign-in tests, helpers or harness"</td><td>No. It's what U25 asks.</td></tr>
 <tr><td>Treat U25's "<code>auth-proof-process.ts</code> kill deadlines" as already done</td><td>The file already waits on an <code>AbortController</code> and the controlled clock</td><td>No. It's a fact from the code.</td></tr>
-<tr><td>The device-code Hegel family and "device-code approval in the core" go to B3</td><td>They're about machine login, which is B3's feature</td><td>Yes, partly: it moves part of R33 and U23 to another deliverable. It's recorded here so you can say no.</td></tr>
+<tr><td>The device-code Hegel family and "device-code approval in the core" are built with machine login (B3), not here</td><td>The device-code grant doesn't exist on <code>main</code>. The schema has a <code>deviceCode</code> table, but no core code issues or redeems device codes; that code is in the frozen PR #11. A property test of single-use redemption, or a check that its approval rule is in the core, can only be written with that code.</td><td>No choice was made: the code that would be tested isn't on <code>main</code>. It's recorded so you can see where these parts of R33 and U23 go.</td></tr>
+<tr><td>Better Auth's own internal crypto (its session tokens, sign-in state, two-factor codes) is outside R30</td><td>R30 governs "every sign-in rule … in one runtime-free core", our code. Better Auth is the library that code is built on (R29), and changing its internals would mean patching it, which your rule on following Better Auth's own way avoids.</td><td><strong>Possibly yes.</strong> No decision of yours settles it. If you want Better Auth's own crypto routed through the host too, that's a larger change (a Better Auth crypto hook or a patch), and it would come to you as a choice.</td></tr>
 <tr><td>Regroup B1's nine slivers into three features (B1-A, B1-B, B1-C)</td><td>Your rules: "a feature done properly", "cannot be some bite size nonsense"</td><td>The grouping is mine; the rule is yours. Correct it on the overview if it's wrong.</td></tr>
 </tbody>
 </table></div>
@@ -79,18 +95,20 @@
 <tr><td><code>pnpm typecheck</code> flags every caller that needs the new <code>crypto</code></td><td>The field and parameters are required, and the core's source is type-checked</td><td>A caller in an excluded test file would fail at run time. The unit and host lanes would catch it.</td></tr>
 <tr><td>Hegel 0.4.10 generates the dispatch combinations</td><td>The existing families use its generators</td><td>Enumerate the small combination space exhaustively instead; same model.</td></tr>
 <tr><td>The test runner's own limit ends a genuinely hung browser run</td><td>Runner configuration, outside test code</td><td>A hang would run until CI's job timeout. That's visible and not a false pass.</td></tr>
-<tr><td>No consumer of these packages exists outside switchboard</td><td>The npm registry returns 404 for both (<a href="#published">below</a>); codex-router and agent-vm don't depend on them</td><td>An outside consumer would need to pass <code>crypto</code> when upgrading.</td></tr>
+<tr><td>No consumer of these packages exists outside switchboard</td><td>Bounded: the public npm registry returns 404 for both, and codex-router and agent-vm don't depend on them. A consumer using a git, tarball or private-registry dependency wasn't checked, so outside consumers are <strong>unknown</strong>.</td><td>That consumer would need to pass <code>crypto</code> when it upgrades.</td></tr>
 <tr><td>Browser scripts written as text are out of R30's scope</td><td>They run in the person's browser, not the service</td><td>They'd need a separate rule. None is asked for.</td></tr>
 </tbody>
 </table>
 
-<h2 id="published">Settled: the signature change breaks nothing outside switchboard</h2>
+<h2 id="published">The signature change: not on public npm; other consumers unknown</h2>
 <p>Meeting R30 changes some exported signatures:</p>
 <ul>
 <li><strong><code>@agent-collaboration/sign-in-core</code>:</strong> eight functions gain a <code>crypto</code> parameter, and <code>SignInPlatform</code> and <code>OrganizationStampRenewalProps</code> gain a required <code>crypto</code>.</li>
 <li><strong><code>@agent-collaboration/sign-in-owner-cli</code>:</strong> <code>FleetCliIo</code> and its three key-store constructors gain a required <code>crypto</code>.</li>
 </ul>
-<p>Both packages have <code>publishConfig</code> set to public, but <strong>neither is published</strong>: on 15 Nov the public npm registry returned 404 for both. So every consumer is inside switchboard, and the same PR updates them all. If you publish later, these become the published signatures. Your deferred repository-visibility decision is where that gets settled.</p>
+<p>Both packages have <code>publishConfig</code> set to public, but <strong>neither is on the public npm registry</strong>: on 15 Nov it returned 404 for both. codex-router and agent-vm don't depend on them. Every caller inside switchboard is updated in the same PR.</p>
+<p>Consumers that use a git, tarball or private-registry dependency weren't checked, so they're <strong>unknown</strong>. If one exists, it would need to pass <code>crypto</code> when it upgrades.</p>
+<p>If you publish later, these become the published signatures. Your deferred repository-visibility decision is where that gets settled.</p>
 
 <h2 id="flood-clock">Recorded risk: Miniflare's counter keeps its own real-clock window</h2>
 <p>Your journey SO2 accepted that "Miniflare's binding keeps its own clock". I read its source (miniflare 5.20260815.0-alpha, <code>ratelimit-object.worker.js</code>): it counts in windows of <code>Math.floor(Date.now() / (period * 1000))</code>, 10 or 60 seconds, aligned to the real clock. The test never reads that clock or waits on it.</p>

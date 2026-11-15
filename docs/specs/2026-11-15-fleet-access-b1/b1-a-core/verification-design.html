@@ -183,7 +183,7 @@ flowchart TB
   <li>the macOS Keychain CLI test, which runs only on a Mac;</li>
   <li>the relay and CLI journeys on the second host.</li>
   </ul>
-  The browser test still carries B1-2's real-timer defect until B1-2 lands. That affects how it waits, not what it checks here.</li>
+  On the PR, the browser test runs with the event-only protocol helper that this same feature delivers (<a href="#V6">V6</a>).</li>
 </ul>
 
 <h3 id="V6">V6 · No sign-in test reads the real clock or waits on real time (S7)</h3>
@@ -206,7 +206,7 @@ flowchart TB
 <p><strong>Proven by:</strong> the new token-kind dispatch family agreeing with its model on every generated case, and failing when the code admits a combination the model refuses.</p>
 <ul>
 <li><strong>Test:</strong> new <code>packages/sign-in-core/src/response-release/sign-in-response-release.unit.test.ts</code> (unit lane), with Hegel <code>derandomize: true</code> and no stored example database.</li>
-<li><strong>Passes when:</strong> for every generated combination of grant, audience, client, refresh credential and session state, the status and error code from <code>releaseSignInResponse</code> equal the model's.</li>
+<li><strong>Passes when:</strong> for every generated case, the status, the error code or body, and whether cleanup ran, all equal the model's. The model is the 20-step decision table on the <a href="program-design.html#hegel">Program Design</a>, covering introspection (passed through, <code>{"active": false}</code>, or the body with <code>checkedAt</code>), <code>client_credentials</code>, person tokens for central's admin audience and for the management audience, refresh credentials, and thrown ports.</li>
 <li><strong>Fails on:</strong> a deliberate mutation, run by the Verifier and then reverted, that removes the owner-fleet-CLI check on refresh credentials (<code>sign-in-response-release.ts</code>, the <code>ownerFleetCliClientId</code> comparison). Hegel must find a case where a refresh credential is released to another client.</li>
 <li><strong>The existing family</strong> (claims round trip, <code>person-identity-contracts.unit.test.ts:118</code>) keeps passing.</li>
 <li><strong>Reference:</strong> R33 and journey SO2's dispatch rows.</li>
@@ -231,7 +231,13 @@ flowchart TB
 <p><strong>Proven by:</strong> reading back every ID column of every sign-in table after a full people journey, on both databases, and finding only version-7 UUIDs.</p>
 <ul>
 <li><strong>Test:</strong> new <code>packages/sign-in-test-support/src/stored-identifier-readback.host.e2e.test.ts</code> (host e2e lane), on D1 and on better-sqlite3.</li>
-<li><strong>Passes when:</strong> every UUID-shaped value in an <code>id</code>, <code>…Id</code> or <code>…_id</code> column parses as <code>z.uuidv7()</code>, and no token, secret, backup code, device code or user code is UUID-shaped.</li>
+<li><strong>Passes when:</strong>
+  <ul>
+  <li>each of the ten tables the journey fills (<a href="specification.html#S10">S10</a>) has at least one row;</li>
+  <li>every value in their <code>id</code>, <code>…Id</code> and <code>…_id</code> columns parses as <code>z.uuidv7()</code>;</li>
+  <li>no token, secret, backup code, device code or user code is UUID-shaped;</li>
+  <li>the existing <code>provider-identifier-cases.ts</code> case (the client-assertion key is the <code>jti</code> digest, and a replay is refused) still passes.</li>
+  </ul></li>
 <li><strong>Fails on:</strong> a deliberate mutation, run by the Verifier and then reverted, that inserts one row with a version-4 ID through the normal store. The test must name its table and column.</li>
 <li><strong>Reference:</strong> R32 and proof row U24.</li>
 <li><strong>Unverified:</strong> IDs stored only by flows this journey doesn't reach. Machine login is B3's.</li>
