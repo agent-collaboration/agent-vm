@@ -1125,3 +1125,11 @@ The workspace id equals the operation id.
   - **Ruling:** no chasing intermediate heads. Finish the independent run at `6a9260fe`/`e56c` as candidate evidence (plus the Sunclaw full host lane).
   - **When #275 merges,** the Implementer does one final re-pin and mirror copy against the merge commit: rebuild, sign, re-hash, re-copy the 15 files, check `description` bounds in the client against central's limits, then gates.
   - The Verifier re-checks the changed anchors and runs again at the final head. Acceptance is at that head.
+- **OWNER DECISION: D (2026-11-15T00:27Z, relayed by Lead A, push 01a1dc99):** "lets just use always 10 minutes". This supersedes C and the hold.
+  - Central uses a fixed 600 s. **No stamp field, no version 2**; the C wire above is withdrawn.
+  - `SetTokenLifetime` and `machine:setTokenLifetime` are removed. Central's side is done in 4b (`81b603891`).
+  - **#11 scope now:**
+    1. drop `formerServiceId`;
+    2. remove `machine:setTokenLifetime` from sign-in (access control, permission check, `fleet-permission.ts`, tests, and any mirrored permission fixtures, to match central's export);
+    3. re-pin to 4b when its shapes are final.
+  - No stamp or profile change. #17 is unaffected.
