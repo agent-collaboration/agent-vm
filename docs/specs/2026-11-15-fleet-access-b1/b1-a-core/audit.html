@@ -72,16 +72,19 @@ flowchart TB
 <div class="ex-table-scroll" data-width="canvas"><table>
 <thead><tr><th>Part</th><th>Today (switchboard <code>f3b2b88b</code>)</th><th>Fully fixed means</th></tr></thead>
 <tbody>
-<tr><td><strong>Crypto from the host</strong> (R30)</td><td>Broken. Six core sites call the runtime's crypto:
+<tr><td><strong>Crypto from the host</strong> (R30)</td><td><p><strong>Broken against your rule, not for users.</strong> Sign-in works. Your rule is that the core never reaches for its runtime: the host hands everything in through one contract, <code>SignInPlatform</code>. Clock, IDs, storage and deadlines already come that way. Crypto doesn't: the contract has no crypto, so six places in the core grab the runtime's global <code>crypto</code> directly. For example:</p>
 <ul>
-<li><code>page-document.tsx:181</code>;</li>
-<li><code>fleet-admin-forwarding.ts:156</code>;</li>
-<li><code>fleet-admin-proof.ts:53–121</code>;</li>
-<li><code>canonical-json.ts:36</code>;</li>
-<li><code>fleet-admin-operation.ts:134</code>;</li>
-<li><code>organization-stamp-renewal.ts:424</code>.</li>
+<li><code>page-document.tsx:181</code>: <code>crypto.randomUUID()</code> makes the page's script nonce;</li>
+<li><code>fleet-admin-forwarding.ts:156</code>: <code>globalThis.crypto.getRandomValues(…)</code> makes the admin forwarding's PKCE verifier.</li>
 </ul>
-<code>SignInPlatform</code> has no crypto capability.</td><td>Every random value and crypto operation the core uses comes from a capability the host hands in. A recording run sees each one.</td></tr>
+<p>The other four hash and sign: the proof key and signature (<code>fleet-admin-proof.ts:53–121</code>), the canonical-JSON digest (<code>canonical-json.ts:36</code>), the intent digest (<code>fleet-admin-operation.ts:134</code>), and the organization statement check (<code>organization-stamp-renewal.ts:424</code>).</p>
+<p><strong>Why it matters:</strong></p>
+<ul>
+<li>the core is tied to whatever <code>crypto</code> its runtime has;</li>
+<li>a test can't hand in known bytes, the way it hands in a fixed clock;</li>
+<li>nothing proves every random value and signature went through the host.</li>
+</ul></td><td><p>The contract gains a required <code>crypto</code>. The six places use <code>platform.crypto</code>. Both hosts and the CLI hand in the standard Web Crypto, so behaviour is identical.</p>
+<p>A test hands in a crypto that records every call and sees all six. The architecture check fails if a bare <code>crypto</code> comes back.</p></td></tr>
 <tr><td><strong>Architecture check</strong> (R30, U23)</td><td>Broken. It blocks runtime imports and Cloudflare-only names, but not shared globals (<code>crypto</code>, <code>Date.now</code>, <code>setTimeout</code>, <code>Math.random</code>), and it collects only <code>.ts</code> files (<code>collectFilesUnderDirectory</code>, lines 1272–1288).</td><td>A planted slip anywhere in the core's source, <code>.ts</code> or <code>.tsx</code>, including inside a <code>${…}</code> expression, fails the check.</td></tr>
 <tr><td><strong>No wall clock in tests</strong> (R33)</td><td>Broken:
 <ul>
