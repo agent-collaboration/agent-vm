@@ -20,21 +20,21 @@
 </nav></ex-nav>
 <ex-document id="doc">
 <h1>B1-B · Passkey sign-in: Program Design</h1>
-<p>How the code changes to meet the <a href="specification.html">Specification</a>: which packages, which types, which call paths. Everything is at switchboard <code>main</code> <code>f3b2b88b</code>, with Better Auth 1.7.11 and <code>@better-auth/passkey</code> 1.7.11 as pinned.</p>
+<p>How the code changes to meet the <a href="specification.html">Specification</a>: which packages, which types, which call paths. Everything is at switchboard <code>main</code> <code>f3b2b88b</code>, with Better Auth 1.7.11, <code>@better-auth/passkey</code> 1.7.11 and Better Auth UI 1.7.34 as pinned.</p>
 
 <h2 id="three">The three things for you</h2>
 <ex-callout title="1 · What you should check" tone="note" icon="shield-check">
 <ul>
-<li><strong><a href="#complete">Where the session is marked as both factors</a>:</strong> in the service's request handler, after Better Auth answers, not in a Better Auth hook. A failure there lands in the handler's existing clean-up, which deletes the new session. That's how S9 holds.</li>
-<li><strong><a href="#turnstile">How the Turnstile token reaches the challenge request</a>:</strong> through Better Auth's own client request hook, so Better Auth UI's button stays as shipped.</li>
+<li><strong><a href="#mark">The session is born confirmed</a>:</strong> both factors are written in the same insert that creates a passkey sign-in's session, through the service's existing session-create hook. No unconfirmed passkey session ever exists, even for a moment.</li>
+<li><strong><a href="#turnstile">How the Turnstile token reaches the challenge request</a>:</strong> through Better Auth's own client request hook, so Better Auth UI's button stays exactly as shipped.</li>
 <li><strong><a href="#sign-in-page">The sign-in page now loads the browser components</a></strong>, which it didn't before.</li>
 </ul>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p><strong>The button and autofill:</strong> <a href="decisions.html#open">open for you</a>. This page is written for the recommended answer: Better Auth UI's button with its one autofill line removed.</p>
+<p><strong>Autofill on the passkey button:</strong> <a href="decisions.html#open">open for you</a>. Both answers are one setting on Better Auth UI's own passkey plugin, <code>passkeyPlugin({ autoFill })</code>. This page is written for the recommended answer, <code>autoFill: false</code>.</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
-<p>Your approved Program Design (line 1738) says passkey sign-in "uses the plugin's own endpoints", that the user-verification hook "refuses an assertion without user verification, so no session exists", and that "an after-hook stamps the new session". This page keeps all three. The stamp runs after Better Auth answers, in the service's handler rather than a Better Auth hook; <a href="decisions.html#mine">why</a>. Line 1826 says "the sign-in page sends the token on the challenge request itself", and so it does.</p>
+<p>Your approved Program Design (line 1738) says passkey sign-in "uses the plugin's own endpoints", that the user-verification hook "refuses an assertion without user verification, so no session exists", and that the new session's <code>secondFactorAt</code> is stamped with method <code>passkey</code>. This page keeps all three. The stamp goes into the session's own insert rather than an after-hook, which makes "confirmed from that moment" literal; <a href="decisions.html#mine">why</a>. Line 1826 says "the sign-in page sends the token on the challenge request itself", and so it does.</p>
 </ex-callout>
 
 <h2 id="path">The sign-in path, end to end</h2>
@@ -45,6 +45,7 @@ sequenceDiagram
   participant T as Turnstile widget
   participant H as sign-in-http-handler.ts
   participant B as Better Auth passkey plugin
+  participant K as session.create.before hook
   participant S as Sign-in storage
   P->>I: click Continue with Passkey
   I->>I: onRequest hook sees the challenge request
@@ -58,36 +59,38 @@ sequenceDiagram
   I->>H: POST verify-authentication
   H->>B: public route
   B->>B: signature check, then afterVerification refuses without UV
-  B->>S: create session (person must be active)
+  B->>S: update the passkey's counter
+  B->>K: createSession, with the endpoint context
+  K->>K: person active? path is verify-authentication?
+  K->>S: insert the session with secondFactorAt now, method passkey
   B-->>H: 200, session cookie, body with the token removed
-  H->>S: stampSession(method passkey)
   H->>S: recordSignIn(method passkey, succeeded)
   H-->>I: 200
   I->>P: location.assign(the continuation address)
 </script></ex-mermaid>
 <p>Participants are coloured automatically; the colours carry no meaning.</p>
 <ul>
-<li><strong>Without user verification:</strong> the plugin's <code>afterVerification</code> throws before <code>createSession</code> (pinned <code>dist/index.mjs:487–500</code>). The handler sees a 401 and no issued session, so it records <code>failed</code> and stamps nothing.</li>
-<li><strong>If the stamp or the record fails:</strong> the handler throws. Its existing <code>catch</code> deletes every session this request issued and answers 503 (<a href="#complete">below</a>).</li>
+<li><strong>Without user verification:</strong> the plugin's <code>afterVerification</code> throws before the counter update and <code>createSession</code> (pinned <code>dist/index.mjs:487–500</code>). The handler sees a 401 with no issued session, and records <code>failed</code>.</li>
+<li><strong>If Better Auth fails after creating the session</strong> (for example its user read at line 502), the handler sees an error answer with an issued session. It treats that as a failed sign-in: it records <code>failed</code> and throws, and its existing <code>catch</code> attempts to delete the session and answers 503 (<a href="#complete">below</a>).</li>
 </ul>
 
 <h2 id="parts">The parts, in code</h2>
 <ex-mermaid id="parts-pic" label="Packages and files B1-B touches" data-width="canvas"><script type="text/plain">
 flowchart TB
   subgraph authui["packages/auth-ui (no I/O)"]
-    btn["components/auth/passkey/passkey-button.tsx<br/>new, copied from Better Auth UI"]
+    btn["components/auth/passkey/passkey-button.tsx<br/>new, copied unchanged from Better Auth UI"]
     idx["src/index.ts exports PasskeyButton"]
   end
   subgraph core["packages/sign-in-core"]
     page["pages/owner-page.tsx<br/>SignInCard: island root, passkey widget"]
     doc["pages/owner-page-document.tsx<br/>loads the island on the sign-in page"]
     state["pages/islands/sign-in-island-state.tsx<br/>new kind passkey-sign-in"]
-    island["pages/islands/sign-in-pages-island.tsx<br/>PasskeyButton, passkeyPlugin, redirectTo"]
+    island["pages/islands/sign-in-pages-island.tsx<br/>PasskeyButton, passkeyPlugin autoFill, redirectTo"]
     hook["pages/islands/passkey-sign-in-turnstile.ts<br/>new: fresh token per challenge"]
-    script["better-auth/owner-page-script.ts<br/>announces Turnstile ready"]
+    script["better-auth/owner-page-script.ts<br/>Turnstile ready or failed"]
     routes["response-release/sign-in-request-handler.ts<br/>two public routes"]
-    strip["better-auth/provider-configuration.ts<br/>token removed from verify's body"]
-    complete["better-auth/passkey-sign-in-completion.ts<br/>new: stamp, then record"]
+    prov["better-auth/provider-configuration.ts<br/>marks the session in its insert; strips the token"]
+    complete["better-auth/passkey-sign-in-completion.ts<br/>new: record, and fail closed"]
     handler["better-auth/sign-in-http-handler.ts<br/>calls the completion"]
   end
   btn --> island
@@ -99,7 +102,7 @@ flowchart TB
   routes --> handler
   complete --> handler
   class btn,hook,complete,state slot2
-  class idx,page,doc,island,script,routes,strip,handler slot1
+  class idx,page,doc,island,script,routes,prov,handler slot1
 </script></ex-mermaid>
 <p><strong>Key:</strong> amber is new; blue is changed. No host package changes: both hosts serve the same core.</p>
 
@@ -111,32 +114,63 @@ flowchart TB
 </ul>
 <p>Nothing else changes. <code>/passkey/delete-passkey</code> stays out, as does every other plugin path. Both requests are already classed <code>callback-passkey</code> by <code>classifySignInRequest</code> (<code>request-limit-policy.ts:74–76</code>), so S8 needs no change.</p>
 
-<h2 id="strip">S6 · The token removed from verify's body</h2>
-<p>The after-middleware in <code>better-auth/provider-configuration.ts:268–271</code> strips the token for <code>/get-session</code> with <code>sessionReadWithoutToken</code> (<code>better-auth/session-read-without-token.ts:15–22</code>). That helper takes a <code>{ session, user }</code> body and returns it without <code>session.token</code>. Better Auth's verify answer has exactly that shape (pinned <code>dist/index.mjs:504–510</code>). So the condition becomes:</p>
+<h2 id="mark">S4, S9 · The session is born confirmed</h2>
+<p><strong>The seam:</strong> Better Auth runs each <code>session.create.before</code> hook with the session data and the current endpoint's context, and merges the hook's returned <code>data</code> into the insert (<code>better-auth</code> 1.7.11 <code>dist/db/with-hooks.mjs:7–30</code>). The service already uses that hook to set <code>activeOrganizationId</code> (<code>provider-configuration.ts:283–293</code>).</p>
+<p><strong>The order inside the plugin's verify request</strong> (pinned <code>dist/index.mjs</code>):</p>
+<ol>
+<li>the challenge is consumed (459);</li>
+<li>the signature is checked (470–484);</li>
+<li><code>afterVerification</code> refuses without user verification (487–491);</li>
+<li>the passkey's counter is updated (492–499);</li>
+<li><code>createSession</code> runs the hook and inserts the row (500).</li>
+</ol>
+<p>So when the hook runs on this path, the person has passed user verification.</p>
+<p><strong>The change</strong> to the existing hook, in <code>provider-configuration.ts</code>:</p>
 <ex-code lang="ts"><script type="text/plain">
-if (context.path === '/get-session' || context.path === '/passkey/verify-authentication') {
-	const read = sessionReadWithoutToken(context.context.returned);
-	if (read.kind === 'stripped') return context.json(read.body);
-}
+session: {
+	create: {
+		async before(session, context) {
+			if (!(await persons.ensurePersonActive(session.userId)))
+				throw new APIError('FORBIDDEN', { message: 'not-allowed' });
+			const memberships = requireStoredValue(
+				await props.store.organizations.membershipsForPerson(session.userId),
+			);
+			const onlyMembership = memberships.length === 1 ? memberships[0] : undefined;
+			// OD21 and R53: a passkey sign-in with user verification counts as both factors,
+			// confirmed from the moment its session exists. afterVerification has already
+			// refused any assertion without user verification on this path.
+			const passkeySignIn = context?.path === '/passkey/verify-authentication';
+			return {
+				data: {
+					...session,
+					activeOrganizationId: onlyMembership?.organizationId ?? null,
+					...(passkeySignIn
+						? { secondFactorAt: props.platform.clock.now(), secondFactorMethod: 'passkey' }
+						: {}),
+				},
+			};
+		},
+		// after: unchanged (tracks the issued session)
+	},
+},
 </script></ex-code>
-<p>The cookie is set by Better Auth's <code>setSessionCookie</code> before the body is returned, and <code>context.json</code> keeps the response headers, so the cookie survives, as it does for <code>/get-session</code> today.</p>
+<ul>
+<li><strong>The fields:</strong> <code>secondFactorAt</code> and <code>secondFactorMethod</code> are already declared as server-only session fields (<code>provider-configuration.ts:170–171</code>; <code>input: false</code>), so a client can't set them. <code>'passkey'</code> is one of the allowed methods (<code>second-factors/second-factor-step-up.ts:8</code>).</li>
+<li><strong>The clock:</strong> the host's injected clock, the same one <code>stampSession</code> uses.</li>
+<li><strong>Every other session</strong> (Google, GitHub, a factor replacing a session) is inserted exactly as today.</li>
+</ul>
 
-<h2 id="complete">S4, S9, S12 · Marking the session, and recording the sign-in</h2>
+<h2 id="complete">S9, S12 · Recording the sign-in, and failing closed</h2>
 <p>A new module, <code>packages/sign-in-core/src/better-auth/passkey-sign-in-completion.ts</code>:</p>
 <ex-code lang="ts"><script type="text/plain">
 import type { IssuedPersonSession } from '#sign-in-core/response-release/sign-in-response-release';
 
-/** The sign-in service's side of a passkey sign-in, after Better Auth answers.
- * Throws when the session can't be marked or the sign-in can't be recorded, so the
- * handler's catch deletes the session it just issued. */
+/** The service's side of a passkey sign-in, after Better Auth answers. A success
+ * records the person; a refusal records anonymous. Throws when the answer and the
+ * issued sessions disagree, so the handler's catch removes what was issued. */
 export async function completePasskeySignIn(props: {
 	readonly response: Response;
 	readonly issuedSessions: readonly IssuedPersonSession[];
-	readonly stampSession: (request: {
-		readonly personId: string;
-		readonly sessionId: string;
-		readonly method: 'passkey';
-	}) => Promise<{ readonly kind: 'stamped'; readonly at: number } | { readonly kind: 'session-not-live' }>;
 	readonly recordSignIn: (record: {
 		readonly actor: string;
 		readonly outcome: 'succeeded' | 'failed';
@@ -145,37 +179,52 @@ export async function completePasskeySignIn(props: {
 }): Promise<void> {
 	const issued = props.issuedSessions.length === 1 ? props.issuedSessions[0] : undefined;
 	if (props.response.ok && issued !== undefined) {
-		const stamped = await props.stampSession({ ...issued, method: 'passkey' });
-		if (stamped.kind !== 'stamped') throw new Error('Passkey sign-in session could not be marked');
 		await props.recordSignIn({ actor: issued.personId, outcome: 'succeeded', method: 'passkey' });
 		return;
 	}
-	if (props.response.ok) throw new Error('Passkey sign-in answered without exactly one session');
 	await props.recordSignIn({ actor: 'anonymous', outcome: 'failed', method: 'passkey' });
+	if (props.response.ok || props.issuedSessions.length > 0)
+		throw new Error('Passkey sign-in answer and issued sessions disagree');
 }
 </script></ex-code>
+<p><strong>The four cases:</strong></p>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Better Auth's answer</th><th>Issued sessions</th><th>What the completion does</th><th>What the person gets</th></tr></thead>
+<tbody>
+<tr><td>200</td><td>one</td><td>records <code>succeeded</code></td><td>signed in, both factors</td></tr>
+<tr><td>an error (no UV, unknown passkey, person refused)</td><td>none</td><td>records <code>failed</code></td><td>the error, signed out</td></tr>
+<tr><td>an error after the session was created</td><td>one or more</td><td>records <code>failed</code>, then throws</td><td>503, signed out</td></tr>
+<tr><td>200</td><td>none, or more than one</td><td>records <code>failed</code>, then throws</td><td>503, signed out</td></tr>
+</tbody>
+</table></div>
 <p><strong>Where it's called:</strong> in <code>sign-in-http-handler.ts</code>, beside today's social sign-in record (lines 383–390), after the login-link check:</p>
 <ex-code lang="ts"><script type="text/plain">
 if (url.pathname === '/api/auth/passkey/verify-authentication')
 	await completePasskeySignIn({
 		response,
 		issuedSessions: state.issuedSessions,
-		stampSession: async (request) =>
-			requireStoredValue(await configuration.store.factors.stampSession(request)),
 		recordSignIn: async (record) =>
 			requireStoredValue(await configuration.store.bootstrap.recordSignIn(record)),
 	});
 </script></ex-code>
 <ul>
-<li><strong>The stamp:</strong> <code>store.factors.stampSession</code> already exists (<code>storage/second-factor-store.ts:70–106</code>). It sets <code>session.secondFactorAt</code> to the injected clock's now and <code>secondFactorMethod</code> to the method, in one atomic write that also checks the session is live and the person's email verified. It returns <code>stamped</code>, <code>session-not-live</code> or <code>store-unavailable</code>; <code>requireStoredValue</code> turns <code>store-unavailable</code> into a throw.</li>
-<li><strong>The failure path (S9):</strong> any throw lands in the handler's existing <code>catch</code> (lines 392–402). It deletes every session in <code>state.issuedSessions</code> with <code>Promise.allSettled</code> and answers <code>503 {"error":"sign-in-unavailable"}</code>. The new session was pushed onto <code>issuedSessions</code> by the session-create hook (<code>provider-configuration.ts:294–300</code>), so it's the one deleted.</li>
 <li><strong>The record (S12):</strong> the same <code>recordSignIn</code> the social callbacks use, with <code>method: 'passkey'</code>. Its <code>method</code> parameter is already a string (<code>storage/owner-bootstrap-store.ts:61–65</code>), so the store doesn't change.</li>
+<li><strong>The failure path:</strong> any throw lands in the handler's existing <code>catch</code> (lines 392–402). It answers <code>503 {"error":"sign-in-unavailable"}</code> as a new response, so Better Auth's cookie header isn't sent. It also tries to delete every session in <code>state.issuedSessions</code> with <code>Promise.allSettled</code>.</li>
+<li><strong>What that deletion guarantees, honestly:</strong> it's best effort, as for every sign-in today. If storage is down for the deletion too, the row can remain until it expires. Such a row is already marked both factors, by its own insert, and no browser holds its cookie. So no unconfirmed passkey session exists, and no person is left signed in after a failure.</li>
 </ul>
-<p><strong>Why the handler and not a Better Auth after-hook:</strong> Better Auth turns an <code>APIError</code> thrown in an after-hook into its own error answer, and merges the response headers it already had, the session cookie included (<code>better-auth</code> 1.7.11 <code>dist/api/dispatch.mjs:119–130</code>). The handler wouldn't throw, its clean-up wouldn't run, and the session created moments earlier would stay, with its cookie sent. Running after Better Auth answers, in the handler, puts a failed stamp on the path that already deletes issued sessions. The approved design's word was "after-hook"; this is still after the session exists, and it's <a href="decisions.html#mine">my call</a>.</p>
-<p><strong>Why not mark it as it's created:</strong> a session-create hook doesn't know which request created the session without reading the path, and it runs before the plugin has updated the passkey's counter. The handler knows the request and sees the finished answer.</p>
+
+<h2 id="strip">S6 · The token removed from verify's body</h2>
+<p>The after-middleware in <code>provider-configuration.ts:268–271</code> strips the token for <code>/get-session</code> with <code>sessionReadWithoutToken</code> (<code>better-auth/session-read-without-token.ts:15–22</code>). That helper takes a <code>{ session, user }</code> body and returns it without <code>session.token</code>. Better Auth's verify answer has exactly that shape (pinned <code>dist/index.mjs:504–510</code>). So the condition becomes:</p>
+<ex-code lang="ts"><script type="text/plain">
+if (context.path === '/get-session' || context.path === '/passkey/verify-authentication') {
+	const read = sessionReadWithoutToken(context.context.returned);
+	if (read.kind === 'stripped') return context.json(read.body);
+}
+</script></ex-code>
+<p>The cookie is set by Better Auth's <code>setSessionCookie</code> before the body is returned, and <code>context.json</code> keeps the response headers, so the cookie survives, as it does for <code>/get-session</code> today.</p>
 
 <h2 id="admission">S5 · Who may sign in</h2>
-<p>No new code. The plugin creates the session through <code>internalAdapter.createSession</code>, which runs the service's <code>session.create.before</code> hook (<code>provider-configuration.ts:283–293</code>). That hook refuses a person <code>ensurePersonActive</code> rejects, and sets the active organization to the person's only membership, the same as for Google or GitHub. A refused person gets an error answer and no session.</p>
+<p>No new code. The same session-create hook refuses a person <code>ensurePersonActive</code> rejects, and sets the active organization to the person's only membership, the same as for Google or GitHub. A refused person gets an error answer and no session.</p>
 
 <h2 id="sign-in-page">S7 · The sign-in page</h2>
 <h3 id="page-server">On the server</h3>
@@ -186,8 +235,12 @@ if (url.pathname === '/api/auth/passkey/verify-authentication')
 </script></ex-code>
   <code>SignInCard</code> takes the continuation address as a new prop from <code>OwnerPage</code>.</li>
 <li><strong>The continuation address</strong> is the path and query of the URL the social button already uses as its <code>callbackURL</code>: <code>/owner-ready</code>, with <code>authorize</code> when a command-line login started first (<code>owner-page-document.tsx:15–16</code>). <code>renderOwnerPage</code> passes it to <code>OwnerPage</code>.</li>
-<li><strong><code>pages/owner-page-document.tsx</code>:</strong> the sign-in page (<code>ready</code> false) now also loads <code>signInPagesIslandScript</code>. Today the island loads only on signed-in factor pages (lines 28–31).</li>
-<li><strong>The no-script fallback:</strong> the island root's server-rendered content is empty. Passkey sign-in needs the browser's WebAuthn API, so there is no form fallback; Google and GitHub still work without the island.</li>
+<li><strong><code>pages/owner-page-document.tsx</code>:</strong>
+  <ul>
+  <li>the sign-in page (<code>ready</code> false) now also loads <code>signInPagesIslandScript</code>; today the island loads only on signed-in factor pages (lines 28–31);</li>
+  <li>the Turnstile script tag gets <code>id="sign-in-turnstile-script"</code>, so a load failure can be recognised (<a href="#turnstile">below</a>).</li>
+  </ul></li>
+<li><strong>The no-script fallback:</strong> the island root's server-rendered content is empty. Passkey sign-in needs the browser's WebAuthn API, so there is no form fallback. Google and GitHub still work without the island.</li>
 </ul>
 <h3 id="page-island">In the browser</h3>
 <ul>
@@ -198,18 +251,20 @@ z.strictObject({ kind: z.literal('passkey-sign-in'), continueLocation: sameOrigi
 <li><strong><code>pages/islands/sign-in-pages-island.tsx</code>:</strong>
   <ul>
   <li>the <code>passkey-sign-in</code> case renders <code>&lt;PasskeyButton /&gt;</code>;</li>
-  <li><code>IslandProviders</code> adds <code>passkeyPlugin()</code> to <code>plugins</code>, because the button reads its label through <code>useAuthPlugin(passkeyPlugin)</code>;</li>
-  <li><code>IslandProviders</code> sets <code>redirectTo</code> to the page's <code>passkey-sign-in</code> state's <code>continueLocation</code> when one is mounted. The button calls <code>navigate({ to: redirectTo })</code> on success, and the island's <code>navigate</code> is <code>location.assign</code> (line 130);</li>
-  <li><code>createAuthClient</code> gains <code>fetchOptions: { onRequest: attachPasskeySignInTurnstile }</code> (<a href="#turnstile">next</a>).</li>
+  <li><code>IslandProviders</code> adds <code>passkeyPlugin({ autoFill: false })</code> to <code>plugins</code>, or <code>autoFill: true</code> if you choose autofill. The button reads its label through <code>useAuthPlugin(passkeyPlugin)</code>, and Better Auth UI's autofill hook does nothing when the plugin's <code>autoFill</code> is false (<a href="#autofill">below</a>);</li>
+  <li><code>IslandProviders</code> sets <code>redirectTo</code> to the page's <code>passkey-sign-in</code> state's <code>continueLocation</code> when one is mounted. The button calls <code>navigate({ to: redirectTo })</code> on success, and the island's <code>navigate</code> is <code>location.assign</code> (line 130), so the query, and with it the waiting command-line login, is kept;</li>
+  <li><code>createAuthClient</code> gains <code>fetchOptions: { onRequest: attachPasskeySignInTurnstile }</code> (<a href="#turnstile">below</a>).</li>
   </ul></li>
 </ul>
 <h3 id="page-button">Better Auth UI's button, in <code>packages/auth-ui</code></h3>
 <ul>
 <li><strong>New:</strong> <code>src/components/auth/passkey/passkey-button.tsx</code>, copied from Better Auth UI <code>examples/start-shadcn-baseui-example/src/components/auth/passkey/passkey-button.tsx</code> at <code>2b028ec5</code>, the commit the rest of auth-ui was copied from.</li>
-<li><strong>Imports follow auth-ui's existing mapping:</strong> <code>Button</code> and <code>Spinner</code> from <code>@agent-collaboration/tool-access-ui/ui/*</code>; <code>passkeyPlugin</code> from <code>@better-auth-ui/core/plugins/passkey</code>, as <code>src/index.ts</code> already re-exports it.</li>
-<li><strong>The one change, if you choose the recommended answer:</strong> the <code>usePasskeyAutoFill(…)</code> call is removed, with a comment naming the reason and your decision. Everything else is as shipped: <code>useSignInPasskey</code>, the label "Continue with Passkey", the spinner, the success navigation, and Better Auth UI's error notice.</li>
+<li><strong>Unchanged in behaviour:</strong> <code>useSignInPasskey</code>, <code>usePasskeyAutoFill</code>, the label "Continue with Passkey", the spinner, the success navigation and Better Auth UI's error notice.</li>
+<li><strong>Only the imports move</strong> to auth-ui's existing mapping: <code>Button</code> and <code>Spinner</code> from <code>@agent-collaboration/tool-access-ui/ui/*</code>, and <code>passkeyPlugin</code> from <code>@better-auth-ui/core/plugins/passkey</code>, which <code>src/index.ts</code> already re-exports.</li>
 <li><strong><code>src/index.ts</code></strong> exports <code>PasskeyButton</code>. auth-ui's boundary test (no direct I/O, no Radix) still holds: the button only calls the supplied auth client.</li>
 </ul>
+<h3 id="autofill">How autofill is switched</h3>
+<p>Better Auth UI's passkey plugin takes <code>autoFill</code>, defaulting to <code>true</code> (<code>packages/core/src/plugins/passkey/passkey-plugin.ts</code> at <code>2b028ec5</code>). Its React hook starts conditional mediation only when that's true and the browser supports it (<code>packages/react/src/plugins/passkey/hooks/use-passkey-auto-fill.ts</code>; <code>packages/core/src/plugins/passkey/passkey-conditional-ui.ts</code>). So the button keeps its hook call, and the island's plugin setting decides.</p>
 
 <h2 id="turnstile">S2, S7 · A fresh Turnstile token on each challenge request</h2>
 <p><strong>The constraint:</strong> the passkey client sends the challenge request with no per-call options (pinned <code>@better-auth/passkey</code> <code>dist/client.mjs:6–11</code>), so the button can't attach a header itself. Your approved design already says the page sends the token itself (Program Design line 1826).</p>
@@ -218,7 +273,7 @@ z.strictObject({ kind: z.literal('passkey-sign-in'), continueLocation: sameOrigi
 <ex-code lang="ts"><script type="text/plain">
 /** Gives every passkey sign-in challenge request its own Turnstile token for the
  * passkey_sign_in action. Tokens work once, so none is reused. Waits only on
- * Turnstile's own callbacks. */
+ * Turnstile's own callbacks and the script's load or error events. */
 export async function attachPasskeySignInTurnstile(context: RequestContext): Promise<RequestContext> {
 	if (new URL(context.url, location.origin).pathname !== '/api/auth/passkey/generate-authenticate-options')
 		return context;
@@ -228,45 +283,82 @@ export async function attachPasskeySignInTurnstile(context: RequestContext): Pro
 	return { ...context, headers };
 }
 </script></ex-code>
+<h3 id="turnstile-ready">Turnstile's script: ready, or failed</h3>
+<p><code>owner-page-script.ts</code> runs before the Turnstile script tag is parsed. It records one page-wide state, <code>window.signInTurnstile</code>, with three values: <code>loading</code>, <code>ready</code> or <code>failed</code>.</p>
 <ul>
-<li><strong><code>passkeySignInTurnstileToken()</code></strong> waits for Turnstile to load, through a <code>sign-in-turnstile-ready</code> event that <code>owner-page-script.ts</code>'s <code>onSignInTurnstileReady</code> now dispatches on <code>window</code>, or at once if <code>window.turnstile</code> is already there.</li>
+<li><strong>Ready:</strong> its existing <code>onSignInTurnstileReady</code> sets <code>ready</code> and dispatches <code>sign-in-turnstile-ready</code> on <code>window</code>.</li>
+<li><strong>Failed:</strong> a capturing <code>error</code> listener on <code>window</code> sees the script element's load error (resource errors don't bubble, but they reach a capturing listener on <code>window</code>). When the target is <code>#sign-in-turnstile-script</code>, it sets <code>failed</code> and dispatches <code>sign-in-turnstile-failed</code>. The existing Google and GitHub status line also shows "Sign-in verification is unavailable."</li>
+</ul>
+<h3 id="turnstile-token">Each token request</h3>
+<ul>
+<li><strong>If Turnstile has failed:</strong> <code>passkeySignInTurnstileToken()</code> rejects at once, with "Sign-in verification is unavailable. Reload the page to try again."</li>
+<li><strong>If it's still loading:</strong> it waits for whichever of the two events comes first.</li>
 <li><strong>The widget:</strong> rendered once into <code>#sign-in-passkey-captcha</code> with <code>action: 'passkey_sign_in'</code>, <code>execution: 'execute'</code> and <code>appearance: 'interaction-only'</code>. It shows only if Cloudflare needs the person to interact.</li>
-<li><strong>Each call:</strong> runs <code>turnstile.reset(widgetId)</code> then <code>turnstile.execute(widgetId)</code>. It resolves with the token from the widget's <code>callback</code>, and rejects from its <code>error-callback</code>.</li>
-<li><strong>A rejection</strong> makes the client's request fail. The button then shows Better Auth UI's error notice, and no challenge request is sent.</li>
+<li><strong>Each call:</strong> runs <code>turnstile.reset(widgetId)</code> then <code>turnstile.execute(widgetId)</code>, and settles on the widget's own callbacks:
+  <ul>
+  <li><code>callback</code> resolves with the token;</li>
+  <li><code>error-callback</code>, <code>expired-callback</code> and <code>timeout-callback</code> each reject that attempt with the same message.</li>
+  </ul>
+  Only one attempt is pending at a time, because the button is disabled while its request runs.</li>
+<li><strong>A rejection</strong> makes the client's request fail before it's sent. The button shows Better Auth UI's error notice and is enabled again. The next click starts a new attempt; after a script failure, every attempt fails at once until the page is reloaded.</li>
 </ul>
 <p><strong>Why two widgets:</strong> Turnstile fixes a widget's action when it's rendered, and the service checks the action (<code>expectedAction: 'passkey_sign_in'</code>, <code>turnstile-captcha.ts:136–137</code>). The Google and GitHub widget's tokens carry <code>sign_in_social</code> and would be refused.</p>
+
+<h2 id="harness">Test harness changes</h2>
+<p>Three changes in <code>packages/sign-in-test-support/src/test-fixtures/</code>, all test-only. The <a href="verification-design.html">Verification Design</a> uses them.</p>
+<h3 id="harness-origin">A domain issuer for the real browser</h3>
+<ul>
+<li><strong>The problem:</strong> the harness fixes its issuer to <code>http://127.0.0.1:&lt;port&gt;</code> (<code>local-auth-harness.ts:411–416</code>). The provider takes its WebAuthn relying-party ID and origin from the issuer (<code>provider-configuration.ts:431–433</code>). Browsers refuse WebAuthn on an IP-address origin: the WebAuthn Level 3 specification and Chromium's origin check (<code>components/webauthn/core/browser/webauthn_security_utils.cc</code>) both reject IP hosts. So Chrome can't register or use a passkey against today's harness, even with a virtual authenticator.</li>
+<li><strong>The change:</strong> <code>startLocalAuthHarness</code> takes a new option, <code>issuerHostname?: 'localhost'</code>. When it's set, <code>issuer</code> becomes <code>http://localhost:&lt;port&gt;</code>. The socket still listens on <code>127.0.0.1</code>. Everything built from <code>issuer</code> follows: the siteverify URL, the provider callbacks, both hosts' configuration, and so the provider's RP ID and origin.</li>
+<li><strong>Chrome's side:</strong> the browser launch in <code>native-browser-protocol.ts</code> (lines 241–257) adds <code>--host-resolver-rules=MAP localhost 127.0.0.1</code>, so <code>localhost</code> reaches the IPv4 listener.</li>
+<li><strong>Who uses it:</strong> <code>observeNativeSignInBrowser</code> passes <code>issuerHostname: 'localhost'</code>. Every other test keeps <code>127.0.0.1</code>.</li>
+</ul>
+<h3 id="harness-faults">One fault control</h3>
+<p><code>harness.failNextPasskeyUserRead()</code>, with <code>POST /__auth-proof/fail-next-passkey-user-read</code>, follows <code>makeLimiterUnavailable()</code>. It makes Better Auth's user read right after a passkey sign-in's session insert fail once (pinned <code>dist/index.mjs:502</code>), and lets every later read and the deletion through.</p>
+<ul>
+<li><strong>workerd:</strong> handled beside <code>auth-proof-rate-limit-bindings.ts:14</code>. <code>recordingD1Database</code> (<code>recording-d1-database.ts</code>) throws for the first <code>select</code> from <code>"user"</code> after an <code>insert into "session"</code> in that request.</li>
+<li><strong>Node:</strong> handled in <code>node-auth-proof-host.ts</code> beside <code>limiter-unavailable</code> (line 384). The Node database's query logger (<code>logQuery</code>, lines 112–125), which already watches every statement, throws for the same statement.</li>
+<li><strong>The harness method</strong> goes in <code>local-auth-harness.ts</code>, beside <code>makeLimiterUnavailable</code> (line 874).</li>
+<li><strong>The same two watchers</strong> also keep the last <code>insert into "session"</code> statement and its parameters. <code>harness.lastSessionInsert()</code> returns them, read through <code>GET /__auth-proof/last-session-insert</code>, so a test can see what the insert itself carried.</li>
+</ul>
+<h3 id="harness-cli">A command-line login through the real browser</h3>
+<p>The existing <code>loginThroughNativeOwnerCli({ target, repositoryRoot, browser })</code> (<code>native-cli-proof.ts:92</code>) runs the real owner CLI with its loopback and hands the sign-in address to <code>browser</code>. The new scenario passes a <code>browser</code> that drives real Chrome to that address and clicks Continue with Passkey. No new fixture is needed.</p>
 
 <h2 id="changes">The change table</h2>
 <div class="ex-table-scroll" data-width="canvas"><table>
 <thead><tr><th>File</th><th>Change</th><th>Rule</th></tr></thead>
 <tbody>
 <tr><td><code>sign-in-core/src/response-release/sign-in-request-handler.ts</code></td><td>Two routes added to the public lists</td><td>S1</td></tr>
-<tr><td><code>sign-in-core/src/better-auth/provider-configuration.ts</code></td><td>The after-middleware also strips <code>/passkey/verify-authentication</code></td><td>S6</td></tr>
-<tr><td><code>sign-in-core/src/better-auth/passkey-sign-in-completion.ts</code> (new)</td><td><code>completePasskeySignIn</code></td><td>S4, S9, S12</td></tr>
-<tr><td><code>sign-in-core/src/better-auth/sign-in-http-handler.ts</code></td><td>Calls <code>completePasskeySignIn</code> for the verify request</td><td>S4, S9, S12</td></tr>
+<tr><td><code>sign-in-core/src/better-auth/provider-configuration.ts</code></td><td>The session-create hook marks a passkey sign-in's session; the after-middleware also strips <code>/passkey/verify-authentication</code></td><td>S4, S6, S9</td></tr>
+<tr><td><code>sign-in-core/src/better-auth/passkey-sign-in-completion.ts</code> (new)</td><td><code>completePasskeySignIn</code></td><td>S9, S12</td></tr>
+<tr><td><code>sign-in-core/src/better-auth/sign-in-http-handler.ts</code></td><td>Calls <code>completePasskeySignIn</code> for the verify request</td><td>S9, S12</td></tr>
 <tr><td><code>sign-in-core/src/pages/owner-page.tsx</code></td><td><code>SignInCard</code>: island root and the passkey Turnstile container; a <code>continueLocation</code> prop</td><td>S7</td></tr>
-<tr><td><code>sign-in-core/src/pages/owner-page-document.tsx</code></td><td>Passes <code>continueLocation</code>; loads the island on the sign-in page</td><td>S7</td></tr>
+<tr><td><code>sign-in-core/src/pages/owner-page-document.tsx</code></td><td>Passes <code>continueLocation</code>; loads the island on the sign-in page; an id on the Turnstile script tag</td><td>S7</td></tr>
 <tr><td><code>sign-in-core/src/pages/islands/sign-in-island-state.tsx</code></td><td>Kind <code>passkey-sign-in</code></td><td>S7</td></tr>
-<tr><td><code>sign-in-core/src/pages/islands/sign-in-pages-island.tsx</code></td><td>Renders <code>PasskeyButton</code>; <code>passkeyPlugin()</code>; <code>redirectTo</code>; the client's <code>onRequest</code></td><td>S2, S7</td></tr>
-<tr><td><code>sign-in-core/src/pages/islands/passkey-sign-in-turnstile.ts</code> (new)</td><td>Fresh token per challenge request</td><td>S2, S7</td></tr>
-<tr><td><code>sign-in-core/src/better-auth/owner-page-script.ts</code></td><td><code>onSignInTurnstileReady</code> also dispatches <code>sign-in-turnstile-ready</code></td><td>S7</td></tr>
-<tr><td><code>auth-ui/src/components/auth/passkey/passkey-button.tsx</code> (new)</td><td>Better Auth UI's button, autofill line removed if you choose so</td><td>S7</td></tr>
+<tr><td><code>sign-in-core/src/pages/islands/sign-in-pages-island.tsx</code></td><td>Renders <code>PasskeyButton</code>; <code>passkeyPlugin({ autoFill })</code>; <code>redirectTo</code>; the client's <code>onRequest</code></td><td>S2, S7</td></tr>
+<tr><td><code>sign-in-core/src/pages/islands/passkey-sign-in-turnstile.ts</code> (new)</td><td>Fresh token per challenge request; fails at once after a script failure</td><td>S2, S7</td></tr>
+<tr><td><code>sign-in-core/src/better-auth/owner-page-script.ts</code></td><td>Page-wide Turnstile state; <code>sign-in-turnstile-ready</code> and <code>sign-in-turnstile-failed</code></td><td>S7</td></tr>
+<tr><td><code>auth-ui/src/components/auth/passkey/passkey-button.tsx</code> (new)</td><td>Better Auth UI's button, imports mapped</td><td>S7</td></tr>
 <tr><td><code>auth-ui/src/index.ts</code></td><td>Exports <code>PasskeyButton</code></td><td>S7</td></tr>
+<tr><td><code>sign-in-test-support/src/test-fixtures/local-auth-harness.ts</code>, <code>native-browser-protocol.ts</code></td><td><code>issuerHostname</code>; Chrome's host-resolver rule; <code>failNextPasskeyUserRead</code></td><td>S9, S10</td></tr>
+<tr><td><code>sign-in-test-support/src/test-fixtures/recording-d1-database.ts</code>, <code>node-auth-proof-host.ts</code>, <code>auth-proof-rate-limit-bindings.ts</code></td><td>The fault control on each host</td><td>S9</td></tr>
 <tr><td><code>.agents/skills/verify-auth/</code> (the passkey passages)</td><td>Say passkeys sign in, not only confirm</td><td>S11</td></tr>
 </tbody>
 </table></div>
 <p><strong>Not changed:</strong> the passkey plugin's configuration (its user-verification hooks are already right), the Turnstile plugin's configuration, the flood-limit classes, storage, migrations, the hosts, and every token format.</p>
 
 <h2 id="csp">The page's security policy</h2>
-<p>The sign-in page already allows Turnstile's script and frames (<code>challenge: 'turnstile'</code>, <code>owner-page-document.tsx:21</code>). The island script is the service's own, loaded with the page's nonce, as on the factor pages. WebAuthn needs no policy entry. So the policy text doesn't change; <code>served-page-csp.host.e2e.test.ts</code> confirms it on the sign-in page.</p>
+<p>The sign-in page already allows Turnstile's script and frames (<code>challenge: 'turnstile'</code>, <code>owner-page-document.tsx:21</code>). The island script is the service's own, loaded with the page's nonce, as on the factor pages. WebAuthn needs no policy entry. So the policy text doesn't change, and <code>served-page-csp.host.e2e.test.ts</code> keeps checking it on the sign-in page.</p>
 
 <h2 id="failure">Failure and concurrency</h2>
 <ul>
-<li><strong>Turnstile fails or is refused:</strong> no challenge is stored (S2). The button shows its error notice.</li>
-<li><strong>The person cancels the prompt:</strong> the challenge stays unused and expires. Better Auth stores it with a lifetime and the signed cookie names it; nothing else reads it.</li>
-<li><strong>Two tabs:</strong> each challenge request stores its own challenge and sets its own cookie. The later cookie wins, so the earlier tab's verify request finds no challenge and is refused. No session is created by the refused one.</li>
+<li><strong>Turnstile's script fails to load:</strong> every click shows the error at once, and no challenge request is sent.</li>
+<li><strong>Turnstile refuses, or the widget errors:</strong> no challenge is stored (S2). The button shows its error notice.</li>
+<li><strong>The person cancels the prompt:</strong> the challenge stays unused and expires. Better Auth stores it with a lifetime, and the signed cookie names it; nothing else reads it.</li>
+<li><strong>Two tabs:</strong> each challenge request stores its own challenge and sets its own cookie. The later cookie wins, so the earlier tab's verify request finds no challenge and is refused. The refused one creates no session.</li>
 <li><strong>Replay:</strong> the plugin consumes the challenge before checking the signature (pinned <code>dist/index.mjs:459</code>, then the check at 470–484), so an answer works at most once.</li>
 <li><strong>A no-UV answer still consumes its challenge</strong> and doesn't move the counter (S3).</li>
+<li><strong>A crash between the session insert and the answer:</strong> the row is already marked both factors, by its own insert, and the cookie never reached the browser.</li>
 </ul>
 
 <h2 id="tests-become">What existing tests become</h2>
@@ -287,13 +379,13 @@ export async function attachPasskeySignInTurnstile(context: RequestContext): Pro
 <tr><td><a href="specification.html#S1">S1</a></td><td>sign-in-core response release</td><td><code>isPublicSignInRoute</code></td><td>none</td><td>other paths 404 as today</td><td><a href="verification-design.html#V1">V1</a></td></tr>
 <tr><td><a href="specification.html#S2">S2</a></td><td>Better Auth captcha plugin; the island's hook</td><td><code>x-captcha-response</code>; <code>attachPasskeySignInTurnstile</code></td><td>challenge row only after a pass</td><td>refused, nothing stored</td><td><a href="verification-design.html#V2">V2</a></td></tr>
 <tr><td><a href="specification.html#S3">S3</a></td><td>passkey plugin's <code>afterVerification</code></td><td>401 <code>USER_VERIFICATION_REQUIRED</code></td><td>challenge consumed; no session</td><td>no session, recorded <code>failed</code></td><td><a href="verification-design.html#V3">V3</a>, <a href="verification-design.html#V8">V8</a></td></tr>
-<tr><td><a href="specification.html#S4">S4</a></td><td>sign-in-core handler</td><td><code>completePasskeySignIn</code>; <code>stampSession</code></td><td><code>session.secondFactorAt</code>, <code>secondFactorMethod</code></td><td>S9</td><td><a href="verification-design.html#V4">V4</a>, <a href="verification-design.html#V8">V8</a></td></tr>
+<tr><td><a href="specification.html#S4">S4</a></td><td>session-create hook</td><td><code>session.create.before</code> with the endpoint context</td><td><code>session.secondFactorAt</code>, <code>secondFactorMethod</code>, in the insert</td><td>no insert, no session</td><td><a href="verification-design.html#V4">V4</a>, <a href="verification-design.html#V8">V8</a></td></tr>
 <tr><td><a href="specification.html#S5">S5</a></td><td>session-create hook</td><td><code>ensurePersonActive</code></td><td>none new</td><td>refused, no session</td><td><a href="verification-design.html#V5">V5</a></td></tr>
 <tr><td><a href="specification.html#S6">S6</a></td><td>provider after-middleware</td><td><code>sessionReadWithoutToken</code></td><td>none</td><td>none</td><td><a href="verification-design.html#V4">V4</a></td></tr>
-<tr><td><a href="specification.html#S7">S7</a></td><td>the sign-in page and island; auth-ui</td><td><code>PasskeyButton</code>; island state <code>passkey-sign-in</code></td><td>none</td><td>Better Auth UI's notice</td><td><a href="verification-design.html#V7">V7</a>, <a href="verification-design.html#V8">V8</a></td></tr>
+<tr><td><a href="specification.html#S7">S7</a></td><td>the sign-in page and island; auth-ui</td><td><code>PasskeyButton</code>; <code>passkeyPlugin({ autoFill })</code>; island state <code>passkey-sign-in</code></td><td>page-wide Turnstile state</td><td>Better Auth UI's notice</td><td><a href="verification-design.html#V7">V7</a>, <a href="verification-design.html#V8">V8</a></td></tr>
 <tr><td><a href="specification.html#S8">S8</a></td><td>request admission</td><td><code>callback-passkey</code> class</td><td>host counters</td><td>429, nothing created</td><td><a href="verification-design.html#V6">V6</a></td></tr>
-<tr><td><a href="specification.html#S9">S9</a></td><td>sign-in-core handler</td><td>its <code>catch</code></td><td>issued sessions deleted</td><td>503</td><td><a href="verification-design.html#V4">V4</a></td></tr>
-<tr><td><a href="specification.html#S10">S10</a></td><td>sign-in test support</td><td>real Chrome, virtual authenticator</td><td>run's rows</td><td>a failing step</td><td><a href="verification-design.html#V8">V8</a></td></tr>
+<tr><td><a href="specification.html#S9">S9</a></td><td>session-create hook; handler</td><td>the insert; <code>completePasskeySignIn</code>; the handler's <code>catch</code></td><td>marked in the insert</td><td>503, best-effort deletion</td><td><a href="verification-design.html#V4">V4</a></td></tr>
+<tr><td><a href="specification.html#S10">S10</a></td><td>sign-in test support</td><td>real Chrome on a <code>localhost</code> issuer, virtual authenticator, the real CLI</td><td>run's rows</td><td>a failing step</td><td><a href="verification-design.html#V8">V8</a></td></tr>
 <tr><td><a href="specification.html#S11">S11</a></td><td>tests; verify-auth skill</td><td>none</td><td>none</td><td>none</td><td><a href="verification-design.html#V9">V9</a></td></tr>
 <tr><td><a href="specification.html#S12">S12</a></td><td>sign-in-core handler</td><td><code>recordSignIn</code></td><td><code>sign_in_audit</code> row</td><td>S9</td><td><a href="verification-design.html#V3">V3</a>, <a href="verification-design.html#V4">V4</a></td></tr>
 </tbody>

@@ -64,40 +64,48 @@ flowchart TB
 <ol>
 <li><strong>Routes.</strong> Add <code>GET /api/auth/passkey/generate-authenticate-options</code> and <code>POST /api/auth/passkey/verify-authentication</code> to <code>isPublicSignInRoute</code> (<code>response-release/sign-in-request-handler.ts</code>), with V1's unit cases.</li>
 <li><strong>Token strip.</strong> In <code>better-auth/provider-configuration.ts</code>'s after-middleware, apply <code>sessionReadWithoutToken</code> to <code>/passkey/verify-authentication</code> as well as <code>/get-session</code> (<a href="program-design.html#strip">Program Design</a>).</li>
-<li><strong>Completion.</strong> Add <code>better-auth/passkey-sign-in-completion.ts</code> with <code>completePasskeySignIn</code>, as written in <a href="program-design.html#complete">the Program Design</a>. Call it from <code>sign-in-http-handler.ts</code> beside the social sign-in record, for the verify path. Add its unit test, <code>sign-in-test-support/src/core-tests/passkey-sign-in-completion.unit.test.ts</code>.</li>
-<li><strong>Harness control.</strong> Add <code>harness.makePasskeyStampUnavailable()</code> and <code>POST /__auth-proof/passkey-stamp-unavailable</code> on both hosts:
+<li><strong>Born confirmed.</strong> In <code>provider-configuration.ts</code>'s <code>session.create.before</code>, take the second argument, the endpoint context. When its <code>path</code> is <code>/passkey/verify-authentication</code>, add <code>secondFactorAt: props.platform.clock.now()</code> and <code>secondFactorMethod: 'passkey'</code> to the returned data, exactly as <a href="program-design.html#mark">the Program Design</a> shows. Add the hook's unit cases.</li>
+<li><strong>Completion.</strong> Add <code>better-auth/passkey-sign-in-completion.ts</code> with <code>completePasskeySignIn</code>, as written in <a href="program-design.html#complete">the Program Design</a>. It records the sign-in, and throws when the answer and the issued sessions disagree. Call it from <code>sign-in-http-handler.ts</code> beside the social sign-in record, for the verify path. Add its unit test, <code>sign-in-test-support/src/core-tests/passkey-sign-in-completion.unit.test.ts</code>.</li>
+<li><strong>Harness.</strong> In <code>test-fixtures/</code> (<a href="program-design.html#harness">Program Design</a>):
   <ul>
-  <li><strong>Node:</strong> in <code>test-fixtures/node-auth-proof-host.ts</code> beside <code>limiter-unavailable</code> (line 384), wrapping <code>store.factors.stampSession</code> once through <code>decorateNodeProofStore</code>;</li>
-  <li><strong>workerd:</strong> beside <code>auth-proof-rate-limit-bindings.ts:14</code>, failing the next D1 batch that updates <code>session.secondFactorAt</code> through <code>recordingD1Database</code>;</li>
-  <li><strong>the harness method:</strong> in <code>local-auth-harness.ts</code> beside <code>makeLimiterUnavailable</code> (line 874).</li>
-  </ul></li>
+  <li><code>startLocalAuthHarness({ issuerHostname: 'localhost' })</code> in <code>local-auth-harness.ts</code>: the issuer becomes <code>http://localhost:&lt;port&gt;</code> while the socket stays on <code>127.0.0.1</code>;</li>
+  <li><code>--host-resolver-rules=MAP localhost 127.0.0.1</code> in <code>native-browser-protocol.ts</code>'s Chrome launch (lines 241–257);</li>
+  <li><code>harness.failNextPasskeyUserRead()</code> with <code>POST /__auth-proof/fail-next-passkey-user-read</code>: on workerd in <code>recordingD1Database</code>, handled beside <code>auth-proof-rate-limit-bindings.ts:14</code>; on Node in the database's <code>logQuery</code> (<code>node-auth-proof-host.ts:112–125</code>), handled beside <code>limiter-unavailable</code> (line 384);</li>
+  <li><code>harness.lastSessionInsert()</code> with <code>GET /__auth-proof/last-session-insert</code>, from the same two watchers.</li>
+  </ul>
+  The harness methods go beside <code>makeLimiterUnavailable</code> (<code>local-auth-harness.ts:874</code>).</li>
 <li><strong>Host tests.</strong> Add <code>sign-in-test-support/src/people-passkey-sign-in.host.e2e.test.ts</code> with V2–V5's cases, and V6's case in <code>people-request-limits.host.e2e.test.ts</code>. In <code>people-passkey-confirmation.host.e2e.test.ts</code>, replace the 404 assertions in the case at line 92 with a no-UV sign-in refused with 401, and drop "remains unoffered" from its name.</li>
 <li><strong>The button.</strong> Copy Better Auth UI's <code>passkey-button.tsx</code> from <code>better-auth-ui</code> <code>examples/start-shadcn-baseui-example/src/components/auth/passkey/passkey-button.tsx</code> at commit <code>2b028ec5</code> into <code>packages/auth-ui/src/components/auth/passkey/passkey-button.tsx</code>.
   <ul>
-  <li>Map its imports as auth-ui's other components do.</li>
-  <li>With the recommended answer, remove the <code>usePasskeyAutoFill</code> call and leave a comment naming the owner's decision.</li>
+  <li>Map its imports as auth-ui's other components do. Change nothing else; its <code>usePasskeyAutoFill</code> call stays.</li>
   <li>Export <code>PasskeyButton</code> from <code>src/index.ts</code>.</li>
   </ul></li>
-<li><strong>Turnstile hook.</strong> Add <code>pages/islands/passkey-sign-in-turnstile.ts</code> (<a href="program-design.html#turnstile">Program Design</a>) with its unit tests. In <code>owner-page-script.ts</code>, make <code>onSignInTurnstileReady</code> dispatch <code>sign-in-turnstile-ready</code> on <code>window</code>.</li>
+<li><strong>Turnstile.</strong> Add <code>pages/islands/passkey-sign-in-turnstile.ts</code> (<a href="program-design.html#turnstile">Program Design</a>) with its unit tests. In <code>owner-page-script.ts</code>:
+  <ul>
+  <li>keep the page-wide state <code>window.signInTurnstile</code> (<code>loading</code>, <code>ready</code>, <code>failed</code>);</li>
+  <li>make <code>onSignInTurnstileReady</code> dispatch <code>sign-in-turnstile-ready</code>;</li>
+  <li>add a capturing <code>error</code> listener on <code>window</code> for <code>#sign-in-turnstile-script</code> that dispatches <code>sign-in-turnstile-failed</code>.</li>
+  </ul>
+  Give the Turnstile script tag in <code>owner-page-document.tsx</code> <code>id="sign-in-turnstile-script"</code>.</li>
 <li><strong>The page.</strong>
   <ul>
   <li><code>sign-in-island-state.tsx</code>: kind <code>passkey-sign-in</code>.</li>
-  <li><code>sign-in-pages-island.tsx</code>: render <code>PasskeyButton</code>; add <code>passkeyPlugin()</code>; set <code>redirectTo</code>; add the client's <code>onRequest</code>.</li>
+  <li><code>sign-in-pages-island.tsx</code>: render <code>PasskeyButton</code>; add <code>passkeyPlugin({ autoFill: false })</code>, or <code>true</code> if the owner chooses autofill; set <code>redirectTo</code>; add the client's <code>onRequest</code>.</li>
   <li><code>owner-page.tsx</code>: <code>SignInCard</code> gets the island root, the <code>#sign-in-passkey-captcha</code> container and a <code>continueLocation</code> prop.</li>
   <li><code>owner-page-document.tsx</code>: pass <code>continueLocation</code>, and load the island script on the sign-in page.</li>
   </ul>
   Add V7's host test of the served page.</li>
-<li><strong>Real browser.</strong> In <code>test-fixtures/native-browser-scenario.ts</code>, add the <code>passkey-journey</code> steps and the no-UV run (<a href="verification-design.html#V8">V8</a>):
+<li><strong>Real browser.</strong> In <code>test-fixtures/native-browser-scenario.ts</code>, on a harness started with <code>issuerHostname: 'localhost'</code>, add the four runs of <a href="verification-design.html#V8">V8</a>: the journey, no user verification, the command-line login (through <code>loginThroughNativeOwnerCli</code>), and the Turnstile script failure. They use:
   <ul>
   <li>the WebAuthn domain calls through <code>native-browser-protocol.ts</code>'s <code>call</code>;</li>
-  <li>the Turnstile script stand-in served through <code>Fetch.enable</code> and <code>Fetch.fulfillRequest</code>.</li>
+  <li>the Turnstile script stand-in served through <code>Fetch.enable</code> and <code>Fetch.fulfillRequest</code>, or failed with <code>Fetch.failRequest</code>.</li>
   </ul>
   Waits are on DevTools replies and events only.</li>
 <li><strong>Guidance.</strong> Update the passkey passages in <code>.agents/skills/verify-auth/</code> to say passkeys sign in.</li>
 <li><strong>Gates.</strong> Run <code>pnpm check</code>, <code>pnpm test:unit</code> and <code>pnpm test:integration</code>. Run <code>pnpm test:e2e:host</code> twice: as is, and with <code>SIGN_IN_TEST_HOST=node</code>. Heavy runs go to Sunclaw. Open the PR as a draft.</li>
 </ol>
 <h3 id="may-change">You may change</h3>
-<p>Every file named in steps 1–10, plus existing tests that need only a fixture or name change to follow them. List each one in your handback.</p>
+<p>Every file named in steps 1–11, plus existing tests that need only a fixture or name change to follow them. List each one in your handback.</p>
 <p><strong>You may not change:</strong></p>
 <ul>
 <li>the passkey or Turnstile plugin configuration;</li>
@@ -127,16 +135,31 @@ flowchart TB
 <tr><td><a href="verification-design.html#V1">V1</a> routes</td><td><code>pnpm test:unit</code></td><td>The two routes are public with their methods. <code>delete-passkey</code> isn't.</td><td>Add <code>delete-passkey</code> to the POST list: the case must fail.</td></tr>
 <tr><td><a href="verification-design.html#V2">V2</a> Turnstile</td><td><code>pnpm test:e2e:host packages/sign-in-test-support/src/people-passkey-sign-in.host.e2e.test.ts</code>, then the same with <code>SIGN_IN_TEST_HOST=node</code></td><td>The five refusals store nothing and set no cookie, each logged with its reason. An accepted token stores one challenge.</td><td>Remove the passkey endpoint from the captcha plugin's list: the no-token case must fail.</td></tr>
 <tr><td><a href="verification-design.html#V3">V3</a> no UV</td><td>The same file, both hosts</td><td>401 <code>USER_VERIFICATION_REQUIRED</code>; no session, no cookie, counter unchanged; a resend gets 400; a <code>failed</code> audit row.</td><td>Remove the UV check from <code>authentication.afterVerification</code>: a session must appear and the case fail.</td></tr>
-<tr><td><a href="verification-design.html#V4">V4</a> both factors</td><td>The same file, both hosts; <code>pnpm test:unit</code> (<code>passkey-sign-in-completion</code>)</td><td>200; no token in the body; the session stamped <code>passkey</code> at the controlled time; the invite goes through, and is refused after 15 minutes and 1 ms; a <code>succeeded</code> audit row. With the stamp made unavailable: 503, no new session, no working cookie.</td><td>Three breaks, one at a time, each with red and restored-green runs kept:
+<tr><td><a href="verification-design.html#V4">V4</a> both factors</td><td>The same file, both hosts; <code>pnpm test:unit</code> (<code>passkey-sign-in-completion</code>)</td><td>200; no token in the body; the session marked <code>passkey</code> at the controlled time, already in its recorded insert; the invite goes through, and is refused after 15 minutes and 1 ms; a <code>succeeded</code> audit row. With <code>failNextPasskeyUserRead()</code>: 503 with no cookie, the insert carried both factors, the row is deleted, a <code>failed</code> audit row.</td><td>Four breaks, one at a time, each with red and restored-green runs kept:
   <ul>
   <li>drop the verify path from the token strip: the token appears;</li>
-  <li>skip the stamp: the invite is refused;</li>
-  <li>catch the stamp failure: a session remains after the 503.</li>
+  <li>mark with a later <code>stampSession</code> instead of in the insert: the recorded insert lacks both factors;</li>
+  <li>drop the marking: the invite is refused;</li>
+  <li>treat every error answer as a plain refusal: the row remains after the fault case.</li>
   </ul></td></tr>
 <tr><td><a href="verification-design.html#V5">V5</a> who may</td><td>The same file, both hosts</td><td>The removed member and the unknown credential get no session. A single-membership person's session has that organization active.</td><td>Skip <code>ensurePersonActive</code> in the session-create hook: the removed member must get a session and the case fail.</td></tr>
 <tr><td><a href="verification-design.html#V6">V6</a> flood</td><td><code>pnpm test:e2e:host packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts</code>, both hosts</td><td>The eleventh challenge request gets 429 and stores nothing. A second address gets 200.</td><td>Classify <code>/api/auth/passkey/</code> as <code>other</code>: the case must fail.</td></tr>
-<tr><td><a href="verification-design.html#V7">V7</a> page</td><td><code>pnpm test:unit</code> (the Turnstile hook); <code>pnpm test:e2e:host</code> (the served page; <code>served-page-csp</code>)</td><td>The page has its island root, container and nonce-bearing script; the policy is unchanged. The hook sets one fresh token per challenge request.</td><td>Make the hook reuse its first token: the two-token case must fail.</td></tr>
-<tr><td><a href="verification-design.html#V8">V8</a> journey 5</td><td><code>pnpm test:e2e:host packages/sign-in-test-support/src/sign-in-native-browser.host.e2e.test.ts</code> (it runs both hosts), on Sunclaw</td><td>Both runs complete journey 5, and the invite needs no confirmation. With UV off, the person stays signed out on <code>/sign-in</code> with the error notice. With the recommended answer, loading the page sends no challenge request. The button lines up at 400 px.</td><td>Run the scenario against the base commit: it must fail at step 4.</td></tr>
+<tr><td><a href="verification-design.html#V7">V7</a> page</td><td><code>pnpm test:unit</code> (the Turnstile hook); <code>pnpm test:e2e:host</code> (the served page; <code>served-page-csp</code>)</td><td>The page has its island root, container and nonce-bearing script; the policy is unchanged. The hook sets one fresh token per challenge request; each widget failure callback and a script load error reject, at once.</td><td>Two breaks, one at a time: make the hook reuse its first token (the two-token case fails); ignore the script's load error (the settled-as-rejected case fails).</td></tr>
+<tr><td><a href="verification-design.html#V8">V8</a> journey 5</td><td><code>pnpm test:e2e:host packages/sign-in-test-support/src/sign-in-native-browser.host.e2e.test.ts</code> (it runs both hosts), on Sunclaw</td><td>On a <code>localhost</code> origin, on both hosts:
+  <ul>
+  <li>journey 5 completes, and the invite needs no confirmation;</li>
+  <li>with UV off, the person stays signed out on <code>/sign-in</code> with the error notice;</li>
+  <li>started from the real owner CLI, its loopback gets its code and it exits 0;</li>
+  <li>with Turnstile's script failed, the notice shows, the button is usable again, and no challenge is sent;</li>
+  <li>with the recommended answer, loading the page sends no challenge request;</li>
+  <li>the button lines up at 400 px.</li>
+  </ul>
+  Record the Chrome version and the origin.</td><td>Three checks, each with red and restored-green runs kept:
+  <ul>
+  <li>run the scenario against the base commit: it must fail at step 4;</li>
+  <li>drop the query from the button's success navigation: the command-line run must fail while the plain run passes;</li>
+  <li>start the harness without <code>issuerHostname</code>: registration must fail in the browser.</li>
+  </ul></td></tr>
 <tr><td><a href="verification-design.html#V9">V9</a> fallback gone</td><td><code>git grep -n "remains unoffered\|passkey sign-in stays off"</code> under <code>packages/sign-in-*</code> and <code>.agents/skills/verify-auth</code></td><td>Nothing found; the diff shows the 404 assertions replaced.</td><td>None.</td></tr>
 </tbody>
 </table></div>
@@ -159,7 +182,7 @@ flowchart TB
 <p><strong>What does this change drop that the owner's words, the earlier designs or the old tests had?</strong> Answer it first, as a list.</p>
 </ex-callout>
 <h3 id="rev-how">How B1-B is built, in short</h3>
-<p>The two passkey sign-in requests become public. Better Auth's passkey plugin, with its existing user-verification hook, creates the session. The service strips the token from the answer, then marks the session as both factors and records the sign-in in its handler; a failure there deletes the session. The sign-in page gets Better Auth UI's PasskeyButton. A client request hook gives each challenge request a fresh Turnstile token. Journey 5 is proven in real Chrome with the virtual authenticator, on both hosts. The full detail is <a href="#order">the Implementer's order above</a> and the <a href="program-design.html">Program Design</a>.</p>
+<p>The two passkey sign-in requests become public. Better Auth's passkey plugin, with its existing user-verification hook, creates the session, and the service's session-create hook writes both factors into that same insert. The service strips the token from the answer and records the sign-in in its handler. A failure after the session exists answers 503 with no cookie, and the handler's clean-up deletes the session. The sign-in page gets Better Auth UI's PasskeyButton. A client request hook gives each challenge request a fresh Turnstile token. Journey 5 is proven in real Chrome with the virtual authenticator on a <code>localhost</code> origin, on both hosts, including a login started from the real owner CLI. The full detail is <a href="#order">the Implementer's order above</a> and the <a href="program-design.html">Program Design</a>.</p>
 <h3 id="rev-gets">Exactly what you get</h3>
 <div class="ex-table-scroll" data-width="canvas"><table>
 <thead><tr><th>Item</th><th>Where</th><th>Used as</th></tr></thead>
@@ -179,7 +202,7 @@ flowchart TB
 <ol>
 <li>Answer the first question.</li>
 <li>For each rule S1–S12, read the rule and the owner's linked words, and write down what "done" means before opening the code.</li>
-<li>Read the code at the pinned commit, not the PR description. Check every path by which a passkey sign-in session can exist without the stamp, and every body that could carry the session token.</li>
+<li>Read the code at the pinned commit, not the PR description. Check every path by which a passkey sign-in session could be stored without both factors in its own insert, every failure path that could leave the person signed in, and every body that could carry the session token.</li>
 <li>Open the evidence. Check that it ran on that commit, on both hosts, that each check failed on its deliberate break, and that the 404 assertion and the "stays off" guidance are gone.</li>
 <li>Any place the Plan, the handback or my check narrows, defers or reinterprets a rule is a finding. Never adopt it.</li>
 <li>A decision counts as the owner's only with a link to his words.</li>
@@ -205,7 +228,7 @@ flowchart TB
 <tr><td><a href="specification.html#S6">S6</a> token in the cookie only</td><td>V4, V8</td><td>Not started</td><td>Not started</td></tr>
 <tr><td><a href="specification.html#S7">S7</a> the page</td><td>V7, V8</td><td>Not started</td><td>Not started</td></tr>
 <tr><td><a href="specification.html#S8">S8</a> flood limit</td><td>V6</td><td>Not started</td><td>Not started</td></tr>
-<tr><td><a href="specification.html#S9">S9</a> confirmed or none</td><td>V4</td><td>Not started</td><td>Not started</td></tr>
+<tr><td><a href="specification.html#S9">S9</a> born confirmed; a failure signs out</td><td>V4</td><td>Not started</td><td>Not started</td></tr>
 <tr><td><a href="specification.html#S10">S10</a> journey 5, both hosts</td><td>V8</td><td>Not started</td><td>Not started</td></tr>
 <tr><td><a href="specification.html#S11">S11</a> fallback gone</td><td>V9</td><td>Not started</td><td>Not started</td></tr>
 <tr><td><a href="specification.html#S12">S12</a> each sign-in recorded</td><td>V3, V4</td><td>Not started</td><td>Not started</td></tr>
