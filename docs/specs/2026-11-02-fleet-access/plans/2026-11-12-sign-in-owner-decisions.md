@@ -1277,3 +1277,10 @@ The workspace id equals the operation id.
   3. freeze.
 
   Then: the Verifier's independent run, Lead acceptance, R-code, CI, and merge #11, then #14.
+- **Central's observe follow-up is frozen (2026-11-15T11:30Z, Lead A push 01a1def8)** at `32a84cd1f` (`feat/launcher-machine-observe`; secret scan clean). Its Verifier's final pass is pending; then the draft PR opens, and the SHA goes to the Implementer directly.
+  - Wire: timestamps are RFC 3339 UTC strings, with null for empty cells; approvals are sorted by decoded `created_at`; the automatic audit origin is accepted.
+  - **Implementer:** start building against `32a84cd1f` now (the object is in the shared local store):
+    1. closed `observationSchema` with the machine rows and a parser negative;
+    2. existing journeys parse empty arrays;
+    3. central-row assertions for M1–M5.
+  - Final pin and freeze at the follow-up's merge commit (compare inputs as in WS13 condition 5).
