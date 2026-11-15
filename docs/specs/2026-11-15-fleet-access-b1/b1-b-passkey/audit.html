@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B1-B · Passkey sign-in · Audit</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
+  <a href="../../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
+  <a href="audit.html">B1-B · 1 Audit</a>
+  <a href="requirements.html">B1-B · 2 Requirements</a>
+  <a href="specification.html">B1-B · 3 Specification</a>
+  <a href="program-design.html">B1-B · 4 Program Design</a>
+  <a href="verification-design.html">B1-B · 5 Verification Design</a>
+  <a href="plan.html">B1-B · 6 Plan</a>
+  <a href="decisions.html">B1-B · 7 Decisions</a>
+</nav></ex-nav>
+<ex-document id="doc">
+<h1>B1-B · Passkey sign-in: Audit</h1>
+<p>A full audit of what exists for passkey sign-in, and what needs fixing. <a href="../../2026-11-15-fleet-access-overview/index.html">Back to the Fleet access overview</a>. B1-B is the second B1 deliverable there. It builds on B1-A's core and runs beside B1-C and B2.</p>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What you should check" tone="note" icon="shield-check">
+<p><strong>A person can add a passkey today, but can't sign in with it.</strong> Everything that makes it safe is already built; the door is shut (<a href="#state">the picture</a>):</p>
+<ul>
+<li>the service refuses the two sign-in requests as unknown routes;</li>
+<li>the sign-in page offers only Google and GitHub;</li>
+<li>a new passkey session isn't marked as confirmed, so it would still be asked for a second factor;</li>
+<li>Better Auth's answer to a passkey sign-in carries the session token in its body, where page scripts can read it.</li>
+</ul>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p><strong>This feature changes the sign-in page:</strong> a third button, "Continue with Passkey". One choice is yours, on the <a href="decisions.html#open">Decisions</a> page: whether that button also offers passkeys in the browser's autofill list, as Better Auth UI's button does, or only on click (recommended, with the reason).</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
+<p>The yardstick is your approved design. Your decision, in the <a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/requirements.source.html">approved Requirements</a> line 270: <strong>OD21, decided by you on 31 October: yes.</strong> <em>"A passkey with fingerprint, face or PIN signs you in and counts as both factors; Google or GitHub stays for the first sign-in and for anyone without a passkey."</em></p>
+<p>Your journey 5 (U50, line 157): <em>"Adding a passkey and signing in with it."</em></p>
+<p>The findings come from two places:</p>
+<ul>
+<li>the independent B1 review (<a href="../audit.html">B1 audit</a>, finding R1-X2: "A registered passkey cannot be used to sign in");</li>
+<li>my own reading of switchboard <code>main</code> at <code>f3b2b88b</code> and the pinned Better Auth 1.7.11 source on 15 Nov.</li>
+</ul>
+</ex-callout>
+
+<h2 id="state">What exists today</h2>
+<ex-mermaid id="state-pic" label="Passkey sign-in's parts and their state today" data-width="canvas"><script type="text/plain">
+flowchart TB
+  add["Add a passkey, user verification required"] --> confirm["Confirm a change with a passkey"]
+  add --> uv["Sign-in refuses a passkey without user verification"]
+  uv --> routes["The two sign-in requests reach Better Auth"]
+  routes --> stamp["The new session counts as both factors"]
+  routes --> token["The session token stays in the cookie"]
+  page["Sign-in page offers the passkey"] --> routes
+  stamp --> proof["Journey 5 proven in a real browser, both hosts"]
+  token --> proof
+  class add,confirm,uv slot6
+  class routes,page,stamp,token,proof slot5
+</script></ex-mermaid>
+<p><strong>Key:</strong> green is built and proven today; rose is missing.</p>
+
+<h2 id="findings">Findings, and what fully fixed means</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Part</th><th>Today at <code>f3b2b88b</code></th><th>Fully fixed means</th></tr></thead>
+<tbody>
+<tr><td><strong>The two sign-in requests</strong> (R5, R63 journey 5)</td><td>Closed. The public route list (<code>response-release/sign-in-request-handler.ts:27–46</code>) allows adding, listing, confirming and removing passkeys, but not <code>GET /api/auth/passkey/generate-authenticate-options</code> or <code>POST /api/auth/passkey/verify-authentication</code>. Both answer 404. An existing test asserts that 404 (<code>people-passkey-confirmation.host.e2e.test.ts:132–137</code>).</td><td>Both requests reach Better Auth's own passkey endpoints, through the same Turnstile check, flood limit and token release as every other sign-in.</td></tr>
+<tr><td><strong>User verification at sign-in</strong> (R5, R53)</td><td>Built, unreachable. The passkey plugin's <code>authentication.afterVerification</code> hook (<code>better-auth/provider-configuration.ts:444–452</code>) throws <code>USER_VERIFICATION_REQUIRED</code> when the assertion isn't user-verified. In the pinned plugin it runs after the signature check and before any session is created (<code>@better-auth/passkey</code> 1.7.11 <code>dist/index.mjs:487–500</code>). No public request can reach it.</td><td>A passkey sign-in without fingerprint, face or PIN gets 401 and creates no session. Proven in a real browser and on both hosts.</td></tr>
+<tr><td><strong>Both factors from one sign-in</strong> (R53, OD21)</td><td>Missing. The session-create hook (<code>provider-configuration.ts:283–300</code>) sets the active organization only. Nothing stamps a passkey sign-in's session as confirmed, so the person would be asked for a second factor on their first change.</td><td>The new session's second-factor time is the moment of sign-in, with method <code>passkey</code>. A change R53 protects goes through straight away, without a separate confirmation.</td></tr>
+<tr><td><strong>The session token in the answer</strong></td><td>Exposed if the route opened. Better Auth's <code>verify-authentication</code> returns <code>{ session, user }</code> as JSON, and the session includes its token (<code>dist/index.mjs:504–510</code>). Our after-hook removes the token only from <code>/get-session</code> (<code>provider-configuration.ts:268–271</code>), under your 12 Nov rule that "the session token is stripped from get-session before it reaches scripts".</td><td>The token stays only in the cookie. The answer's body carries no token.</td></tr>
+<tr><td><strong>The sign-in page</strong> (U20)</td><td>Google and GitHub only (<code>pages/owner-page.tsx:109–139</code>). The page's browser components (<code>pages/islands/sign-in-pages-island.tsx</code>) already create Better Auth's client with <code>passkeyClient()</code>, but use it only to manage passkeys.</td><td>A "Continue with Passkey" button sits under Google and GitHub. It sends the Turnstile token on the challenge request and lands the person where Google or GitHub would.</td></tr>
+<tr><td><strong>Turnstile on the passkey challenge</strong> (R52)</td><td>Configured, proven only on a Better Auth instance driven directly. The captcha plugin guards <code>/passkey/generate-authenticate-options</code> with the action <code>passkey_sign_in</code> (<code>better-auth/turnstile-captcha.ts:128–139</code>). Its refusals, and an accepted challenge, are proven there (<code>turnstile-provider.host.e2e.test.ts:76–167</code>). Through the public service the route is closed, and no page sends a token for it.</td><td>The challenge request carries a fresh token for that action. Without one, it's refused and no challenge is stored.</td></tr>
+<tr><td><strong>Proof of journey 5</strong> (R63, R67)</td><td>Missing. Host tests drive passkeys with a software authenticator (<code>test-fixtures/software-passkey-authenticator.ts</code>), for adding and confirming only. The real-browser test doesn't drive passkeys at all, and no test uses Chrome's virtual authenticator.</td><td>Journey 5 runs in real Chrome with Chrome's virtual authenticator, on both hosts: add a passkey, sign out, sign in with it, make a protected change. The same run with user verification off is refused. Both fail on today's build.</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="inventory">Inventory: what was built before, and its state</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Piece</th><th>Where</th><th>State</th></tr></thead>
+<tbody>
+<tr><td>Passkey registration with user verification required</td><td><code>provider-configuration.ts:431–443</code></td><td>Built and proven: <code>people-passkey-confirmation.host.e2e.test.ts</code> (a no-UV registration gets 403)</td></tr>
+<tr><td>Confirming a change with a passkey</td><td><code>better-auth/passkey-confirmation-plugin.ts</code>; <code>storage/passkey-credential-store.ts</code></td><td>Built and proven, on the already signed-in session</td></tr>
+<tr><td>Passkey management on the page</td><td>auth-ui <code>PasskeyManager</code> in the island; <code>people-passkey-page.host.e2e.test.ts</code></td><td>Built and proven</td></tr>
+<tr><td>UV refusal at sign-in</td><td><code>provider-configuration.ts:444–452</code></td><td>Built, never reached</td></tr>
+<tr><td>Turnstile on the passkey challenge</td><td><code>turnstile-captcha.ts:128–139</code></td><td>Configured, never sent</td></tr>
+<tr><td>Flood limit for passkey requests</td><td><code>request-limits/request-limit-policy.ts:74–76</code>: every <code>/api/auth/passkey/</code> request is in the <code>callback-passkey</code> class (10 per 60 s per address)</td><td>Built</td></tr>
+<tr><td>"Passkey sign-in stays off until the hook is proven"</td><td>Approved design, Program Design line 1738; B1 doc line 258; the 404 assertion above</td><td>The fallback this feature removes</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="went-wrong">What went wrong, and what replaces it</h2>
+<ul>
+<li><strong>Passkey sign-in was deferred and then called done with B1.</strong> B1 was accepted with the user-verification proof gate still open, so journey 5 couldn't run. The B1 audit names this as R1-X2.</li>
+<li><strong>A passing test hid the gap.</strong> The confirmation tests stayed green while sign-in was unavailable, and one test asserted the 404 as expected behaviour.</li>
+<li><strong>What replaces it:</strong> this feature. The 404 assertion becomes a refusal-without-UV assertion, and the "stays off" fallback is removed. Journey 5 is proven in a real browser on both hosts.</li>
+</ul>
+</ex-document>
+</body>
+</html>

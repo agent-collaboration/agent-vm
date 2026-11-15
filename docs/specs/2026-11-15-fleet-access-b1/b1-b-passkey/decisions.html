@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B1-B · Passkey sign-in · Decisions</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
+  <a href="../../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
+  <a href="audit.html">B1-B · 1 Audit</a>
+  <a href="requirements.html">B1-B · 2 Requirements</a>
+  <a href="specification.html">B1-B · 3 Specification</a>
+  <a href="program-design.html">B1-B · 4 Program Design</a>
+  <a href="verification-design.html">B1-B · 5 Verification Design</a>
+  <a href="plan.html">B1-B · 6 Plan</a>
+  <a href="decisions.html">B1-B · 7 Decisions</a>
+</nav></ex-nav>
+<ex-document id="doc">
+<h1>B1-B · Passkey sign-in: Decisions</h1>
+<p>Every decision and assumption B1-B rests on: yours, quoted with where you said them; mine, each marked with whether it should have been yours; and the one open for you.</p>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What you should check" tone="note" icon="shield-check">
+<ul>
+<li><strong><a href="#mine">My calls</a>:</strong> each says whether it should have been yours.</li>
+<li><strong><a href="#assumptions">The assumptions</a>:</strong> if one is wrong, part of the design is wrong.</li>
+</ul>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p><strong>One is open for you</strong>, with a picker <a href="#open">at the end</a>: does the "Continue with Passkey" button also offer passkeys in the browser's autofill list, as Better Auth UI ships it, or only when clicked?</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
+<p>Your decisions below are quoted from the <a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/requirements.source.html">approved Requirements</a> and your transcripts, with line numbers. The design rests on your 4 Nov approval of the overall design, B1 and B2 (<em>"yes you need anytnhign?"</em>, Fleet transcript lines 71226 and 71230).</p>
+</ex-callout>
+
+<ex-mermaid id="decisions-pic" label="Where B1-B's decisions come from" data-width="canvas"><script type="text/plain">
+flowchart TB
+  words["Your decisions<br/>OD21, U20, U50 journey 5"] --> design["Your approved design<br/>R5, R52, R53, R63, R67"]
+  design --> b1b["B1-B design"]
+  mine["My calls<br/>each marked: should it have been yours?"] --> b1b
+  assume["Assumptions<br/>each with: if it's wrong"] --> b1b
+  b1b --> open["Open for you:<br/>autofill on the passkey button?"]
+  class words,design slot1
+  class mine slot2
+  class assume slot3
+  class b1b slot6
+  class open slot4
+</script></ex-mermaid>
+<p><strong>Key:</strong> blue is yours, amber is mine, teal the assumptions, green the design, violet what's open.</p>
+
+<h2 id="owner">Your decisions</h2>
+<ex-grid cols="2" data-width="canvas">
+<ex-card title="A passkey signs you in, as both factors (OD21)" tone="done" icon="key" tag="Requirements line 270 · 31 Oct" pick>
+<p><em>"A passkey with fingerprint, face or PIN signs you in and counts as both factors; Google or GitHub stays for the first sign-in and for anyone without a passkey."</em></p>
+<p><strong>Decides here:</strong> S3, S4 and the button.</p>
+</ex-card>
+<ex-card title="People sign in with Google, GitHub or a passkey (U20)" tone="done" icon="users" tag="Requirements line 97" pick>
+<p><em>"People sign in with Google, GitHub or a passkey."</em></p>
+<p><strong>Decides here:</strong> S1, S5 and S7.</p>
+</ex-card>
+<ex-card title="Journey 5, before release (U50)" tone="done" icon="path" tag="Requirements line 157" pick>
+<p><em>"Adding a passkey and signing in with it."</em> Your rule R67 puts the sign-in part on local runs.</p>
+<p><strong>Decides here:</strong> V8 in real Chrome on both hosts.</p>
+</ex-card>
+<ex-card title="The session token stays out of scripts" tone="done" icon="lock" tag="12 Nov, in the code comment" pick>
+<p><em>"Cookie-bound reads for the sign-in pages' browser components (owner, 12 Nov). The session token is stripped from get-session before it reaches scripts."</em> (<code>sign-in-request-handler.ts:10–11</code>)</p>
+<p><strong>Decides here:</strong> S6, the verify answer's body stripped the same way.</p>
+</ex-card>
+<ex-card title="Use Better Auth UI as shipped" tone="done" icon="package" tag="13 Nov" pick>
+<p>Use Better Auth UI's own components and helpers, adjust our side, and diverge only for a named reason brought to you.</p>
+<p><strong>Decides here:</strong> the button is Better Auth UI's; the open choice below is the one divergence, brought to you.</p>
+</ex-card>
+<ex-card title="No wall clock in tests" tone="done" icon="clock" tag="P 143821" pick>
+<p><em>"i dont allow wall clock time ever in tests"</em>.</p>
+<p><strong>Decides here:</strong> the 15-minute window is tested by moving the controlled clock; every browser wait is on an event.</p>
+</ex-card>
+</ex-grid>
+
+<h2 id="mine">My calls, and whether they should have been yours</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>My call</th><th>Why</th><th>Should it have been yours?</th></tr></thead>
+<tbody>
+<tr><td>Mark the session in the service's handler after Better Auth answers, not in a Better Auth after-hook as the approved design worded it</td><td>Better Auth turns an error in an after-hook into its own answer and keeps the cookie it already set (<code>dispatch.mjs:119–130</code>). The session would survive a failed stamp. In the handler, a failure lands in the existing clean-up that deletes it (<a href="program-design.html#complete">Program Design</a>).</td><td>No. Same outcome you approved, "confirmed from that moment", with a stronger failure path. It's how, not what.</td></tr>
+<tr><td>Record each passkey sign-in in <code>sign_in_audit</code>, like Google and GitHub (S12)</td><td>Today every social sign-in callback writes a row. A passkey sign-in without one would be the only sign-in with no record.</td><td>No. It follows the existing behaviour.</td></tr>
+<tr><td>Strip the token from the verify answer (S6)</td><td>Your 12 Nov rule for <code>/get-session</code>; the same helper fits the same <code>{ session, user }</code> shape.</td><td>No. It follows your rule.</td></tr>
+<tr><td>Attach the Turnstile token through Better Auth's client request hook</td><td>The passkey client gives its challenge request no options of its own, so the shipped button can't add a header. The client-wide <code>onRequest</code> is Better Auth's own seam (<code>config.mjs:31–37</code>). Your approved design says the page sends the token itself.</td><td>No. It keeps the button as shipped.</td></tr>
+<tr><td>A second, mostly invisible Turnstile widget for passkey sign-in</td><td>Turnstile fixes a widget's action at render, and the service checks the action. It appears only if Cloudflare needs the person to interact.</td><td>No. A person may see a second Turnstile box only when Cloudflare asks for interaction.</td></tr>
+<tr><td>Load the browser components on the sign-in page</td><td>The button is a Better Auth UI component, so it needs the island. Today the sign-in page has no island.</td><td>No. Same policy, own script, no new third party.</td></tr>
+<tr><td>No no-script fallback for passkey sign-in</td><td>WebAuthn needs script. Google and GitHub still work without it.</td><td>No.</td></tr>
+<tr><td>Test the stamp failure through a new harness control, <code>makePasskeyStampUnavailable()</code></td><td>Nothing in normal use makes a just-created session unstampable. The control follows the existing <code>makeLimiterUnavailable()</code> on both hosts.</td><td>No. It's test support.</td></tr>
+<tr><td>Replace only Cloudflare's Turnstile script in the real-browser test</td><td>The test can't reach Cloudflare. Everything else, the page's widget code and the service's siteverify check against the harness, runs as written.</td><td>No. Real Turnstile stays unverified locally, as your design already says.</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="assumptions">Every assumption this design makes</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Assumption</th><th>Basis</th><th>If it's wrong</th></tr></thead>
+<tbody>
+<tr><td>Better Auth's verify answer is <code>{ session, user }</code>, as <code>/get-session</code>'s is</td><td>Pinned <code>dist/index.mjs:504–510</code></td><td>The strip helper returns "unchanged", and V4's token check fails. Fix the helper.</td></tr>
+<tr><td>The client-wide <code>onRequest</code> runs for the passkey client's challenge request</td><td><code>config.mjs:31–37</code> wires it into every <code>$fetch</code>; the passkey client uses that <code>$fetch</code> (<code>client.mjs:8</code>)</td><td>The token isn't sent, and V2 and V8 fail. Then the page would call the endpoints itself, which is a divergence to bring to you.</td></tr>
+<tr><td>Turnstile's <code>execute</code> mode gives a new token after each <code>reset</code></td><td>Cloudflare's documented widget API</td><td>A second sign-in attempt on the same page fails until reload. V7's two-token case catches it in the stand-in; real Turnstile stays unverified.</td></tr>
+<tr><td>The session-create hook runs for the plugin's <code>createSession</code></td><td>The plugin uses <code>internalAdapter.createSession</code> (<code>dist/index.mjs:500</code>), which runs database hooks</td><td>A removed person could sign in. V5 catches it.</td></tr>
+<tr><td>Chrome's virtual authenticator reports user verification as set</td><td>CDP's <code>WebAuthn.setUserVerified</code></td><td>V8's refusal run can't be made. The software authenticator in V3 still proves the refusal on both hosts.</td></tr>
+<tr><td>A person with a passkey has already set up the app</td><td>Adding a passkey needs a recent app or recovery-code confirmation (the passkey page's "Confirm with your app or a recovery code first")</td><td>None for sign-in. The page after sign-in decides the next step as today.</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="was-there">What was there before, and what each change replaces or keeps</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Before (<code>f3b2b88b</code>)</th><th>After B1-B</th><th>Replaced or kept</th></tr></thead>
+<tbody>
+<tr><td>Passkey sign-in routes answer 404</td><td>Both public, behind Turnstile and the flood limit</td><td>Replaced</td></tr>
+<tr><td>A test asserting that 404</td><td>A no-UV sign-in refused with 401</td><td>Replaced</td></tr>
+<tr><td>The user-verification hooks</td><td>Unchanged, now reachable</td><td>Kept</td></tr>
+<tr><td>Token stripped from <code>/get-session</code> only</td><td>Also from the verify answer</td><td>Kept and extended</td></tr>
+<tr><td>Sign-in page: Google and GitHub</td><td>Plus Continue with Passkey</td><td>Kept and extended</td></tr>
+<tr><td>Social sign-ins recorded</td><td>Passkey sign-ins recorded too</td><td>Kept and extended</td></tr>
+<tr><td>Guidance: passkeys only confirm</td><td>Passkeys sign in</td><td>Replaced</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="open">Open for you: autofill on the passkey button?</h2>
+<p><strong>Today, in Better Auth UI:</strong> its <code>PasskeyButton</code> does two things. It signs in on click, and when the page loads it also asks the browser to list passkeys in its autofill dropdown (<code>usePasskeyAutoFill</code>). That autofill list appears under a username or email field marked for passkeys. Our sign-in page has no such field: people only choose Google, GitHub or now a passkey.</p>
+<ex-mermaid id="open-now" label="What the shipped button does on page load" data-width="canvas"><script type="text/plain">
+flowchart TB
+  load["Sign-in page loads"] --> auto["Shipped button asks for a challenge<br/>for autofill"]
+  auto --> cost["One Turnstile run, one stored challenge,<br/>one of the 10 sign-in requests a minute"]
+  auto --> field{"A username field<br/>for the list?"}
+  field -->|"our page: no"| none["Nothing appears"]
+  click["Person clicks the button"] --> signin["Challenge, passkey prompt, signed in"]
+  class load,click slot1
+  class auto,cost slot5
+  class field,none slot4
+  class signin slot6
+</script></ex-mermaid>
+<p><strong>Key:</strong> blue are the starts; rose the autofill cost; violet the missing field; green the click path.</p>
+
+<ex-compare label="Autofill on the passkey button" data-width="canvas">
+  <section id="opt-click" label="A · Click only (one line removed)" icon="key">
+    <section data-compare-row="sees"><p><strong>What a person sees</strong></p><p>The Continue with Passkey button. No autofill list.</p></section>
+    <section data-compare-row="changes"><p><strong>What changes in the code</strong></p><p>Better Auth UI's button, copied with its one <code>usePasskeyAutoFill</code> call removed and a comment naming your decision.</p></section>
+    <section data-compare-row="improves"><p><strong>What it improves</strong></p><p>Loading the sign-in page costs nothing: no Turnstile run, no challenge, no sign-in request counted.</p></section>
+    <section data-compare-row="costs"><p><strong>What it costs</strong></p><p>One line differs from the shipped component, so a later Better Auth UI update needs that line kept out.</p></section>
+    <section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="opt-click-pic" label="Option A"><script type="text/plain">
+flowchart TB
+  a1["Page loads: nothing sent"] --> a2["Click: challenge, prompt, signed in"]
+  class a1 slot6
+  class a2 slot2
+</script></ex-mermaid></section>
+  </section>
+  <section id="opt-shipped" label="B · As shipped, with autofill" icon="package">
+    <section data-compare-row="sees"><p><strong>What a person sees</strong></p><p>The same button. No autofill list either, because the page has no field to show it under.</p></section>
+    <section data-compare-row="changes"><p><strong>What changes in the code</strong></p><p>Better Auth UI's button exactly as shipped.</p></section>
+    <section data-compare-row="improves"><p><strong>What it improves</strong></p><p>No difference from the shipped component.</p></section>
+    <section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Every sign-in page load runs Turnstile (which may ask the person to interact before they click anything), stores a challenge, and uses one of their 10 sign-in requests a minute. Ten reloads in a minute would hit the flood limit.</p></section>
+    <section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="opt-shipped-pic" label="Option B"><script type="text/plain">
+flowchart TB
+  b1["Page loads: Turnstile, challenge, one request counted"] --> b2["Nothing appears"]
+  b3["Click: challenge, prompt, signed in"]
+  class b1 slot5
+  class b2 slot4
+  class b3 slot2
+</script></ex-mermaid></section>
+  </section>
+  <section id="opt-field" label="C · Autofill with an email field" icon="envelope">
+    <section data-compare-row="sees"><p><strong>What a person sees</strong></p><p>A new email field on the sign-in page. Focusing it lists their passkeys; the field does nothing else.</p></section>
+    <section data-compare-row="changes"><p><strong>What changes in the code</strong></p><p>The shipped button, plus a field marked <code>autocomplete="username webauthn"</code>.</p></section>
+    <section data-compare-row="improves"><p><strong>What it improves</strong></p><p>Passkeys appear in the browser's list.</p></section>
+    <section data-compare-row="costs"><p><strong>What it costs</strong></p><p>All of B's load costs, plus a field that looks like email sign-in but isn't one.</p></section>
+    <section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="opt-field-pic" label="Option C"><script type="text/plain">
+flowchart TB
+  c1["Page loads: Turnstile, challenge, one request counted"] --> c2["Focus the email field: passkeys listed"]
+  class c1 slot5
+  class c2 slot3
+</script></ex-mermaid></section>
+  </section>
+</ex-compare>
+<ex-grid cols="3" data-width="canvas">
+<ex-card title="A · Click only" tone="planned" icon="key" tag="Recommended">
+<p><strong>Cost:</strong> one line differs from Better Auth UI.</p>
+</ex-card>
+<ex-card title="B · As shipped" tone="planned" icon="package" tag="Load costs, no benefit here">
+<p><strong>Cost:</strong> a Turnstile run, a challenge and a counted request on every page load.</p>
+</ex-card>
+<ex-card title="C · With an email field" tone="planned" icon="envelope" tag="New field">
+<p><strong>Cost:</strong> B's costs and a field that isn't email sign-in.</p>
+</ex-card>
+</ex-grid>
+<ex-callout title="Recommended: A" tone="decision" icon="key">
+<p>On our page autofill shows nothing, and every load would still pay for it. Removing the one call is the smallest divergence from Better Auth UI, with a reason you can check. <strong>Not decided.</strong></p>
+</ex-callout>
+<ex-callout title="If you defer" tone="risk" icon="clock">
+<p>Nothing is built: B1-B's packets go out only after you answer this and give the go-ahead. The pages are written for A. If you answer B or C, I revise S7, V7 and the button's change before sending anything.</p>
+</ex-callout>
+<ex-choice id="autofill-choice" title="Does the passkey button also offer passkeys in the browser's autofill list?">
+  <ex-option id="autofill-choice-a" title="**A.** Click only (recommended)"><template slot="summary">Better Auth UI's button with its autofill call removed; page loads cost nothing.</template></ex-option>
+  <ex-option id="autofill-choice-b" title="**B.** As shipped, with autofill"><template slot="summary">The exact component; every page load runs Turnstile and stores a challenge, and nothing appears.</template></ex-option>
+  <ex-option id="autofill-choice-c" title="**C.** Autofill with an email field"><template slot="summary">A field that lists passkeys on focus; B's costs plus the field.</template></ex-option>
+</ex-choice>
+</ex-document>
+</body>
+</html>

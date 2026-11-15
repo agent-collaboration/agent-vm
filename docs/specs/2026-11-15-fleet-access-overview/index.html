@@ -11,6 +11,7 @@
 <ex-nav for="home"><nav slot="pages" aria-label="Pages">
   <a href="index.html">Fleet access overview</a>
   <a href="../2026-11-15-fleet-access-b1/b1-a-core/audit.html">B1-A One sign-in core</a>
+  <a href="../2026-11-15-fleet-access-b1/b1-b-passkey/audit.html">B1-B Passkey sign-in</a>
 </nav></ex-nav>
 <ex-document id="home">
 <h1>Fleet access: overview</h1>
@@ -24,19 +25,18 @@ flowchart TB
   A --> B2["4 · B2 Central organizations"]
   B2 --> B2X["5 · B2 additions"]
   B2 --> BG["6 · BG Getting in, staging proof"]
-  BG -. "staging exists" .-> B
   B2X --> B3["7 · B3 Machine login, locked link"]
   LA4["Lead A · 4 Router to central link"] --> B3
   B3 --> B45["8 · B4 and B5"]
   class you1 slot4
-  class A slot2
-  class B,C,B2,B2X,BG,B3,B45 slot1
+  class A,B slot2
+  class C,B2,B2X,BG,B3,B45 slot1
   class LA4 slot3
 </script></ex-mermaid>
 <p><strong>Key:</strong> violet waits on you, amber has its design written, blue comes later, teal is another Lead's deliverable.</p>
 <ol>
 <li><strong>B1-A</strong> One sign-in core, injected and honestly tested. Designed. The second Sol and Terra review findings are fixed, and the final recheck is running. One boundary question is open for you on its Decisions page.</li>
-<li><strong>B1-B</strong> Passkey sign-in.</li>
+<li><strong>B1-B</strong> Passkey sign-in. All seven pages written; its own Sol review is next. One choice is open for you on its Decisions page (autofill on the passkey button).</li>
 <li><strong>B1-C</strong> Organizations finished: choose your organization, look up members.</li>
 <li><strong>B2</strong> Central organizations.</li>
 <li><strong>B2 additions</strong> Person tokens, revocation.</li>
@@ -51,7 +51,7 @@ flowchart TB
 <thead><tr><th>Feature</th><th>Blocked by</th><th>Runs in parallel with</th><th>Unblocks</th><th>Approved with go-ahead?</th></tr></thead>
 <tbody>
 <tr><td><strong>B1-A</strong> One sign-in core (<a href="../2026-11-15-fleet-access-b1/b1-a-core/audit.html">design</a>)</td><td>Its Sol and Terra recheck, then your approval</td><td>None: it goes first</td><td>B1-B, B1-C and B2 (they build on its core contract and test changes)</td><td>No</td></tr>
-<tr><td><strong>B1-B</strong> Passkey sign-in</td><td>B1-A merged; your approval of its design. Its one real release sign-in also needs BG's staging.</td><td>B1-C, B2</td><td>Nothing else in this lane</td><td>No: not designed</td></tr>
+<tr><td><strong>B1-B</strong> Passkey sign-in (<a href="../2026-11-15-fleet-access-b1/b1-b-passkey/audit.html">design</a>)</td><td>Its Sol review; B1-A merged; your autofill answer and approval. Staging covers journey 5 from adding the passkey onward, in BG's run.</td><td>B1-C, B2</td><td>Nothing else in this lane</td><td>No: designed, in review</td></tr>
 <tr><td><strong>B1-C</strong> Organizations finished</td><td>B1-A merged; your approval of its design</td><td>B1-B, B2</td><td>Nothing else in this lane</td><td>No: not designed</td></tr>
 <tr><td><strong>B2</strong> Central organizations</td><td>B1-A merged; your approval of its design</td><td>B1-B, B1-C</td><td>B2 additions, BG</td><td>No: not designed</td></tr>
 <tr><td><strong>B2 additions</strong> Person tokens, revocation</td><td>B2 merged; your answer on CLI <code>--device</code> login (on its Decisions page); your approval</td><td>BG</td><td>B3</td><td>No: not designed</td></tr>
