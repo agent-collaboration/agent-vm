@@ -115,36 +115,46 @@ flowchart TB
 </section>
 
 <section id="review"><h2>3. The packets: what each role gets, from whom, and where</h2>
-<p>Every handoff is a fixed packet at a fixed place. Each piece of B1 work, a <em>slice</em>, gets one folder. Everything for that slice lives there: the brief, what the Implementer hands back, what the Verifier saw, my acceptance, and the reviewer's report. You can open the folder and see exactly what each role was given and what it returned.</p>
-<p><strong>The folder:</strong> <code>docs/specs/2026-11-15-fleet-access-b1/work/&lt;slice&gt;/</code>. The five slices are in <a href="#order">section 4</a>, named <code>s1-honest-tests</code>, <code>s2-lookup-and-switching</code>, <code>s3-passkey-sign-in</code>, <code>s4-ids-and-agent-path</code> and <code>s5-release-check</code>. None is created yet: your stop holds.</p>
+<p>B1's remaining work is cut into seven <a href="#order">deliverable items</a>. Each is something tangible the roles can finish in 2–4 hours, and each has a gate that must pass before the next one starts. Every item gets one folder, and everything for it lives there: the brief, what the Implementer hands back, what the Verifier saw, my check, the reviewer's report and my acceptance. Open the folder and you see exactly what each role was given and what it returned.</p>
+<p><strong>The folder:</strong> <code>docs/specs/2026-11-15-fleet-access-b1/work/&lt;item&gt;/</code>, for example <code>work/b1-1-honest-tests/</code>. None is created yet: your stop holds.</p>
 
-<ex-mermaid id="packet-flow" label="One slice, from brief to your review" data-width="canvas"><script type="text/plain">
+<ex-mermaid id="packet-flow" label="One deliverable item, from brief to the gate" data-width="canvas"><script type="text/plain">
 flowchart TB
-  brief["Lead writes brief.html<br/>gap, design rows, cases, scope"] --> impl["Implementer builds<br/>returns implementer-handback.md"]
-  brief --> ver["Verifier observes the pinned build<br/>returns verifier-observation.md"]
+  brief["Lead writes brief.html<br/>scope, design rows, checks, gate"] --> impl["Implementer builds<br/>implementer-handback.md"]
+  brief --> ver["Verifier runs the checks on the pinned build<br/>verifier-observation.md + evidence/"]
   impl --> ver
-  ver --> acc["Lead accepts against your design<br/>writes lead-acceptance.html"]
-  acc --> rev["Fresh reviewer<br/>returns reviewer-report.html"]
-  rev --> terra["Terra medium checks the report"]
-  terra --> you["You: the B1 home agreements list<br/>is updated from these files"]
-  class brief,acc slot2
+  ver --> check["Lead checks before review<br/>lead-check.html"]
+  check --> rev["Fresh reviewer<br/>reviewer-report.html"]
+  rev --> acc["Lead acceptance map<br/>lead-acceptance.html"]
+  acc --> gap{"Anything not delivered?"}
+  gap -->|"yes"| you["Comes to you first"]
+  gap -->|"no"| gate["Gate passes: next item starts"]
+  class brief,check,acc slot2
   class impl slot3
   class ver slot4
-  class rev,terra slot1
-  class you slot6
+  class rev slot1
+  class you,gate slot6
 </script></ex-mermaid>
-<p><strong>Key:</strong> amber is the Lead, teal the Implementer, violet the Verifier, blue the review, green you.</p>
+<p><strong>Key:</strong> amber is the Lead, teal the Implementer, violet the Verifier, blue the independent reviewer, green you and the gate.</p>
 
 <ex-card id="pkt-implementer" title="1 · Implementer packet (from the Lead)" tone="note" icon="code">
-<p><strong>Who:</strong> the Implementer (Opus high), one per slice.</p>
+<p><strong>Who:</strong> the Implementer (Opus high), on one item at a time.</p>
 <p><strong>Gets exactly:</strong></p>
 <ul>
-<li><code>work/&lt;slice&gt;/brief.html</code>: the gap in plain words, "fully fixed means", the design rows it must meet (links into the four design pages), the cases from the Plan it must pass, the files it may change in switchboard, when to stop, and the paired Verifier's address.</li>
-<li>The four B1 design pages: <a href="requirements.html">requirements</a>, <a href="specification.html">specification</a>, <a href="program-design.html">program design</a>, <a href="verification-design.html">verification design</a>.</li>
+<li><code>work/&lt;item&gt;/brief.html</code>. It holds:
+  <ul>
+  <li>the gap in plain words and "fully fixed means";</li>
+  <li>the obligations in scope, linked into the four design pages;</li>
+  <li>the checks it must pass, from <a href="#cases">the case table</a>;</li>
+  <li>the write scope (exact switchboard paths);</li>
+  <li>the gate and when to stop;</li>
+  <li>the paired Verifier's address.</li>
+  </ul></li>
+<li>The approved pages: <a href="requirements.html">requirements</a>, <a href="specification.html">specification</a>, <a href="program-design.html">program design</a>, <a href="verification-design.html">verification design</a>.</li>
 <li>Your decisions: <a href="decisions.html#owner">decisions.html#owner</a>.</li>
-<li>The repo's rules: <code>switchboard/AGENTS.md</code>.</li>
+<li>The repo's rules: switchboard <code>AGENTS.md</code>.</li>
 </ul>
-<p><strong>Returns to:</strong> <code>work/&lt;slice&gt;/implementer-handback.md</code>. It holds the PR and commit, the gate commands with counts and exit codes, what it couldn't do, and every place it thinks the design is wrong.</p>
+<p><strong>Returns to:</strong> <code>work/&lt;item&gt;/implementer-handback.md</code>. It holds the PR and commit, the gate commands with counts and exit codes, what it couldn't do, and every place it thinks the design is wrong.</p>
 <p><strong>Never gets:</strong> permission to change the design, a public contract or a check gate. Those come back to me, and then to you.</p>
 </ex-card>
 
@@ -153,66 +163,102 @@ flowchart TB
 <p><strong>Gets exactly:</strong></p>
 <ul>
 <li>The same <code>brief.html</code> and the four design pages.</li>
-<li>The slice's cases from <a href="#cases">the case table</a>. Each names the boundary and the wrong build it must catch.</li>
-<li>The pinned build: the PR head commit, filled into the brief at handoff.</li>
-<li>The verification skill: <code>switchboard/.agents/skills/verify-auth/</code>.</li>
+<li>The item's checks. Each names its boundary and the wrong build it must catch.</li>
+<li>The exact targets, run on both hosts (local workerd with D1 through Miniflare, and Node with better-sqlite3):
+  <ul>
+  <li><code>pnpm check</code></li>
+  <li><code>pnpm test:unit</code></li>
+  <li><code>pnpm test:e2e:host</code></li>
+  <li>the item's named test files</li>
+  </ul>
+  Real-browser checks use Chrome with a virtual authenticator. Heavy runs go to Sunclaw.</li>
+<li>The pinned versions: the switchboard PR head commit (filled in at handoff), Node 24.7.0, <code>better-auth</code> 1.7.11, and the Chrome version, recorded with the run.</li>
+<li>The verification skill: switchboard <code>.agents/skills/verify-auth/</code>.</li>
 </ul>
-<p><strong>Returns to:</strong> <code>work/&lt;slice&gt;/verifier-observation.md</code>, with an evidence folder named in it. The observation holds the build pin, the commands, counts, exit codes and file hashes. For each case it records what was seen, and whether the wrong build would have failed.</p>
-<p><strong>Never gets:</strong> the Implementer's own results as proof. It runs the cases itself.</p>
+<p><strong>Returns to:</strong> <code>work/&lt;item&gt;/verifier-observation.md</code> and the evidence folder <code>work/&lt;item&gt;/evidence/</code>. The evidence holds logs, counts, exit codes and file hashes, with no secrets. For each check it records what was seen, and that the same check fails on the base commit.</p>
+<p><strong>Never gets:</strong> the Implementer's own results as proof. It runs every check itself.</p>
 </ex-card>
 
-<ex-card id="pkt-acceptance" title="3 · What the accepting Lead holds" tone="note" icon="shield-check">
-<p><strong>Who:</strong> me, before any review starts.</p>
-<p><strong>I hold:</strong></p>
-<ul>
-<li>the design rows from the brief;</li>
-<li>the Verifier's observation and evidence;</li>
-<li>the Implementer's handback;</li>
-<li>the PR diff at the pinned commit;</li>
-<li>CI.</li>
-</ul>
-<p>I open the code and the evidence myself.</p>
-<p><strong>Writes:</strong> <code>work/&lt;slice&gt;/lead-acceptance.html</code>. It runs the five checks from <a href="#accept">section 2</a>, each citing the file and line it rests on. Each outcome is marked accepted, partial or missing. Any gap or narrowing goes to you as a decision first.</p>
-<p><strong>Never:</strong> accepts against my own brief instead of your design, or counts a summary as evidence.</p>
-</ex-card>
-
-<ex-card id="pkt-reviewer" title="4 · Reviewer packet (from the Lead, after acceptance)" tone="note" icon="users">
-<p><strong>Who:</strong> a fresh Sol xhigh session with no history of this work. It loads <code>role-checker</code>, <code>design-review</code> and the three verification principles.</p>
+<ex-card id="pkt-reviewer" title="3 · Reviewer packet (from the Lead, after my check)" tone="note" icon="users">
+<p><strong>Who:</strong> a fresh Sol xhigh session with no history of this work. It loads <code>role-checker</code>, <code>design-review</code>, <code>principle-verify-before-accepting</code>, <code>principle-prove-it-works</code> and <code>principle-write-tests-that-can-fail</code>.</p>
+<p><strong>The required first question:</strong> what does this drop that your words, the earlier designs or the old tests had?</p>
 <p><strong>Gets exactly:</strong></p>
 <ul>
-<li>The yardstick: the four B1 design pages.</li>
-<li>Your words: <a href="decisions.html#owner">decisions.html#owner</a>, each item linked to a transcript line.</li>
-<li>The PR number and the pinned commit.</li>
-<li>The evidence folder named in <code>verifier-observation.md</code>.</li>
-<li>The report format: <code>docs/specs/2026-11-15-fleet-access-overview/report-format.md</code>.</li>
-<li>As <strong>claims to check only</strong>: <code>brief.html</code>, <code>implementer-handback.md</code>, <code>lead-acceptance.html</code>.</li>
+<li><strong>Your first-hand words, with their sources:</strong> <a href="decisions.html#owner">decisions.html#owner</a>, each linked to a transcript line.</li>
+<li><strong>Every earlier design for the area:</strong>
+  <ul>
+  <li>the approved B1 deliverable, <code>docs/specs/2026-11-02-fleet-access/deliverables/b1-people-roles-sign-in.source.html</code>, and the shared design set beside it;</li>
+  <li>the 30 Oct assumption pages in <code>tmp/2026-10-30-lead-pages/</code>: <code>assumptions-by-deliverable.html</code>, <code>fleet-access-assumptions.html</code> and <code>fleet-access-assumptions-followup.html</code>.</li>
+  </ul></li>
+<li><strong>The old code and tests:</strong> switchboard at the item's base commit, and the existing tests for the area in <code>packages/sign-in-test-support/src/</code> and <code>packages/sign-in-core/src/</code>.</li>
+<li><strong>These pages:</strong> the four B1 design pages.</li>
+<li><strong>The PR and versions:</strong> the PR number and pinned commit, with the versions from the Verifier packet.</li>
+<li><strong>The evidence:</strong> <code>work/&lt;item&gt;/evidence/</code>.</li>
+<li><strong>The report format:</strong> <code>docs/specs/2026-11-15-fleet-access-overview/report-format.md</code>.</li>
+<li><strong>Claims to audit only:</strong> <code>brief.html</code>, <code>implementer-handback.md</code> and <code>lead-check.html</code>.</li>
 </ul>
-<p><strong>Returns to:</strong> <code>work/&lt;slice&gt;/reviewer-report.html</code>. Every finding cites your design row, your words where they apply, and the code line. I reject any finding, or any "done", that doesn't.</p>
-<p><strong>Never gets:</strong> my plan or rulings as a standard.</p>
+<p><strong>Returns to:</strong> <code>work/&lt;item&gt;/reviewer-report.html</code>. Every finding cites your design row, your words where they apply, and the code line. I reject any finding, or any "done", that doesn't.</p>
+<p><strong>Never gets:</strong> my plan, summaries or rulings as a standard.</p>
+</ex-card>
+
+<ex-card id="pkt-acceptance" title="4 · Lead acceptance packet (what I hold when I accept)" tone="note" icon="shield-check">
+<p><strong>Before review:</strong> I open the code and the evidence myself and write <code>work/&lt;item&gt;/lead-check.html</code>. It runs the five checks from <a href="#accept">section 2</a>, each citing a file and line. The reviewer gets it as a claim.</p>
+<p><strong>To accept, I hold:</strong></p>
+<ul>
+<li>the acceptance map: obligation → check → evidence → accepted;</li>
+<li>the Verifier's observation and evidence;</li>
+<li>the reviewer's report, with each finding disposed of at its anchor.</li>
+</ul>
+<p><strong>Writes:</strong> <code>work/&lt;item&gt;/lead-acceptance.html</code>, with the map and each reviewer finding fixed, rejected with evidence, or brought to you.</p>
+<p><strong>The rule:</strong> anything not delivered comes to you <strong>before</strong> I accept. Then the gate passes and the next item starts.</p>
 </ex-card>
 
 <h3 id="how-review">How the reviewer validates</h3>
 <ol>
+<li>Answer the first question: list what the change drops against your words, the earlier designs and the old tests.</li>
 <li>For each obligation, read your design row and any linked words of yours first, and write down what "done" means before opening the code.</li>
 <li>Read the code at the pinned commit, not the PR description.</li>
-<li>Open the evidence and check that it ran on that build, at the boundary the design names, and would fail on the wrong build.</li>
+<li>Open the evidence and check that it ran on that build, at the boundary the design names, and fails on the base commit.</li>
 <li>Any place my records narrow, defer or reinterpret an obligation is a finding. Never adopt it.</li>
 <li>A decision counts as yours only with a link to your own words. A relay stays "relayed, unconfirmed".</li>
 </ol>
 </section>
 
-<section id="order"><h2>4. The order of work once you lift the stop</h2>
-<ex-mermaid data-width="canvas" id="work-order" label="B1 work order after the stop lifts"><script type="text/plain">
+<section id="order"><h2>4. The deliverable items: 2–4 hours each, gate and go</h2>
+<p>Each item is one PR, run by the Implementer and Verifier pair, then my check, the reviewer and my acceptance. Its gate is the exact list of checks that must pass before the next item starts. Every gate also includes:</p>
+<ul>
+<li>the item's new checks fail on the base commit and pass on the item;</li>
+<li><code>pnpm check</code>, <code>pnpm test:unit</code> and <code>pnpm test:e2e:host</code> are green;</li>
+<li>CI is green;</li>
+<li>the reviewer says READY;</li>
+<li>anything not delivered has been brought to you.</li>
+</ul>
+<ex-mermaid id="work-order" label="B1 deliverable items in order" data-width="canvas"><script type="text/plain">
 flowchart TB
-  w1["s1-honest-tests<br/>page randomness, watchdogs, flood binding"]:::fix --> w2["s2-lookup-and-switching<br/>membership lookup, organization choice"]:::build
-  w2 --> w3["s3-passkey-sign-in<br/>prove the hook, then turn it on"]:::build
-  w3 --> w4["s4-ids-and-agent-path<br/>identifier readback, agent path"]:::fix
-  w4 --> w5["s5-release-check<br/>real sign-in on staging, with BG"]:::later
-  classDef fix fill:#f8d7da,stroke:#b02a37,color:#3d0a0f
-  classDef build fill:#fff3cd,stroke:#b8860b,color:#3d2b00
-  classDef later fill:#e7e9ee,stroke:#59606e,color:#1d2129
+  i1["B1-1 Honest tests<br/>about 3 hours"] --> i2["B1-2 Membership lookup<br/>about 3 hours"]
+  i2 --> i3["B1-3 Keep the organization choice<br/>about 2 hours"]
+  i3 --> i4["B1-4 Prove the passkey check<br/>about 2 hours"]
+  i4 --> i5["B1-5 Passkey sign-in on<br/>about 3 hours"]
+  i5 --> i6["B1-6 Identifiers and agent path<br/>about 2 hours"]
+  i6 --> i7["B1-7 Release check on staging<br/>after BG's staging item"]
+  class i1 slot5
+  class i2,i3,i5 slot2
+  class i4,i6 slot3
+  class i7 slot1
 </script></ex-mermaid>
-<p>Each slice is one PR with its own folder, packets, Verifier observation, Lead acceptance and review, as in <a href="#review">section 3</a>.</p>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Item and folder</th><th>What it delivers</th><th>Design rows</th><th>Its gate (on top of the common ones)</th></tr></thead>
+<tbody>
+<tr><td><strong>B1-1 Honest tests</strong><br><code>work/b1-1-honest-tests/</code></td><td>The host supplies page randomness and the boundary scan covers page files. The browser harness waits on events with the controlled clock. The flood threshold runs through Miniflare's rate-limit binding.</td><td><a href="specification.html#R30">R30</a>, <a href="specification.html#R33">R33</a>, <a href="specification.html#R52">R52</a></td><td>A planted global call in a page file fails the scan. The source scan finds no real timer in tests or helpers. Past the limit on the binding: 429 with nothing changed, while another address passes.</td></tr>
+<tr><td><strong>B1-2 Membership lookup</strong><br><code>work/b1-2-membership-lookup/</code></td><td>The owner looks up a person's membership in the requested organization.</td><td><a href="specification.html#R14">R14</a></td><td>On both hosts, the owner gets the answer, and a member or stranger learns nothing.</td></tr>
+<tr><td><strong>B1-3 Keep the organization choice</strong><br><code>work/b1-3-organization-choice/</code></td><td>The account page keeps the choose-organization control.</td><td><a href="specification.html#R5">R5</a></td><td>On real served pages: choose an organization, and the CLI's waiting login returns.</td></tr>
+<tr><td><strong>B1-4 Prove the passkey check</strong><br><code>work/b1-4-passkey-proof/</code></td><td>Evidence that Better Auth 1.7.11 refuses a passkey sign-in without user verification. Nothing is switched on yet.</td><td><a href="specification.html#R5">R5</a></td><td>In real Chrome with a virtual authenticator, unverified is refused on both hosts. If it can't be proven, it comes to you, and passkey sign-in stays off.</td></tr>
+<tr><td><strong>B1-5 Passkey sign-in on</strong><br><code>work/b1-5-passkey-sign-in/</code></td><td>The passkey sign-in route and button, with Turnstile checked before the challenge.</td><td><a href="specification.html#R5">R5</a>, <a href="specification.html#R52">R52</a></td><td>A verified passkey signs in and can make a change. A missing Turnstile token creates nothing. Checked in real Chrome on both hosts.</td></tr>
+<tr><td><strong>B1-6 Identifiers and agent path</strong><br><code>work/b1-6-ids-and-agent-path/</code></td><td>Every stored ID is read back, and the agent path is re-observed at the final build.</td><td><a href="specification.html#R32">R32</a>, <a href="specification.html#R38">R38</a></td><td>Every ID reads back as UUIDv7 on both databases. Today's agent gets its token and one tool call, and a person is refused a tool credential.</td></tr>
+<tr><td><strong>B1-7 Release check on staging</strong><br><code>work/b1-7-release-check/</code></td><td>One real Google sign-in with the real Turnstile check, on staging after deploy, with no action from you.</td><td><a href="specification.html#R52">R52</a></td><td>Can't start until BG's staging item exists. Then the real sign-in passes and the real siteverify is recorded.</td></tr>
+</tbody>
+</table></div>
+<p>The hours are estimates for the agent roles. If an item turns out bigger, I split it before it starts and tell you, rather than letting it run long.</p>
 </section>
 </ex-document>
 </body>
