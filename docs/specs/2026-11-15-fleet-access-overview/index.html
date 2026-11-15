@@ -16,7 +16,7 @@
 <h1>Fleet access: overview</h1>
 
 <h2 id="sequence">Sequence: what comes first, and what runs in parallel</h2>
-<p>Each arrow means the next deliverable builds on the one before. Boxes side by side after the same arrow can run in parallel. <strong>Key:</strong> amber has its design set written, blue doesn't yet.</p>
+<p>Each arrow means the next deliverable builds on the one before. Boxes side by side after the same arrow can run in parallel. <strong>Key:</strong> amber has its design set written, teal is being written now, blue comes later.</p>
 <ex-mermaid id="order" label="Fleet access deliverables: sequence and parallel work" data-width="canvas"><script type="text/plain">
 flowchart TB
   B1["B1 People, roles, sign-in"] --> B2["B2 Central organizations"]
@@ -30,7 +30,8 @@ flowchart TB
   B5 --> SW
   SW --> B6["B6 to B9<br/>traces, who is in, remote start, members view"]
   class B1 slot2
-  class B2,B2X,BG,B3,B4,B5,SW,B6 slot1
+  class B2,B2X,BG,B3 slot3
+  class B4,B5,SW,B6 slot1
 </script></ex-mermaid>
 <p><strong>In parallel:</strong> B2 additions and BG, after B2. B4 and B5, after B3. <strong>In sequence:</strong> the 2–4 hour items inside each deliverable, each behind its gate.</p>
 
@@ -40,13 +41,13 @@ flowchart TB
 <thead><tr><th>Deliverable</th><th>Design set</th><th>Approved with go-ahead</th></tr></thead>
 <tbody>
 <tr><td><strong>B1</strong> People, roles, sign-in</td><td><a href="../2026-11-15-fleet-access-b1/index.html">B1 design set</a></td><td>Not yet. Waiting for your approval of this set.</td></tr>
-<tr><td><strong>B2</strong> Central organizations</td><td>Not written yet</td><td>Not yet</td></tr>
-<tr><td><strong>B2 additions</strong> Person tokens, revocation</td><td>Not written yet</td><td>Not yet</td></tr>
-<tr><td><strong>BG</strong> Getting in</td><td>Not written yet</td><td>Not yet</td></tr>
-<tr><td><strong>B3</strong> Machine login, locked link</td><td>Not written yet</td><td>Not yet</td></tr>
-<tr><td><strong>B4</strong> Sessions through their machine</td><td>Not written yet</td><td>Not yet</td></tr>
-<tr><td><strong>B5</strong> Authenticated CLI</td><td>Not written yet</td><td>Not yet</td></tr>
-<tr><td><strong>B6–B9</strong></td><td>Not written yet</td><td>Not yet</td></tr>
+<tr><td><strong>B2</strong> Central organizations</td><td>Being written (started 17:21Z, 15 Nov)</td><td>Not yet: its set must exist first</td></tr>
+<tr><td><strong>B2 additions</strong> Person tokens, revocation</td><td>Being written (started 17:21Z, 15 Nov)</td><td>Not yet: its set must exist first</td></tr>
+<tr><td><strong>BG</strong> Getting in</td><td>Being written (started 17:21Z, 15 Nov)</td><td>Not yet: its set must exist first</td></tr>
+<tr><td><strong>B3</strong> Machine login, locked link</td><td>Being written (started 17:21Z, 15 Nov)</td><td>Not yet: its set must exist first</td></tr>
+<tr><td><strong>B4</strong> Sessions through their machine</td><td>After B3's set: new design work, built on B3</td><td>Not yet</td></tr>
+<tr><td><strong>B5</strong> Authenticated CLI</td><td>After B3's set: new design work, built on B3</td><td>Not yet</td></tr>
+<tr><td><strong>B6–B9</strong></td><td>After B3's set: new design work, built on B3</td><td>Not yet</td></tr>
 </tbody>
 </table>
 </ex-document>
