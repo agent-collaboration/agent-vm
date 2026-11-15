@@ -10,16 +10,18 @@
 <body>
 <ex-nav for="home"><nav slot="pages" aria-label="Pages">
   <a href="index.html">Fleet access overview</a>
-  <a href="../2026-11-15-fleet-access-b1/index.html">B1 People, roles, sign-in</a>
+  <a href="../2026-11-15-fleet-access-b1/b1-a-core/audit.html">B1-A One sign-in core</a>
 </nav></ex-nav>
 <ex-document id="home">
 <h1>Fleet access: overview</h1>
 
 <h2 id="sequence">Sequence: what comes first, and what runs in parallel</h2>
-<p>Each arrow means the next deliverable builds on the one before. Boxes side by side after the same arrow can run in parallel. <strong>Key:</strong> amber is being rewritten now, blue comes later.</p>
-<ex-mermaid id="order" label="Fleet access deliverables: sequence and parallel work" data-width="canvas"><script type="text/plain">
+<p>Each arrow means the next feature builds on the one before. Features after the same arrow can run in parallel. <strong>Key:</strong> amber has its design written, blue doesn't yet.</p>
+<ex-mermaid id="order" label="Fleet access features: sequence and parallel work" data-width="canvas"><script type="text/plain">
 flowchart TB
-  B1["B1 People, roles, sign-in"] --> B2["B2 Central organizations"]
+  A["B1-A One sign-in core,<br/>injected and honestly tested"] --> B["B1-B Passkey sign-in"]
+  A --> C["B1-C Organizations finished"]
+  A --> B2["B2 Central organizations"]
   B2 --> B2X["B2 additions<br/>person tokens, revocation"]
   B2 --> BG["BG Getting in<br/>setup pages, staging proof"]
   B2X --> B3["B3 Machine login, locked link"]
@@ -28,26 +30,29 @@ flowchart TB
   BG --> SW(["Your switch: every machine logs in again"])
   B4 --> SW
   B5 --> SW
-  SW --> B6["B6 to B9<br/>traces, who is in, remote start, members view"]
-  class B1 slot2
-  class B2,B2X,BG,B3 slot1
-  class B4,B5,SW,B6 slot1
+  SW --> B6["B6 to B9"]
+  class A slot2
+  class B,C,B2,B2X,BG,B3,B4,B5,SW,B6 slot1
 </script></ex-mermaid>
-<p><strong>In parallel:</strong> B2 additions and BG, after B2. B4 and B5, after B3. <strong>In sequence:</strong> the 2–4 hour items inside each deliverable, each behind its gate.</p>
+<ul>
+<li><strong>In parallel:</strong> after B1-A, three can run side by side: B1-B, B1-C and B2. After B2, B2 additions and BG can run in parallel, and after B3, B4 and B5.</li>
+<li><strong>B1-A comes first</strong> because it changes the core's host contract and the tests every later feature builds on.</li>
+<li><strong>Still to regroup:</strong> B2, B2 additions, BG and B3 will be regrouped into whole features the same way as B1, so their names here may change.</li>
+</ul>
 
-<h2 id="deliverables">Deliverables and approval</h2>
-<p>You approved the overall design, B1 and B2 on 4 Nov (<a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl">Fleet transcript</a> line 71230). Your stop on 15 Nov paused all development until you understand each design. So nothing has a go-ahead now. Each deliverable gets one when you approve its design set.</p>
+<h2 id="deliverables">Features and approval</h2>
+<p>You approved the overall design, B1 and B2 on 4 Nov (<a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl">Fleet transcript</a> lines 71226 and 71230). Your stop on 15 Nov paused all development until you understand each design, so nothing has a go-ahead now. Each feature gets one when you approve its design.</p>
 <table>
-<thead><tr><th>Deliverable</th><th>Design set</th><th>Approved with go-ahead</th></tr></thead>
+<thead><tr><th>Feature</th><th>Design</th><th>Approved with go-ahead</th></tr></thead>
 <tbody>
-<tr><td><strong>B1</strong> People, roles, sign-in</td><td><a href="../2026-11-15-fleet-access-b1/index.html">B1 design set</a>: its four design documents are <strong>being rewritten</strong> by hand. The first versions were script-generated.</td><td>Not yet</td></tr>
-<tr><td><strong>B2</strong> Central organizations</td><td>Not written yet: comes after B1, written by hand by the Lead</td><td>Not yet</td></tr>
-<tr><td><strong>B2 additions</strong> Person tokens, revocation</td><td>Not written yet: comes after B1, written by hand by the Lead</td><td>Not yet</td></tr>
-<tr><td><strong>BG</strong> Getting in</td><td>Not written yet: comes after B1, written by hand by the Lead</td><td>Not yet</td></tr>
-<tr><td><strong>B3</strong> Machine login, locked link</td><td>Not written yet: comes after B1, written by hand by the Lead</td><td>Not yet</td></tr>
-<tr><td><strong>B4</strong> Sessions through their machine</td><td>After B3's set: new design work, built on B3</td><td>Not yet</td></tr>
-<tr><td><strong>B5</strong> Authenticated CLI</td><td>After B3's set: new design work, built on B3</td><td>Not yet</td></tr>
-<tr><td><strong>B6–B9</strong></td><td>After B3's set: new design work, built on B3</td><td>Not yet</td></tr>
+<tr><td><strong>B1-A</strong> One sign-in core, injected and honestly tested</td><td><a href="../2026-11-15-fleet-access-b1/b1-a-core/audit.html">B1-A design</a>: written; Terra and Sol reviews next</td><td>Not yet</td></tr>
+<tr><td><strong>B1-B</strong> Passkey sign-in</td><td>Not written yet</td><td>Not yet</td></tr>
+<tr><td><strong>B1-C</strong> Organizations finished: choose your organization, look up members</td><td>Not written yet</td><td>Not yet</td></tr>
+<tr><td><strong>B2</strong> Central organizations</td><td>Not written yet</td><td>Not yet</td></tr>
+<tr><td><strong>B2 additions</strong> Person tokens, revocation</td><td>Not written yet</td><td>Not yet</td></tr>
+<tr><td><strong>BG</strong> Getting in</td><td>Not written yet</td><td>Not yet</td></tr>
+<tr><td><strong>B3</strong> Machine login, locked link</td><td>Not written yet</td><td>Not yet</td></tr>
+<tr><td><strong>B4</strong>, <strong>B5</strong>, <strong>B6–B9</strong></td><td>After B3's design</td><td>Not yet</td></tr>
 </tbody>
 </table>
 </ex-document>
