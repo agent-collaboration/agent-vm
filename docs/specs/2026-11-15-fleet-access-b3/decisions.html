@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B3 · Machine login · Decisions</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
+<a href="../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
+<a href="audit.html">B3 · 1 Audit</a>
+<a href="requirements.html">B3 · 2 Requirements</a>
+<a href="specification.html">B3 · 3 Specification</a>
+<a href="program-design.html">B3 · 4 Program Design</a>
+<a href="verification-design.html">B3 · 5 Verification Design</a>
+<a href="plan.html">B3 · 6 Plan</a>
+<a href="decisions.html">B3 · 7 Decisions</a>
+</nav></ex-nav>
+<ex-document id="doc">
+<h1>B3 · Machine login: Decisions</h1>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What to check" tone="note" icon="shield-check">
+<p>The <a href="#calls">calls</a>: building on #11 and the split with Lead A.</p>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p>Three open: <a href="#pr11">#11's fate</a>, <a href="#storage">enrollment storage A</a>, <a href="#allow">where allowances live</a>.</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>Decided cards quote you; the first two open items are carried from today's owner page (<code>~/dev/memory-logs/projects/2026/2026-11-codex-router/owner-pages/2026-11-15-fleet-access-audit.html</code>, Decisions 1 and 2).</p>
+</ex-callout>
+
+<h2 id="decided">Already decided by you</h2>
+<ex-card title="Device-code login" tone="done" icon="key" tag="Fleet transcript 12490" pick><p><em>“login i want login to work with device codes in codex”</em>.</p></ex-card>
+<ex-card title="Secret stores: macOS Keychain only, injected" tone="done" icon="lock" tag="7 Nov" pick><p>Only the macOS Keychain through an injected trait; Linux stores out of scope; non-macOS Routers memory-only until a later OIDC design.</p></ex-card>
+<ex-card title="Renewal on the open connection" tone="done" icon="key" tag="Approved R40, 4 Nov" pick><p>“On the open connection, the Router sends the fresh token (RenewMachineToken)”. Lead A confirmed you never changed it; 4a builds it.</p></ex-card>
+<ex-card title="Owner only" tone="done" icon="users" tag="Requirements line 98" pick><p><em>“yes lets keep it all owner only”</em>.</p></ex-card>
+
+<h2 id="calls">My calls</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Call</th><th>Why</th><th>Should it have been yours?</th></tr></thead>
+<tbody>
+<tr><td>Deny needs a recent second factor, like Approve</td><td>R53: changes need step-up; the audit found it missing.</td><td>No.</td></tr>
+<tr><td>Machines are managed from a section on B2's admin page</td><td>Where the owner already administers the organization.</td><td>Possibly: placement.</td></tr>
+<tr><td>The Central decisions merged in #281 are checked and extended, not rewritten</td><td>Lead A's boundary (push 01a1e199-bf63).</td><td>No.</td></tr>
+</tbody></table></div>
+
+<h2 id="open">Open</h2>
+<ex-mermaid id="current-model" label="Where the choices land" data-width="canvas"><script type="text/plain">
+flowchart TB
+  pr["Frozen #11/#14: login and refresh"] --> c1["Choice 1: finish B3 on it, or merge login-only first"]
+  central["Central enrollment rows"] --> c2["Choice 2: storage A"]
+  allow["Allowed workspaces"] --> c3["Choice 3: existing column or new table"]
+  class pr,central,allow slot1
+  class c1,c2,c3 slot2
+</script></ex-mermaid>
+
+<h3 id="pr11">1 · What happens to #11?</h3>
+<ex-compare label="#11" data-width="canvas">
+<section id="pr-finish" label="A · Finish all of B3 on top of #11 before merging" icon="path">
+<section data-compare-row="sees"><p><strong>What you get</strong></p><p>One merge that delivers machine login whole: login, revoke, workspaces, connection.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Nothing reaches main until the whole of B3 is done.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="pr-finish-pic" label="Option A"><script type="text/plain">
+flowchart TB
+  a["#11"] --> b["+ revoke, workspaces, connection, Deny fix"] --> m["Merge B3"]
+</script></ex-mermaid></section>
+</section>
+<section id="pr-partial" label="B · Fix Deny, merge a login-only part" icon="package">
+<section data-compare-row="sees"><p><strong>What you get</strong></p><p>Login and refresh on main sooner; revoke and workspaces later.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>A machine you can log in but not revoke from the page, on main for a while; against your whole-feature rule.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="pr-partial-pic" label="Option B"><script type="text/plain">
+flowchart TB
+  a["#11 + Deny fix"] --> m1["Merge login only"] --> rest["Rest of B3 later"]
+</script></ex-mermaid></section>
+</section>
+</ex-compare>
+<ex-callout title="Recommendation: A" tone="decision" icon="path"><p>Your rule is a deliverable is a whole feature.</p></ex-callout>
+<ex-choice id="choice-pr11" title="What happens to #11?">
+<ex-option id="pr11-a" title="A · Finish B3 on #11, then merge (recommended)"><template slot="summary">One whole feature.</template></ex-option>
+<ex-option id="pr11-b" title="B · Fix Deny, merge login-only first"><template slot="summary">Partial on main for a while.</template></ex-option>
+</ex-choice>
+
+<h3 id="storage">2 · Enrollment storage A, now that the costs are explained?</h3>
+<p>On Lead A's page you picked A and wrote <em>“whats teh cons i don tkudnetand fully”</em>; no confirmation after the explanation was found. A is already built on Central (#281).</p>
+<ex-compare label="Enrollment storage" data-width="canvas">
+<section id="st-a" label="A · Each approval row is one login (built)" icon="package">
+<section data-compare-row="sees"><p><strong>What you get</strong></p><p>One table holds each login's whole history: who approved, when, how it ended.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>About ten columns; ended logins stay as small rows.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="st-a-pic" label="Option A"><script type="text/plain">
+flowchart TB
+  m["Machine (generation)"] --> e1["Enrollment row: active"]
+  m --> e0["Enrollment rows: ended"]
+</script></ex-mermaid></section>
+</section>
+<section id="st-b" label="B · Active login on the machine row" icon="code">
+<section data-compare-row="sees"><p><strong>What you get</strong></p><p>A one-row read for the active login.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Login state split across two tables; replaced login history lost; Central reworked.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="st-b-pic" label="Option B"><script type="text/plain">
+flowchart TB
+  m["Machine row holds the active login"] --> h["History overwritten"]
+</script></ex-mermaid></section>
+</section>
+</ex-compare>
+<ex-callout title="Recommendation: A" tone="decision" icon="package"><p>Keeps history, already built and tested.</p></ex-callout>
+<ex-choice id="choice-storage" title="Approve enrollment storage A?">
+<ex-option id="storage-a" title="A · Approval row is the login (recommended)"><template slot="summary">Built; keeps history.</template></ex-option>
+<ex-option id="storage-b" title="B · Active login on the machine row"><template slot="summary">Rework; history lost.</template></ex-option>
+</ex-choice>
+
+<h3 id="allow">3 · Where do allowed workspaces live?</h3>
+<ex-compare label="Allowances" data-width="canvas">
+<section id="al-col" label="A · Central's existing column, history in change records" icon="code">
+<section data-compare-row="sees"><p><strong>What you get</strong></p><p>Allow and withdraw edit <code>machines.allowed_workspaces</code>, which admission already reads; each change is a record.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Per-allowance history is in the record list, not its own table.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="al-col-pic" label="Option A"><script type="text/plain">
+flowchart TB
+  cmd["Allow / Withdraw"] --> col["machines.allowed_workspaces"]
+  cmd --> rec["allowanceChanged record"]
+</script></ex-mermaid></section>
+</section>
+<section id="al-table" label="B · A new machine_allowances table" icon="package">
+<section data-compare-row="sees"><p><strong>What you get</strong></p><p>One row per machine and workspace with its own state, as sketched in approved B3.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>A migration; the column retired; 4a's admission read moved to the table.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="al-table-pic" label="Option B"><script type="text/plain">
+flowchart TB
+  cmd["Allow / Withdraw"] --> t["machine_allowances rows"]
+  t --> adm["Admission reads the table"]
+</script></ex-mermaid></section>
+</section>
+</ex-compare>
+<ex-callout title="Recommendation: A" tone="decision" icon="code"><p>No new table and no second source of truth; approved B3 called its table a sketch to reconcile with existing columns.</p></ex-callout>
+<ex-callout title="If you defer" tone="risk" icon="clock"><p>B3 can't start: the commands and admission depend on it.</p></ex-callout>
+<ex-choice id="choice-allow" title="Where do allowed workspaces live?">
+<ex-option id="allow-a" title="A · Existing column plus change records (recommended)"><template slot="summary">No migration.</template></ex-option>
+<ex-option id="allow-b" title="B · New machine_allowances table"><template slot="summary">Migration and admission change.</template></ex-option>
+</ex-choice>
+</ex-document>
+</body>
+</html>

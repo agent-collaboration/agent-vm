@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B3 · Machine login · Verification Design</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
+<a href="../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
+<a href="audit.html">B3 · 1 Audit</a>
+<a href="requirements.html">B3 · 2 Requirements</a>
+<a href="specification.html">B3 · 3 Specification</a>
+<a href="program-design.html">B3 · 4 Program Design</a>
+<a href="verification-design.html">B3 · 5 Verification Design</a>
+<a href="plan.html">B3 · 6 Plan</a>
+<a href="decisions.html">B3 · 7 Decisions</a>
+</nav></ex-nav>
+<ex-document id="doc">
+<h1>B3 · Machine login: Verification Design</h1>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What to check" tone="note" icon="shield-check">
+<p>V6 is the real journey: two Routers on macOS log in by device code through the sign-in page, connect through sign-in, against both Central builds; one is revoked and refused. V1 races two pollers on one code.</p>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p>V3's allowance checks follow your storage answer.</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>Approved B3 proof table; Lead A's 4a rows are observed here, built there.</p>
+</ex-callout>
+
+<h2 id="V1">V1 · Login and single use (S1, S2)</h2>
+<ul>
+<li>Kept: #11/#14's tests, merged forward, both hosts against real Central.</li>
+<li>Two pollers redeem one approved code at once, barriers around the conditional write, on D1 and better-sqlite3: exactly one machine token.</li>
+<li>Deny with an old confirmation: asked for a second factor. Someone else denying: the code stays for the owner.</li>
+<li>Repeat approval with changed workspaces: the first stored approval returns; the page shows Central's stored values.</li>
+<li>Hegel family <code>device-approval-rule.hegel.unit.test.ts</code> (M1) over code states, approvers, factor ages and time.</li>
+</ul>
+
+<h2 id="V2">V2 · Connection and renewal (S3, S6)</h2>
+<ul>
+<li>A Router connects through the sign-in carrier on both pairings; a person token, a stale token, another installation's token and a superseded enrollment's token are refused (4a's check, observed).</li>
+<li>On a controlled clock, a running machine renews many times on the open connection; a machine idle 30 days is refused <code>idleExpired</code>.</li>
+<li>Token at <code>grant_expires_at</code> − 1 ms admitted, at equality refused.</li>
+</ul>
+
+<h2 id="V3">V3 · Workspaces and revoke (S4, S5)</h2>
+<ul>
+<li>Approval with workspaces W1 and W3 picked from the live list: only those allowed. Withdraw W1, W3 stays; a non-owner's withdraw is refused.</li>
+<li>Revoke: connection closed, client disabled, next renewal refused, Router asks for a new code. Drop the close at the fault proxy: the machine still gets nothing and ends at its token's expiry.</li>
+<li>Re-login after revocation: nothing restored; workspaces chosen again.</li>
+</ul>
+
+<h2 id="V4">V4 · BA1, re-key, switch (S7, S9)</h2>
+<ul>
+<li>BA1's six cases from approved B3, as Rust tests on both Central builds, plus a property test: at most one active enrollment per machine; no approval activates after a generation change.</li>
+<li>Re-key from three roots (pre-PR-A, post-PR-A, fresh): the machine ID is exactly the peer UUIDv7; sessions and allowances stay; a lost token answer then a retry with the same mapping is accepted; a different mapping is refused.</li>
+<li>Link switch: hold a notice, a read and an install across the switch and kill the Router at each step; never a mix; same-central and other-central rules each hold after restart.</li>
+</ul>
+
+<h2 id="V5">V5 · Secret store (S8)</h2>
+<ul>
+<li>The login code compiles against <code>RefreshCredentialStore</code> alone; the crate selects no platform.</li>
+<li>Fake-source unit tests: absent then usable picks the second; a locked, denied or damaged first source stops with no later access; all absent gives memory only.</li>
+<li>Kill between credential confirmation, metadata publication and retirement: no inconsistent pair is used.</li>
+<li>No plaintext on disk; memory-only restart needs a new code and comes back as the same machine. The Keychain case runs on your Mac with your yes.</li>
+</ul>
+
+<h2 id="V6">V6 · The real journey and step switch (S10, S11)</h2>
+<ul>
+<li>Two Routers on macOS log in by device code through the sign-in page, connect through sign-in, against Central's Worker and Tokio builds; one is revoked and refused. Linux memory-only restart runs in the existing Ubuntu job.</li>
+<li>Step 1 unchanged in production configuration; on a test deployment step 2 refuses the old credential and every bad machine token.</li>
+<li>Exhaustiveness: one added variant per TypeScript union fails at <code>satisfies never</code>; Rust enums matched without wildcards.</li>
+</ul>
+</ex-document>
+</body>
+</html>

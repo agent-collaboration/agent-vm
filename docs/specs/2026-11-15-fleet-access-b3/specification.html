@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B3 · Machine login · Specification</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
+<a href="../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
+<a href="audit.html">B3 · 1 Audit</a>
+<a href="requirements.html">B3 · 2 Requirements</a>
+<a href="specification.html">B3 · 3 Specification</a>
+<a href="program-design.html">B3 · 4 Program Design</a>
+<a href="verification-design.html">B3 · 5 Verification Design</a>
+<a href="plan.html">B3 · 6 Plan</a>
+<a href="decisions.html">B3 · 7 Decisions</a>
+</nav></ex-nav>
+<ex-document id="doc">
+<h1>B3 · Machine login: Specification</h1>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What to check" tone="note" icon="shield-check">
+<p>S2: one code, one machine, once. S5: revoke ends the connection and every later renewal. S7: a newer login always wins over a stale one (BA1). S8: the refresh credential is never written in plaintext.</p>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p>S4's allowance storage and S7's enrollment storage follow your answers.</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>Approved B3 revision 2026-11-07.1; Lead A's 4a for Central's token, door and renewal.</p>
+</ex-callout>
+
+<h2 id="terms">Things</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Thing</th><th>Same thing when</th><th>Rules</th></tr></thead>
+<tbody>
+<tr><td>Machine (installation)</td><td>Its UUIDv7 (the Router's peer UUIDv7).</td><td>Belongs to one organization; has an enrollment generation.</td></tr>
+<tr><td>Device code</td><td>Better Auth's record ID.</td><td>Pending, approved, denied, redeemed once, or expired.</td></tr>
+<tr><td>Enrollment</td><td>Its UUIDv7, also the machine client's ID.</td><td>Reserved, approved, enrolled (active), revoked, or expired; at most one active per machine.</td></tr>
+<tr><td>Allowance</td><td>One machine and one workspace.</td><td>Active or withdrawn.</td></tr>
+<tr><td>Machine token</td><td>The signed bytes.</td><td>Short-lived; refused at <code>grant_expires_at</code>.</td></tr>
+</tbody></table></div>
+
+<h2 id="rules">Rules</h2>
+<h3 id="S1">S1 · Logging a machine in</h3>
+<p>From M1. <code>codex-router fleet login --organization &lt;id&gt; --label &lt;label&gt;</code> MUST print a code and an address. The owner, signed in with <code>machine:enroll</code> and a recent second factor, opens it, sees the code beside the machine's label and organization, picks workspaces, and approves. The Router then gets a machine token and refresh credential and connects.</p>
+<h3 id="S2">S2 · One code, one machine, once</h3>
+<p>From M2, M9. A code MUST be approvable once, redeemable once even when two pollers race, expire at its lifetime, and limit guesses (RFC 8628 §5). Approval logs in only the requesting machine, into only that organization. Someone else opening or denying the code leaves it for the owner. Deny also needs a recent second factor. A repeated approval returns the first one, unchanged. The approval rule is one pure function in the sign-in core.</p>
+<h3 id="S3">S3 · Connect only through sign-in</h3>
+<p>From M4. The Router MUST connect to Central only through the sign-in service, which carries the WebSocket upgrade over the private link to Lead A's door. Every token but a valid machine token for that installation and active enrollment is refused (Lead A's check).</p>
+<h3 id="S4">S4 · Workspaces</h3>
+<p>From M3. The approval page MUST list the organization's workspaces (from B2's <code>ListWorkspaces</code>) to pick from. Later the owner can allow one workspace and withdraw one, each one at a time, each recorded; a non-owner is refused. Central's admission reads the authoritative allowances live (4a).</p>
+<h3 id="S5">S5 · Revoke at once</h3>
+<p>From M6. Revoking MUST, in one Central transaction, end the enrollment, withdraw its allowances, remove its sessions, bump the generation and write a record; then the old connection is closed and the sign-in service disables that enrollment's client. The next renewal is refused and the Router asks for a new code. If the close or the disable is lost, every decision still reads the enrollment live and the token ends at its expiry.</p>
+<h3 id="S6">S6 · Renew with no one acting</h3>
+<p>From M5. The Router MUST refresh at the sign-in service before <code>grant_expires_at</code> (each refresh asks Central <code>DecideMachineToken</code>, read live) and send the fresh token on the open connection with <code>RenewMachineToken</code> (Lead A's 4a); Central answers renewed or refused. After one refusal it refreshes once more; on a second refusal, or <code>enrollmentNotActive</code>, it stops and asks for a new code. A machine idle for 30 days is refused as <code>idleExpired</code>.</p>
+<h3 id="S7">S7 · A stale login never replaces a newer one (BA1)</h3>
+<p>Each approval records the machine's generation; its first token activates only if the generation is unchanged, then supersedes the old enrollment and bumps it. Otherwise it is refused and can never activate. A revocation bumps too, so every approval made before it is dead. B3 confirms <code>machine_enrollment.rs</code> on Central's main (merged in #281) enforces this and the 30-day idle expiry, and changes it if not.</p>
+<h3 id="S8">S8 · The Router keeps its secret safely</h3>
+<p>From M7. The login code uses only <code>RefreshCredentialStore</code>. The host injects <code>[MacKeychain]</code> on macOS and nothing elsewhere. Classification: the first usable source supplies the key for the encrypted envelope; if all are absent and the store classifier allows it, memory only, and the login says so; a present but locked, denied or damaged source is an error with no fallback. No plaintext credential is ever written. Saving is ordered: confirm the credential, replace the public <code>fleet_login</code> row, retire older credentials.</p>
+<h3 id="S9">S9 · UUIDv7 re-key and link switch</h3>
+<p>From M8. At the first B3 login the machine's ID becomes its peer UUIDv7; a former service ID it sends maps once to that ID and keeps its sessions, allowances and board relationships; the same mapping later is accepted, a different one refused. Re-login while active keeps sessions and allowances and closes the old connection; B3 decides when to switch and calls Lead A's link client re-enrolled entry (<code>central-link-client/src/link_state.rs:344</code>), with R10/R10a's same-central and other-central rules.</p>
+<h3 id="S10">S10 · Production stays on today's login</h3>
+<p>Central's <code>machineLogin</code> setting is step 1 in production and step 2 on test deployments. Switching production is your step.</p>
+<h3 id="S11">S11 · Machines and Hegel</h3>
+<p>Device-code decisions (M1), enrollment with BA1 (M2), the Router's login (M3) and on-connection renewal (M4) MUST be closed unions with pure transitions, inline exhaustiveness (<code>x satisfies never</code> in TypeScript; exhaustive <code>match</code> with no wildcard in Rust), effects as data, and Hegel families (TypeScript) or property tests (Rust); plus a real race of two pollers redeeming one code on both databases.</p>
+
+<h2 id="trace">Rules to proof</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Rules</th><th>Decided by</th></tr></thead>
+<tbody>
+<tr><td>S1, S2</td><td><a href="verification-design.html#V1">V1</a></td></tr>
+<tr><td>S3, S6</td><td><a href="verification-design.html#V2">V2</a></td></tr>
+<tr><td>S4, S5</td><td><a href="verification-design.html#V3">V3</a></td></tr>
+<tr><td>S7, S9</td><td><a href="verification-design.html#V4">V4</a></td></tr>
+<tr><td>S8</td><td><a href="verification-design.html#V5">V5</a></td></tr>
+<tr><td>S10, S11</td><td><a href="verification-design.html#V6">V6</a></td></tr>
+</tbody></table></div>
+</ex-document>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B3 · Machine login · Requirements</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
+<a href="../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
+<a href="audit.html">B3 · 1 Audit</a>
+<a href="requirements.html">B3 · 2 Requirements</a>
+<a href="specification.html">B3 · 3 Specification</a>
+<a href="program-design.html">B3 · 4 Program Design</a>
+<a href="verification-design.html">B3 · 5 Verification Design</a>
+<a href="plan.html">B3 · 6 Plan</a>
+<a href="decisions.html">B3 · 7 Decisions</a>
+</nav></ex-nav>
+<ex-document id="doc">
+<h1>B3 · Machine login: Requirements</h1>
+<p><strong>A Router logs in by device code: you approve it on the sign-in page and choose its workspaces. It gets short-lived machine tokens, connects to Central only through the sign-in service, and renews on the open connection with no one acting. Revoking it refuses it at once and closes its connection.</strong></p>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What to check" tone="note" icon="shield-check">
+<ul>
+<li>Only you approve a machine, and it belongs to one organization.</li>
+<li>A code works once; two Routers you approved stay independent.</li>
+<li>Revoke closes the connection and refuses the next renewal.</li>
+</ul>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p>#11's fate and storage A: <a href="decisions.html#open">Decisions</a>.</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>Approved B3 and your words below.</p>
+</ex-callout>
+
+<h2 id="needs">Needs</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Need</th><th>Your words or approved row</th><th>Existing proof</th><th>Missing</th></tr></thead>
+<tbody>
+<tr><td><strong>M1 · Device-code login</strong></td><td><em>“login i want login to work with device codes in codex”</em> (Fleet transcript 12490); approved B3.</td><td>#11/#14 runs.</td><td>The Router side and the merge forward.</td></tr>
+<tr><td><strong>M2 · Only the owner logs machines in; one organization</strong></td><td>U21 <em>“yes lets keep it all owner only”</em>; U31 (approved Requirements).</td><td>#11 approval needs <code>machine:enroll</code>.</td><td>Deny with a recent second factor.</td></tr>
+<tr><td><strong>M3 · Choose and change workspaces</strong></td><td>Approved B3: pick workspaces at approval; allow and withdraw one at a time.</td><td>None.</td><td>Picker and commands.</td></tr>
+<tr><td><strong>M4 · Connect only through sign-in</strong></td><td>Approved B3; your 1 Nov revision: Central behind the authentication Worker, not exposed.</td><td>None.</td><td>Carrying the connection.</td></tr>
+<tr><td><strong>M5 · Renew on the open connection</strong></td><td>Approved R40 and B3: <code>RenewMachineToken</code> on the open connection.</td><td>None (C2 renews by new socket).</td><td>4a adds it; Router uses it.</td></tr>
+<tr><td><strong>M6 · Revoke at once</strong></td><td>Approved B3.</td><td>None.</td><td>Command, page, close, client disabled.</td></tr>
+<tr><td><strong>M7 · Secret store, injected</strong></td><td>Your 7 Nov decision: only the macOS Keychain through an injected trait; Linux stores out of scope; non-macOS memory-only until a later OIDC design.</td><td>Today's <code>cfg</code> keychain access.</td><td>Traits and composition.</td></tr>
+<tr><td><strong>M8 · UUIDv7 machine IDs</strong></td><td><em>“we ony use uuidv7”</em> (Requirements line 175); approved B3 re-key.</td><td>None.</td><td>Re-key at first login.</td></tr>
+<tr><td><strong>M9 · Device code single use under concurrency; the approval rule in the core</strong></td><td>B1-A deferred to B3: R33's device-code Hegel family; U23 “device-code approval rule is in the core”.</td><td>None.</td><td>Pure approval rule; Hegel; real race.</td></tr>
+</tbody></table></div>
+
+<h2 id="rules">Standing rules</h2>
+<ul>
+<li>Pure transitions with exhaustive checks and Hegel (Fleet transcript 142100, 142119).</li>
+<li>Injected capabilities; UUIDv7; no wall clock in tests; Drizzle in sign-in; Better Auth's grain.</li>
+<li>Production stays on today's login; switching is your step.</li>
+</ul>
+
+<h2 id="elsewhere">Not in B3</h2>
+<ul>
+<li>Agent session tokens (Lead A's 5); sessions through their machine (B4); the authenticated CLI (B5); presence (B7); Linux secret stores.</li>
+</ul>
+</ex-document>
+</body>
+</html>
