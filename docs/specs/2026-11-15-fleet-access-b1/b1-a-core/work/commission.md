@@ -28,7 +28,12 @@
   - Address: serviceId `8b61218b-d5f3-4ae9-a2db-d2fb4075dbc2`, endpoint `codex-local`, session `01a1b755-5c31-7690-b2b4-5b116d355a7a`.
   - Each packet gives the commit, exact commands, its own working root and what to report.
   - No SSH to Sunclaw.
-- macOS Keychain test (V11's "the keychain test still runs"): **waiting on the owner.** The Lead asked whether it may run on the owner's Mac. Until the answer is here, it stays unrun and is listed as unverified. Don't run it on the owner's Mac without that answer.
+- macOS Keychain test (V11's "the keychain test still runs"): **the owner said yes on 15 Nov.** The Verifier may run that one test, and only that one, on the owner's Mac:
+  - the test: `packages/sign-in-owner-cli/src/fleet/macos-keychain-proof-key-store.host.e2e.test.ts`;
+  - where: this Mac, in the PR worktree at the pinned commit;
+  - what it touches: it creates one test Keychain item and deletes it.
+
+  Record the command, count and exit code, and confirm afterwards that no test item is left. Every other heavy run still goes to Sunclaw.
 
 ## Standing rules (owner's)
 - Never print secrets.
