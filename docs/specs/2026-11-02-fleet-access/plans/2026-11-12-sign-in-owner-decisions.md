@@ -1117,3 +1117,6 @@ The workspace id equals the operation id.
   2. stamp v2 with the claim: profile, signer, fixtures and reds (v1 refused; a missing claim refused);
   3. remove `machine:setTokenLifetime`;
   4. re-pin B2e/B3e to 4b.
+- **HOLD, owner reconsidering (2026-11-15T00:21Z, Lead A push 01a1dc94).** After hearing the cons, the owner is choosing between **C** (the v2 stamp claim above) and **D** (fixed 600 s in central, nothing in the stamp). `SetTokenLifetime` and `machine:setTokenLifetime` are removed either way.
+  - **The stamp-v2 part of #11 scope is on hold** until the owner confirms.
+  - **The Lead's view, sent to Lead A to relay:** D. Central enforces the lifetime, so it owns the constant, and with no change path the stamp field only adds a cross-repo cutover.
