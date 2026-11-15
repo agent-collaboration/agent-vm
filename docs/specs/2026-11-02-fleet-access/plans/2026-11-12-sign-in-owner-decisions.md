@@ -1120,3 +1120,8 @@ The workspace id equals the operation id.
 - **HOLD, owner reconsidering (2026-11-15T00:21Z, Lead A push 01a1dc94).** After hearing the cons, the owner is choosing between **C** (the v2 stamp claim above) and **D** (fixed 600 s in central, nothing in the stamp). `SetTokenLifetime` and `machine:setTokenLifetime` are removed either way.
   - **The stamp-v2 part of #11 scope is on hold** until the owner confirms.
   - **The Lead's view, sent to Lead A to relay:** D. Central enforces the lifetime, so it owns the constant, and with no change path the stamp field only adds a cross-repo cutover.
+- **WS14: #275 is still moving (2026-11-15T00:23Z).** It's now at `6153952e1`: review fixes "Reject unknown retained fields and bound admin description contracts", contract-fixture helper changes, and main's #277 (workerd bridge cleanup, `workerd-bridge.mts`).
+  - The contract triplets and the bridge script changed since `e56c6345`, so #17's mirror and pins at `e56c` are stale against #275's head.
+  - **Ruling:** no chasing intermediate heads. Finish the independent run at `6a9260fe`/`e56c` as candidate evidence (plus the Sunclaw full host lane).
+  - **When #275 merges,** the Implementer does one final re-pin and mirror copy against the merge commit: rebuild, sign, re-hash, re-copy the 15 files, check `description` bounds in the client against central's limits, then gates.
+  - The Verifier re-checks the changed anchors and runs again at the final head. Acceptance is at that head.
