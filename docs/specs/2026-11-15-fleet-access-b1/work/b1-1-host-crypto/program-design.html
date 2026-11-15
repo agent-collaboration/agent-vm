@@ -34,7 +34,7 @@
 <p><strong>The new rule in the architecture check</strong> (<a href="#scan">below</a>) rejects the runtime's crypto, clock and timers anywhere in the core, including code inside <code>${…}</code> in a template.</p>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p><strong>None for people.</strong> One decision for code outside this repository: the public exports of the two published packages (<code>sign-in-core</code> and <code>sign-in-owner-cli</code>) gain a required <code>crypto</code>. That's <a href="brief.html#d1">decision D1 on the Plan</a>.</p>
+<p><strong>None.</strong> Exported signatures of <code>sign-in-core</code> and <code>sign-in-owner-cli</code> change, but neither is published, so only switchboard's own callers are affected, and they are updated in the same PR (<a href="brief.html#d1">D1</a>).</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
 <p>It's the same pattern your approved design already uses for the clock, IDs and deadlines: an interface in the core, with each runtime injecting its own. Your words (<a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/requirements.source.html">approved Requirements</a>, line 174, U23): <em>"you inject stukff not pkul out engines"</em>. The <a href="#trace">trace table</a> maps every rule to its owner and proof.</p>
@@ -113,7 +113,7 @@ export function mintPageNonce(crypto: SignInCrypto): PageNonce {
 </tbody>
 </table>
 <p><strong>What would reopen it:</strong> if the production changes grow past about 40 call sites, so the PR can't be reviewed in one pass, switch to B and say so.</p>
-<p><strong>Published package:</strong> option A changes eight exported functions and two exported types (<a href="#changes">marked in the table</a>). Whether to make that breaking change in the next 0.0.x release is <a href="brief.html#d1">decision D1</a>.</p>
+<p><strong>Published package:</strong> option A changes eight exported functions and two exported types (<a href="#changes">marked in the table</a>). Neither package is published, so this breaks no outside code (<a href="brief.html#d1">D1</a>).</p>
 
 <h2 id="paths">How a request reaches crypto, before and after</h2>
 <p>In the sequence diagrams, participants are coloured automatically. The colour carries no meaning.</p>
@@ -194,7 +194,7 @@ sequenceDiagram
 
 <h2 id="changes">Every production change</h2>
 <div class="ex-table-scroll" data-width="canvas"><table>
-<thead><tr><th>File</th><th>Before</th><th>After</th><th>Exported from the published package?</th></tr></thead>
+<thead><tr><th>File</th><th>Before</th><th>After</th><th>Part of a package's exports?</th></tr></thead>
 <tbody>
 <tr><td><code>sign-in-core/src/contracts/sign-in-platform.ts</code></td><td>no crypto</td><td><code>SignInCrypto</code>; <code>SignInPlatform.crypto</code> (required)</td><td><strong>yes</strong> (type: an outside host must now supply it)</td></tr>
 <tr><td><code>sign-in-core/src/contracts/page-nonce.ts</code> (new)</td><td>—</td><td><code>PageNonce</code>, <code>mintPageNonce(crypto)</code></td><td>no</td></tr>
@@ -210,11 +210,11 @@ sequenceDiagram
 <tr><td><code>better-auth/organization-statement-plugin.ts:73–86</code></td><td>builds renewal props without crypto</td><td>adds <code>crypto: props.platform.crypto</code></td><td>no</td></tr>
 <tr><td><code>central-link/fleet-admin-proof.ts:50–126</code></td><td><code>createFleetAdminProofKey</code>, <code>exportFleetAdminPrivateJwk</code>, <code>importFleetAdminProofKey</code>, <code>fleetAdminProofKeyThumbprint</code>, <code>signFleetAdminProof</code></td><td>each takes <code>crypto</code> first</td><td><strong>yes</strong> (all five)</td></tr>
 <tr><td><code>sign-in-platform-web/src/index.ts</code></td><td>returns clock, ids, deadlines</td><td><code>createWebSignInCapabilities(clock?, deadlines?, crypto?)</code> also returns <code>crypto</code>, defaulting to <code>globalThis.crypto</code>; README line updated</td><td>yes (its own package)</td></tr>
-<tr><td><code>sign-in-owner-cli/src/fleet/fleet-credential.ts:14–20</code>, <code>fleet-cli-commands.ts:56–75</code>, <code>fleet-admin-command.ts</code>, <code>proof-key-store.ts:30, 92, 155</code></td><td>no crypto in its IO or key stores</td><td><code>FleetCliIo.crypto</code>; key stores take <code>crypto</code>; calls pass it</td><td><strong>yes</strong>: <code>@agent-collaboration/sign-in-owner-cli</code> 0.0.153 is also published, and its index re-exports <code>FleetCliIo</code> and the three key-store constructors</td></tr>
+<tr><td><code>sign-in-owner-cli/src/fleet/fleet-credential.ts:14–20</code>, <code>fleet-cli-commands.ts:56–75</code>, <code>fleet-admin-command.ts</code>, <code>proof-key-store.ts:30, 92, 155</code></td><td>no crypto in its IO or key stores</td><td><code>FleetCliIo.crypto</code>; key stores take <code>crypto</code>; calls pass it</td><td><strong>yes</strong>: the <code>sign-in-owner-cli</code> index re-exports <code>FleetCliIo</code> and the three key-store constructors</td></tr>
 <tr><td><code>scripts/audit-portal-architecture.ts</code> (<code>collectFilesUnderDirectory</code> at 1272–1288; <code>collectAuthCoreViolations</code> at 1250–1270)</td><td><code>.ts</code> only; no shared-global rule</td><td><code>.tsx</code> under the core; the runtime-global rule (<a href="#scan">below</a>)</td><td>—</td></tr>
 </tbody>
 </table></div>
-<p><strong>What the published packages change.</strong> <code>@agent-collaboration/sign-in-core</code>, re-exported by <code>packages/sign-in-core/src/index.ts</code> lines 26 and 52–55:</p>
+<p><strong>What the packages' exports change</strong> (neither package is published; see <a href="brief.html#d1">D1</a>). <code>@agent-collaboration/sign-in-core</code>, re-exported by <code>packages/sign-in-core/src/index.ts</code> lines 26 and 52–55:</p>
 <ul>
 <li><strong>Eight functions:</strong> <code>fleetAdminIntentDigest</code>, <code>base64UrlSha256</code>, <code>readOrganizationStatementFacts</code>, and the five proof functions.</li>
 <li><strong>Two types:</strong> <code>SignInPlatform</code> and <code>OrganizationStampRenewalProps</code>, each with a new required <code>crypto</code>.</li>
@@ -293,7 +293,7 @@ sequenceDiagram
 
 <h2 id="open">Deviations and open decisions</h2>
 <ul>
-<li><strong>Open:</strong> <a href="brief.html#d1">D1</a>, the published package's parameter change.</li>
+<li><strong>Settled:</strong> <a href="brief.html#d1">D1</a>. The exported signatures change, and nothing is published.</li>
 <li><strong>Deliberate reading:</strong> the new check also covers <code>better-auth/</code>, which is stricter than proof row U23's wording but follows R30.</li>
 </ul>
 </ex-document>

@@ -20,7 +20,7 @@
 </nav></ex-nav>
 <ex-document id="doc">
 <h1>B1-1 · The host supplies all cryptography: Verification Design</h1>
-<p>How each rule on the <a href="specification.html">Specification</a> will be shown to hold, and what stays unproven. <strong>This is a plan: nothing here has been run.</strong> The paired Verifier runs these checks on the pinned PR commit, and each must fail on its named wrong build.</p>
+<p>How each rule on the <a href="specification.html">Specification</a> will be shown to hold, and what stays unproven. <strong>This is a plan: nothing here has been run.</strong> The paired Verifier runs these checks on the pinned PR commit. V1–V4 must each fail on their named wrong build. V5 is a regression check on the hosts it covers.</p>
 
 <h2 id="three">The three things for you</h2>
 <ex-callout title="1 · What you should check" tone="note" icon="shield-check">
@@ -190,7 +190,7 @@ flowchart TB
 <div class="ex-table-scroll" data-width="canvas"><table>
 <thead><tr><th>Need</th><th>Rules</th><th>Seam (Program Design)</th><th>Checks</th><th>Target</th><th>Passes when</th><th>Unverified</th></tr></thead>
 <tbody>
-<tr><td><strong>U23</strong> one runtime-free core, injected</td><td><a href="specification.html#S1">S1</a>, <a href="specification.html#S2">S2</a>, <a href="specification.html#S3">S3</a>, <a href="specification.html#S5">S5</a>, <a href="specification.html#S6">S6</a></td><td><code>SignInPlatform.crypto</code>, <code>mintPageNonce</code>, the changed functions and props, <code>collectAuthCoreViolations</code></td><td>V1, V2, V3, V4, V5</td><td>switchboard PR head; Node 24.7.0; <code>better-auth</code> 1.7.11; hosts per V5's table; Chrome version recorded</td><td>As each check, each failing on its wrong build</td><td>Deployed hosts; real central; the parts of U23 named in <a href="#u23">the split</a>; exotic aliasing beyond source reads</td></tr>
+<tr><td><strong>U23</strong> one runtime-free core, injected</td><td><a href="specification.html#S1">S1</a>, <a href="specification.html#S2">S2</a>, <a href="specification.html#S3">S3</a>, <a href="specification.html#S5">S5</a>, <a href="specification.html#S6">S6</a></td><td><code>SignInPlatform.crypto</code>, <code>mintPageNonce</code>, the changed functions and props, <code>collectAuthCoreViolations</code></td><td>V1, V2, V3, V4, V5</td><td>switchboard PR head; Node 24.7.0; <code>better-auth</code> 1.7.11; hosts per V5's table; Chrome version recorded</td><td>V1–V4 each failing on their wrong build; V5 passing on its hosts</td><td>Deployed hosts; real central; the parts of U23 named in <a href="#u23">the split</a>; exotic aliasing beyond source reads</td></tr>
 <tr><td><strong>U16</strong> one design on any host</td><td><a href="specification.html#S4">S4</a></td><td><code>createWebSignInCapabilities</code></td><td>V5, the source read, V4's type mutation</td><td>As V5</td><td>The hosts pass with the capability handed in by the shared builder, and add no crypto code</td><td>Deployed hosts</td></tr>
 </tbody>
 </table></div>

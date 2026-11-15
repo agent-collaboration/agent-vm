@@ -27,7 +27,7 @@
 <p>Rules S1–S3: <strong>every random value and every crypto operation the sign-in rules use comes from the host</strong>, and none is taken from the runtime. Rule S6: <strong>the architecture check fails</strong> if anyone puts the runtime's crypto, clock or timers back into the core, including in a page file.</p>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p><strong>None for people.</strong> Rule S5 requires every page, token, proof and digest to keep its exact format, so nothing a person or central sees changes. One decision for code outside this repository: the two published packages' exported functions and types gain a required <code>crypto</code> (<a href="brief.html#d1">D1 on the Plan</a>).</p>
+<p><strong>None for people.</strong> Rule S5 requires every page, token, proof and digest to keep its exact format, so nothing a person or central sees changes. Exported function signatures change, but neither package is published, so nothing outside switchboard breaks (<a href="brief.html#d1">D1</a>).</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
 <p>Your rule R30, word for word: <em>"The core MUST reach storage, time, identifiers, cryptography and outbound requests only through capabilities its host supplies, and each capability is required. The Cloudflare host and the Node host MUST each supply them and add no sign-in rule."</em></p>
@@ -93,7 +93,7 @@ flowchart TB
 <h3 id="S3">S3 · The capability is required</h3>
 <p>The core MUST NOT fall back to the runtime's crypto when a host doesn't hand one in. Every function that needs it takes it explicitly, and a host that leaves it out does not build: it fails type-checking.</p>
 <p><strong>Wrong if:</strong> any core function has a default that reads the runtime's crypto.</p>
-<p><strong>Outside effect:</strong> this changes the public exports of the published <code>@agent-collaboration/sign-in-core</code> and <code>@agent-collaboration/sign-in-owner-cli</code> packages. Whether to release that breaking change is <a href="brief.html#d1">D1</a>.</p>
+<p><strong>Outside effect:</strong> this changes exported signatures of <code>@agent-collaboration/sign-in-core</code> and <code>@agent-collaboration/sign-in-owner-cli</code>. Neither is published (npm registry 404, 15 Nov), and every caller is in switchboard and updated in the same PR (<a href="brief.html#d1">D1</a>).</p>
 
 <h3 id="S4">S4 · Each host hands it in and adds no rule</h3>
 <p>The Cloudflare host, the Node host and the owner CLI MUST each hand in a crypto capability built from their runtime's standard Web Crypto. The host adds no sign-in rule while doing so: no extra checks, no format choices.</p>

@@ -22,10 +22,10 @@
 <h1>B1-1 · The host supplies all cryptography: Plan</h1>
 <h2 id="three">The three things for you</h2>
 <ex-callout title="1 · What you should check" tone="note" icon="shield-check">
-<p><strong>The gate</strong> (<a href="#gate">below</a>): five checks observed by the Verifier, each failing on its wrong build, then a fresh reviewer and my acceptance. Anything not delivered comes to you first. <strong>The scope list</strong> (<a href="#scope">below</a>) names every file the Implementer may touch.</p>
+<p><strong>The gate</strong> (<a href="#gate">below</a>): five checks observed by the Verifier (V1–V4 each failing on their wrong build, V5 a regression check), then a fresh reviewer and my acceptance. Anything not delivered comes to you first. <strong>The scope list</strong> (<a href="#scope">below</a>) names every file the Implementer may touch.</p>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p><strong>None for people.</strong> One for code outside this repository: <a href="#d1">D1, the published package's breaking change</a>.</p>
+<p><strong>None.</strong> Exported signatures change, but nothing is published, so only switchboard's own callers are affected (<a href="#d1">D1</a>).</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
 <p>Built against your rule R30 and need U23, with your words on the <a href="requirements.html#three">Requirements</a> page. You approved the overall design, B1 and B2 on 4 Nov: I asked "Still waiting on you: approve the overall design, B1 and B2", and you answered "yes you need anytnhign?" (<a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl">Fleet transcript</a> lines 71226 and 71230).</p>
@@ -57,7 +57,7 @@ flowchart TB
 <p><strong>Key:</strong> green is you and the gate, teal the Implementer, violet the Verifier, amber me, blue the independent reviewer.</p>
 
 <h2 id="checks">What must be shown</h2>
-<p>These are the five checks on the <a href="verification-design.html">Verification Design</a>. Each must pass on the pinned commit and fail on its named wrong build:</p>
+<p>These are the five checks on the <a href="verification-design.html">Verification Design</a>. V1–V4 must each pass on the pinned commit and fail on their named wrong build. V5 is a regression check:</p>
 <ul>
 <li><a href="verification-design.html#V1">V1</a>: the page nonce comes from the host.</li>
 <li><a href="verification-design.html#V2">V2</a>: the recording run sees every crypto call.</li>
@@ -90,7 +90,7 @@ flowchart TB
 <li><strong>Any other in-repo caller</strong> that <code>pnpm typecheck</code> flags because of the new <code>crypto</code> parameter or field may be updated, argument or field only, with assertions unchanged. The handback lists each one.</li>
 <li><strong>The check:</strong> <code>scripts/audit-portal-architecture.ts</code> and <code>scripts/audit-portal-architecture.unit.test.ts</code>, for the rule and the <code>.tsx</code> collection under <code>packages/sign-in-core/src/</code> only.</li>
 </ul>
-<p><strong>Must not change:</strong> any other check script or CI workflow, storage, or any token, proof or digest format. The published package's function parameters change only as <a href="#d1">D1</a> decides. <strong>Stop and come back</strong> if a fix needs anything outside this list.</p>
+<p><strong>Must not change:</strong> any other check script or CI workflow, storage, or any token, proof or digest format. Exported signatures change only as the <a href="program-design.html#changes">change table</a> says (<a href="#d1">D1</a>). <strong>Stop and come back</strong> if a fix needs anything outside this list.</p>
 
 <h2 id="gate">The gate: all must pass before B1-2 starts</h2>
 <ol>
@@ -107,7 +107,7 @@ flowchart TB
 <thead><tr><th>From</th><th>File, in this folder</th><th>Holds</th></tr></thead>
 <tbody>
 <tr><td>Implementer</td><td><code>implementer-handback.md</code></td><td>PR number and head commit; gate commands with counts and exit codes; what it couldn't do; anywhere it thinks the design is wrong</td></tr>
-<tr><td>Verifier</td><td><code>verifier-observation.md</code> and <code>evidence/</code></td><td>The build pin (commit, Node 24.7.0, <code>better-auth</code> 1.7.11, the Chrome version); each check with what was seen and its wrong build failing; logs, counts, exit codes and file hashes, with no secrets</td></tr>
+<tr><td>Verifier</td><td><code>verifier-observation.md</code> and <code>evidence/</code></td><td>The build pin (commit, Node 24.7.0, <code>better-auth</code> 1.7.11, the Chrome version); each check with what was seen, and for V1–V4 its wrong build failing; logs, counts, exit codes and file hashes, with no secrets</td></tr>
 </tbody>
 </table>
 
@@ -119,34 +119,14 @@ flowchart TB
 </ul>
 
 <h2 id="decisions">Decisions</h2>
-<h3 id="d1">D1 · Open: release a breaking change to the two published packages?</h3>
-<p>Two of the packages are set up for public npm publishing (<code>publishConfig</code> public, version 0.0.153 in the repository; I haven't checked the registry). Your rule R30 can only be met by handing <code>crypto</code> in, so their public exports change:</p>
+<h3 id="d1">D1 · Settled: the signature change breaks nothing outside switchboard</h3>
+<p>Meeting your rule R30 changes exported signatures in two packages:</p>
 <ul>
-<li><strong><code>@agent-collaboration/sign-in-core</code>:</strong> eight exported functions gain a <code>crypto</code> parameter, and two exported types (<code>SignInPlatform</code>, <code>OrganizationStampRenewalProps</code>) gain a required <code>crypto</code>.</li>
-<li><strong><code>@agent-collaboration/sign-in-owner-cli</code>:</strong> <code>FleetCliIo</code> gains a required <code>crypto</code>, and its three key-store constructors take <code>crypto</code>.</li>
+<li><strong><code>@agent-collaboration/sign-in-core</code>:</strong> eight functions gain a <code>crypto</code> parameter, and <code>SignInPlatform</code> and <code>OrganizationStampRenewalProps</code> gain a required <code>crypto</code>.</li>
+<li><strong><code>@agent-collaboration/sign-in-owner-cli</code>:</strong> <code>FleetCliIo</code> and its three key-store constructors gain a required <code>crypto</code>.</li>
 </ul>
-<p>Inside this repository, every caller is updated in the same PR. Outside it, I found no consumer: codex-router and agent-vm don't depend on either package.</p>
-<ex-mermaid id="d1-pic" label="Who is affected by the parameter change" data-width="canvas"><script type="text/plain">
-flowchart TB
-  pkg["sign-in-core and sign-in-owner-cli 0.0.153"] --> inrepo["Callers in switchboard<br/>all updated in the same PR"]
-  pkg --> out["Callers outside switchboard<br/>none found"]
-  class pkg slot2
-  class inrepo slot6
-  class out slot1
-</script></ex-mermaid>
-<p><strong>Key:</strong> amber is the package, green is updated with it, blue is outside it.</p>
-<table>
-<thead><tr><th>Option</th><th>Gain</th><th>Cost</th></tr></thead>
-<tbody>
-<tr><td><strong>A. Release it as a breaking change in the next 0.0.x version</strong> (recommended)</td><td>R30 holds everywhere, with one way to call each function. Pre-1.0 versions allow breaking changes, and it matches your "no backward compatibility" rule.</td><td>Any outside consumer, if one exists, must pass <code>crypto</code> when it upgrades.</td></tr>
-<tr><td>B. Keep the old signatures as wrappers that read the runtime's crypto</td><td>Outside code keeps compiling.</td><td>The wrappers break R30 inside the core and add a second path, which is the kind of compatibility shim you don't allow. The new check would also have to exempt them.</td></tr>
-</tbody>
-</table>
-<ex-choice id="d1-choice" title="Release the breaking change to the two published packages?">
-  <ex-option id="d1-a" title="**A.** Breaking change in the next 0.0.x (recommended)"><template slot="summary">One way to call each function; R30 holds everywhere.</template></ex-option>
-  <ex-option id="d1-b" title="**B.** Keep wrappers for the old signatures"><template slot="summary">Outside code keeps compiling; R30 is broken in the wrappers.</template></ex-option>
-</ex-choice>
-<p><strong>If you defer:</strong> B1-1 can't merge, because the PR changes the exported signatures. Nothing else in B1 waits on it.</p>
+<p><strong>Neither package is published.</strong> Both have <code>publishConfig</code> set to public, and version 0.0.153 in the repository. On 15 Nov, the public npm registry returned 404 for both (<code>npm view @agent-collaboration/sign-in-core</code> and <code>…/sign-in-owner-cli</code>). So every consumer is inside switchboard, and the same PR updates them all. That's why this isn't a decision for you.</p>
+<p><strong>If you publish later</strong>, these become the published signatures. Your deferred repository-visibility decision (13 Nov) is where that would be settled.</p>
 
 <h3 id="other-decisions">The rest</h3>
 <table>
