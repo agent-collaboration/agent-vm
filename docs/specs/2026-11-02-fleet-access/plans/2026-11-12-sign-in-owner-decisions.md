@@ -1203,3 +1203,7 @@ The workspace id equals the operation id.
 - add or adjust cases for 2–5 where sign-in observes them (`Refuse{superseded}` after idle; `NotPermitted` on a different-installation replay; refused expired code; first-grant retry).
 
 **Verifier:** challenge and observe at the refrozen head.
+- **WS15 ruling R-migration (Lead, 2026-11-15T03:10Z; the Implementer's question): option A.** Delete `drizzle/0005_machine_former_service_id.sql`, its journal entry and `meta/0005_snapshot.json`, and drop `machine_former_service_id` from `sign-in-schema.ts` and the host migration-schema test's expected columns.
+  - **Evidence that nothing stored it:** 0005 exists only on #11 (`git log --all`, first in `34f1b851`). Switchboard `main` stops at 0004. The staging deploy checkout (`switchboard.deploy-sign-in-staging` @`41302fc8`, 6 Nov) has only 0000–0002. Nothing deploys from `main`.
+  - **So:** it isn't a persisted-data format change (no stored data is reshaped), and it's a hard cutover. A local dev database created from #11 keeps a harmless unknown column; recreate it.
+  - **Check after renumbering:** the next migration on #11 (if any) must follow 0004 contiguously, and main's 0004 must stay unchanged.
