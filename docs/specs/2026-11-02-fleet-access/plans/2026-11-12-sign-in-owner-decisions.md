@@ -1207,3 +1207,9 @@ The workspace id equals the operation id.
   - **Evidence that nothing stored it:** 0005 exists only on #11 (`git log --all`, first in `34f1b851`). Switchboard `main` stops at 0004. The staging deploy checkout (`switchboard.deploy-sign-in-staging` @`41302fc8`, 6 Nov) has only 0000–0002. Nothing deploys from `main`.
   - **So:** it isn't a persisted-data format change (no stored data is reshaped), and it's a hard cutover. A local dev database created from #11 keeps a harmless unknown column; recreate it.
   - **Check after renumbering:** the next migration on #11 (if any) must follow 0004 contiguously, and main's 0004 must stay unchanged.
+- **WS15 prep frozen (2026-11-15T04:00Z).**
+  - **Heads:** #11 `b1c9f6f6` (check 12/12, unit 2672, full host on Sunclaw CF 600 + 18 skipped / Node 598 + 20 skipped); #14 `b3eb643d` (unit 2676; CF 624 + 18 / Node 622 + 20).
+  - **Done:** main merged; `formerServiceId` dropped, plus migration 0005 (R-migration A); `machine:setTokenLifetime` dropped.
+  - **Policy digest** re-pinned `2d31b5d7…` → `af40ec7f…`. Central compares token vs stored floor (data-driven), so only its test and fixture constants need updating. Sent to Lead A, together with the `formerService` issuer-mirror vectors.
+  - **Kept red:** `3a098246` (stale K5 count 9 vs 8).
+  - **Found, deferred (owner before any real deployment):** a permission-mapping change on a running deployment makes every existing organization refuse person-token issuance (`policy-mismatch`, `person-fleet-issuance.ts:77`) until its fence is re-stamped and pushed. No such rollout step exists. No impact today: nothing is deployed, and central starts empty.
