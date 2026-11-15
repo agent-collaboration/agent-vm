@@ -23,7 +23,7 @@
 <h1>B1 · People, roles and sign-in</h1>
 
 <ex-callout id="answer" title="B1 in three sentences" tone="tldr">
-<p>B1 lets a person sign in with Google or GitHub plus a second factor, create their organization, and invite and remove people. Every change needs a fresh second factor and leaves a record. <strong>Most of what you agreed is built and proven on both servers. Three things are missing, three tests are built wrong, and one step that was yours was skipped.</strong></p>
+<p>B1 lets a person sign in with Google or GitHub plus a second factor, create their organization, and invite and remove people. Every change needs a fresh second factor and leaves a record. <strong>Most of what you agreed is built and proven on both servers. Three things are missing and three tests are built wrong.</strong></p>
 </ex-callout>
 
 <p>This page is the short version. You don't need to read the eight detail pages in the menu: they hold the full matrices the reviewers and I check against. What you should check is in <a href="#agreed">Did we build what you agreed?</a> below. Every agreement there links to your own words.</p>
@@ -120,28 +120,26 @@ flowchart TB
     <p><strong>Gap:</strong> none. This replaced my own in-page print and my own error wording.</p>
   </details>
   <details icon="test-tube" tone="risk" tag="Built wrong">
-    <summary>Tests are honest: no wall clock, the host supplies every effect, the flood limit is real</summary>
-    <p><strong>You said:</strong> <em>"i dont allow wall clock time ever"</em> (<a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portable-tool-portal-hosts/2febb449-db01-4859-8fdb-fdc41a74abfc.jsonl">portal transcript</a> line 143821, 24 Oct). The design also requires this: <a href="specification.html#R30">R30</a>, <a href="specification.html#R33">R33</a>, and Miniflare's rate-limit binding for flood limits.</p>
+    <summary>Tests are honest: no wall clock in tests, the host supplies every effect, the flood limit is real</summary>
+    <p><strong>Your rule: no wall clock in tests.</strong> You said, about tests: <em>"i dont allow wall clock time ever"</em> (<a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portable-tool-portal-hosts/2febb449-db01-4859-8fdb-fdc41a74abfc.jsonl">portal transcript</a> line 143821, 24 Oct). The design also requires this: <a href="specification.html#R30">R30</a>, <a href="specification.html#R33">R33</a>. For floods, it requires testing Cloudflare's real request counter in Miniflare, Cloudflare's local simulator.</p>
     <p><strong>Built wrong:</strong></p>
     <ul>
       <li>The browser test uses real 20/30-second timers (#13).</li>
       <li>A page takes randomness from the global instead of the host, and the check that should catch that skips page files (#10).</li>
-      <li>The flood-limit test uses a stand-in counter instead of the binding (#9).</li>
+      <li>The flood-limit test uses a hand-made stand-in counter instead of the real one in the simulator (#9).</li>
     </ul>
     <p><strong>Gap:</strong> fix all three, so a wrong build actually fails these tests.</p>
   </details>
-  <details icon="database" tone="question" tag="Skipped · yours to confirm">
+  <details icon="database" tone="done" tag="Skipped · you confirmed 15 Nov">
     <summary>The second-factor SQL comes to you before it's used</summary>
     <p><strong>You said:</strong> <em>"yes 5. for second fator tables are fine"</em> (line 69497, 4 Nov 11:23:31Z). That approves the tables. The design also says the exact generated SQL comes to you.</p>
     <p><strong>What happened:</strong> I checked the 7 statements against the tables myself, and they merged in #9. I found no record that they came to you.</p>
-    <p><strong>Gap:</strong> <a href="decisions.html#sql">your confirmation</a>.</p>
+    <p><strong>Closed:</strong> you confirmed it on 15 Nov. Two of the parts are Better Auth's own and three columns are ours, each for a reason in your design. <a href="decisions.html#sql">See which, and why</a>.</p>
   </details>
 </ex-trace>
 
-<h2 id="decide">The one thing for you to decide</h2>
-<ex-callout title="Second-factor SQL: confirm, or see it first" tone="decision" icon="database">
-<p>The tables match what you approved on 4 Nov, but the SQL step was yours and I skipped it. <strong>Recommended: A, confirm.</strong> The alternative, B, puts the 7 statements on a page for you first. <a href="decisions.html#sql">Answer on the Decisions page</a>. <strong>Not decided.</strong></p>
-</ex-callout>
+<h2 id="decide">Decisions for you</h2>
+<p><strong>None open.</strong> You confirmed the second-factor SQL on 15 Nov. <a href="decisions.html#sql">What it contains, and why</a>.</p>
 
 <h2 id="next">What happens after your stop lifts</h2>
 <p>The remaining B1 work is cut into seven items. Each takes 2–4 hours for the Implementer and Verifier pair, and each has a gate that must pass before the next starts. Anything not delivered comes to you before I accept an item. <a href="plan.html#order">See the seven items and their gates</a>.</p>

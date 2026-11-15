@@ -65,7 +65,7 @@ flowchart TB
 <tr><td><strong>Choose an organization</strong> (R5)</td><td>Real served pages</td><td>Choose; the CLI's waiting login returns</td><td>The account page loses the choice</td><td><strong>Partial</strong></td></tr>
 <tr><td><strong>Flood limits</strong> (U42, R52)</td><td>Local workerd with Miniflare's rate-limit binding; Node</td><td>Past the limit: 429, nothing changed; another address passes; forged header ignored</td><td>The limiter is off, or trusts <code>x-forwarded-for</code></td><td><strong>Stand-in counter; must use the binding</strong></td></tr>
 <tr><td><strong>Host supplies every effect</strong> (R30)</td><td>Source scan plus both hosts</td><td>Clock, IDs, randomness, crypto and outbound calls come from the host; the scan covers page files</td><td>A planted global call in a page file passes the scan</td><td><strong>Defect</strong></td></tr>
-<tr><td><strong>No wall clock</strong> (R33, your rule)</td><td>Source scan of tests and helpers</td><td>No real timer, sleep or wall-clock read</td><td>A watchdog on real time</td><td><strong>Defect</strong></td></tr>
+<tr><td><strong>No wall clock in tests</strong> (R33, your rule)</td><td>Source scan of tests and helpers</td><td>No real timer, sleep or wall-clock read</td><td>A watchdog on real time</td><td><strong>Defect</strong></td></tr>
 <tr><td><strong>Identifiers</strong> (R32)</td><td>Both databases after a full run</td><td>Every stored ID reads back as UUIDv7</td><td>A v4 or other ID stored</td><td><strong>Partial</strong></td></tr>
 <tr><td><strong>Release check</strong> (R52, U42)</td><td>Staging, after deploy, no owner action</td><td>One real provider sign-in with the real Turnstile check</td><td>Turnstile skipped, or siteverify faked</td><td><strong>Not run</strong>: runs with BG's staging proof</td></tr>
 </tbody>
@@ -107,7 +107,7 @@ flowchart TB
 <tr><td>Choose between organizations (R5)</td><td>Choose an organization</td><td>Served page, but no choice kept on the account page</td><td><strong>No</strong>: partial</td></tr>
 <tr><td>Second factors, step-up and recovery (U43, U44)</td><td>First factor; recovery; single-use; step-up</td><td>Both hosts, both databases</td><td><strong>Yes</strong>, at the local boundary</td></tr>
 <tr><td>Flood limits and human check (U42)</td><td>Flood limits; release check</td><td>Stand-in counter; Turnstile stubbed locally</td><td><strong>No</strong></td></tr>
-<tr><td>Storage, host boundary, IDs, clock (R29, R30, R32, R33)</td><td>Host effects; no wall clock; identifiers</td><td>Storage proven; three defects</td><td><strong>No</strong></td></tr>
+<tr><td>Storage, host boundary, IDs, clock (R29, R30, R32, R33)</td><td>Host effects; no wall clock in tests; identifiers</td><td>Storage proven; three defects</td><td><strong>No</strong></td></tr>
 <tr><td>People get no tool credential; agents unchanged (R38)</td><td>Agent path</td><td>Earlier runs; not at the final build</td><td><strong>No</strong>: re-observe</td></tr>
 </tbody>
 </table></div>
