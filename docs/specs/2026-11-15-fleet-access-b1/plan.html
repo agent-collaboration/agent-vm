@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B1 · Plan</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="plan"><nav slot="pages" aria-label="Pages">
+  <a href="index.html">B1 home</a>
+  <a href="audit.html">1 · Audit</a>
+  <a href="requirements.html">2 · Requirements</a>
+  <a href="specification.html">3 · Specification</a>
+  <a href="program-design.html">4 · Program Design</a>
+  <a href="verification-design.html">5 · Verification Design</a>
+  <a href="plan.html">6 · Plan</a>
+  <a href="decisions.html">7 · Decisions</a>
+  <a href="inventory.html">8 · Inventory</a>
+</nav></ex-nav>
+<ex-document id="plan" document-id="fleet-access-b1-plan-2026-11-15" revision="2026-11-15.1">
+<h1>B1 · Plan: verification, acceptance, review</h1>
+<p>This page explains the process, not the design. It covers three things. First, how every B1 obligation gets verified, and what exactly is checked. Second, how acceptance happens, with the map from your outcomes to evidence. Third, what the reviewer gets, and how they check the work against your words and your design so the old mistakes don't repeat.</p>
+
+<ex-callout id="answer" title="The three rules that changed" tone="tldr">
+<p><strong>1. The yardstick is your approved design.</strong> It's never my workstream goal. <strong>2. An outcome is accepted only when all of it is proven,</strong> at the boundary your Verification Design names. A PR that proves part of it is "partial", never "done". <strong>3. The reviewer gets your design, your first-hand decisions, the PRs and the evidence.</strong> They get nothing I wrote except as claims to check.</p>
+</ex-callout>
+
+<ex-mermaid data-width="canvas" id="flow" label="From build to your decision"><script type="text/plain">
+flowchart TB
+  B["Implementer builds one B1 gap"]:::step --> T["Build pinned: commit, hosts, versions"]:::step
+  T --> V["Paired Verifier observes each case<br/>both hosts, controlled clock"]:::check
+  V --> E["Evidence folder with build pin"]:::step
+  E --> L["Lead accepts per outcome<br/>against your design"]:::check
+  L --> R["Fresh reviewer: your design,<br/>your words, PR, evidence"]:::check
+  R --> X["Terra medium checks the pages"]:::check
+  X --> O["You read and decide"]:::owner
+  L -. "gap or narrowing" .-> O
+  classDef step fill:#dbe8f7,stroke:#2f5b8f,color:#0d2340
+  classDef check fill:#d9f2d9,stroke:#2e7d32,color:#0b2e13
+  classDef owner fill:#fff3cd,stroke:#b8860b,color:#3d2b00
+</script></ex-mermaid>
+
+<section id="verify"><h2>1. How verification fully happens</h2>
+<p><strong>Who:</strong> the paired Verifier, a Sol session that didn't write the code (the Implementer is Opus). It observes; it never repairs product code. <strong>Where:</strong> both builds your design names. Those are local workerd with D1, and Node with SQLite. Both run on a controlled clock with no real time anywhere in tests or helpers. Heavy runs go to Sunclaw. <strong>What it records:</strong> the build pin (switchboard commit, plus central's commit where central is involved), Node and Chrome versions, the command, the counts and exit codes, and file hashes. All of it goes into one evidence folder per run.</p>
+<p><strong>What counts:</strong> each case names the wrong build that must make it fail. A case that would still pass on the wrong build proves nothing and is rewritten. A success message or exit code alone never counts. The Verifier reads the effect: the row in the database, the page served, the refusal with nothing changed.</p>
+
+<h3 id="cases">Every B1 case</h3>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Case (your design)</th><th>Boundary</th><th>What is seen</th><th>The wrong build that must fail</th><th>Today</th></tr></thead>
+<tbody>
+<tr><td>Sign in and first factor (U44, R54)</td><td>Both hosts</td><td>Google or GitHub; app set up; codes issued once; a change without a fresh factor refused</td><td>Google alone makes a change</td><td>Proven locally</td></tr>
+<tr><td>Recovery and never-zero factors (R54)</td><td>Both hosts, D1 and better-sqlite3</td><td>Two factors to replace; racing removals leave one; restart mid-replace leaves a working factor</td><td>The last factor can be removed</td><td>Proven locally</td></tr>
+<tr><td>Recovery codes single-use (R54)</td><td>Both databases</td><td>Two uses at once: exactly one succeeds</td><td>A code works twice</td><td>Proven locally</td></tr>
+<tr><td>Invite, accept, cancel, remove (R13)</td><td>Both hosts</td><td>Member exists; intent and outcome records; the actor is the owner</td><td>A change with no record</td><td>Proven locally</td></tr>
+<tr><td>Records unwritable, outcome lost (R13)</td><td>Both hosts</td><td>Change refused, nothing changed; lost outcome stays "unconfirmed"</td><td>A change goes through without its record</td><td>Proven locally</td></tr>
+<tr><td>Refusals and owner protection (R13)</td><td>Both hosts</td><td>Member can't invite; owner can't be removed, even twice at once; hidden routes not found</td><td>The owner is removed</td><td>Proven locally</td></tr>
+<tr><td>Step-up window (U43, R53)</td><td>Both hosts</td><td>A change succeeds with a fresh factor and fails without it or after 15 minutes, on the controlled clock</td><td>A change with a stale factor</td><td>Proven locally</td></tr>
+<tr><td>Permission confirmation (R27)</td><td>Both hosts</td><td>The confirmation names exactly the checked permission; reused on another operation, it's refused</td><td>A confirmation works for any permission</td><td>Proven locally</td></tr>
+<tr><td>Setting up until central confirms (R13)</td><td>Both hosts, central stand-in</td><td>Starts "setting up"; a caller can't set "ready"</td><td>A caller marks it ready</td><td>Proven locally; the real central link is B2</td></tr>
+<tr><td>Agent path unchanged (R38)</td><td>Both hosts</td><td>Today's agent gets its token and one allowed tool call; a person asking for tool access is refused</td><td>A person gets a tool credential</td><td>Partly: to re-observe at the final build</td></tr>
+<tr><td><strong>Passkey sign-in</strong> (U20, R5)</td><td>Real Chrome, virtual authenticator, both hosts</td><td>Verified passkey signs in and can change something; unverified is refused</td><td>A passkey without user verification signs in</td><td><strong>Missing</strong></td></tr>
+<tr><td><strong>Membership lookup</strong> (R14)</td><td>Both hosts</td><td>The owner gets the membership; every other caller learns nothing</td><td>A member or stranger learns membership</td><td><strong>Missing</strong></td></tr>
+<tr><td><strong>Choose an organization</strong> (R5)</td><td>Real served pages</td><td>Choose; the CLI's waiting login returns</td><td>The account page loses the choice</td><td><strong>Partial</strong></td></tr>
+<tr><td><strong>Flood limits</strong> (U42, R52)</td><td>Local workerd with Miniflare's rate-limit binding; Node</td><td>Past the limit: 429, nothing changed; another address passes; forged header ignored</td><td>The limiter is off, or trusts <code>x-forwarded-for</code></td><td><strong>Stand-in counter; must use the binding</strong></td></tr>
+<tr><td><strong>Host supplies every effect</strong> (R30)</td><td>Source scan plus both hosts</td><td>Clock, IDs, randomness, crypto and outbound calls come from the host; the scan covers page files</td><td>A planted global call in a page file passes the scan</td><td><strong>Defect</strong></td></tr>
+<tr><td><strong>No wall clock</strong> (R33, your rule)</td><td>Source scan of tests and helpers</td><td>No real timer, sleep or wall-clock read</td><td>A watchdog on real time</td><td><strong>Defect</strong></td></tr>
+<tr><td><strong>Identifiers</strong> (R32)</td><td>Both databases after a full run</td><td>Every stored ID reads back as UUIDv7</td><td>A v4 or other ID stored</td><td><strong>Partial</strong></td></tr>
+<tr><td><strong>Release check</strong> (R52, U42)</td><td>Staging, after deploy, no owner action</td><td>One real provider sign-in with the real Turnstile check</td><td>Turnstile skipped, or siteverify faked</td><td><strong>Not run</strong>: runs with BG's staging proof</td></tr>
+</tbody>
+</table></div>
+<p><strong>Named limits, as your design already states:</strong> Better Auth's own expiry clock is checked on Node only. Resetting the rate-limit binding and its counting across Cloudflare locations is checked on the private stack, not locally.</p>
+</section>
+
+<section id="accept"><h2>2. How acceptance happens, and the map</h2>
+<ex-mermaid data-width="canvas" id="accept-flow" label="How one outcome is accepted"><script type="text/plain">
+flowchart TB
+  o["Your outcome, from the approved design"]:::owner --> c["Every case for it has evidence<br/>on the pinned build"]:::check
+  c --> q{"All cases pass at<br/>the named boundary?"}:::check
+  q -->|"yes"| a["Lead accepts this outcome"]:::ok
+  q -->|"no"| g["Stays partial or missing"]:::gap
+  g --> s{"Tempted to narrow it?"}:::check
+  s -->|"yes"| y["Comes to you as a decision first"]:::owner
+  classDef owner fill:#fff3cd,stroke:#b8860b,color:#3d2b00
+  classDef check fill:#dbe8f7,stroke:#2f5b8f,color:#0d2340
+  classDef ok fill:#d9f2d9,stroke:#2e7d32,color:#0b2e13
+  classDef gap fill:#f8d7da,stroke:#b02a37,color:#3d0a0f
+</script></ex-mermaid>
+<p><strong>The Lead's five checks before accepting:</strong></p>
+<ol>
+<li>The requirement is met: every case for the outcome passes.</li>
+<li>Tests: the repository's gates pass, with commands, counts and exit codes.</li>
+<li>Real path: the Verifier's observation ran at the boundary the design names.</li>
+<li>No drift: the code matches the Program Design.</li>
+<li>What isn't verified is named.</li>
+</ol>
+<p>I open the decisive code and evidence myself; a tidy summary isn't enough. A PR can merge only after this, the reviewer's READY and green CI, and only once your stop lifts.</p>
+
+<h3 id="map">The acceptance map for B1, today</h3>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Your outcome</th><th>Cases</th><th>Evidence today</th><th>Accepted?</th></tr></thead>
+<tbody>
+<tr><td>Sign in with Google, GitHub or a verified passkey (U20)</td><td>Sign in; passkey sign-in; release check</td><td>Google and GitHub locally; no passkey sign-in; no release run</td><td><strong>No</strong>: partial</td></tr>
+<tr><td>Your organization, roles, invitations and removals with records (R13)</td><td>Invite to refusals; setting up</td><td>CI <code>43666972972</code>; B1 CI <code>41968777865</code>; Verifier reports</td><td>Locally yes; the outcome waits on the lookup and switching</td></tr>
+<tr><td>Owner looks up a membership (R14)</td><td>Membership lookup</td><td>None</td><td><strong>No</strong>: missing</td></tr>
+<tr><td>Choose between organizations (R5)</td><td>Choose an organization</td><td>Served page, but no choice kept on the account page</td><td><strong>No</strong>: partial</td></tr>
+<tr><td>Second factors, step-up and recovery (U43, U44)</td><td>First factor; recovery; single-use; step-up</td><td>Both hosts, both databases</td><td><strong>Yes</strong>, at the local boundary</td></tr>
+<tr><td>Flood limits and human check (U42)</td><td>Flood limits; release check</td><td>Stand-in counter; Turnstile stubbed locally</td><td><strong>No</strong></td></tr>
+<tr><td>Storage, host boundary, IDs, clock (R29, R30, R32, R33)</td><td>Host effects; no wall clock; identifiers</td><td>Storage proven; three defects</td><td><strong>No</strong></td></tr>
+<tr><td>People get no tool credential; agents unchanged (R38)</td><td>Agent path</td><td>Earlier runs; not at the final build</td><td><strong>No</strong>: re-observe</td></tr>
+</tbody>
+</table></div>
+<p>Under the old process #9 was accepted as "B1". That acceptance is withdrawn. B1 is partly delivered until every row above says yes.</p>
+</section>
+
+<section id="review"><h2>3. What the reviewer gets, and how they check</h2>
+<p><strong>Who:</strong> a fresh Sol xhigh session with no history of writing this work, using the <code>role-checker</code> and <code>design-review</code> skills and the principles <code>verify-before-accepting</code>, <code>prove-it-works</code> and <code>write-tests-that-can-fail</code>. It writes its report as an HTML page in the shared audit format.</p>
+<h3 id="packet">The packet (fixed; nothing else)</h3>
+<table>
+<thead><tr><th>Item</th><th>Where</th><th>Used as</th></tr></thead>
+<tbody>
+<tr><td>Your approved design</td><td>This set's pages 2–5, and <code>docs/specs/2026-11-02-fleet-access/</code></td><td>The yardstick</td></tr>
+<tr><td>Your first-hand decisions</td><td><a href="decisions.html#owner">Decisions: Yours</a>, each with transcript line and time</td><td>Changes to the yardstick, only where your words are linked</td></tr>
+<tr><td>The PRs and the pinned build</td><td>switchboard PR numbers with head and merge commits; central commit where involved</td><td>What is judged</td></tr>
+<tr><td>The evidence</td><td>The Verifier's folders with build pins; CI run IDs</td><td>Claims to re-check against the code</td></tr>
+<tr><td>The shared audit format</td><td><code>tmp/2026-11-15-full-review/report-format.md</code></td><td>How the report is laid out</td></tr>
+<tr><td>Lead records (plan, acceptances, these Plan and Decisions pages)</td><td>Paths only</td><td><strong>Claims to audit, never the standard</strong></td></tr>
+</tbody>
+</table>
+<h3 id="how-review">How the reviewer validates</h3>
+<ol>
+<li>For each obligation, read your design row and any linked words of yours first, then write down what "done" means before opening the code.</li>
+<li>Read the code at the pinned commit, not the PR description.</li>
+<li>Open the evidence and check it ran on that build, at the boundary the design names, and would fail on the wrong build.</li>
+<li>Any place my records narrow, defer or reinterpret an obligation is a finding. Never adopt it.</li>
+<li>A decision counts as yours only with a link to your own words. A relay stays "relayed, unconfirmed".</li>
+<li>Report every obligation: delivered, partial, missing or contradicted, with "fully fixed means".</li>
+</ol>
+<p>Every page then gets a Terra medium check before it reaches you.</p>
+</section>
+
+<section id="order"><h2>4. The order of work once you lift the stop</h2>
+<ex-mermaid data-width="canvas" id="work-order" label="B1 work order after the stop lifts"><script type="text/plain">
+flowchart TB
+  w1["1 Fix the three defects:<br/>page randomness, watchdogs, flood binding"]:::fix --> w2["2 Build lookup and org switching"]:::build
+  w2 --> w3["3 Passkey hook proof,<br/>then turn on passkey sign-in"]:::build
+  w3 --> w4["4 Full identifier readback;<br/>agent path at final build"]:::fix
+  w4 --> w5["5 Release check on staging,<br/>with BG's staging proof"]:::later
+  classDef fix fill:#f8d7da,stroke:#b02a37,color:#3d0a0f
+  classDef build fill:#fff3cd,stroke:#b8860b,color:#3d2b00
+  classDef later fill:#e7e9ee,stroke:#59606e,color:#1d2129
+</script></ex-mermaid>
+<p>Each step is one PR with its own Verifier observation, Lead acceptance and review, as above.</p>
+</section>
+</ex-document>
+</body>
+</html>

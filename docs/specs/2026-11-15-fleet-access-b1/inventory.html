@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B1 · Inventory</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="inventory"><nav slot="pages" aria-label="Pages">
+  <a href="index.html">B1 home</a>
+  <a href="audit.html">1 · Audit</a>
+  <a href="requirements.html">2 · Requirements</a>
+  <a href="specification.html">3 · Specification</a>
+  <a href="program-design.html">4 · Program Design</a>
+  <a href="verification-design.html">5 · Verification Design</a>
+  <a href="plan.html">6 · Plan</a>
+  <a href="decisions.html">7 · Decisions</a>
+  <a href="inventory.html">8 · Inventory</a>
+</nav></ex-nav>
+<ex-document id="inventory" document-id="fleet-access-b1-inventory-2026-11-15" revision="2026-11-15.1">
+<h1>B1 · Inventory</h1>
+<p>What was built for B1, what went wrong, and what replaced it or will replace it. Repository: switchboard (<code>agent-collaboration/switchboard</code>), <code>main</code> at <code>f3b2b88b</code>.</p>
+
+<ex-mermaid data-width="canvas" id="timeline" label="B1 pull requests in order"><script type="text/plain">
+flowchart TB
+  p4["#4 31 Oct: separate runtimes, Drizzle storage"]:::ok --> p5["#5 1 Nov: Turnstile before social sign-in"]:::ok
+  p5 --> p6["#6 1 Nov: Node host"]:::ok
+  p6 --> p7["#7 1 Nov: social linking audit"]:::ok
+  p7 --> p9["#9 5 Nov: organizations, second factors, flood limits"]:::part
+  p9 --> p10["#10 13 Nov: sign-in pages on Bridge"]:::part
+  p10 --> p15["#15 13 Nov: print the Better Auth UI way"]:::ok
+  p15 --> p16["#16 13 Nov: wrong codes the Better Auth UI way"]:::ok
+  p16 --> p13["#13 14 Nov: browser journey, recovery"]:::part
+  classDef ok fill:#d9f2d9,stroke:#2e7d32,color:#0b2e13
+  classDef part fill:#fff3cd,stroke:#b8860b,color:#3d2b00
+</script></ex-mermaid>
+<p>Green: stands as built. Amber: carries a B1 defect or leaves a B1 outcome open.</p>
+
+<section id="built"><h2>What was built</h2>
+<table>
+<thead><tr><th>PR (merge commit)</th><th>Merged</th><th>What it did for B1</th><th>What it left open</th></tr></thead>
+<tbody>
+<tr><td>#4 (<code>0653bd36</code>)</td><td>31 Oct</td><td>Split the sign-in service into a core plus Cloudflare and Node hosts; Drizzle storage on D1 and better-sqlite3.</td><td>None for B1.</td></tr>
+<tr><td>#5 (<code>3c355df2</code>)</td><td>1 Nov</td><td>Turnstile check before any Google or GitHub sign-in is created.</td><td>The real Turnstile check, once at release.</td></tr>
+<tr><td>#6 (<code>bf284dab</code>)</td><td>1 Nov</td><td>Node host for the sign-in service.</td><td>None for B1 (deployed Node isn't in scope).</td></tr>
+<tr><td>#7 (<code>eb56223f</code>)</td><td>1 Nov</td><td>Records social-login linking; stores when a person was confirmed.</td><td>None for B1.</td></tr>
+<tr><td>#9 (<code>d4c47214</code>)</td><td>5 Nov</td><td>Organizations, roles, invitations, owner protection, change records, second factors and recovery codes, flood limits.</td><td>Passkey sign-in; membership lookup; flood threshold on a stand-in counter.</td></tr>
+<tr><td>#10 (<code>6375b1e6</code>)</td><td>13 Nov</td><td>Sign-in pages with Better Auth UI on Base UI and the Bridge tokens.</td><td>Page randomness from the global; organization switching not kept on the account page.</td></tr>
+<tr><td>#15 (<code>74793e3e</code>)</td><td>13 Nov</td><td>Recovery codes print with Better Auth UI's own helper (<code>frame-src blob:</code> on signed-in pages only).</td><td>None.</td></tr>
+<tr><td>#16 (<code>f675a7ca</code>)</td><td>13 Nov</td><td>Wrong codes shown the Better Auth UI default way.</td><td>None.</td></tr>
+<tr><td>#13 (<code>18cd339c</code>)</td><td>14 Nov</td><td>The verify-auth skill, recovery, and the native browser journey on both hosts.</td><td>Real 20/30-second watchdog timers in the browser test.</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="wrong"><h2>What went wrong</h2>
+<table>
+<thead><tr><th>Mistake</th><th>Whose</th><th>What it cost</th></tr></thead>
+<tbody>
+<tr><td>I accepted #9 as "B1 done" while three approved outcomes were still open.</td><td>Lead</td><td>Passkey sign-in, the membership lookup and organization switching dropped out of every later summary.</td></tr>
+<tr><td>Nobody was assigned the passkey proof that the design made a condition for turning passkey sign-in on.</td><td>Lead</td><td>Passkey sign-in has stayed off since 5 Nov.</td></tr>
+<tr><td>The flood threshold was tested on a stand-in counter, not the Miniflare binding your Verification Design names.</td><td>Implementer, accepted by Lead</td><td>The threshold's real wiring is unproven.</td></tr>
+<tr><td>Real-time watchdogs in the browser test, against your no-wall-clock rule.</td><td>Verifier apparatus, accepted by Lead</td><td>The test can fail on a slow machine for reasons unrelated to sign-in.</td></tr>
+<tr><td>A page took randomness from the global, and the boundary scan skipped page files.</td><td>Implementer, accepted by Lead</td><td>Spec R30's host boundary is broken, and the check that should catch it can't.</td></tr>
+<tr><td>In-page print and inline-only errors in our words (R-print, R1).</td><td>Lead</td><td>Two PRs (#15, #16) to put Better Auth UI back.</td></tr>
+<tr><td>The first sign-in page design.</td><td>Lead and Implementer</td><td>You called it "very ugly". It was redone on Bridge (#10).</td></tr>
+<tr><td>Reviewers were given my plan and acceptances instead of your design.</td><td>Lead</td><td>Every review inherited my narrowing, so none of the above was caught.</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="replace"><h2>What replaces it</h2>
+<p>All of this waits on your stop. Nothing below is being built now.</p>
+<table>
+<thead><tr><th>Gap</th><th>Replacement</th><th>Proven by (see <a href="plan.html">Plan</a>)</th></tr></thead>
+<tbody>
+<tr><td>Passkey sign-in</td><td>Prove that Better Auth 1.7.11 refuses a passkey sign-in without user verification, then turn on the passkey sign-in route and button.</td><td>Real Chrome with a virtual authenticator, on both hosts: verified passes, unverified is refused.</td></tr>
+<tr><td>Membership lookup (R14)</td><td>The owner-only lookup of a person's membership in the requested organization.</td><td>Both hosts: the owner gets the answer; every other caller learns nothing.</td></tr>
+<tr><td>Organization switching (R5)</td><td>Keep the choose-organization control on the account page.</td><td>Real served pages: choose, and the CLI's waiting login returns.</td></tr>
+<tr><td>Flood threshold</td><td>Run the threshold cases through Miniflare's rate-limit binding.</td><td>Local workerd with the binding: limited, nothing changed, other address passes.</td></tr>
+<tr><td>Watchdogs</td><td>Event waits and the controlled clock in the browser harness.</td><td>Source check: no real timer in tests or helpers.</td></tr>
+<tr><td>Page randomness</td><td>The host supplies it; the boundary scan includes every server page file.</td><td>The scan fails on a planted global call in a page file.</td></tr>
+<tr><td>Identifier readback (R32)</td><td>Read back every stored identifier as UUIDv7.</td><td>Both databases after a full run.</td></tr>
+</tbody>
+</table>
+</section>
+</ex-document>
+</body>
+</html>

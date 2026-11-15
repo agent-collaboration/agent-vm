@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B1 · People, roles and sign-in</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="home"><nav slot="pages" aria-label="Pages">
+  <a href="index.html">B1 home</a>
+  <a href="audit.html">1 · Audit</a>
+  <a href="requirements.html">2 · Requirements</a>
+  <a href="specification.html">3 · Specification</a>
+  <a href="program-design.html">4 · Program Design</a>
+  <a href="verification-design.html">5 · Verification Design</a>
+  <a href="plan.html">6 · Plan</a>
+  <a href="decisions.html">7 · Decisions</a>
+  <a href="inventory.html">8 · Inventory</a>
+</nav></ex-nav>
+<ex-document id="home" document-id="fleet-access-b1-home-2026-11-15" revision="2026-11-15.1">
+<h1>B1 · People, roles and sign-in</h1>
+<p>Deliverable 1 of the Fleet access lane. Next comes B2, central's organizations. See <a href="../2026-11-15-fleet-access-overview/index.html">the lane overview and order</a>.</p>
+
+<ex-callout id="answer" title="B1 in plain words" tone="tldr">
+<p><strong>What it's for:</strong> a person signs in with Google or GitHub plus a second factor, creates their organization, and invites and removes people. Every change needs a recent second factor and leaves a record. Members can't use owner powers, and the owner can't be removed.</p>
+<p><strong>Today:</strong> most of that works on both servers (Cloudflare's and Node). <strong>Missing:</strong> signing in with a passkey, the owner looking up someone's membership, and switching between organizations. <strong>Built wrong:</strong> one page takes randomness directly instead of from the host, one browser test waits on real time, and the flood-limit test uses a stand-in counter instead of the one your design names.</p>
+<p><strong>Verdict: partly delivered.</strong></p>
+</ex-callout>
+
+<h2 id="needs-you">What needs you</h2>
+<p><strong>No choice is waiting on you for B1.</strong> Every open item is build or proof work that your approved design already decides. The <a href="decisions.html#open">Decisions page</a> shows each one and why. What you're asked to do here is read the design and say whether it's what you meant. Under your stop, nothing gets built until you have.</p>
+
+<h2 id="state">What exists, at a glance</h2>
+<ex-mermaid data-width="canvas" id="b1-glance" label="B1 steps and their state"><script type="text/plain">
+flowchart TB
+  s1["Sign in: Google or GitHub, with human check"]:::partial --> s2["Set up authenticator app and recovery codes"]:::delivered
+  s2 --> s3["Create organization; you are owner"]:::delivered
+  s3 --> s4["Invite, accept, remove; each change recorded"]:::delivered
+  s4 --> s5["Every change needs a recent second factor"]:::delivered
+  s5 --> s6["Sign in with a passkey"]:::missing
+  s5 --> s7["Owner looks up a membership"]:::missing
+  s5 --> s8["Switch between organizations"]:::partial
+  s5 --> s9["Host supplies time, randomness, IDs"]:::defect
+  classDef delivered fill:#d9f2d9,stroke:#2e7d32,color:#0b2e13
+  classDef partial fill:#fff3cd,stroke:#b8860b,color:#3d2b00
+  classDef missing fill:#f8d7da,stroke:#b02a37,color:#3d0a0f
+  classDef defect fill:#f8d7da,stroke:#b02a37,color:#3d0a0f,stroke-dasharray:4 3
+</script></ex-mermaid>
+<p>Green: delivered. Amber: partly. Red: missing. Dashed red: built but wrong.</p>
+
+<h2 id="pages">The pages</h2>
+<ol>
+<li><a href="audit.html">Audit</a>: the independent review against your approved design. What exists, what's missing, and what "fully fixed" means for each.</li>
+<li><a href="requirements.html">Requirements</a>: B1's needs (U rows) from your approved design, with your later decisions marked.</li>
+<li><a href="specification.html">Specification</a>: B1's obligations (R rows) and the things they're about (E rows).</li>
+<li><a href="program-design.html">Program Design</a>: the packages, tables and boundaries that carry B1.</li>
+<li><a href="verification-design.html">Verification Design</a>: how each need is proven, and at which boundary.</li>
+<li><a href="plan.html">Plan</a>: how verification fully happens, how acceptance works (with the map), and exactly what the reviewer gets and checks.</li>
+<li><a href="decisions.html">Decisions</a>: yours (linked to your own words), mine (each with a verdict), and the open ones.</li>
+<li><a href="inventory.html">Inventory</a>: what was built, what went wrong, and what replaced it.</li>
+</ol>
+<p>Pages 2–5 are written by a separate Sol writer from your approved design only. They're checked by Terra before you see them.</p>
+</ex-document>
+</body>
+</html>
