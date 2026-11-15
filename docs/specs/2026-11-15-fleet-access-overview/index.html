@@ -21,7 +21,7 @@
 </ex-callout>
 
 <h2 id="sequence">The order</h2>
-<p>This is the order you approved on 2 Nov (design index §10). Each arrow means the next one builds on the one before. Colours show today's state from the independent review.</p>
+<p>This is the order you approved on 2 Nov (design index §10). Each arrow means the next one builds on the one before. <strong>Key:</strong> amber is partly delivered, rose is the furthest off, blue is not started.</p>
 <ex-mermaid data-width="canvas" id="order" label="Fleet access deliverables in order, coloured by state"><script type="text/plain">
 flowchart TB
   B1["B1 People, roles, sign-in<br/>partly delivered"] --> B2["B2 Central organizations<br/>partly delivered"]
@@ -34,13 +34,13 @@ flowchart TB
   B4 --> SW
   B5 --> SW
   SW --> B6["B6 to B9: traces, who is in,<br/>remote start, members view"]
-  classDef partial fill:#fff3cd,stroke:#b8860b,color:#3d2b00
-  classDef missing fill:#f8d7da,stroke:#b02a37,color:#3d0a0f
-  classDef later fill:#e7e9ee,stroke:#59606e,color:#1d2129
-  class B1,B2,B2X,BG partial
-  class B3 missing
-  class B4,B5,SW,B6 later
+  class B1,B2,B2X,BG slot2
+  class B3 slot5
+  class B4,B5,SW,B6 slot1
 </script></ex-mermaid>
+
+<h2 id="items">Each deliverable is cut into 2–4 hour items</h2>
+<p>Each item is something tangible the Implementer and Verifier pair can finish in 2–4 hours, with a gate that must pass before the next item starts. Anything not delivered comes to you before an item is accepted. B1's seven items and their gates are on <a href="../2026-11-15-fleet-access-b1/plan.html#order">the B1 Plan</a>. The other deliverables are cut the same way when their sets are written.</p>
 
 <h2 id="how">How each deliverable's set is made</h2>
 <ex-mermaid data-width="canvas" id="set-flow" label="How one deliverable's set is made and checked"><script type="text/plain">
@@ -51,10 +51,8 @@ flowchart TB
   C --> I["8 Inventory: built, mistakes, replacements"]
   I --> T["Terra medium checks every page"]
   T --> O["You read it and decide"]
-  classDef step fill:#dbe8f7,stroke:#2f5b8f,color:#0d2340
-  classDef gate fill:#d9f2d9,stroke:#2e7d32,color:#0b2e13
-  class A,D,P,C,I step
-  class T,O gate
+  class A,D,P,C,I slot1
+  class T,O slot6
 </script></ex-mermaid>
 <p>The four design documents are split from your approved Fleet access design (2 Nov). They aren't rewritten. Every row keeps its original ID and links back to its source. Where you later decided something different, the original is shown, marked superseded, with your newer words and where you said them.</p>
 
