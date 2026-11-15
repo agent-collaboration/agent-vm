@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B1-1 · Honest tests · Acceptance</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="acceptance"><nav slot="pages" aria-label="Pages">
+  <a href="../../index.html">B1 home</a>
+  <a href="../../plan.html#order">B1 items</a>
+  <a href="brief.html">B1-1 brief</a>
+  <a href="reviewer-packet.html">B1-1 reviewer packet</a>
+  <a href="acceptance.html">B1-1 acceptance</a>
+</nav></ex-nav>
+<ex-document id="acceptance">
+<h1>B1-1 · Honest tests: acceptance</h1>
+<p>The process I follow to accept B1-1, and the map I fill in as I go. <strong>Today every row is "not started".</strong> Nothing is accepted from a summary: each row names the file and line it rests on.</p>
+
+<h2 id="process">The process, step by step</h2>
+<ex-trace id="steps" title="Accepting B1-1" data-width="canvas">
+  <details icon="file" tone="planned" tag="Not started">
+    <summary>1 · Implementer hands back</summary>
+    <p><strong>File:</strong> <code>implementer-handback.md</code>. <strong>Passes when</strong> it names the PR and head commit, gives gate commands with counts and exit codes, and changed nothing outside <a href="brief.html#scope">the allowed paths</a>.</p>
+  </details>
+  <details icon="test-tube" tone="planned" tag="Not started">
+    <summary>2 · Verifier observes on the pinned commit</summary>
+    <p><strong>Files:</strong> <code>verifier-observation.md</code> and <code>evidence/</code>. <strong>Passes when</strong> each check passed on both hosts and failed on its wrong build, with the build pin recorded.</p>
+  </details>
+  <details icon="shield-check" tone="planned" tag="Not started">
+    <summary>3 · Lead check before review</summary>
+    <p><strong>File:</strong> <code>lead-check.html</code>. I open the diff and the evidence myself and fill in the map below. <strong>Passes when</strong> every row has evidence. Any row that can't is not narrowed: it comes to you.</p>
+  </details>
+  <details icon="users" tone="planned" tag="Not started">
+    <summary>4 · Reviewer, from its fixed packet</summary>
+    <p><strong>File:</strong> <code>reviewer-report.html</code>, from <a href="reviewer-packet.html">the packet</a>. <strong>Passes when</strong> the verdict is READY and every finding is cited.</p>
+  </details>
+  <details icon="shield-check" tone="planned" tag="Not started">
+    <summary>5 · Lead acceptance</summary>
+    <p><strong>File:</strong> this page, final section. Each reviewer finding is fixed, rejected with evidence, or brought to you. <strong>Anything not delivered comes to you before I accept.</strong> Then the gate passes, and B1-2 may start once you've given B1 its go-ahead.</p>
+  </details>
+</ex-trace>
+
+<h2 id="map">The acceptance map</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Rule (design row)</th><th>Check</th><th>Evidence (file and line)</th><th>Accepted?</th></tr></thead>
+<tbody>
+<tr><td>The host supplies page randomness (<a href="../../specification.html#R30">R30</a>)</td><td><a href="brief.html#c1">C1</a></td><td>Not started</td><td>Not started</td></tr>
+<tr><td>The scan sees page files (<a href="../../specification.html#R30">R30</a>)</td><td><a href="brief.html#c1b">C1b</a></td><td>Waiting on your yes to the scan change</td><td>Not started</td></tr>
+<tr><td>No wall clock in tests (<a href="../../specification.html#R33">R33</a>, your rule)</td><td><a href="brief.html#c2">C2</a></td><td>Not started</td><td>Not started</td></tr>
+<tr><td>Flood limits on the real counter (<a href="../../specification.html#R52">R52</a>, U42)</td><td><a href="brief.html#c3">C3</a></td><td>Not started</td><td>Not started</td></tr>
+<tr><td>Repository gates on both hosts</td><td><code>pnpm check</code>, <code>pnpm test:unit</code>, <code>pnpm test:e2e:host</code></td><td>Not started</td><td>Not started</td></tr>
+<tr><td>CI</td><td>The PR's checks</td><td>Not started</td><td>Not started</td></tr>
+<tr><td>Independent review</td><td><code>reviewer-report.html</code> READY</td><td>Not started</td><td>Not started</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="final">Final acceptance</h2>
+<p><strong>Not started.</strong> When written, this section lists each reviewer finding and what happened to it, what was not delivered and your answer on it, and the line "B1-1 accepted against the approved design", with the commit.</p>
+</ex-document>
+</body>
+</html>
