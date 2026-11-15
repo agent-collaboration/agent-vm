@@ -1284,3 +1284,10 @@ The workspace id equals the operation id.
     2. existing journeys parse empty arrays;
     3. central-row assertions for M1–M5.
   - Final pin and freeze at the follow-up's merge commit (compare inputs as in WS13 condition 5).
+- **The `32a84cd1f` build is accepted for interim use, with a named gap (2026-11-15T12:06Z; Verifier audit, 20 checks consistent).** The signed launcher is `367340fa…`; four Worker bundles are stable across rounds.
+  - **Gap, kept as is:** the before-checkout tree gate has no receipt. The head, tree and status check ran **after** the build: exact `32a84cd1f`, tree `66b5bbee`, clean.
+  - **Lead ruling:** that's sufficient identity for interim use, because a clean tree at the exact commit after the build proves what was built. No rebuild. The **final** pin is at the follow-up's merge commit with a fresh build, and there the tree gate must run before checkout and keep its own receipt.
+  - **The consumer candidate's fixes** (Verifier → Implementer `01a1df12`):
+    1. the timestamp predicate must not throw `RangeError` on regex-valid but impossible dates;
+    2. M2 needs the immediate no-effect baseline (machine, approval, records) and the control machine kept;
+    3. M1 asserts the `machineId` association.
