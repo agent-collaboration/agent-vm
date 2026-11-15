@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B1-A · One sign-in core, injected and honestly tested · Decisions</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
+  <a href="../../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
+  <a href="audit.html">B1-A · 1 Audit</a>
+  <a href="requirements.html">B1-A · 2 Requirements</a>
+  <a href="specification.html">B1-A · 3 Specification</a>
+  <a href="program-design.html">B1-A · 4 Program Design</a>
+  <a href="verification-design.html">B1-A · 5 Verification Design</a>
+  <a href="plan.html">B1-A · 6 Plan</a>
+  <a href="decisions.html">B1-A · 7 Decisions</a>
+</nav></ex-nav>
+<ex-document id="doc">
+<h1>B1-A · One sign-in core, injected and honestly tested: Decisions</h1>
+<p>Every assumption this design makes, every decision behind it (yours in your words, mine with whether it should have been yours), and what was there before.</p>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What you should check" tone="note" icon="shield-check">
+<ul>
+<li><strong><a href="#assumptions">The assumptions</a>:</strong> if one is wrong, part of the design is wrong.</li>
+<li><strong><a href="#mine">My calls</a>:</strong> each says whether it should have been yours.</li>
+<li><strong><a href="#flood-clock">The one recorded risk</a>:</strong> Miniflare's counter keeps its own real-clock window.</li>
+</ul>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p><strong>None open.</strong> Nothing in B1-A changes what a person sees or can do.</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
+<p>Every decision of yours below is quoted with where you said it. Lines marked <strong>unconfirmed</strong> are ones I couldn't find in a transcript, and each has another line of yours that backs it up.</p>
+</ex-callout>
+
+<h2 id="owner">Your decisions</h2>
+<p>Transcripts: <strong>F</strong> is the <a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl">Fleet access session</a>; <strong>P</strong> is the <a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portable-tool-portal-hosts/2febb449-db01-4859-8fdb-fdc41a74abfc.jsonl">earlier portal session</a>. The approved Requirements are <a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/requirements.source.html"><code>requirements.source.html</code></a>.</p>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Decision</th><th>Your words</th><th>Where</th><th>What it decides here</th></tr></thead>
+<tbody>
+<tr><td>The design and B1 are approved</td><td>"yes you need anytnhign?", answering "Still waiting on you: approve the overall design, B1 and B2"</td><td>F lines 71226 and 71230, 4 Nov 16:50Z</td><td>The approved rows are the yardstick</td></tr>
+<tr><td>One runtime-free core, runtimes injected (U23, rule R30)</td><td>"you inject stukff not pkul out engines"; "it shoudl be runtime seperated like fuckign codex router"</td><td>Requirements line 174</td><td>Crypto must come from the host</td></tr>
+<tr><td>One design on any host (U16)</td><td>"maqke sure clodufalre is one runtiem and we decokuple yes? same design"</td><td>Requirements line 172</td><td>Both hosts and the CLI use one shared builder</td></tr>
+<tr><td>No wall clock in tests (U25, rule R33)</td><td>"i dont allow wall clock time ever in tests"; "use hegal"; also "i dont allow wall clock time ever"</td><td>Requirements line 176; P line 143821, 24 Oct</td><td>Event waits only; controlled-clock fixtures; the dispatch Hegel family</td></tr>
+<tr><td>No hang guard, waits on events only</td><td>"no real clock and only events, mock timers in tests" (<strong>unconfirmed</strong>; backed by the line above)</td><td>31 Oct, in my memory record; line not found</td><td>The five real-time bounds go, with no replacement watchdog</td></tr>
+<tr><td>Only UUIDv7 (U24, rule R32)</td><td>"we ony use uuidv7"</td><td>Requirements line 175</td><td>The full ID readback</td></tr>
+<tr><td>How flood limits are proven (journey SO2)</td><td>Approved row: "Miniflare's binding keeps its own clock: locally it proves 'limited', the window reset is proven through the core's limiter on a controlled clock, and the binding's reset is checked once on the private stack"</td><td><code>verification-design.source.html</code>, journey SO2</td><td>"Limited" on Miniflare's real binding; the stand-in removed</td></tr>
+<tr><td>Better Auth used as shipped</td><td>"can we not just trust better akuth ui?"</td><td>F line 124460, 13 Nov</td><td>Better Auth's own internal crypto is out of this rule's scope</td></tr>
+<tr><td>A deliverable is a whole feature</td><td>"when I see deliverable it means a feature done properly"; "the work cannot be some bite size nonsense" (relayed by Lead A, 15 Nov)</td><td>Lead A's relays, 15 Nov</td><td>B1-A groups the core, time, Hegel, flood, ID and agent work into one feature, with old code removed</td></tr>
+<tr><td>Heavy test runs go to Sunclaw</td><td>"yes run thsi stuff"</td><td>F line 122302, 13 Nov</td><td>The Verifier's heavy runs</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="mine">My calls, and whether they should have been yours</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>My call</th><th>Why</th><th>Should it have been yours?</th></tr></thead>
+<tbody>
+<tr><td>Pass <code>crypto</code> explicitly, not through a helper object</td><td>It's how the core already passes the clock; no new abstraction (<a href="program-design.html#choice">Program Design</a>)</td><td>No. It's reversible, inside R30.</td></tr>
+<tr><td>The new core check also covers <code>better-auth/</code></td><td>R30 governs our code there. U23's exemption is for importing Better Auth.</td><td>No. It's stricter than U23's wording, but within R30.</td></tr>
+<tr><td>The nonce helper lives in <code>contracts/</code></td><td>The package's import map sends <code>pages/*</code> to <code>.tsx</code></td><td>No.</td></tr>
+<tr><td>Delete the flood stand-in</td><td>No test needs it after the change; your feature rule says old code goes</td><td>No: it follows your rule.</td></tr>
+<tr><td>The test-time scan covers <code>sign-in-test-support</code>, the sign-in <code>*.test.ts</code> files, and <code>scripts/verify-auth/</code></td><td>Proof row U25 names "the sign-in tests, helpers or harness"</td><td>No. It's what U25 asks.</td></tr>
+<tr><td>Treat U25's "<code>auth-proof-process.ts</code> kill deadlines" as already done</td><td>The file already waits on an <code>AbortController</code> and the controlled clock</td><td>No. It's a fact from the code.</td></tr>
+<tr><td>The device-code Hegel family and "device-code approval in the core" go to B3</td><td>They're about machine login, which is B3's feature</td><td>Yes, partly: it moves part of R33 and U23 to another deliverable. It's recorded here so you can say no.</td></tr>
+<tr><td>Regroup B1's nine slivers into three features (B1-A, B1-B, B1-C)</td><td>Your rules: "a feature done properly", "cannot be some bite size nonsense"</td><td>The grouping is mine; the rule is yours. Correct it on the overview if it's wrong.</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="assumptions">Every assumption this design makes</h2>
+<table>
+<thead><tr><th>Assumption</th><th>Basis</th><th>If it's wrong</th></tr></thead>
+<tbody>
+<tr><td>Both runtimes provide the standard Web Crypto (<code>getRandomValues</code>, <code>subtle.digest</code>, ECDSA P-256 <code>generateKey</code>, <code>sign</code>, <code>importKey</code>, <code>exportKey</code>)</td><td>The six sites already use exactly these on both hosts today</td><td>A host would need its own adapter. The contract doesn't change.</td></tr>
+<tr><td>The harness's controlled clock is the clock Better Auth reads in that harness</td><td>The harness passes <code>authenticatorClock</code> (<code>fleet-cli-fixture.ts:81–85</code> pattern)</td><td>The fence rows' expiry would still be off. Fix it in the harness.</td></tr>
+<tr><td><code>pnpm typecheck</code> flags every caller that needs the new <code>crypto</code></td><td>The field and parameters are required, and the core's source is type-checked</td><td>A caller in an excluded test file would fail at run time. The unit and host lanes would catch it.</td></tr>
+<tr><td>Hegel 0.4.10 generates the dispatch combinations</td><td>The existing families use its generators</td><td>Enumerate the small combination space exhaustively instead; same model.</td></tr>
+<tr><td>The test runner's own limit ends a genuinely hung browser run</td><td>Runner configuration, outside test code</td><td>A hang would run until CI's job timeout. That's visible and not a false pass.</td></tr>
+<tr><td>No consumer of these packages exists outside switchboard</td><td>The npm registry returns 404 for both (<a href="#published">below</a>); codex-router and agent-vm don't depend on them</td><td>An outside consumer would need to pass <code>crypto</code> when upgrading.</td></tr>
+<tr><td>Browser scripts written as text are out of R30's scope</td><td>They run in the person's browser, not the service</td><td>They'd need a separate rule. None is asked for.</td></tr>
+</tbody>
+</table>
+
+<h2 id="published">Settled: the signature change breaks nothing outside switchboard</h2>
+<p>Meeting R30 changes some exported signatures:</p>
+<ul>
+<li><strong><code>@agent-collaboration/sign-in-core</code>:</strong> eight functions gain a <code>crypto</code> parameter, and <code>SignInPlatform</code> and <code>OrganizationStampRenewalProps</code> gain a required <code>crypto</code>.</li>
+<li><strong><code>@agent-collaboration/sign-in-owner-cli</code>:</strong> <code>FleetCliIo</code> and its three key-store constructors gain a required <code>crypto</code>.</li>
+</ul>
+<p>Both packages have <code>publishConfig</code> set to public, but <strong>neither is published</strong>: on 15 Nov the public npm registry returned 404 for both. So every consumer is inside switchboard, and the same PR updates them all. If you publish later, these become the published signatures. Your deferred repository-visibility decision is where that gets settled.</p>
+
+<h2 id="flood-clock">Recorded risk: Miniflare's counter keeps its own real-clock window</h2>
+<p>Your journey SO2 accepted that "Miniflare's binding keeps its own clock". I read its source (miniflare 5.20260815.0-alpha, <code>ratelimit-object.worker.js</code>): it counts in windows of <code>Math.floor(Date.now() / (period * 1000))</code>, 10 or 60 seconds, aligned to the real clock. The test never reads that clock or waits on it.</p>
+<p><strong>The risk:</strong> if the burst of requests in the "limited" case happens to cross a window boundary, the count resets and one request too many gets through. The case would then fail, a false alarm, not a false pass. A burst takes milliseconds against a 60-second window, so this is rare.</p>
+<p><strong>If it ever happens:</strong> the failure says the request wasn't limited. A rerun decides it. Nothing is waited on, and nothing passes wrongly.</p>
+
+<h2 id="was-there">What was there before, and what each change replaces or keeps</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Before (switchboard <code>f3b2b88b</code>)</th><th>After B1-A</th><th>Replaced or kept</th></tr></thead>
+<tbody>
+<tr><td>Host contract with clock, IDs, deadlines, storage and central; no crypto</td><td>The same, plus a required <code>crypto</code></td><td>Kept and extended</td></tr>
+<tr><td>Six core sites calling the runtime's crypto</td><td>Each uses the handed-in <code>crypto</code></td><td>Replaced</td></tr>
+<tr><td><code>page-document.tsx</code> minting a version-4-UUID nonce</td><td><code>mintPageNonce</code> from 16 host bytes, only for rendered pages</td><td>Replaced</td></tr>
+<tr><td>The architecture check: runtime imports and Cloudflare names, <code>.ts</code> only</td><td>The same rules, plus <code>.tsx</code> in the core, a core runtime-global rule, and a test-time rule</td><td>Kept and extended</td></tr>
+<tr><td>Five real-time bounds in the browser-test protocol helper</td><td>Event waits only</td><td>Replaced</td></tr>
+<tr><td>Real-clock rows in <code>authorization-fence.host.e2e.test.ts</code></td><td>Controlled-clock rows</td><td>Replaced</td></tr>
+<tr><td>Hegel: claims round trip, record histories</td><td>The same, plus token-kind dispatch</td><td>Kept and extended</td></tr>
+<tr><td>Flood "limited" on a stand-in; the stand-in option and switch</td><td>"Limited" on Miniflare's binding; the stand-in deleted</td><td>Replaced</td></tr>
+<tr><td>Spot ID checks in host tests</td><td>Those, plus a full readback</td><td>Kept and extended</td></tr>
+<tr><td>The agent journey</td><td>Unchanged, re-run on the final build</td><td>Kept</td></tr>
+<tr><td>The existing known-answer tests (digests, thumbprint, DPoP)</td><td>Unchanged except for passing a crypto</td><td>Kept</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="open">Open for you</h2>
+<p><strong>None.</strong> If anything above isn't what you meant, say which row, and it becomes a choice here.</p>
+</ex-document>
+</body>
+</html>

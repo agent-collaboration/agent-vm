@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B1-A · One sign-in core, injected and honestly tested · Audit</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
+  <a href="../../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
+  <a href="audit.html">B1-A · 1 Audit</a>
+  <a href="requirements.html">B1-A · 2 Requirements</a>
+  <a href="specification.html">B1-A · 3 Specification</a>
+  <a href="program-design.html">B1-A · 4 Program Design</a>
+  <a href="verification-design.html">B1-A · 5 Verification Design</a>
+  <a href="plan.html">B1-A · 6 Plan</a>
+  <a href="decisions.html">B1-A · 7 Decisions</a>
+</nav></ex-nav>
+<ex-document id="doc">
+<h1>B1-A · One sign-in core, injected and honestly tested: Audit</h1>
+<p>A full audit of what was built for this feature, and what needs fixing. <a href="../../2026-11-15-fleet-access-overview/index.html">Back to the Fleet access overview</a>. B1-A is the first B1 deliverable there, and B1-B (passkey sign-in) and B1-C (organizations finished) follow it.</p>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What you should check" tone="note" icon="shield-check">
+<p><strong>Six parts of your design are only partly true today</strong> (<a href="#state">the picture</a>):</p>
+<ul>
+<li>the core still takes crypto from the runtime;</li>
+<li>tests use real time in two places;</li>
+<li>one property-test family is missing;</li>
+<li>"limited" is proven on a stand-in;</li>
+<li>stored IDs are only spot-checked;</li>
+<li>the agent path hasn't been re-observed.</li>
+</ul>
+<p>The rows below say what "fully fixed" means for each.</p>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p><strong>None.</strong> Everything here is how the existing behaviour is built and proven.</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
+<p>The yardstick is your approved design (rules R30, R32, R33, R38 and R52, and needs U16, U23, U24, U25 and U42), with your words on the <a href="requirements.html#three">Requirements</a> page.</p>
+<p>The findings come from two places:</p>
+<ul>
+<li>the independent B1 review (<a href="../audit.html">B1 audit</a>, findings R1-X5, R1-X6 and R1-X7);</li>
+<li>my own reading of the code at switchboard <code>main</code> <code>f3b2b88b</code> on 15 Nov, which a Terra review then checked.</li>
+</ul>
+</ex-callout>
+
+<h2 id="state">What exists today</h2>
+<ex-mermaid id="state-pic" label="B1-A's parts and their state today" data-width="canvas"><script type="text/plain">
+flowchart TB
+  store["Storage, clock, IDs, deadlines from the host"] --> crypto["Crypto from the host"]
+  crypto --> check["Architecture check sees slips"]
+  check --> time["No wall clock in tests"]
+  time --> hegel["Hegel families"]
+  hegel --> flood["Limited on the real counter"]
+  flood --> ids["Every stored ID is v7"]
+  ids --> agents["Agent path re-observed"]
+  class store slot6
+  class crypto,check,time,flood slot5
+  class hegel,ids,agents slot2
+</script></ex-mermaid>
+<p><strong>Key:</strong> green works, rose is broken today, amber is partly there.</p>
+
+<h2 id="findings">What needs fixing, and what "fully fixed" means</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Part</th><th>Today (switchboard <code>f3b2b88b</code>)</th><th>Fully fixed means</th></tr></thead>
+<tbody>
+<tr><td><strong>Crypto from the host</strong> (R30)</td><td>Broken. Six core sites call the runtime's crypto:
+<ul>
+<li><code>page-document.tsx:181</code>;</li>
+<li><code>fleet-admin-forwarding.ts:156</code>;</li>
+<li><code>fleet-admin-proof.ts:53–121</code>;</li>
+<li><code>canonical-json.ts:36</code>;</li>
+<li><code>fleet-admin-operation.ts:134</code>;</li>
+<li><code>organization-stamp-renewal.ts:424</code>.</li>
+</ul>
+<code>SignInPlatform</code> has no crypto capability.</td><td>Every random value and crypto operation the core uses comes from a capability the host hands in. A recording run sees each one.</td></tr>
+<tr><td><strong>Architecture check</strong> (R30, U23)</td><td>Broken. It blocks runtime imports and Cloudflare-only names, but not shared globals (<code>crypto</code>, <code>Date.now</code>, <code>setTimeout</code>, <code>Math.random</code>), and it collects only <code>.ts</code> files (<code>collectFilesUnderDirectory</code>, lines 1272–1288).</td><td>A planted slip anywhere in the core's source, <code>.ts</code> or <code>.tsx</code>, including inside a <code>${…}</code> expression, fails the check.</td></tr>
+<tr><td><strong>No wall clock in tests</strong> (R33)</td><td>Broken:
+<ul>
+<li>five real-time bounds in <code>native-browser-protocol.ts</code> (84, 115, 148, 218, 274);</li>
+<li>rows built with <code>new Date()</code> and <code>Date.now()</code> in <code>authorization-fence.host.e2e.test.ts</code> (538–678);</li>
+<li>no scan outside unit tests.</li>
+</ul></td><td>Every wait is on an event, every time value comes from the controlled clock, and a scan fails on a planted real timer.</td></tr>
+<tr><td><strong>Hegel families</strong> (R33)</td><td>Partly there. The claims round trip (<code>person-identity-contracts.unit.test.ts:118</code>) and record histories exist. The token-kind dispatch family doesn't.</td><td>A dispatch family matches a model of today's rules on every generated case, and catches a planted mistake.</td></tr>
+<tr><td><strong>"Limited" on the real counter</strong> (R52)</td><td>Broken. On Cloudflare, the over-limit cases use a stand-in (<code>people-request-limits.host.e2e.test.ts:99, 152</code>), not Miniflare's binding, as journey SO2 says.</td><td>"Limited" is proven on Miniflare's real binding and fails without it. The stand-in is deleted.</td></tr>
+<tr><td><strong>Every stored ID is v7</strong> (R32)</td><td>Partly there. Individual IDs are checked in several host tests, with no full readback.</td><td>After a full journey, every ID column of every sign-in table holds only v7 UUIDs, on both databases.</td></tr>
+<tr><td><strong>Agent path</strong> (R38)</td><td>Partly there. The <code>agent</code> journey passed on earlier builds.</td><td>It passes on the final build of this feature.</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="inventory">Inventory: what was built, what went wrong, what replaces it</h2>
+<h3 id="built">What was built</h3>
+<table>
+<thead><tr><th>PR (merge commit)</th><th>Merged</th><th>What it built for this feature</th></tr></thead>
+<tbody>
+<tr><td>#4 (<code>0653bd36</code>)</td><td>31 Oct</td><td>The core-and-hosts split and Drizzle storage. Clock and IDs handed in by the host.</td></tr>
+<tr><td>#6 (<code>bf284dab</code>)</td><td>1 Nov</td><td>The Node host, beside Cloudflare's.</td></tr>
+<tr><td>#9 (<code>d4c47214</code>)</td><td>5 Nov</td><td>The flood limits, with the over-limit cases on a stand-in. The claims round-trip Hegel family. Spot ID checks.</td></tr>
+<tr><td>#10 (<code>6375b1e6</code>)</td><td>13 Nov</td><td>The sign-in pages, including <code>page-document.tsx</code>'s own nonce (first commit <code>66f478e6</code>, 5 Nov).</td></tr>
+<tr><td>#12 (<code>7e599dd9</code>)</td><td>14 Nov</td><td>Admin forwarding, the proof key, the intent and canonical-JSON digests, and stamp renewal, each with the runtime's crypto (first commits <code>9c93dbfb</code> and <code>96457cb0</code>, 8 Nov; <code>531a0408</code>, 11 Nov).</td></tr>
+<tr><td>#13 (<code>18cd339c</code>)</td><td>14 Nov</td><td>The native browser journey, with the protocol helper's real-time bounds.</td></tr>
+</tbody>
+</table>
+<h3 id="wrong">What went wrong</h3>
+<ul>
+<li><strong>Nobody added crypto to the host contract,</strong> so each new feature reached for the runtime's crypto. My acceptances of #10 and #12 didn't check R30.</li>
+<li><strong>The architecture check looks for runtime imports, not shared globals or <code>.tsx</code> files,</strong> so it couldn't catch any of this.</li>
+<li><strong>The browser test kept real-time bounds,</strong> and I accepted them in #13, against your rule.</li>
+<li><strong>The flood test used a stand-in,</strong> and I accepted it in #9, though your design names Miniflare's binding.</li>
+<li><strong>"Done" was claimed on narrow tests,</strong> not on your design's rows, so the missing Hegel family and ID readback weren't noticed.</li>
+</ul>
+<h3 id="replace">What replaces it</h3>
+<p>This feature. Each row above becomes "fully fixed" as the <a href="program-design.html">Program Design</a> describes and the <a href="verification-design.html">Verification Design</a> proves. The old code it replaces is removed: the six runtime-crypto calls, the five real-time bounds, the real-clock fixture rows, and the flood stand-in and its switch.</p>
+</ex-document>
+</body>
+</html>

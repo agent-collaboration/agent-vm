@@ -3,30 +3,35 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>B1-1 · Host supplies cryptography · Verification Design</title>
+<title>B1-A · One sign-in core, injected and honestly tested · Verification Design</title>
 <link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
 <script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
 </head>
 <body>
 <ex-nav for="doc"><nav slot="pages" aria-label="Pages">
-  <a href="../../index.html">B1 home</a>
-  <a href="requirements.html">B1-1 Requirements</a>
-  <a href="specification.html">B1-1 Specification</a>
-  <a href="program-design.html">B1-1 Program Design</a>
-  <a href="verification-design.html">B1-1 Verification Design</a>
-  <a href="brief.html">B1-1 Plan</a>
-  <a href="reviewer-packet.html">B1-1 Reviewer packet</a>
-  <a href="acceptance.html">B1-1 Acceptance</a>
+  <a href="../../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
+  <a href="audit.html">B1-A · 1 Audit</a>
+  <a href="requirements.html">B1-A · 2 Requirements</a>
+  <a href="specification.html">B1-A · 3 Specification</a>
+  <a href="program-design.html">B1-A · 4 Program Design</a>
+  <a href="verification-design.html">B1-A · 5 Verification Design</a>
+  <a href="plan.html">B1-A · 6 Plan</a>
+  <a href="decisions.html">B1-A · 7 Decisions</a>
 </nav></ex-nav>
 <ex-document id="doc">
-<h1>B1-1 · The host supplies all cryptography: Verification Design</h1>
-<p>How each rule on the <a href="specification.html">Specification</a> will be shown to hold, and what stays unproven. <strong>This is a plan: nothing here has been run.</strong> The paired Verifier runs these checks on the pinned PR commit. V1–V4 must each fail on their named wrong build. V5 is a regression check on the hosts it covers.</p>
+<h1>B1-A · One sign-in core, injected and honestly tested: Verification Design</h1>
+<p>How each rule on the <a href="specification.html">Specification</a> will be shown to hold, and what stays unproven. <strong>This is a plan: nothing here has been run.</strong></p>
+<ul>
+<li><strong>Who runs it:</strong> the paired Verifier, on the pinned PR commit.</li>
+<li><strong>Must fail on a named wrong build:</strong> V1–V4 and V6–V9.</li>
+<li><strong>Regression checks:</strong> V5 and V10, on the hosts and targets they name.</li>
+</ul>
 
 <h2 id="three">The three things for you</h2>
 <ex-callout title="1 · What you should check" tone="note" icon="shield-check">
-<p>Two checks carry the weight.</p>
-<p><strong><a href="#V2">V2</a>, the recording run</strong>, does what your proof row U23 asks. It drives each of the six sites with known inputs and checks that each one's exact operation and input appears in the record. So any one site left on the runtime's crypto fails it. The same run also records clock, ID and central calls.</p>
-<p><strong><a href="#V4">V4</a>:</strong> planted slips, including one inside a <code>.tsx</code> page and one hidden in a <code>${…}</code> template expression, must fail the architecture check.</p>
+<p><strong><a href="#V2">V2</a>, the recording run</strong>, does what your proof row U23 asks. It drives each of the six crypto sites with known inputs and checks that each one's exact operation and input appears in the record. So any one site left on the runtime's crypto fails it. The same run also records clock, ID and central calls.</p>
+<p><strong><a href="#V4">V4</a> and <a href="#V6">V6</a>:</strong> planted slips must fail the architecture check. They include one inside a <code>.tsx</code> page, one hidden in a <code>${…}</code> template expression, and a real timer in a test helper.</p>
+<p><strong><a href="#V8">V8</a>:</strong> removing Miniflare's counter from the Worker must make the "limited" case fail. <strong><a href="#V9">V9</a>:</strong> a planted version-4 ID must fail the readback.</p>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
 <p><strong>None for people.</strong> <a href="#V3">V3</a> checks against fixed known values, including central's own shared vectors, that nothing anyone sees has changed.</p>
@@ -34,6 +39,13 @@
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
 <p>Every check traces to your rule R30 and your proof row U23 (<a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/verification-design.source.html">approved Verification Design</a>, line 278): <em>"Run SO2 on both hosts; run the core with recording capabilities and a pinned process clock … every clock, identifier, crypto and central call is recorded; no platform global in the core outside the Better Auth boundary module, and a Node or Worker import placed in a sign-in-core source file makes the audit fail; the device-code approval rule is in the core."</em></p>
 <p>What this deliverable proves of that row, and what it leaves to others, is in <a href="#u23">the U23 split</a> at the end.</p>
+<p>The other checks trace to your proof rows in the same file:</p>
+<ul>
+<li><strong>U25</strong> (line 280): <em>"A scan finds no real-clock read, real-time wait or real timer in the sign-in tests, helpers or harness"</em>.</li>
+<li><strong>U24</strong> (line 279).</li>
+<li><strong>U42</strong> and journey SO2's flood paragraph: <em>"Miniflare's binding keeps its own clock: locally it proves 'limited', the window reset is proven through the core's limiter on a controlled clock"</em>.</li>
+<li><strong>SO2's</strong> "today's agent path still works".</li>
+</ul>
 </ex-callout>
 
 <h2 id="paths">Where each check looks</h2>
@@ -174,6 +186,66 @@ flowchart TB
   The browser test still carries B1-2's real-timer defect until B1-2 lands. That affects how it waits, not what it checks here.</li>
 </ul>
 
+<h3 id="V6">V6 · No sign-in test reads the real clock or waits on real time (S7)</h3>
+<p><strong>Proven by:</strong> planting real-time calls in test sources and seeing the scan reject them, then running the scan over the real tree, plus the browser journey passing with event waits only.</p>
+<ul>
+<li><strong>Tests:</strong> new cases in <code>scripts/audit-portal-architecture.unit.test.ts</code>:
+  <ul>
+  <li><strong>Rejected:</strong> <code>setTimeout</code> in a file under <code>packages/sign-in-test-support/src/</code>; <code>Date.now()</code> in a <code>*.host.e2e.test.ts</code>; <code>new Date()</code> in <code>scripts/verify-auth/</code>; <code>performance.now()</code>; <code>setInterval</code>; <code>typeof setTimeout</code> in a type.</li>
+  <li><strong>Accepted:</strong> <code>vi.useFakeTimers()</code>, <code>vi.setSystemTime(…)</code>, <code>vi.spyOn(globalThis, 'setInterval')</code>, <code>toFake: ['setTimeout']</code>, <code>new Date(controlledSignInClock.now())</code>.</li>
+  </ul></li>
+<li><strong>The real tree:</strong> the PR's checker, run over the base commit's sign-in tests, reports the five <code>native-browser-protocol.ts</code> bounds (lines 84, 115, 148, 218, 274) and the <code>authorization-fence.host.e2e.test.ts</code> rows (lines 538, 548, 549, 560, 567, 678). Run over the PR's tree, it reports nothing.</li>
+<li><strong>Behaviour:</strong> <code>sign-in-native-browser.host.e2e.test.ts</code> passes on both storage hosts with the event-only protocol helper.</li>
+<li><strong>The fixture's validity:</strong> <code>authorization-fence.host.e2e.test.ts</code> passes with its invitation's expiry taken from the controlled clock.</li>
+<li><strong>Fails on:</strong> a test helper that keeps a <code>setTimeout</code> bound, or a fixture built with <code>Date.now()</code>.</li>
+<li><strong>Reference:</strong> R33 and proof row U25.</li>
+<li><strong>Unverified:</strong> how a genuinely hung Chrome is ended. That's the test runner's job limit, configuration outside test code, and it isn't exercised here.</li>
+</ul>
+
+<h3 id="V7">V7 · The Hegel families (S8)</h3>
+<p><strong>Proven by:</strong> the new token-kind dispatch family agreeing with its model on every generated case, and failing when the code admits a combination the model refuses.</p>
+<ul>
+<li><strong>Test:</strong> new <code>packages/sign-in-core/src/response-release/sign-in-response-release.unit.test.ts</code> (unit lane), with Hegel <code>derandomize: true</code> and no stored example database.</li>
+<li><strong>Passes when:</strong> for every generated combination of grant, audience, client, refresh credential and session state, the status and error code from <code>releaseSignInResponse</code> equal the model's.</li>
+<li><strong>Fails on:</strong> a deliberate mutation, run by the Verifier and then reverted, that removes the owner-fleet-CLI check on refresh credentials (<code>sign-in-response-release.ts</code>, the <code>ownerFleetCliClientId</code> comparison). Hegel must find a case where a refresh credential is released to another client.</li>
+<li><strong>The existing family</strong> (claims round trip, <code>person-identity-contracts.unit.test.ts:118</code>) keeps passing.</li>
+<li><strong>Reference:</strong> R33 and journey SO2's dispatch rows.</li>
+<li><strong>Unverified:</strong> the device-code family (B3).</li>
+</ul>
+
+<h3 id="V8">V8 · "Limited" on Miniflare's real counter; reset on the controlled clock (S9)</h3>
+<p><strong>Proven by:</strong> the over-limit cases passing on Miniflare's real binding, and failing when the binding is taken out.</p>
+<ul>
+<li><strong>Tests:</strong> <code>people-request-limits.host.e2e.test.ts</code>, the cases at lines 96 and 149, now on the real binding, in <code>pnpm test:e2e:host</code>. The existing reset cases run on the core's limiter with the controlled clock.</li>
+<li><strong>Passes when:</strong> from one address, past the limit, the next request gets 429 with <code>Retry-After</code>, and every sign-in row fingerprint reads back unchanged. Another address still passes. A forged <code>x-forwarded-for</code> is ignored.</li>
+<li><strong>Fails on:</strong> a deliberate mutation, run by the Verifier and then reverted, where the Worker's limiter is built without the binding (<code>createBindingRequestLimiter</code> answering allowed). The "limited" case must then fail.</li>
+<li><strong>Reference:</strong> R52 and journey SO2's flood paragraph.</li>
+<li><strong>Unverified:</strong>
+  <ul>
+  <li>the binding's own reset, and counting across Cloudflare locations, which are checked on the private stack;</li>
+  <li>the rare case of a burst crossing Miniflare's real-clock window (<a href="decisions.html#flood-clock">Decisions</a>).</li>
+  </ul></li>
+</ul>
+
+<h3 id="V9">V9 · Every stored ID is a UUIDv7 (S10)</h3>
+<p><strong>Proven by:</strong> reading back every ID column of every sign-in table after a full people journey, on both databases, and finding only version-7 UUIDs.</p>
+<ul>
+<li><strong>Test:</strong> new <code>packages/sign-in-test-support/src/stored-identifier-readback.host.e2e.test.ts</code> (host e2e lane), on D1 and on better-sqlite3.</li>
+<li><strong>Passes when:</strong> every UUID-shaped value in an <code>id</code>, <code>…Id</code> or <code>…_id</code> column parses as <code>z.uuidv7()</code>, and no token, secret, backup code, device code or user code is UUID-shaped.</li>
+<li><strong>Fails on:</strong> a deliberate mutation, run by the Verifier and then reverted, that inserts one row with a version-4 ID through the normal store. The test must name its table and column.</li>
+<li><strong>Reference:</strong> R32 and proof row U24.</li>
+<li><strong>Unverified:</strong> IDs stored only by flows this journey doesn't reach. Machine login is B3's.</li>
+</ul>
+
+<h3 id="V10">V10 · Today's agents still work; people get no tool credential (S11): a regression check</h3>
+<p><strong>Proven by:</strong> the existing <code>verify-auth</code> <code>agent</code> journey passing on the final build of this feature.</p>
+<ul>
+<li><strong>Command:</strong> <code>pnpm exec tsx scripts/verify-auth/verify-auth.ts agent --target-file "$AUTH_VERIFY_TARGET_FILE"</code>, with a <code>local-workerd</code> target, as the skill describes.</li>
+<li><strong>Passes when:</strong> the agent gets its token, makes one allowed tool call, and a live person is refused a tool credential, with the journey's own storage assertions passing.</li>
+<li><strong>Reference:</strong> R38 and journey SO2.</li>
+<li><strong>Unverified:</strong> the agent path on the Node host, which the journey reaches only through its Node bridge, as today.</li>
+</ul>
+
 <h2 id="u23">The U23 split: what this deliverable proves, and what it leaves</h2>
 <table>
 <thead><tr><th>Part of proof row U23</th><th>Here?</th></tr></thead>
@@ -192,9 +264,13 @@ flowchart TB
 <tbody>
 <tr><td><strong>U23</strong> one runtime-free core, injected</td><td><a href="specification.html#S1">S1</a>, <a href="specification.html#S2">S2</a>, <a href="specification.html#S3">S3</a>, <a href="specification.html#S5">S5</a>, <a href="specification.html#S6">S6</a></td><td><code>SignInPlatform.crypto</code>, <code>mintPageNonce</code>, the changed functions and props, <code>collectAuthCoreViolations</code></td><td>V1, V2, V3, V4, V5</td><td>switchboard PR head; Node 24.7.0; <code>better-auth</code> 1.7.11; hosts per V5's table; Chrome version recorded</td><td>V1–V4 each failing on their wrong build; V5 passing on its hosts</td><td>Deployed hosts; real central; the parts of U23 named in <a href="#u23">the split</a>; exotic aliasing beyond source reads</td></tr>
 <tr><td><strong>U16</strong> one design on any host</td><td><a href="specification.html#S4">S4</a></td><td><code>createWebSignInCapabilities</code></td><td>V5, the source read, V4's type mutation</td><td>As V5</td><td>The hosts pass with the capability handed in by the shared builder, and add no crypto code</td><td>Deployed hosts</td></tr>
+<tr><td><strong>U25</strong> no wall clock; Hegel</td><td><a href="specification.html#S7">S7</a>, <a href="specification.html#S8">S8</a></td><td>event waits in <code>native-browser-protocol.ts</code>; controlled-clock rows; the test-time rule; the dispatch family</td><td>V6, V7</td><td>Unit lane; host e2e on both storage hosts</td><td>The scan is clean on the PR tree and catches the planted calls; the family matches its model and catches the mutation</td><td>How a hung Chrome is ended (runner configuration); the device-code family (B3)</td></tr>
+<tr><td><strong>U42</strong> flood limits</td><td><a href="specification.html#S9">S9</a></td><td><code>startLocalAuthHarness</code> real binding; <code>createBindingRequestLimiter</code></td><td>V8</td><td>Local workerd with Miniflare's binding; both hosts for the reset</td><td>"Limited" with nothing changed; failing without the binding</td><td>The binding's reset and cross-location counting (private stack); the window-boundary risk</td></tr>
+<tr><td><strong>U24</strong> UUIDv7 only</td><td><a href="specification.html#S10">S10</a></td><td>a Drizzle read of every <code>signInSchema</code> table</td><td>V9</td><td>D1 and better-sqlite3</td><td>Only v7 IDs; no UUID-shaped secrets; the planted v4 is caught</td><td>Flows the journey doesn't reach (B3)</td></tr>
+<tr><td><strong>R38</strong> agents unchanged</td><td><a href="specification.html#S11">S11</a></td><td>the existing agent path</td><td>V10</td><td><code>local-workerd</code> target</td><td>The agent journey passes on the final build</td><td>The Node bridge path</td></tr>
 </tbody>
 </table></div>
-<p><strong>Journeys needed:</strong> none new. The recording run (V2) is a new permanent integration test.</p>
+<p><strong>Journeys needed:</strong> none new. New permanent tests: the recording run (V2), the dispatch family (V7) and the ID readback (V9).</p>
 </ex-document>
 </body>
 </html>

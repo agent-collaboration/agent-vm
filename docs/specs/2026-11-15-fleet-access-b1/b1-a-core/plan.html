@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B1-A · One sign-in core, injected and honestly tested · Plan</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
+  <a href="../../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
+  <a href="audit.html">B1-A · 1 Audit</a>
+  <a href="requirements.html">B1-A · 2 Requirements</a>
+  <a href="specification.html">B1-A · 3 Specification</a>
+  <a href="program-design.html">B1-A · 4 Program Design</a>
+  <a href="verification-design.html">B1-A · 5 Verification Design</a>
+  <a href="plan.html">B1-A · 6 Plan</a>
+  <a href="decisions.html">B1-A · 7 Decisions</a>
+</nav></ex-nav>
+<ex-document id="doc">
+<h1>B1-A · One sign-in core, injected and honestly tested: Plan</h1>
+<p>How B1-A gets built, verified, reviewed and accepted, with the four packets written out in full. <strong>Status: designed, not started.</strong> It waits on your go-ahead, and under your stop nothing is built.</p>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What you should check" tone="note" icon="shield-check">
+<ul>
+<li><strong><a href="#acceptance">The acceptance map</a>:</strong> each of the eleven rules goes to its check and its evidence, and nothing is accepted from a summary.</li>
+<li><strong><a href="#reviewer">The reviewer's packet</a>:</strong> your words and your design are the yardstick, my records are only claims, and the first question is "what does this drop?"</li>
+<li><strong>Anything not delivered comes to you before I accept.</strong></li>
+</ul>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p><strong>None.</strong> One recorded risk and one settled fact are on the <a href="decisions.html">Decisions</a> page.</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
+<p>The process is the one you set on 15 Nov. You said acceptance is against your design, <em>"accepts to my aprpoved fuckign deisng"</em> (<a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl">Fleet transcript</a> line 131608). You asked for the packets to be specified with locations (line 133987). Lead A relayed the rest: packets "fully understandable on how they gonna build".</p>
+</ex-callout>
+
+<h2 id="flow">From go-ahead to accepted</h2>
+<ex-mermaid id="flow-pic" label="B1-A from go-ahead to accepted" data-width="canvas"><script type="text/plain">
+flowchart TB
+  go["You give B1-A its go-ahead"] --> impl["Implementer builds, in the order below<br/>work/implementer-handback.md"]
+  impl --> ver["Verifier runs V1 to V10 and the mutations<br/>work/verifier-observation.md and evidence"]
+  ver --> check["Lead checks code and evidence<br/>work/lead-check.html"]
+  check --> rev["Fresh Sol reviewer from its packet<br/>work/reviewer-report.html"]
+  rev --> acc["Lead acceptance map filled<br/>work/lead-acceptance.html"]
+  acc --> gap{"Anything not delivered?"}
+  gap -->|"yes"| you["Comes to you first"]
+  gap -->|"no"| done["B1-A accepted; B1-B may start"]
+  class go,you,done slot6
+  class impl slot3
+  class ver slot4
+  class check,acc slot2
+  class rev slot1
+</script></ex-mermaid>
+<p><strong>Key:</strong> green is you and the outcome, teal the Implementer, violet the Verifier, amber me, blue the reviewer.</p>
+<p><strong>Where everything lives:</strong> every file the roles return goes in <code>docs/specs/2026-11-15-fleet-access-b1/b1-a-core/work/</code> (the "work folder" below), in the agent-vm worktree <code>/Users/shravansunder/code/projects/agent-vm.design-portal-remediation</code>. The code is in switchboard, <code>/Users/shravansunder/code/projects/switchboard</code>, on a new branch from <code>main</code> in an Agent Studio worktree.</p>
+
+<h2 id="implementer">Packet 1 · The Implementer (Opus high)</h2>
+<p><strong>You build B1-A.</strong> Read these first: the <a href="specification.html">Specification</a> (rules S1–S11), the <a href="program-design.html">Program Design</a> (every file and type), the <a href="verification-design.html">Verification Design</a> (what must pass), and switchboard <code>AGENTS.md</code>. Your paired Verifier's address is filled in here at go-ahead.</p>
+<h3 id="order">The order of the work</h3>
+<ol>
+<li><strong>The contract.</strong> Add <code>SignInCrypto</code> and the required <code>SignInPlatform.crypto</code> to <code>packages/sign-in-core/src/contracts/sign-in-platform.ts</code>. Make <code>createWebSignInCapabilities</code> in <code>packages/sign-in-platform-web/src/index.ts</code> take an optional <code>crypto</code> and return it, defaulting to <code>globalThis.crypto</code>, and update its README line. Run <code>pnpm typecheck</code>: every place that builds a platform now fails, and that's your list for step 2.</li>
+<li><strong>Thread crypto through.</strong> Make every change in <a href="program-design.html#changes">the change table</a>:
+  <ul>
+  <li><code>fleet-admin-proof.ts</code> (five functions); <code>fleet-admin-operation.ts</code> (two); <code>canonical-json.ts</code>;</li>
+  <li><code>organization-stamp-renewal.ts</code> (its props and its reader), and <code>organization-statement-plugin.ts</code> (its builder);</li>
+  <li><code>fleet-admin-forwarding.ts</code> (both picks, and the verifier on line 156);</li>
+  <li>the owner CLI's <code>FleetCliIo</code>, <code>nodeFleetCliEnvironment</code> and the three key stores.</li>
+  </ul>
+  Add the test fixture <code>packages/sign-in-test-support/src/test-fixtures/recording-sign-in-capabilities.ts</code>, and give every test platform builder a crypto.</li>
+<li><strong>The page nonce.</strong> Add <code>packages/sign-in-core/src/contracts/page-nonce.ts</code> (<code>PageNonce</code>, <code>mintPageNonce</code>):
+  <ul>
+  <li>make <code>pageDocument</code> require <code>nonce</code>;</li>
+  <li><code>renderOwnerPage</code> and <code>renderFactorPage</code> pass it through;</li>
+  <li><code>minimalOwnerPage</code> mints it, and <code>renderFactorFormResponse</code> mints it only on its render branch;</li>
+  <li><code>sign-in-http-handler.ts</code> passes <code>configuration.platform.crypto</code> at lines 272, 346 and 391.</li>
+  </ul></li>
+<li><strong>The check.</strong> In <code>scripts/audit-portal-architecture.ts</code>:
+  <ul>
+  <li>collect <code>.tsx</code> under <code>packages/sign-in-core/src/</code>;</li>
+  <li>add the core runtime-global rule (including inside <code>${…}</code>);</li>
+  <li>add the test-time rule for the sign-in tests.</li>
+  </ul>
+  Add their cases to <code>scripts/audit-portal-architecture.unit.test.ts</code>.</li>
+<li><strong>No wall clock in tests.</strong> Turn the five bounds in <code>native-browser-protocol.ts</code> into event waits, as <a href="program-design.html#time-protocol">the table</a> says. Build the <code>authorization-fence.host.e2e.test.ts</code> rows from <code>controlledSignInClock</code>.</li>
+<li><strong>Hegel.</strong> Add <code>packages/sign-in-core/src/response-release/sign-in-response-release.unit.test.ts</code> with the dispatch family and its model (<a href="program-design.html#hegel">Program Design</a>).</li>
+<li><strong>Flood.</strong> Switch the cases at lines 96 and 149 of <code>people-request-limits.host.e2e.test.ts</code> to the real binding. Delete the <code>controlled-stand-in</code> option from <code>local-auth-harness.ts</code> (145, 610, 754) and the switch in <code>auth-proof-rate-limit-bindings.ts</code> (42–46).</li>
+<li><strong>IDs.</strong> Add <code>packages/sign-in-test-support/src/stored-identifier-readback.host.e2e.test.ts</code> (<a href="program-design.html#ids">Program Design</a>).</li>
+<li><strong>Gates.</strong> Run <code>pnpm check</code>, <code>pnpm test:unit</code>, <code>pnpm test:integration</code> and <code>pnpm test:e2e:host</code>. Open the PR as a draft.</li>
+</ol>
+<h3 id="may-change">You may change</h3>
+<p>Every file named in steps 1–8, plus:</p>
+<ul>
+<li>the existing tests that call a changed function, argument or field only, with assertions unchanged. They're listed in <a href="program-design.html#tests-become">what tests become</a>, including <code>proof-key-store.unit.test.ts</code> and <code>b2e-joint-journey.host.e2e.test.ts</code>;</li>
+<li>any other in-repo caller that <code>pnpm typecheck</code> flags because of the new <code>crypto</code>, argument or field only. List each one in your handback.</li>
+</ul>
+<p><strong>You may not change:</strong> any other check script or CI workflow, storage or migrations, or any token, proof, digest or page-policy format. <strong>Stop and come back</strong> if a fix needs anything outside this list, or if you think the design is wrong.</p>
+<h3 id="impl-returns">You return</h3>
+<p><code>work/implementer-handback.md</code>. It holds:</p>
+<ul>
+<li>the PR number and head commit;</li>
+<li>each gate command with its counts and exit code;</li>
+<li>every extra caller you touched;</li>
+<li>what you couldn't do;</li>
+<li>anywhere you think the design is wrong.</li>
+</ul>
+
+<h2 id="verifier">Packet 2 · The Verifier (Sol high, a different model)</h2>
+<p><strong>You prove B1-A, and you never repair product code.</strong> Read the <a href="verification-design.html">Verification Design</a> and the <a href="specification.html">Specification</a>. Load switchboard's <code>.agents/skills/verify-auth/</code>. Run each check yourself on the PR head commit the Implementer names. Never use the Implementer's results as proof.</p>
+<h3 id="runs">What you run, where, and what passing looks like</h3>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Check</th><th>Command and target</th><th>Passes when</th><th>The deliberate break you run, then revert</th></tr></thead>
+<tbody>
+<tr><td><a href="verification-design.html#V1">V1</a> nonce</td><td><code>pnpm test:unit</code> (the page-nonce and page cases)</td><td>The nonce equals the fixed bytes. One draw per rendered page. None for JSON, a redirect or a pass-through.</td><td>Mint in the handler before rendering: the pass-through case must fail.</td></tr>
+<tr><td><a href="verification-design.html#V2">V2</a> recording</td><td><code>pnpm test:integration</code> (<code>host-crypto-recording.integration.test.ts</code>), process clock pinned</td><td>Each site's operation and input is in the record. The PKCE verifier and challenge match the fixed bytes.</td><td>Put each of the six sites back on <code>globalThis.crypto</code>, one at a time: each must fail with that site named.</td></tr>
+<tr><td><a href="verification-design.html#V3">V3</a> known answers</td><td><code>pnpm test:unit</code></td><td>Every known value is identical.</td><td>Change the digest encoding: the canonical-JSON constant must fail.</td></tr>
+<tr><td><a href="verification-design.html#V4">V4</a> core check</td><td><code>pnpm test:unit</code> (audit cases); the PR's checker over the base commit's core source; <code>pnpm typecheck</code></td><td>The planted slips are rejected and the look-alikes accepted. The base tree reports exactly the six sites, and the PR tree none.</td><td>Remove <code>crypto</code> from the builder's return, and make <code>SignInPlatform.crypto</code> optional: both must fail type-checking.</td></tr>
+<tr><td><a href="verification-design.html#V5">V5</a> hosts (regression)</td><td><code>pnpm test:e2e:host</code>; <code>verify-auth.ts organization</code> with a <code>local-workerd</code> and then a <code>local-node</code> target</td><td>Every case passes on the hosts each covers. The host diffs add no crypto code (read them).</td><td>None (regression).</td></tr>
+<tr><td><a href="verification-design.html#V6">V6</a> no wall clock</td><td><code>pnpm test:unit</code> (audit cases); the PR's checker over the base commit's tests; <code>pnpm test:e2e:host</code></td><td>The planted timers are rejected. The base tree reports the five bounds and the fence rows, and the PR tree none. The browser journey passes on both hosts.</td><td>Put back one <code>setTimeout</code> bound: the scan must fail.</td></tr>
+<tr><td><a href="verification-design.html#V7">V7</a> Hegel</td><td><code>pnpm test:unit</code></td><td>The dispatch family matches its model.</td><td>Remove the owner-fleet-CLI refresh check: the family must find a failing case.</td></tr>
+<tr><td><a href="verification-design.html#V8">V8</a> flood</td><td><code>pnpm test:e2e:host</code> (<code>people-request-limits</code>)</td><td>429 with <code>Retry-After</code> and nothing changed, on the real binding. Another address passes.</td><td>Build the Worker's limiter without the binding: the "limited" case must fail.</td></tr>
+<tr><td><a href="verification-design.html#V9">V9</a> IDs</td><td><code>pnpm test:e2e:host</code> (<code>stored-identifier-readback</code>), D1 and better-sqlite3</td><td>Only v7 IDs, and no UUID-shaped secrets.</td><td>Insert one v4 ID through the normal store: the test must name its table and column.</td></tr>
+<tr><td><a href="verification-design.html#V10">V10</a> agents (regression)</td><td><code>verify-auth.ts agent</code>, <code>local-workerd</code> target</td><td>The agent gets its token and makes one allowed call. A person is refused.</td><td>None (regression).</td></tr>
+</tbody>
+</table></div>
+<p><strong>Versions to record:</strong> the switchboard commit, Node 24.7.0, <code>better-auth</code> 1.7.11, miniflare 5.20260815.0-alpha, and the Chrome version. Heavy runs go to Sunclaw.</p>
+<h3 id="ver-returns">You return</h3>
+<p><code>work/verifier-observation.md</code>, plus the evidence folder <code>work/evidence/</code>.</p>
+<ul>
+<li><strong>The observation:</strong> for each check, the command, counts, exit code and what you saw. For each deliberate break, that it failed, then passed again after the revert.</li>
+<li><strong>The evidence folder:</strong> logs and file hashes, with no secrets.</li>
+</ul>
+
+<h2 id="reviewer">Packet 3 · The reviewer (a fresh Sol xhigh session, no history of this work)</h2>
+<p><strong>You judge whether B1-A was built as the owner agreed.</strong> Load these first:</p>
+<ul>
+<li><code>sunstack-workflow-v2:role-checker</code> and <code>design-review</code>;</li>
+<li><code>sunstack-dev:principle-verify-before-accepting</code>, <code>principle-prove-it-works</code> and <code>principle-write-tests-that-can-fail</code>;</li>
+<li><code>presentation-html</code>, for your report.</li>
+</ul>
+<ex-callout title="Your first question" tone="question" icon="users">
+<p><strong>What does this change drop that the owner's words, the earlier designs or the old tests had?</strong> Answer it first, as a list.</p>
+</ex-callout>
+<h3 id="rev-how">How B1-A is built, in short</h3>
+<p>The core gets a required <code>crypto</code> capability. Six sites and their callers use it, including the page nonce, admin forwarding, the proof key, three digests and the CLI. The architecture check rejects runtime crypto, clock and timers in the core, and real time in the sign-in tests. Tests drop their real-time bounds and real-clock fixtures. A Hegel family covers token-kind dispatch. The flood cases move to Miniflare's real binding, and the stand-in is deleted. A new test reads back every stored ID. The full detail is <a href="#order">the Implementer's order above</a> and the <a href="program-design.html">Program Design</a>.</p>
+<h3 id="rev-gets">Exactly what you get</h3>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Item</th><th>Where</th><th>Used as</th></tr></thead>
+<tbody>
+<tr><td>The owner's words</td><td><a href="requirements.html#three">B1-A Requirements</a>, quoting <code>docs/specs/2026-11-02-fleet-access/requirements.source.html</code> lines 172–176; approval at Fleet transcript lines 71226 and 71230</td><td>The yardstick</td></tr>
+<tr><td>The approved design</td><td><code>docs/specs/2026-11-02-fleet-access/specification.source.html</code> (R30 at 277, R32 at 279, R33 at 280, R52 at 270, R38 at 184); <code>verification-design.source.html</code> (U23–U25 at 278–280, U42, and journey SO2); the seven B1-A pages</td><td>The yardstick</td></tr>
+<tr><td>Earlier designs for the area</td><td><code>docs/specs/2026-11-02-fleet-access/program-design.source.html</code> (the sign-in core and hosts); <code>deliverables/b1-people-roles-sign-in.source.html</code>; the 30 Oct assumption pages in <code>tmp/2026-10-30-lead-pages/</code></td><td>To find what the change drops</td></tr>
+<tr><td>The old code and tests</td><td>switchboard at the base commit (<code>f3b2b88b</code> unless <code>main</code> moves): every file in <a href="program-design.html#changes">the change table</a> and <a href="program-design.html#tests-become">what tests become</a></td><td>To find what the change drops</td></tr>
+<tr><td>The independent audit</td><td><a href="audit.html">B1-A Audit</a>; <a href="../audit.html">B1 audit</a> (R1-X5, R1-X6, R1-X7)</td><td>What was wrong before</td></tr>
+<tr><td>The PR and versions</td><td>The PR number and head commit, filled in at handoff; versions as in the Verifier packet</td><td>What is judged</td></tr>
+<tr><td>The evidence</td><td><code>work/verifier-observation.md</code> and <code>work/evidence/</code></td><td>Claims to re-check against the code</td></tr>
+<tr><td>The report format</td><td><code>docs/specs/2026-11-15-fleet-access-overview/report-format.md</code></td><td>Your report's layout</td></tr>
+<tr><td>Lead and Implementer records</td><td>this Plan, <code>work/implementer-handback.md</code>, <code>work/lead-check.html</code></td><td><strong>Claims to audit only, never the standard</strong></td></tr>
+</tbody>
+</table></div>
+<h3 id="rev-steps">How you validate</h3>
+<ol>
+<li>Answer the first question.</li>
+<li>For each rule S1–S11, read the rule and the owner's linked words, and write down what "done" means before opening the code.</li>
+<li>Read the code at the pinned commit, not the PR description. Search the whole of <code>packages/sign-in-core/src/</code> and the sign-in tests for any remaining runtime crypto, clock or timer, including aliasing.</li>
+<li>Open the evidence. Check that it ran on that commit, on the hosts named, that V1–V4 and V6–V9 failed on their deliberate breaks, and that the old code is gone: the six global calls, the five bounds, the fixture rows, and the stand-in.</li>
+<li>Any place the Plan, the handback or my check narrows, defers or reinterprets a rule is a finding. Never adopt it.</li>
+<li>A decision counts as the owner's only with a link to his words.</li>
+</ol>
+<p><strong>You return</strong> <code>work/reviewer-report.html</code>, in the shared format, ending READY or NOT READY. Every finding cites the rule, the owner's words where they apply, and the code line.</p>
+
+<h2 id="acceptance">Packet 4 · Lead acceptance (what I hold, and the map)</h2>
+<p><strong>Before the review,</strong> I open the diff and the evidence myself and write <code>work/lead-check.html</code>, filling the map below. The reviewer gets it as a claim.</p>
+<p><strong>To accept, I hold:</strong></p>
+<ul>
+<li>this map;</li>
+<li>the Verifier's observation and evidence;</li>
+<li>the reviewer's report, with every finding fixed, rejected with evidence, or brought to you.</li>
+</ul>
+<p><strong>I write</strong> <code>work/lead-acceptance.html</code>. <strong>Anything not delivered comes to you before I accept.</strong></p>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Rule</th><th>Check</th><th>Evidence (file and line)</th><th>Accepted?</th></tr></thead>
+<tbody>
+<tr><td><a href="specification.html#S1">S1</a> random from the host</td><td>V1, V2</td><td>Not started</td><td>Not started</td></tr>
+<tr><td><a href="specification.html#S2">S2</a> hashing, keys, signing via the host</td><td>V2</td><td>Not started</td><td>Not started</td></tr>
+<tr><td><a href="specification.html#S3">S3</a> capability required</td><td>V4 (type mutations)</td><td>Not started</td><td>Not started</td></tr>
+<tr><td><a href="specification.html#S4">S4</a> hosts add no rule</td><td>V5; the host-diff read</td><td>Not started</td><td>Not started</td></tr>
+<tr><td><a href="specification.html#S5">S5</a> formats unchanged</td><td>V3</td><td>Not started</td><td>Not started</td></tr>
+<tr><td><a href="specification.html#S6">S6</a> the core check</td><td>V4</td><td>Not started</td><td>Not started</td></tr>
+<tr><td><a href="specification.html#S7">S7</a> no wall clock in tests</td><td>V6</td><td>Not started</td><td>Not started</td></tr>
+<tr><td><a href="specification.html#S8">S8</a> Hegel families</td><td>V7</td><td>Not started</td><td>Not started</td></tr>
+<tr><td><a href="specification.html#S9">S9</a> "limited" on the real counter</td><td>V8</td><td>Not started</td><td>Not started</td></tr>
+<tr><td><a href="specification.html#S10">S10</a> every stored ID v7</td><td>V9</td><td>Not started</td><td>Not started</td></tr>
+<tr><td><a href="specification.html#S11">S11</a> agents unchanged</td><td>V10</td><td>Not started</td><td>Not started</td></tr>
+<tr><td>Old code removed</td><td>Source read</td><td>Not started</td><td>Not started</td></tr>
+<tr><td>Gates and CI</td><td><code>pnpm check</code>, <code>test:unit</code>, <code>test:integration</code>, <code>test:e2e:host</code>; PR checks</td><td>Not started</td><td>Not started</td></tr>
+<tr><td>Independent review</td><td><code>work/reviewer-report.html</code> READY</td><td>Not started</td><td>Not started</td></tr>
+</tbody>
+</table></div>
+</ex-document>
+</body>
+</html>
