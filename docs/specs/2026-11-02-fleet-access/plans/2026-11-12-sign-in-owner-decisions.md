@@ -1375,3 +1375,16 @@ The workspace id equals the operation id.
   - the Lead explaining the design to the owner.
 - **Helpers:** the Implementer holds (no commits, pushes or builds). The Verifier does verification only.
 - **Resumes only** when the owner says the design is understood, and on the owner's explicit go.
+
+### OWNER: a separate design per deliverable, step by step (2026-11-15T14:55Z)
+**Owner (first-hand):** "every deliverable is gonna have separate design we gonna do step by step. every design needs a full audit section of what's there and what needs to be fully fixed".
+- **Each deliverable gets its own design page (HTML):**
+  1. purpose and diagram;
+  2. approved obligations;
+  3. owner decisions (first-hand) and open questions;
+  4. **audit**: status diagram; what exists and at what proof level; what needs fixing, with "fully fixed means"; acceptance as done versus as it should have been; the Lead's decisions and their verdicts;
+  5. a proposed fix plan, with verification against the VD;
+  6. the owner's decisions for that step.
+- **Order (Lead's call, dependency order):** B1 → B2 → B2-additions → BG → B3. One at a time; the next starts after the owner understands and decides.
+- **Source:** the full review reports, in the shared format with sections per deliverable.
+- **Still under the owner's stop:** design and review only, no development.
