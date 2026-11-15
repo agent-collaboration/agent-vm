@@ -1259,3 +1259,10 @@ The workspace id equals the operation id.
     3. Then a fresh login (new code and approval) succeeds, and its Grant carries `superseded` naming the orphan enrollment and client.
     4. That client is disabled at sign-in, and central's `observe` shows the orphan ended as superseded. No recovery mechanism is added.
   - **Asked of the Verifier (read-only source check):** does Better Auth 1.7.11's **refresh** grant rotate or consume the refresh token **before** our claim contributor calls `DecideMachineToken`? If so, a lost central reply during a refresh could spend the machine's refresh token (reuse detection), forcing a re-login after any central blip. That would be a resilience finding for me to take to design, not something to patch here. Report the order with source lines.
+- **Refresh order checked (2026-11-15T06:25Z; Verifier, read-only from pinned Better Auth 1.7.11 source): no risk on the machine JWT path.**
+  - `introspect-B-5vOvYK.mjs:1807` selects a JWT for the machine resource. The early `createRefreshToken` (`:1840`) runs only for non-JWT tokens, so it's skipped.
+  - `:1845–1858` resolve the access-token claims, which runs our contributor and so `DecideMachineToken`.
+  - **Only after that succeeds** do `:1859–1876` create the JWT and the refresh token; rotation is inside `createRefreshToken:1595`.
+  - So a lost central reply throws 503 **before** any rotation, and the machine's refresh token stays valid for the retry. No design finding.
+  - **Not covered** (different paths): revoked-token reuse, opaque grants, and loss of the issuer's own final response. Evidence: `/private/tmp/2026-11-ws15-verifier/refresh-token-order.md`.
+  - **Possible lasting check, the Implementer's choice:** a refresh with the central reply dropped is followed by a successful retry with the same refresh token.
