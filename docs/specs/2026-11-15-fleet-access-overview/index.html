@@ -17,7 +17,7 @@
 
 <ex-callout id="answer" title="Where things stand" tone="tldr">
 <p><strong>Your stop holds:</strong> there's no development, only verification, review and design documents. Each deliverable gets its own set of eight pages: <strong>Audit · Requirements · Specification · Program Design · Verification Design · Plan · Decisions · Inventory</strong>. We go one at a time. <strong>B1 is first</strong>; its set is being written now. When you've read it, B2 follows.</p>
-<p><strong>Verdicts from the independent review:</strong> B1, B2, B2 additions and BG are partly delivered. B3 is not delivered as approved.</p>
+<p><strong>Verdicts from the independent review:</strong> all five are partly delivered. B3 is the furthest off: login and refresh work, but its core outcomes are missing and one step is built wrong.</p>
 </ex-callout>
 
 <h2 id="sequence">The order</h2>
@@ -27,7 +27,7 @@ flowchart TB
   B1["B1 People, roles, sign-in<br/>partly delivered"] --> B2["B2 Central organizations<br/>partly delivered"]
   B2 --> B2X["B2 additions: person tokens, revocation<br/>partly delivered"]
   B2 --> BG["BG Getting in, staging proof<br/>partly delivered"]
-  B2X --> B3["B3 Machine login, locked link<br/>not delivered as approved"]
+  B2X --> B3["B3 Machine login, locked link<br/>partly: core missing, one defect"]
   B3 --> B4["B4 Sessions through their machine<br/>not started"]
   B3 --> B5["B5 Authenticated CLI<br/>not started"]
   BG --> SW(["Your switch: every machine logs in again"])
@@ -66,7 +66,7 @@ flowchart TB
 <tr><td>2</td><td><strong>B2</strong> Central's organizations</td><td>Central sets up the organization for real; admin actions run under the checked permission; organizations stay apart.</td><td>Partly delivered: the full workspace list, renewal status and safe key retirement are missing.</td><td>Set next. Audit so far: <a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-15-full-review/report-B2.html">report-B2</a></td></tr>
 <tr><td>3</td><td><strong>B2 additions</strong> Person tokens and revocation</td><td>Signed-in people get short tokens; signing out or removal ends them; the CLI logs in.</td><td>Partly delivered: CLI device-code login is missing; pending confirmations aren't visible; main can't read some new central records.</td><td>Audit so far: <a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-15-full-review/report-B2-additions.html">report-B2-additions</a></td></tr>
 <tr><td>4</td><td><strong>BG</strong> Getting in, and the staging proof</td><td>The six setup and invitation journeys on designed pages, proven on staging after each deploy, without you touching staging.</td><td>Partly delivered: the full setup and invitation flow, passkey sign-in and the staging run are missing.</td><td>Audit so far: <a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-15-full-review/report-BG.html">report-BG</a></td></tr>
-<tr><td>5</td><td><strong>B3</strong> Machine login and the locked link</td><td>Approve a machine by device code; it connects only through sign-in; revoking it refuses it at once.</td><td>Not delivered as approved: login and refresh work, but revoke, workspace choice and the connection are missing, and denying a code skips the recent second factor.</td><td>Audit so far: <a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-15-full-review/report-B3.html">report-B3</a></td></tr>
+<tr><td>5</td><td><strong>B3</strong> Machine login and the locked link</td><td>Approve a machine by device code; it connects only through sign-in; revoking it refuses it at once.</td><td>Partly delivered, the furthest off: login and refresh work, but revoke, workspace choice, the live connection and safe local saving are missing, and denying a code skips the recent second factor.</td><td>Audit so far: <a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-15-full-review/report-B3.html">report-B3</a></td></tr>
 <tr><td>6+</td><td><strong>B4–B9</strong></td><td>Sessions through their machine, the authenticated CLI, then traces, who is logged in, remote start and members in the view.</td><td>Not started.</td><td>None yet.</td></tr>
 </tbody>
 </table>
