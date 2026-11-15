@@ -1170,3 +1170,13 @@ The workspace id equals the operation id.
     - `conflict` → the exact conflict text, a non-zero exit, one create, **no** lookup.
   - Include a red: changing that branch to print "Workspace created" and exit 0 must fail. Then gates, re-freeze, and hand back.
   - The Verifier checks the delta; the Reviewer re-checks F1 at the new head.
+
+### #17 merged (Lead, 2026-11-15T03:04Z)
+- #17 (WS14) `39d85c71` → switchboard `main` as **`f3b2b88b`**. R-code READY (F1 closed), the Verifier's final run SUPPORTED, CI green, CLEAN, 0 threads.
+- **Risk stated before merging:** nothing deploys from main. The create-workspace wire matches central main `ea030e513`. R-adopt is the one product-logic change, and rule 4 still requires a valid stamp for calls.
+- **Now on main:**
+  - B2 sign-in (#12);
+  - verification and the F journey (#13);
+  - workspace setup, `nameInUse`, R-adopt, and the contract mirror of central `ea030e513` (#17).
+- **Remaining:** #11 (machine login; waits for central 4b), with #14 on it.
+  - #11 scope: drop `formerServiceId`; remove `machine:setTokenLifetime`; merge main; re-pin to 4b.
