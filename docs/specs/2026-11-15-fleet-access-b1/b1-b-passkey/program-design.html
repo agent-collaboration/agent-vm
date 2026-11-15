@@ -31,7 +31,7 @@
 </ul>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p><strong>Autofill on the passkey button:</strong> <a href="decisions.html#open">open for you</a>. Both answers are one setting on Better Auth UI's own passkey plugin, <code>passkeyPlugin({ autoFill })</code>. This page is written for the recommended answer, <code>autoFill: false</code>.</p>
+<p><strong>None open.</strong> You chose click only on 15 Nov (<a href="decisions.html#open">Decisions</a>): one setting on Better Auth UI's own passkey plugin, <code>passkeyPlugin({ autoFill: false })</code>.</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
 <p>Your approved Program Design (line 1738) says passkey sign-in "uses the plugin's own endpoints", that the user-verification hook "refuses an assertion without user verification, so no session exists", and that the new session's <code>secondFactorAt</code> is stamped with method <code>passkey</code>. This page keeps all three. The stamp goes into the session's own insert rather than an after-hook, which makes "confirmed from that moment" literal; <a href="decisions.html#mine">why</a>. Line 1826 says "the sign-in page sends the token on the challenge request itself", and so it does.</p>
@@ -251,7 +251,7 @@ z.strictObject({ kind: z.literal('passkey-sign-in'), continueLocation: sameOrigi
 <li><strong><code>pages/islands/sign-in-pages-island.tsx</code>:</strong>
   <ul>
   <li>the <code>passkey-sign-in</code> case renders <code>&lt;PasskeyButton /&gt;</code>;</li>
-  <li><code>IslandProviders</code> adds <code>passkeyPlugin({ autoFill: false })</code> to <code>plugins</code>, or <code>autoFill: true</code> if you choose autofill. The button reads its label through <code>useAuthPlugin(passkeyPlugin)</code>, and Better Auth UI's autofill hook does nothing when the plugin's <code>autoFill</code> is false (<a href="#autofill">below</a>);</li>
+  <li><code>IslandProviders</code> adds <code>passkeyPlugin({ autoFill: false })</code> to <code>plugins</code>, your choice. The button reads its label through <code>useAuthPlugin(passkeyPlugin)</code>, and Better Auth UI's autofill hook does nothing when the plugin's <code>autoFill</code> is false (<a href="#autofill">below</a>);</li>
   <li><code>IslandProviders</code> sets <code>redirectTo</code> to the page's <code>passkey-sign-in</code> state's <code>continueLocation</code> when one is mounted. The button calls <code>navigate({ to: redirectTo })</code> on success, and the island's <code>navigate</code> is <code>location.assign</code> (line 130), so the query, and with it the waiting command-line login, is kept;</li>
   <li><code>createAuthClient</code> gains <code>fetchOptions: { onRequest: attachPasskeySignInTurnstile }</code> (<a href="#turnstile">below</a>).</li>
   </ul></li>

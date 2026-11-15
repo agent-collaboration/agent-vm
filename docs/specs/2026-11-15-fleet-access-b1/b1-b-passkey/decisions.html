@@ -20,7 +20,7 @@
 </nav></ex-nav>
 <ex-document id="doc">
 <h1>B1-B · Passkey sign-in: Decisions</h1>
-<p>Every decision and assumption B1-B rests on: yours, quoted with where you said them; mine, each marked with whether it should have been yours; and the one open for you.</p>
+<p>Every decision and assumption B1-B rests on: yours, quoted with where you said them; mine, each marked with whether it should have been yours. Nothing is open for you.</p>
 
 <h2 id="three">The three things for you</h2>
 <ex-callout title="1 · What you should check" tone="note" icon="shield-check">
@@ -30,7 +30,7 @@
 </ul>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p><strong>One is open for you</strong>, with a picker <a href="#open">at the end</a>: does the "Continue with Passkey" button also offer passkeys in the browser's autofill list, as Better Auth UI ships it, or only when clicked?</p>
+<p><strong>Nothing is open for you.</strong> On 15 Nov you chose <strong>A, click only</strong>, for the "Continue with Passkey" button (review <code>6ab23fa3</code>; <a href="#open">kept below</a>).</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
 <p>Your decisions below are quoted from the <a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/requirements.source.html">approved Requirements</a> and your transcripts, with line numbers. The design rests on your 4 Nov approval of the overall design, B1 and B2 (<em>"yes you need anytnhign?"</em>, Fleet transcript lines 71226 and 71230).</p>
@@ -42,7 +42,7 @@ flowchart TB
   design --> b1b["B1-B design"]
   mine["My calls<br/>each marked: should it have been yours?"] --> b1b
   assume["Assumptions<br/>each with: if it's wrong"] --> b1b
-  b1b --> open["Open for you:<br/>autofill on the passkey button?"]
+  b1b --> open["Open for you: nothing"]
   class words,design slot1
   class mine slot2
   class assume slot3
@@ -126,9 +126,10 @@ flowchart TB
 </tbody>
 </table></div>
 
-<h2 id="open">Open for you: autofill on the passkey button?</h2>
-<p><strong>Today, in Better Auth UI:</strong> its <code>PasskeyButton</code> signs in on click. When its passkey plugin's <code>autoFill</code> setting is on (the default), loading the page also asks the browser to list passkeys in its autofill dropdown, in browsers that support it (current Chrome, Edge and Safari). That list appears under a username or email field marked for passkeys. Our sign-in page has no such field: people only choose Google, GitHub or now a passkey.</p>
-<p><strong>Every answer keeps Better Auth UI's button unchanged.</strong> The choice is one setting on its own plugin: <code>passkeyPlugin({ autoFill: false })</code> or <code>true</code>. The Turnstile helper already serves overlapping token requests one at a time, so autofill's background request and a click can't share a token. If you choose autofill, one more real-browser run proves that overlap (<a href="verification-design.html#V7">V7</a>).</p>
+<h2 id="open">Decided by you on 15 Nov: click only, no autofill</h2>
+<p><strong>Your answer:</strong> "A. Click only (recommended)", in your review of this page (review <code>6ab23fa3</code>, document revision <code>465b72ae</code>). The choice and what each option would have cost are kept below.</p>
+<p><strong>What the question was. In Better Auth UI,</strong> its <code>PasskeyButton</code> signs in on click. When its passkey plugin's <code>autoFill</code> setting is on (the default), loading the page also asks the browser to list passkeys in its autofill dropdown, in browsers that support it (current Chrome, Edge and Safari). That list appears under a username or email field marked for passkeys. Our sign-in page has no such field: people only choose Google, GitHub or now a passkey.</p>
+<p><strong>Every answer keeps Better Auth UI's button unchanged.</strong> The choice is one setting on its own plugin: <code>passkeyPlugin({ autoFill: false })</code> or <code>true</code>. With click only, there's no background request at all. The Turnstile helper still serves overlapping token requests one at a time, so two quick clicks can't share a token (<a href="verification-design.html#V7">V7</a>).</p>
 <ex-mermaid id="open-now" label="What the shipped button does on page load" data-width="canvas"><script type="text/plain">
 flowchart TB
   load["Sign-in page loads"] --> auto["With autoFill on, the button asks<br/>for a challenge for autofill"]
@@ -184,7 +185,7 @@ flowchart TB
   </section>
 </ex-compare>
 <ex-grid cols="3" data-width="canvas">
-<ex-card title="A · Click only" tone="planned" icon="key" tag="Recommended">
+<ex-card title="A · Click only" tone="done" icon="key" tag="Your choice, 15 Nov" pick>
 <p><strong>Cost:</strong> none in code; one setting on Better Auth UI's plugin.</p>
 </ex-card>
 <ex-card title="B · Autofill on" tone="planned" icon="package" tag="Load costs, no benefit here">
@@ -194,17 +195,9 @@ flowchart TB
 <p><strong>Cost:</strong> B's costs and a field that isn't email sign-in.</p>
 </ex-card>
 </ex-grid>
-<ex-callout title="Recommended: A" tone="decision" icon="key">
-<p>On our page autofill shows nothing, and loads would still pay for it. Better Auth UI offers the switch itself, so click only needs no change to its button. <strong>Not decided.</strong></p>
+<ex-callout title="Decided: A, click only" tone="done" icon="key">
+<p>Your choice on 15 Nov. Better Auth UI's button ships unchanged with <code>passkeyPlugin({ autoFill: false })</code>. Loading the sign-in page sends no challenge request, and V7 checks that.</p>
 </ex-callout>
-<ex-callout title="If you defer" tone="risk" icon="clock">
-<p>Nothing is built: B1-B's packets go out only after you answer this and give the go-ahead. The pages are written for A. If you answer B or C, I revise S7, V7 and the button's change before sending anything.</p>
-</ex-callout>
-<ex-choice id="autofill-choice" title="Does the passkey button also offer passkeys in the browser's autofill list?">
-  <ex-option id="autofill-choice-a" title="**A.** Click only (recommended)"><template slot="summary">Better Auth UI's button as shipped, its plugin set to autoFill off; page loads cost nothing.</template></ex-option>
-  <ex-option id="autofill-choice-b" title="**B.** Autofill on"><template slot="summary">The plugin's default; page loads run Turnstile and store a challenge where autofill is supported, and nothing appears.</template></ex-option>
-  <ex-option id="autofill-choice-c" title="**C.** Autofill with an email field"><template slot="summary">A field that lists passkeys on focus; B's costs plus the field.</template></ex-option>
-</ex-choice>
 </ex-document>
 </body>
 </html>

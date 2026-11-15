@@ -31,7 +31,7 @@
 </ul>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p><strong>The passkey button's autofill</strong> is <a href="decisions.html#open">open for you</a>. The packets are written for the recommended answer, click only, and aren't sent until you answer.</p>
+<p><strong>None open.</strong> You chose click only for the passkey button on 15 Nov (<a href="decisions.html#open">Decisions</a>), and the packets follow it.</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
 <p>The process is the one you set on 15 Nov. You said acceptance is against your design, <em>"accepts to my aprpoved fuckign deisng"</em> (<a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl">Fleet transcript</a> line 131608). You asked for the packets to be specified with locations (line 133987).</p>
@@ -90,7 +90,7 @@ flowchart TB
 <li><strong>The page.</strong>
   <ul>
   <li><code>sign-in-island-state.tsx</code>: kind <code>passkey-sign-in</code>.</li>
-  <li><code>sign-in-pages-island.tsx</code>: render <code>PasskeyButton</code>; add <code>passkeyPlugin({ autoFill: false })</code>, or <code>true</code> if the owner chooses autofill; set <code>redirectTo</code>; add the client's <code>onRequest</code>.</li>
+  <li><code>sign-in-pages-island.tsx</code>: render <code>PasskeyButton</code>; add <code>passkeyPlugin({ autoFill: false })</code>, the owner's choice; set <code>redirectTo</code>; add the client's <code>onRequest</code>.</li>
   <li><code>owner-page.tsx</code>: <code>SignInCard</code> gets the island root, the <code>#sign-in-passkey-captcha</code> container and a <code>continueLocation</code> prop.</li>
   <li><code>owner-page-document.tsx</code>: pass <code>continueLocation</code>, and load the island script on the sign-in page.</li>
   </ul>
@@ -151,7 +151,7 @@ flowchart TB
   <li>with UV off, the person stays signed out on <code>/sign-in</code> with the error notice;</li>
   <li>started from the real owner CLI, its loopback gets its code and it exits 0;</li>
   <li>with Turnstile's script failed, the notice shows, the button is usable again, and no challenge is sent;</li>
-  <li>with the recommended answer, loading the page sends no challenge request;</li>
+  <li>loading the page sends no challenge request (click only, the owner's choice);</li>
   <li>the button lines up at 400 px.</li>
   </ul>
   Record the Chrome version and the origin.</td><td>Three checks, each with red and restored-green runs kept:

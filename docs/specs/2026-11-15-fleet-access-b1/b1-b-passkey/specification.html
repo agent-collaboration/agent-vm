@@ -32,7 +32,7 @@
 </ul>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p><strong>S7, the sign-in page:</strong> a "Continue with Passkey" button. Whether it also offers passkeys in the browser's autofill list is <a href="decisions.html#open">open for you</a>; S7 is written for the recommended answer, click only.</p>
+<p><strong>S7, the sign-in page:</strong> a "Continue with Passkey" button. It doesn't offer passkeys in the browser's autofill list: you chose click only on 15 Nov (<a href="decisions.html#open">Decisions</a>).</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
 <p>Every rule traces to your approved design: OD21 (<em>"A passkey with fingerprint, face or PIN signs you in and counts as both factors"</em>, decided 31 October), and rules R5, R52, R53, R63 and R67 in the <a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/specification.source.html">approved Specification</a> (lines 174, 270, 241, 254 and 261).</p>
@@ -122,7 +122,7 @@
 <li>Under Google and GitHub there's a third button: <strong>Continue with Passkey</strong>, Better Auth UI's own button.</li>
 <li><strong>Clicking it:</strong> the page gets a fresh Turnstile pass for <code>passkey_sign_in</code>, sends it with the challenge request, then the browser asks for the passkey. On success, the person lands where Google or GitHub would have taken them: the same continuation address, so a command-line login started first still continues.</li>
 <li><strong>Cancelling, or a refusal,</strong> shows Better Auth UI's own error notice. The person stays on the sign-in page, signed out.</li>
-<li><strong>Autofill:</strong> the button doesn't offer passkeys in the browser's autofill list, and loading the page sends no challenge request. This is the recommended answer to the <a href="decisions.html#open">open decision</a>, set through Better Auth UI's own option; the button itself is unchanged.</li>
+<li><strong>Autofill:</strong> the button doesn't offer passkeys in the browser's autofill list, and loading the page sends no challenge request. That's your 15 Nov choice, click only (<a href="decisions.html#open">Decisions</a>), set through Better Auth UI's own option; the button itself is unchanged.</li>
 <li><strong>If Turnstile can't load or refuses:</strong> clicking shows an error notice saying sign-in verification is unavailable. The button is usable again, and no challenge request is sent.</li>
 <li><strong>At 400 px</strong> the button follows the page column, like Google and GitHub.</li>
 </ul>

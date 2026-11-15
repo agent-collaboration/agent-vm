@@ -36,7 +36,7 @@
 </ul>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p><strong>None here.</strong> <a href="#V7">V7</a> checks the button as your <a href="decisions.html#open">autofill decision</a> sets it.</p>
+<p><strong>None here.</strong> <a href="#V7">V7</a> checks the button as your 15 Nov choice sets it: click only, no autofill (<a href="decisions.html#open">Decisions</a>).</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
 <p>Your approved Verification Design names the driver: "a real-browser driver … over the Chrome DevTools Protocol (headless Chrome; not Playwright). It uses CDP's virtual WebAuthn authenticator for passkeys" (journey SO14). Your rule R67 puts passkey sign-in's proof on local runs. V8 is that, for journey 5.</p>
@@ -187,13 +187,10 @@ flowchart TB
   <li><code>onSignInTurnstileReady</code> sets <code>ready</code> and dispatches <code>sign-in-turnstile-ready</code>;</li>
   <li><strong>a script load failure:</strong> an <code>error</code> event on <code>#sign-in-turnstile-script</code> sets <code>failed</code> and dispatches <code>sign-in-turnstile-failed</code>. A token request pending at that moment rejects, and so does every later one, at once.</li>
   </ul></li>
-<li><strong>Autofill, as you decide:</strong> V8 counts the browser's network events while the sign-in page loads.
+<li><strong>Click only, your 15 Nov choice:</strong> V8 counts the browser's network events while the sign-in page loads, on Chrome, which supports autofill. With <code>passkeyPlugin({ autoFill: false })</code>, loading sends no challenge request. This runs through the real island and Better Auth UI's own hook, not a fake.
   <ul>
-  <li>With <code>passkeyPlugin({ autoFill: false })</code>, the recommended answer, loading sends no challenge request.</li>
-  <li>With <code>autoFill: true</code>, on Chrome, which supports conditional mediation, loading sends exactly one.</li>
-  </ul>
-  <strong>If you choose autofill (B or C),</strong> V8 adds one more run on both hosts. The scenario holds the Turnstile stand-in's first callback, so the background request is waiting, then clicks the still-enabled button. It releases the callbacks in order, and observes: both requests settle; each challenge request carries its own token; no "already used" refusal; the click's sign-in completes.
-  This runs through the real island and Better Auth UI's own hook, not a fake.</li>
+  <li><strong>Fails on:</strong> a deliberate break that leaves the plugin at its default (<code>passkeyPlugin()</code>): loading sends one challenge request.</li>
+  </ul></li>
 <li><strong>Fails on:</strong> today's page (no root, no container); a deliberate break that sets the same token twice; and one that ignores the script's load error. The DOM case starts a token request, dispatches the error event, lets pending promise callbacks run, then asserts the request is settled as rejected. On the broken build it's still pending, so the assertion fails at once; nothing waits.</li>
 </ul>
 
