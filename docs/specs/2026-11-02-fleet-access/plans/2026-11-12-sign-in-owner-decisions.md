@@ -1416,3 +1416,8 @@ The workspace id equals the operation id.
   3. the reviewer's packet (approved design, the owner's first-hand words per decision, PRs and versions, evidence, review skills, the shared format; Lead records only as claims), and how the reviewer validates against what the owner said and the design.
 
   **Relayed to all Leads** and the Leads thread. Each Fleet access deliverable set is now: **Audit · Requirements · Specification · Program Design · Verification Design · Plan.**
+
+### OWNER RESTATEMENT: the exact deliverable structure (2026-11-15T15:22Z, first-hand)
+**Every deliverable:** 1 Audit · 2 Requirements · 3 Specification · 4 Program Design · 5 Verification Design · 6 Plan (verification; acceptance plus map; the reviewer's packet and validation) · 7 Decisions · 8 Inventory.
+**Each Lead:** one overview page linking all its deliverables, with their sequence explained and a diagram.
+Relayed verbatim to every Lead and the Leads thread. Building order for Fleet access: overview → B1 set → (owner) → B2 → B2-additions → BG → B3.
