@@ -1388,3 +1388,14 @@ The workspace id equals the operation id.
 - **Order (Lead's call, dependency order):** B1 → B2 → B2-additions → BG → B3. One at a time; the next starts after the owner understands and decides.
 - **Source:** the full review reports, in the shared format with sections per deliverable.
 - **Still under the owner's stop:** design and review only, no development.
+- **OWNER, first-hand (2026-11-15T14:56Z), with a screenshot of the S4 design set's Pages menu:** "tell every lead the first page is a full audit of what needs to be fixed for that design".
+  - **Page order for each Fleet access deliverable design set:**
+    1. **Audit** (what exists, what needs fixing with "fully fixed means", acceptance done versus required, decisions whose, open for the owner);
+    2. Requirements / approved obligations;
+    3. Specification;
+    4. Program Design;
+    5. Verification;
+    6. the fix plan.
+
+    This supersedes the earlier "audit as section 4".
+  - **Relayed to every Lead:** Lead A `13635880`, `2352c15e` and `d171455e`, plus the Leads thread post.
