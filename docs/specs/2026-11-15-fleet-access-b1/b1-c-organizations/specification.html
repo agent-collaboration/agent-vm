@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B1-C · Organizations finished · Specification</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
+<a href="../../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
+<a href="audit.html">B1-C · 1 Audit</a><a href="requirements.html">B1-C · 2 Requirements</a>
+<a href="specification.html">B1-C · 3 Specification</a><a href="program-design.html">B1-C · 4 Program Design</a>
+<a href="verification-design.html">B1-C · 5 Verification Design</a><a href="plan.html">B1-C · 6 Plan</a><a href="decisions.html">B1-C · 7 Decisions</a>
+</nav></ex-nav>
+<ex-document id="doc">
+<h1>B1-C · Organizations finished: Specification</h1>
+<p>A person chooses among their own organizations; an owner looks up one person's membership in the organization they are administering. This page states the complete observable contract. The three <a href="decisions.html#open">open choices</a> determine presentation and lookup input, not permission or privacy. No choice has been made for the owner.</p>
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What you should check" tone="note" icon="shield-check">
+<p>The chooser remains usable after selection; the next read and native session agree. A lookup authorizes the caller before it reads its subject. An absent person and someone who exists only elsewhere get exactly the same answer. Failure is never reported as absence.</p>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p>Three are open on <a href="decisions.html#open">Decisions</a>: the lookup's page, how the owner identifies a person, and the organization-choice component. The detailed recommended design uses a separate owner page, exact email, and the shipped switcher with narrow server replies. Those recommendations are conditional, not approved defaults.</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>The authority is <a href="requirements.html#needs">U9, U21/U46, U27 and U51</a>, with approved R13/R14/R53/R58/R62. The owner's selected wording was “Your account page: your second factors, your organizations (choose one), and a clear ‘done’” (<a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl">Fleet transcript:86867</a>). Existing tests cover initial selection, not repeated choice or the missing lookup. All new proof here is planned.</p>
+</ex-callout>
+
+<h2 id="entities">The things the rules describe</h2>
+<p>These reuse the approved Fleet entity identities. A person's current choice is session context. Membership and permission still come from the sign-in service, and an invitation is not membership.</p>
+<ex-mermaid id="entity-picture" label="A person may belong to several organizations" data-width="canvas"><script type="text/plain">
+erDiagram
+  PERSON ||--o{ MEMBERSHIP : has
+  ORGANIZATION ||--o{ MEMBERSHIP : contains
+  PERSON ||--o{ SIGNED_IN_SESSION : holds
+  ORGANIZATION o|--o{ SIGNED_IN_SESSION : selected_by
+  ORGANIZATION ||--o{ INVITATION : offers
+</script></ex-mermaid>
+<p>A session has at most one selected organization, while a person may have several memberships. The invitation's recipient is an email and need not yet have a person account.</p>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Identity</th><th>Same thing when</th><th>States and invariant</th></tr></thead><tbody>
+<tr><td>E1 Organization</td><td>The same organization identifier; its display name can change.</td><td>Sign-in owns membership; central owns its Fleet state. Changing a person's selection creates neither a new organization nor membership.</td></tr>
+<tr><td>E3 Person</td><td>The same sign-in account identifier, not merely a matching human name or email.</td><td>May have zero, one or several memberships. Linked provider identities retain the existing explicit-linking rule.</td></tr>
+<tr><td>E19 Membership</td><td>One person's membership of one organization. Rejoining after removal is a new membership.</td><td>One role per person/organization: owner or member. A pending invitation does not confer the role. Owner has the existing permissions; member has none.</td></tr>
+<tr><td>E31 Invitation</td><td>The same invitation identifier, for one organization's invitation to its named email.</td><td>Pending and unexpired can be answered as invited; canceled, rejected, accepted or expired is not a current invitation. Acceptance and Decline remain their existing/BG operations.</td></tr>
+<tr><td>Signed-in session</td><td>The same existing sign-in session identifier.</td><td>Current, expired or ended. It has zero or one current organization. Its choice is never a permission cache and is checked against current membership.</td></tr>
+</tbody></table></div>
+
+<h2 id="choice">Choosing an organization</h2>
+<ex-mermaid id="choice-picture" label="Selection is checked by Better Auth, then read again" data-width="canvas"><script type="text/plain">
+flowchart TB
+  own["Read current person's memberships"] --> display["Show memberships and current choice"]
+  display --> choose["Choose a membership"]
+  choose --> native["Native membership check and selection"]
+  native --> success["Success: stored choice changes"]
+  native --> refusal["Foreign: choice cleared, request refused"]
+  success --> fresh["Fresh context and displayed result"]
+  refusal --> fresh
+  class own,native slot3
+  class display,choose slot1
+  class success,fresh slot6
+  class refusal slot2
+</script></ex-mermaid>
+<p>Teal owns the read/check, blue is what the person uses, green is confirmed state, amber is the native refusal. A click or optimistic label alone does not establish the stored result.</p>
+<h3 id="S1">S1 · A person reads only their own organizations</h3>
+<p>From U27/U51 and R62. A current, verified signed-in person MUST be able to read their membership choices, each with organization ID, name and their role, and the session's validated current selection. No token, credential, another person's membership or organization's roster is part of this self-view. No caller-supplied person ID selects whose memberships are read. The self-view has distinct signed-out, available and unavailable endings.</p>
+<p>An available view with no memberships is an empty available view, not an error. A stored selection no longer present in the fresh memberships is represented as no current selection; this read does not repair the row. The configured first owner and an invited person may therefore still reach BG's organization step. Session expiry is enforced by the existing injected-clock session read.</p>
+<h3 id="S2">S2 · Choice remains available after selection</h3>
+<p>From U51/R62 and R58. All current memberships MUST remain inspectable after a valid selection. A person in two organizations can choose the first and then the second in the same signed-in session, without starting sign-in again. The displayed current organization and the next organization-bound result MUST reflect the stored native selection after its read completes. Names and owner/member role labels are visible in the person's membership summary even if the selected switcher hides its own role badge.</p>
+<p>Keep today's fresh-session rule: exactly one membership is selected at sign-in; several start unselected. A GET of the new self-context never silently selects one. A foreign-choice refusal may leave no current selection even with a sole membership, under S3; the person can select that membership again.</p>
+<h3 id="S3">S3 · Selection uses Better Auth's own membership guard</h3>
+<p>Use the native set-active operation. Only a real membership can be selected. A signed-out or expired caller cannot select an organization. Selection creates no membership, changes no role, and stamps no second factor. <strong>Keep the pinned native foreign-choice effect:</strong> it refuses with 403 and clears <code>activeOrganizationId</code>; memberships and roles are unchanged. Re-read after both success and refusal, and do not restore the previous selection as though it were still authoritative.</p>
+<p>Concurrent selections follow the native write order; no new lock or selection version is promised. The UI must not present an optimistic update as an authorization result. A later page entry/focus or explicit refresh reads the session and memberships again. No browser-persistent membership or selection store is added.</p>
+<h3 id="S4">S4 · Reading and choosing do not demand a recent second factor</h3>
+<p>From U43/R53 and the owner's returning-sign-in answer. A valid person may read and select an existing membership with an absent or expired confirmation. These actions MUST NOT mint or extend confirmation. Keep initial authenticator setup ordering and protected-change checks: this rule does not make an unenrolled person ready or let them invite, cancel, accept, remove or create without the existing checks.</p>
+
+<h2 id="lookup">The owner lookup</h2>
+<ex-mermaid id="lookup-sequence" label="Permission brackets the subject read" data-width="canvas"><script type="text/plain">
+sequenceDiagram
+  participant B as Owner's browser
+  participant H as Sign-in endpoint
+  participant P as Live session and permission
+  participant D as Scoped membership store
+  B->>H: organization and one subject
+  H->>P: session current in requested organization?
+  H->>P: has organization-view permission now?
+  alt refused
+    H-->>B: refused, no subject data
+  else allowed
+    H->>D: read only requested organization's rows
+    D-->>H: member, invited, absent or unavailable
+    H->>P: recheck before releasing answer
+    H-->>B: scoped answer, or refusal/unavailable
+  end
+</script></ex-mermaid>
+<p>The second authorization check catches a removal or session end while the subject read was held. It does not promise a transaction spanning separate reads; an answer describes the subject observation during that request.</p>
+<h3 id="S5">S5 · Only the requested organization's current permitted person can look up a subject</h3>
+<p>From U21/U46, R13 and OD25. Require a current verified person session selected into the requested organization and a fresh native <code>hasPermission</code> check for <code>organization:view</code>, using the current member role with memory caching off. A role-name shortcut or a valid token signature is insufficient. In the current mapping only the owner holds that permission.</p>
+<p>A member, an owner current only in another organization, a removed actor, an ended/expired session, or agent/bot/fleet-session credentials MUST be refused without any subject result. Run no subject read before authorization. Recheck session, selection and permission before returning successful subject data; a failed recheck discards that data. Lookups require no recent second factor, and call no central endpoint.</p>
+<h3 id="S6">S6 · The answer is about only the organization requested</h3>
+<p>From U9/R14 and C4 (<a href="../../2026-11-02-fleet-access/specification.source.html#specification--c4-lookups-admin">approved Specification:288</a>). The answer is exactly one of:</p>
+<ul><li><code>member</code>, with the person's owner/member role there;</li><li><code>invited</code>, when there is a pending invitation there with expiry strictly after the injected clock's now;</li><li><code>not-member</code>, otherwise.</li></ul>
+<p>Membership takes precedence over a pending invitation for the same email. A person who belongs only elsewhere and a person with no account MUST have byte-identical successful negative bodies for the same requested organization. Reveal no other organization's ID, name, role, existence, invitation, user ID or counts. This is response equality, not a constant-time promise. Malformed stored role data and storage errors are unavailable, never not-member.</p>
+<h3 id="S7">S7 · Lookup does not change people or settle history</h3>
+<p>From OD26 and existing people rules. The lookup MUST NOT create users, memberships, invitations, role changes, confirmation stamps or outcome records. It does not confirm which earlier operation completed. Existing invite/accept/cancel/remove, owner protection, no-resend and intent/outcome fault tests remain intact. No schema or migration is part of B1-C.</p>
+<h3 id="S8">S8 · The input follows the owner's pending answer</h3>
+<p>The recommended <a href="decisions.html#lookup-input">exact-email option</a> accepts one normalized exact email with the organization ID, in a POST JSON body, not a URL. It reaches invitations before a person row exists. Blank/invalid input gets a field error and no subject read; it is not a prefix or all-person search.</p>
+<p>The alternative is an owner-only member/invitation picker <em>with an exact-email fallback</em>; the fallback is necessary to ask about someone absent from that list. It exposes a roster and therefore changes the author's proposed no-roster boundary. Its paging, public response and proof must be revised and reviewed before implementation if chosen; the current packet does not quietly enable native member-list routes. This alternative is a real scope/visibility choice, not a hidden setting.</p>
+<h3 id="S9">S9 · The visible lookup follows the owner's pending placement answer</h3>
+<p>The recommended separate page has a “Look up a person” heading, the organization name, a labeled field or selected input, a Look up action and a live result/error region. It is linked from organization administration and guarded independently of that link. The alternative puts that same task inside the existing organization-admin page and requires a shared-shell adaptation that preserves B2's controls. Neither adds an admin action to the account page.</p>
+<p>Clear an earlier result on input/organization change, submission, refusal, malformed reply or unavailable/network failure. A late reply for an older request MUST NOT overwrite the current request's result. A refused caller sees no subject information; a signed-out page request goes to sign-in without a subject email in its URL. No email, token or result body is recorded in telemetry or screenshots; browser proof uses test-only identities and redacted captures.</p>
+
+<h2 id="ui-contract">UI and integration constraints</h2>
+<h3 id="S10">S10 · The chosen organization component does not expose a directory</h3>
+<p>If the owner chooses the recommended shipped component, use Better Auth UI's unchanged <code>OrganizationSwitcher</code> with <code>hideCreate</code>, <code>hidePersonal</code> and <code>hideSettings</code>. Its nested organization views hide roles; a separate self-membership summary supplies the already-approved role labels. Open only the exact native GET list/full-organization reads its queries require, and release only whitelisted organization fields, to owners and members alike. Do not release members, invitations, totals, metadata or Fleet stamp fields. Keep the native membership guard and mutation unchanged.</p>
+<p>The projection MUST be complete before any successful HTTP body reaches a script. A malformed native success is unavailable, not an unprojected fallback. A native full-organization read can itself clear a stale or foreign selection before refusing; preserve and disclose that native effect as well as S3's selection effect. The pure self-context read remains nonmutating. Internal server API reads retain their native full shape; only the public HTTP boundary projects it.</p>
+<p>Those public native self reads require the same verified current stored-session authentication as the self-context. They accept no explicit organization, slug, member-limit or other query key; any query gets the same generic invalid-request answer before native dispatch. The shipped component is configured without a route slug and reads only the session's current organization. A caller cannot use native error differences to ask whether a foreign organization exists. Internal native query contracts are unchanged.</p>
+<p>If the owner chooses the existing Switchboard chooser instead, use that approved exception and the self-context read; the native list/full routes stay closed. Do not build two permanent selectors or a runtime flag. Both options must satisfy S1–S4, and no choice permits opening native list-members.</p>
+<h3 id="S11">S11 · BG consumes facts; it still owns getting in</h3>
+<p>B1-C supplies a current-person organization context, native selection and a reusable choice surface. BG owns <code>decideSetupPage</code>, first pending step, invitation/Decline, account-page shell, checked return destination, CLI deadline and all six combined local journeys. Preserve existing valid CLI continuation in the B1-C regression. When BG cuts over <code>/owner-ready</code>, it reuses these contracts and removes that old page; B1-C adds no competing setup engine, destination store or account route.</p>
+<h3 id="S12">S12 · Both hosts, design system and full cutover</h3>
+<p>The real offered paths MUST work on local workerd/D1 and Node/better-sqlite3. The new surfaces use Switchboard's shared React/shadcn system, one top heading, labeled keyboard-reachable controls and 400 px dark-mode layout. Keep B1-A's injected crypto, clock, UUIDv7 and allowed-globals contract; tests use controlled time and event waits. Heavy runs go to Sunclaw. Add no CI gate. Remove the old hide-after-selection condition, superseded selector/controller for the chosen option, and obsolete route-closure assertions only where the chosen precise routes replace them.</p>
+
+<h2 id="failure">Failure outcomes</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Condition</th><th>Visible/API outcome</th><th>Effect</th></tr></thead><tbody>
+<tr><td>No current session</td><td>Self-context: signed-out/401. Owner read: refused/401. Guarded page: sign-in redirect.</td><td>No subject read or membership write.</td></tr>
+<tr><td>Wrong organization, role or live permission</td><td>Generic refused/403, no subject fields.</td><td>No subject read at initial refusal; discard a result if authorization ends while reading.</td></tr>
+<tr><td>Bad request</td><td>Invalid-request/400 with field-safe explanation.</td><td>No subject read. Do not echo the body in logs.</td></tr>
+<tr><td>Store or native projection unavailable</td><td>Unavailable/503; old UI result cleared.</td><td>No guessed absence or full native reply released.</td></tr>
+<tr><td>Native foreign set-active or full-read refusal</td><td>Native refusal, then refresh actual state.</td><td>Native selection clearing is retained; membership/role unchanged.</td></tr>
+<tr><td>Lost selection reply</td><td>No success claimed; re-read current context.</td><td>The native write may have landed. Do not undo it from a cached label or automatically replay it.</td></tr>
+<tr><td>Held old lookup reply</td><td>Ignore it after another request/input/organization replaces it.</td><td>Only current request can fill the current result region.</td></tr>
+</tbody></table></div>
+
+<h2 id="trace">Authority and proof map</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Rules</th><th>Authority</th><th>Deciding planned observation</th></tr></thead><tbody>
+<tr><td>S1–S4</td><td>U27/U51, R58/R62, native behaviour retained by Lead scope approval</td><td><a href="verification-design.html#V1">V1</a> self-context; <a href="verification-design.html#V2">V2</a> stored repeat choice; <a href="verification-design.html#V6">V6</a> real browser.</td></tr>
+<tr><td>S5–S7</td><td>U9/U21/U46, R13/R14/R53, OD25/OD26</td><td><a href="verification-design.html#V3">V3</a> scoped outcomes; <a href="verification-design.html#V4">V4</a> refusals/removal/faults.</td></tr>
+<tr><td>S8–S10</td><td>Owner's pending input, placement and component answers; fixed R13/R14/R62 privacy</td><td><a href="verification-design.html#V5">V5</a> projected HTTP boundary; <a href="verification-design.html#V6">V6</a> actual chosen UI and stale reply.</td></tr>
+<tr><td>S11–S12</td><td>Approved BG split, existing behaviour, standing tooling and B1-A constraints</td><td><a href="verification-design.html#V7">V7</a> existing journeys, architecture and cutover.</td></tr>
+</tbody></table></div>
+<p>Nothing here waives staging, production isolation or release sign-in; those remain BG's obligations. This specification is conditional on the open owner answers and claims no implementation or acceptance.</p>
+</ex-document>
+</body>
+</html>

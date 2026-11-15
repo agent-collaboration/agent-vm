@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B1-C · Organizations finished · Verification Design</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css"><script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head><body>
+<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
+<a href="../../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a><a href="audit.html">B1-C · 1 Audit</a><a href="requirements.html">B1-C · 2 Requirements</a><a href="specification.html">B1-C · 3 Specification</a><a href="program-design.html">B1-C · 4 Program Design</a><a href="verification-design.html">B1-C · 5 Verification Design</a><a href="plan.html">B1-C · 6 Plan</a><a href="decisions.html">B1-C · 7 Decisions</a>
+</nav></ex-nav>
+<ex-document id="doc">
+<h1>B1-C · Organizations finished: Verification Design</h1>
+<p>Choose twice through the delivered UI and read the stored result. Then look up real member and invitation rows as the owner and try the same requests as callers who must learn nothing. The chosen component's real browser traffic must contain no roster. Every observation below is a plan; none has run.</p>
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What you should check" tone="note" icon="shield-check"><p>V2 and V6 fail on today's hide-after-selection build. V3/V4 prove the organization filter and live permission, including a session ending during the read. V5 reads actual native replies, so a projection that exists but is never called cannot pass.</p></ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users"><p>The three <a href="decisions.html#open">owner answers</a> determine the UI under test. The detailed observations cover the recommended separate page, exact email and shipped switcher. A roster or embedded page choice requires its new branch to be reconciled before the build packet is released.</p></ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open"><p>U9/R14 require the requested organization's answer only; U51/R62 require choice on the account surface. The owner chose “returning sign-in (step-up only for changes)” (<a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl">Fleet transcript:86867</a>). The old real-service tests are retained, but their inspected source is not a fresh proof receipt. A passing local run would still not establish staging or release sign-in.</p></ex-callout>
+
+<h2 id="path">What stays real in each observation</h2>
+<ex-mermaid id="proof-path" label="Proof moves from contracts to the actual offered path" data-width="canvas"><script type="text/plain">
+flowchart TB
+  unit["Unit: strict shapes, projection and view state"] --> host["Both hosts: native auth, permission and Drizzle"]
+  host --> browser["Real Chrome: chosen UI and requests"]
+  browser --> rows["Stored selection and scoped lookup outcomes"]
+  wrong["Named deliberate wrong build"] --> host
+  wrong --> browser
+  class unit slot1
+  class host slot3
+  class browser slot2
+  class rows slot6
+  class wrong slot5
+</script></ex-mermaid>
+<p>Blue is pure contract proof, teal the actual service/storage boundary, amber the browser, green the deciding state, rose the sensitivity control. Stand-ins remain outside the membership/permission/selection interaction being claimed.</p>
+<p>V1–V5 use the existing local auth harness, with provider, Turnstile and central test peers, controlled clock and private database root. Membership, invitation, session, Better Auth and injected Drizzle are real. Every host file runs twice: default local workerd/D1 and <code>SIGN_IN_TEST_HOST=node</code> for Node/better-sqlite3. V6 parameterizes both hosts in one real-browser file. Heavy runs are on Sunclaw, after B1-A merges.</p>
+
+<h2 id="V1">V1 · Own context is current, scoped and fail-closed (S1/S4)</h2>
+<p><strong>Proven by:</strong> asking the new public self-context endpoint from real cookie sessions and comparing its strict body with the actual membership/session rows, on both hosts.</p>
+<ul>
+<li>Cases: signed out; expired session; a verified invited person with zero memberships; one membership; two memberships; selected ID no longer among those memberships. Use the existing injected-clock control for expiry. An available empty list must differ from unavailable.</li>
+<li>Each choice has exactly organization ID, name and role; only the signed-in person's rows occur. No token, user record, invitation list, metadata or another person's membership field is present. Attempts to supply <code>personId</code> in query fail as invalid rather than select that person's view.</li>
+<li>Snapshot the selection and authority rows before/after the context read: unchanged. Missing/old second-factor confirmation does not prevent the read or change the confirmation stamp.</li>
+<li>Pure cases for <code>readPersonOrganizationContext</code> cover each unavailable port and malformed stored row, with no I/O; both-host fault cases cover the actual database failure mapping.</li>
+</ul>
+<p><strong>Wrong builds:</strong> query memberships by a supplied person ID; keep a stale active ID; catch a failed store read as an empty list. Each has a separate deciding assertion. An allowed change in membership display order still passes because the oracle compares identities/content rather than a cosmetic order.</p>
+<p><strong>Lifetime/target:</strong> lasting regression, new <code>people-organization-context.host.e2e.test.ts</code> plus beside-module unit cases, on the frozen PR head. Unverified: deployed cookies and hosts.</p>
+
+<h2 id="V2">V2 · Choose twice, then observe the actual session (S2/S3/S4)</h2>
+<ex-mermaid id="repeat-choice-observation" label="A second choice is the discriminator today's page cannot satisfy" data-width="canvas"><script type="text/plain">
+sequenceDiagram
+  participant P as Delivered browser UI
+  participant N as Native selection
+  participant D as Stored session
+  P->>N: choose O1
+  N->>D: current O1
+  P->>P: chooser still present
+  P->>N: choose O2 in same session
+  N->>D: current O2
+  P->>N: lookup under current O2
+  N-->>P: O2 allowed; explicit O1 refused
+</script></ex-mermaid>
+<p><strong>Proven by:</strong> extending the existing delivered-chooser coverage so it chooses again after the first success, reads the stored selection and makes a real organization-bound lookup under that choice.</p>
+<ol>
+<li>Reuse the native two-organization setup from <a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b74225359970b0580a290cd34fe1e557b/packages/sign-in-test-support/src/people-owner-page.host.e2e.test.ts#L65">people-owner-page.host.e2e.test.ts:65–115</a>. Keep its real CLI completion and foreign-membership refusal assertions.</li>
+<li>In the continuing signed-in browser, choose O1, read <code>session.activeOrganizationId</code> for that same session, then choose O2. Both stored reads equal the requested real membership. The chooser still exists after the first selection.</li>
+<li>As a person owning both fixtures, lookup in the selected O2 succeeds, while lookup explicitly requesting O1 is refused until O1 is selected again. This checks the next real organization-bound result without creating another sign-in that would reset the session choice.</li>
+<li>With a valid O1 selection, submit a real foreign organization to native set-active. Expect 403 and read null from that same stored session. Re-read self-context and inspect the UI: no old current-choice label remains after settlement. Membership and role rows are unchanged.</li>
+<li>Advance beyond the confirmation window but within session expiry. Selection succeeds; confirmation fields stay unchanged. A protected invite still gets the existing second-factor refusal.</li>
+</ol>
+<p><strong>Wrong builds:</strong> today's hide-after-selection condition; retain the old self-context after a mutation; restore the old selection after native 403; treat selection as factor confirmation. Each must fail its named row, while an unchanged native clearing implementation passes. The short-lived optimistic label is allowed only while pending, never as the settled authorization answer.</p>
+<p><strong>Lifetime/target:</strong> lasting host regression in <code>people-owner-page.host.e2e.test.ts</code> and the new context file on both hosts; V6 supplies actual Chrome. The existing served-page driver is controlled browser I/O, not Chrome proof.</p>
+
+<h2 id="V3">V3 · Lookup answers exactly this organization's truth (S6/S7/S8)</h2>
+<p><strong>Proven by:</strong> creating native member/invitation states, calling the offered lookup as the selected owner and reading the resulting exact bodies and unchanged database state.</p>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Subject fixture</th><th>Required body/status</th></tr></thead><tbody>
+<tr><td>Current owner or member of requested O1</td><td>200; <code>{ kind: 'member', role: 'owner' | 'member' }</code> matching that membership.</td></tr>
+<tr><td>Pending, unexpired O1 invitation; no person row</td><td>200; exactly <code>{ kind: 'invited' }</code>.</td></tr>
+<tr><td>Member plus a pending invitation for the same email</td><td>Member result; membership takes precedence.</td></tr>
+<tr><td>Expired exactly at controlled now, canceled, rejected, or no longer-current accepted invitation with no membership</td><td>200; exactly <code>{ kind: 'not-member' }</code>.</td></tr>
+<tr><td>Person/invitation only in O2; nonexistent person</td><td>200; byte-identical not-member bodies. No O2 field, user ID, name or count.</td></tr>
+<tr><td>Whitespace/case form of same valid exact email</td><td>Same scoped result after the shared request normalization.</td></tr>
+<tr><td>Blank, malformed email, non-v7 organization ID or extra request key</td><td>400; no subject read and no rows changed.</td></tr>
+<tr><td>Malformed JSON or non-JSON content type</td><td>400; exactly the generic invalid-request body, no input/issue dump, no subject read or changed row.</td></tr>
+</tbody></table></div>
+<p>Reuse native invite/accept/cancel/remove from <a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b74225359970b0580a290cd34fe1e557b/packages/sign-in-test-support/src/people-organizations.host.e2e.test.ts#L86">people-organizations:86–185</a>; keep its ten-record actor/intent/outcome assertions, then lookup before/after acceptance, cancellation and removal. The precise expired/rejected/adversarial combinations may be seeded through Drizzle as labeled fixture states, not claimed as new public operations. Snapshot user/session/membership/invitation/factor/audit state around each lookup.</p>
+<p><strong>Wrong builds:</strong> remove the organization filter from either subject query; use expiry <code>&gt;=</code> rather than <code>&gt;</code>; return global user existence; write an outcome during lookup; lowercase only one matching path. The corresponding fixture must fail. A changed internal query strategy with the same strict scoped answer passes.</p>
+<p><strong>Lifetime/target:</strong> lasting new <code>people-membership-lookup.host.e2e.test.ts</code> on both hosts, plus store cases in the existing D1/SQLite storage harness. Unverified: a shared transaction snapshot across both subject reads is not promised.</p>
+
+<h2 id="V4">V4 · Caller removal, ended sessions and store failures reveal no subject (S5/S7)</h2>
+<ex-mermaid id="hold-observation" label="Force authorization to change during the real subject read" data-width="canvas"><script type="text/plain">
+sequenceDiagram
+  participant T as Test
+  participant H as Real lookup request
+  participant D as Database fixture boundary
+  T->>H: owner lookup
+  H->>D: subject read, held at observed query
+  D-->>T: query reached
+  T->>D: end session or change test role
+  T->>D: release held query
+  H->>D: final live checks
+  H-->>T: refused; no subject body
+</script></ex-mermaid>
+<p>Waiting is on explicit query/settlement events, never a delay. Changing the owner-role row directly is an adversarial fixture; it does not claim the public API permits owner removal or demotion.</p>
+<ul>
+<li>Run the same O1 subject request as member, another organization's owner, removed/noncurrent actor, expired/ended session, no cookie, and agent/bot/fleet-session bearer credentials. Expect the documented 401/403 body and unchanged rows. Initial refusal makes zero subject queries.</li>
+<li>Hold the actual subject read, end that session using fixture Drizzle or advance its controlled expiry, then release it. The final check refuses. Repeat with a fixture role change removing <code>organization:view</code>. Do not replace the native permission helper with a stand-in.</li>
+<li>For the permission-name discriminator, a unit case records the endpoint's actual call to <code>checkOrganizationPermission</code> with a forwarding spy that invokes the real helper. Assert the requested permission is exactly <code>organization:view</code> at both checks. Temporarily changing the endpoint literal to <code>organization:readAudit</code> must fail that assertion, even though today's owner holds both. The host cases still exercise real native permission; no third production role or configurable permission port is introduced just for the test.</li>
+<li>Fail each real membership/permission/subject database read through the test query watcher, while leaving later reads usable. Expect unavailable/503, no subject result and no audit outcome. Run owner success after restoring the fixture to distinguish a broken setup from the intended failure.</li>
+<li>With valid session but no recent second factor, the lookup succeeds and the protected invite remains refused. Authentication, permission and confirmation are different decisions.</li>
+</ul>
+<p><strong>Test seam:</strong> extend the existing <code>recordingD1Database</code> and Node query logger test boundaries, following B1-B's fault-control pattern. The permanent harness exposes <code>holdNextPersonMembershipRead()</code> returning reached/release events and <code>failNextOrganizationRead()</code>; only test hosts serve their control routes. They wrap the real statement, not a replacement membership answer. Node and workerd each must exercise the same cases.</p>
+<p><strong>Wrong builds:</strong> skip initial permission; replace it with role-name success; skip final recheck; catch a database error as absence. Keep one failing receipt per mutation, then restore and observe green. Lifetime: lasting host cases plus unit permission/schema cases. No source-only “looks guarded” check closes this observation.</p>
+
+<h2 id="V5">V5 · The shipped switcher gets safe native replies (S10)</h2>
+<ex-mermaid id="projection-observation" label="Canary data must stop before the actual HTTP body" data-width="canvas"><script type="text/plain">
+flowchart TB
+  rows["Real native member, invitation and metadata canaries"] --> native["Actual native full response"]
+  native --> fence["Project in public HTTP dispatch"]
+  fence --> body["Observe browser-visible whitelist only"]
+  bypass["Wrong build bypasses fence"] --> leak["Canary appears; assertion fails"]
+  class rows,native slot3
+  class fence slot2
+  class body slot6
+  class bypass,leak slot5
+</script></ex-mermaid>
+<p><strong>Proven by:</strong> actual GETs to native list/full-organization, containing real seeded member/invitation/metadata canaries before projection, through the public service as owner and ordinary member on both hosts. Inspect the serialized HTTP body, not a locally reconstructed projection.</p>
+<ul>
+<li>The full body is null or exactly <code>id, name, slug, logo, createdAt</code>; list contains only those summaries for the caller's organizations. Recursively reject members, invitations, totals, metadata, Fleet stamp fields, session token and planted canaries. The strict field check applies to owners too.</li>
+<li>Native foreign full-read still refuses and clears selection; signed-out reads refuse. Wrong methods stay 404. <code>list-members</code> and all other unselected native routes remain closed, with their old assertions retained.</li>
+<li>For a stored stale/foreign active selection, a query-free full read retains native refusal/clearing. Explicit <code>organizationId</code>, slug, member-limit or any query key instead gets generic 400 before native dispatch, identically for a real O2 and a nonexistent ID. Session/membership snapshots are unchanged by that invalid request, and the query watcher sees no native subject read. Test unverified and expired stored sessions too; public native self reads cannot bypass V1's authentication.</li>
+<li>In a real-component integration fixture, an internal native <code>provider.api.getFullOrganization</code> call with the same authorized cookie still has its native full shape. This proves the public fence did not change internal semantics.</li>
+<li>Unit cases for the projection cover full null, full summary, array, future fields, invalid UUID/date, malformed JSON and missing fields. A malformed success becomes 503; native error status/body survives except the documented lookup 400 normalization. Test no-store on successes/errors, multiple set-cookie values and removal of old content-length; no session-token string appears in JSON.</li>
+</ul>
+<p><strong>Wrong builds:</strong> omit projection dispatch; spread the full body while deleting only members; pass malformed success through; project internal API results; allow a caller-selected native organization query; skip fresh self-session authentication. Each fails a distinct assertion. A native upstream extra field remains an allowed change because the whitelist excludes it without needing an updated deny list.</p>
+<p><strong>Lifetime:</strong> lasting <code>people-organization-read-projection.host.e2e.test.ts</code>, projection unit cases and an internal/public boundary integration case. If the existing chooser is chosen, these route-open observations are replaced by explicit closed-route assertions; the owner lookup remains required.</p>
+
+<h2 id="V6">V6 · Real Chrome uses the actual chosen UI (S2/S9/S10/S12)</h2>
+<ex-mermaid id="browser-observation" label="UI proof follows the real component through the real service" data-width="canvas"><script type="text/plain">
+flowchart TB
+  chrome["Real Chrome on each host"] --> control["Actual chosen selector and lookup input"]
+  control --> requests["Real native and project endpoint requests"]
+  requests --> rows["Stored session and scoped lookup result"]
+  requests --> network["Browser receives no roster fields"]
+  rows --> visible["Settled UI matches state, including refusal"]
+  class chrome,control slot1
+  class requests slot3
+  class rows,network,visible slot6
+</script></ex-mermaid>
+<p><strong>Proven by:</strong> a new permanent browser scenario on each host. Reuse <code>startLocalAuthHarness</code>, <code>startHeadlessChrome</code>, <code>NativeBrowserPage</code> and the event-driven DevTools protocol B1-A delivers. Do not introduce Playwright, a new browser harness or wall-clock watchdog.</p>
+<ol>
+<li>Establish native verified owner/member fixture sessions and two organizations through the existing harness; the real browser receives only that test session's cookie. This fixture start is not a hosted provider sign-in claim.</li>
+<li>Open the delivered <code>/owner-ready</code> membership surface. With the shipped option, operate its actual dropdown by label/keyboard; creation, personal-account and settings controls are absent. The summary shows own role labels.</li>
+<li>Choose O1 then O2 with the same browser session. Wait on network replies/refetch settlement and inspect UI plus stored session. Capture native list/full response bodies seen by the browser and apply V5's strict no-roster check. Fail if any list-members request is sent.</li>
+<li>Drive native foreign selection from that same browser, observe refusal and the settled empty current choice, then choose a valid organization again. Verify the same behaviour after a page reload; no current label is supplied from localStorage.</li>
+<li>Open lookup through its actual selected entry point; submit test member, invitation and absent email through the delivered field. Inspect the displayed answer and real response. Deny the next read: the old result disappears and unavailable is shown.</li>
+<li>Use DevTools Fetch interception to hold the first lookup response <em>after the real service computed it</em>; submit a different subject and allow the second response to land, then release the first. Only the second result remains. Repeat with input/organization change before release. The service is not replaced by a fake response.</li>
+<li>Inspect at 400 px in the existing dark design: one top heading, visible result/error, no horizontal page overflow, labeled controls reachable by keyboard. Capture the chosen surface with synthetic data and record Chrome version, origin, host and exact commit.</li>
+</ol>
+<p><strong>Wrong builds:</strong> today's hidden second choice; a copied switcher that enables roles and therefore calls list-members; remove the new lookup result generation check; leave old result on network failure; mount a custom fake switcher in place of the shipped component. Each must fail its own UI/network observation. The alternative existing selector is tested through its real served controls if the owner chooses it; that allowed build passes the same capability outcomes without pretending to be shipped UI.</p>
+<p><strong>Lifetime/target:</strong> lasting <code>people-organization-browser.host.e2e.test.ts</code>, both hosts, with <code>test-fixtures/native-organization-browser-scenario.ts</code>. Test-only providers/central/Turnstile and injected clocks remain named stand-ins; no physical authenticator or real hosted login is claimed. All-six-journey completeness remains BG's.</p>
+
+<h2 id="V7">V7 · Existing paths, injected boundaries and old code removal (S7/S11/S12)</h2>
+<p>Retain the existing people organization/change/step-up/no-resend/fault tests, initial sole/multiple membership tests and real CLI continuation in <code>people-owner-page</code>. Run existing <code>verify-auth people</code> on local workerd and local-node targets and the existing agent journey on its supported target. The new host tests run separately; no new journey or receipt allowance is invented.</p>
+<p>Read the final diff for one schema home, one chosen selector/controller, exact new method/path openings, unchanged native mutation, no new migration/role store/central call and no runtime variant flag. The architecture check from B1-A covers all new core files and test clocks; test it with a planted bare crypto in a new server file and a planted non-v7 UUID mint, then restore. The chosen copied-component inventory is compared with upstream at <code>2b028ec5</code>, allowing import mapping/formatting only. Existing B1-B hooks/state are preserved if already merged.</p>
+<p><strong>Wrong builds:</strong> keep the old hide-after-selection condition or competing inline listener; open list-members; add a direct runtime crypto/clock; change a people-change assertion to conceal a failure. The meaningful route/architecture/regression test must fail for each applicable break; the source read confirms actual removal. An unchanged protected people path remains an allowed green result.</p>
+<p><strong>Limits:</strong> these local runs establish no hosted, staging, release or production-isolation claim. No new CI gate is authorized. A required unavailable layer stays open, with its exact runner/blocker.</p>
+
+<h2 id="inventory">Files and actual commands</h2>
+<p>New permanent product regression files: the four host files named in V1/V3/V5/V6, beside-module schema/context/projection unit cases, a core/native public-vs-internal integration case, and the event/fault fixture extensions in V4. Existing <code>people-owner-page</code>, <code>people-organizations</code>, organization route inventory and native-browser regression remain in the suite. No temporary tests are created.</p>
+<ex-code lang="sh" title="Run in the isolated switchboard worktree; heavy commands on Sunclaw"><script type="text/plain">
+pnpm install --frozen-lockfile
+pnpm build
+pnpm check
+pnpm test:unit
+pnpm test:integration
+pnpm test:e2e:host
+SIGN_IN_TEST_HOST=node pnpm test:e2e:host
+pnpm exec tsx scripts/verify-auth/verify-auth.ts people --target-file "$AUTH_VERIFY_TARGET_FILE"
+pnpm exec tsx scripts/verify-auth/verify-auth.ts agent --target-file "$AUTH_VERIFY_TARGET_FILE"
+</script></ex-code>
+<p>The first people run uses a <code>local-workerd</code> target; repeat people with a separately created <code>local-node</code> target. Agent uses the supported local-workerd/bridge target as its existing recipe specifies. Read <code>.agents/skills/verify-auth/SKILL.md</code> when constructing targets; do not invent a target file. Record Node, pnpm, Chrome, Miniflare, Better Auth/UI, Drizzle and Pacer versions, source head and build/asset hashes. A skipped case is not a passing observation. Each mutation is isolated, run to its intended assertion red, restored, and rerun green; a setup/import failure is not its sensitivity proof.</p>
+
+<h2 id="coverage">Each need and obligation has its observation</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Need</th><th>Rules</th><th>Seam</th><th>Deciding observation</th><th>Unverified</th></tr></thead><tbody>
+<tr><td>U51/U27</td><td>S1–S4</td><td>Context reader, native set-active, chosen component</td><td>V1/V2/V6, both-host rows plus real repeated choice and native clearing</td><td>Deployed sessions; BG's complete account/flow cutover</td></tr>
+<tr><td>U9</td><td>S6/S8</td><td>Scoped Drizzle read and strict public lookup</td><td>V3 and V6; member/invited/absent, other-org equality</td><td>Roster alternative until re-designed if selected</td></tr>
+<tr><td>U21/U46</td><td>S5</td><td>Native live permission before/after subject read</td><td>V4; initial zero-subject-query refusal and forced in-flight session/permission end</td><td>Changes after the final check; no cross-read transaction claim</td></tr>
+<tr><td>U43</td><td>S4/S5</td><td>No step-up in read/selection; unchanged protected changes</td><td>V2/V4, old confirmation read succeeds while protected invite refuses</td><td>BG's full returning-person page decision</td></tr>
+<tr><td>OD25/OD26</td><td>S5/S7</td><td>Existing permission/record owners</td><td>V3/V4/V7, unchanged authority snapshots and record tests</td><td>Central consumer acceptance, which B2 owns</td></tr>
+<tr><td>U51 and standing UI rules</td><td>S9/S10/S12</td><td>Chosen page, native projection, shipped cache, shared shell</td><td>V5/V6, actual bodies, cache settlement, visible result and stale-reply failure</td><td>Owner's three answers; alternate placement adaptation if selected</td></tr>
+<tr><td>Approved BG split; B1-A constraints</td><td>S11/S12</td><td>Shared contracts and final source cutover</td><td>V7 plus both-host gates</td><td>Staging, production isolation, real release sign-in and six-journey acceptance</td></tr>
+</tbody></table></div>
+<p>The independent Verifier receives a frozen target and these sources; its observed results and raw receipts remain separate from the Implementer's tests and the Lead's later acceptance.</p>
+</ex-document></body></html>

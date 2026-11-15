@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B1-C · Organizations finished · Plan</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css"><script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head><body>
+<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
+<a href="../../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a><a href="audit.html">B1-C · 1 Audit</a><a href="requirements.html">B1-C · 2 Requirements</a><a href="specification.html">B1-C · 3 Specification</a><a href="program-design.html">B1-C · 4 Program Design</a><a href="verification-design.html">B1-C · 5 Verification Design</a><a href="plan.html">B1-C · 6 Plan</a><a href="decisions.html">B1-C · 7 Decisions</a>
+</nav></ex-nav>
+<ex-document id="doc">
+<h1>B1-C · Organizations finished: Plan</h1>
+<p>The four packets below cover the complete feature: own-membership read, repeated native choice, owner-only person lookup, the selected real UI, preserved old tests and removed obsolete code. <strong>No product work starts until B1-A merges, the owner answers the three choices, the affected documents are reconciled and the owner gives implementation go-ahead.</strong></p>
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What you should check" tone="note" icon="shield-check"><p>Each packet has a write/command boundary, exact return locations and a stop condition. The acceptance map checks every rule against original evidence; it cannot be completed from an Implementer summary or a green CI badge.</p></ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users"><p>The lookup page, lookup input and chooser component remain <a href="decisions.html#open">open owner choices</a>. The packets fully describe the recommended separate page, exact email and shipped switcher branch. An answer selecting an alternate is reconciled and reviewed before these packets are issued; no agent infers a default from the recommendation.</p></ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open"><p>The governing outcomes are U9/U27/U51 and R13/R14/R53/R58/R62. The owner's 6 November account answer says “your organizations (choose one)” (<a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl">Fleet transcript:86867</a>). The Lead approved Stage 1's scope and B1-A dependency in <a href="router://0ff962c5-7fa3-4c18-a5ca-1bbe8db09e89/push/01a1e11a-38bb-7562-9d30-36d7ba95c686">the Stage 2 commission</a>. That authorizes writing this design, not implementation or owner acceptance.</p></ex-callout>
+
+<h2 id="delivery">From prerequisites to acceptance</h2>
+<ex-mermaid id="delivery-picture" label="B1-C's prerequisites, proof and acceptance" data-width="canvas"><script type="text/plain">
+flowchart TB
+  pre["B1-A merged; owner answers; design reconciled"] --> go["Owner's implementation go-ahead"]
+  go --> build["Implementer builds complete chosen branch"]
+  build --> verify["Paired Verifier: both hosts, heavy runs Sunclaw"]
+  verify --> lead["Lead inspects diff and raw proof"]
+  lead --> review["Independent reviewer checks approved design"]
+  review --> accept["Lead fills acceptance map or returns gap"]
+  class pre,go slot1
+  class build slot2
+  class verify,review slot4
+  class lead,accept slot6
+</script></ex-mermaid>
+<p>Blue is authority/prerequisites, amber implementation, violet independent observation/review, green Lead inspection and acceptance. Passing one stage does not waive any following obligation.</p>
+<p><strong>Code home:</strong> an isolated Agent Studio worktree of <code>/Users/shravansunder/code/projects/switchboard</code>, from the main branch containing merged B1-A. Pin its base and final head. <code>f3b2b88b</code> is the inspected design baseline; it is not automatically the future implementation base. Read the B1-A diff, preserve its <code>SignInPlatform.crypto</code>, nonce helper, allowed-globals and UUID rules. If B1-B or B2 corrections have landed, read and preserve their affected hooks, UI states and admin controls.</p>
+<p><strong>Handoff home:</strong> <code>/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-15-fleet-access-b1/b1-c-organizations/work/</code>. “Work folder” below means that exact directory. It holds handbacks and redacted evidence, not product code. The Lead fills actual SessionRefs, Verifier pair, work-log grant and frozen PR target in the commission before sending an implementation packet. The design-writing run itself is no-home and has no paired Checker.</p>
+
+<h2 id="implementer">Packet 1 · Implementer</h2>
+<p><strong>Outcome:</strong> deliver S1–S12 as the owner selects them, with new permanent regression coverage and the obsolete selector path removed. Read the seven pages, original approved B1/BG scope, Switchboard <code>AGENTS.md</code>, B1-A's merged contract and the source anchors below. The Lead chooses the Implementer and paired Verifier through the current agent-management policy; no model or session is invented in this document.</p>
+<h3 id="implementation-order">Build order and exact changes</h3>
+<ex-mermaid id="build-order-picture" label="Build shared truth access before binding the selected UI" data-width="canvas"><script type="text/plain">
+flowchart TB
+  contract["One shared contract home"] --> reads["Own context and scoped subject read"]
+  reads --> auth["Native endpoint authorization and strict release"]
+  auth --> ui["Selected UI and public projection"]
+  ui --> proof["Permanent tests, both hosts and browser"]
+  proof --> remove["Old selector path removed; final gates"]
+  class contract,reads slot3
+  class auth,ui slot2
+  class proof slot4
+  class remove slot6
+</script></ex-mermaid>
+<p>Contracts and store ownership precede UI binding. The full chosen path and removal are one deliverable, not separate acceptance of scaffolding.</p>
+<ol>
+<li><strong>Shared contracts.</strong> Add <code>sign-in-core/src/contracts/organization-membership.ts</code>. Move the existing membership schema/type unchanged from <code>storage/organization-membership-store.ts:25–31</code>; derive choice, context and lookup request/result schemas. Update <code>owner-page.tsx</code> and <code>sign-in-http-handler.ts</code> type imports. Export the new public contracts/context reader from <code>src/index.ts</code>. No duplicate schemas or compatibility forwarding export.</li>
+<li><strong>Self context.</strong> Add <code>organizations/person-organization-context.ts</code>, using <code>persons.readPersonSession</code> and <code>organizations.membershipsForPerson</code>, returning signed-out/unavailable/available. Active means still among current memberships; the read makes no write. Extend the owner handler to use that same reader instead of its ad hoc choices block; preserve configured-owner creation, factor setup and Fleet setup status.</li>
+<li><strong>Scoped store.</strong> Extend <code>OrganizationMembershipRecords</code> with <code>lookupPersonMembership({ organizationId, email, now })</code>. Through injected Drizzle, query membership joined to user by requested organization and normalized email, then pending invitation in the same organization/email with expiry strictly after now. Membership wins. Return strict member/role, invited or not-member; propagate query/parse failure. No global user-existence read, raw SQL, schema change or audit write.</li>
+<li><strong>Native project endpoints.</strong> Add <code>better-auth/organization-membership-read-plugin.ts</code>, registered in <code>provider-configuration.ts</code>. GET self-context obtains the current native cookie session without refresh/cache. POST person-membership parses exact organization/email, verifies stored current session/selection and live <code>organization:view</code>, reads the subject, then rechecks before release. Return documented status/body, no-store and no subject on refusal/failure.</li>
+<li><strong>Selected public surface.</strong> Add the exact method/path cases inside the organization-prefix branch in <code>response-release/sign-in-request-handler.ts</code>, before its POST-only return. Add <code>organization-read-projection.ts</code> for safe lookup content-type/400-body release in either branch. For the shipped option also reject every query key on native list/full before dispatch, project successful native responses and require the shared fresh verified self-session check. Preserve query-free native errors/clearing; keep list-members closed. Update public-route and installed-plugin inventory tests without deleting their census loops. Internal provider API stays unprojected.</li>
+<li><strong>Shipped component branch.</strong> Copy upstream <code>2b028ec5</code> Base UI example files into auth-ui: organization-switcher, organization-view, organization-view-skeleton, organization-logo, create-organization-dialog, slug-field, user-view and user-avatar. Copy its avatar/dropdown-menu primitives into tool-access-ui's existing registry. Map imports only; preserve upstream logic, including the named copied UserView cast. Export the component/plugin. Add pinned <code>@tanstack/react-pacer@0.23.0</code> to auth-ui and update the lockfile; frozen installation must work without undeclared transitive dependencies. Use existing Base UI, not Radix.</li>
+<li><strong>Choice composition.</strong> Add <code>pages/person-organization-choice.tsx</code> and <code>pages/islands/person-organization-choice.tsx</code>. Show own organization/role summary and the shipped switcher with creation/personal/settings hidden. Add native/UI organization plugins to the existing island provider without removing B1-B's hooks or factor/passkey plugins. Refresh self-context after set-active settles and on page/focus entry; do not persist it. If the existing chooser is the chosen exception instead, extract that one component, use the self-context/native POST path, and omit the shipped-only files/routes/dependency.</li>
+<li><strong>Chosen lookup page.</strong> For the recommended separate page, add <code>pages/organization-person-lookup-page.tsx</code> and <code>pages/islands/organization-person-lookup.tsx</code>. GET <code>/api/auth/organization/people</code> is guarded by current session/selection/live permission before rendering any organization name; render through pageDocument with B1-A's injected nonce and existing CSP. Add one escaped link in <code>organization-admin-page.ts</code>; do not rewrite B2's workspace page. The exact-email island parses the shared result schema, has labeled field/action/live result, clears previous data on failure/change, and uses an in-memory generation to reject stale replies.</li>
+<li><strong>Island integration.</strong> Extend <code>sign-in-island-state.tsx</code> and <code>sign-in-pages-island.tsx</code> with choice/lookup states. Ensure <code>owner-page-document.tsx</code> loads the bundle for the choice surface even when no factor island is present. Keep the existing factor flows, Turnstile and B1-B continuation inputs. No new third-party script or CSP exception.</li>
+<li><strong>Product tests and test boundaries.</strong> Add the permanent files listed under the Verifier packet. Extend existing D1 recording and Node query-log fixtures with explicit hold/release and one-shot failure for membership reads; add harness methods with test-host-only routes. Preserve actual native auth/permission/selection and Drizzle. No temporary test files, wall-clock waits, weakened record assertions or fake membership answers.</li>
+<li><strong>Cutover.</strong> Remove the old hide-after-selection condition and the superseded inline chooser listener in <code>owner-page-script.ts:47–52</code>. Keep one selector/controller, selected native route assertions and all unrelated route closures. Preserve sole-membership session initialization and native foreign-choice clearing. BG still removes <code>/owner-ready</code> in its own full page cutover.</li>
+<li><strong>Gates and PR.</strong> Build and run the required gates on the isolated final source; heavy commands go to Sunclaw. Open one draft PR for B1-C when the scoped diff and proof are reviewable. No merge, release, tag or deployment is authorized by this packet.</li>
+</ol>
+<h3 id="write-scope">Write scope and stops</h3>
+<p>You may edit every product/module file above, named permanent regression files, the corresponding copied upstream dependency closure and tests, <code>auth-ui/package.json</code>/<code>pnpm-lock.yaml</code> for the selected shipped branch, and existing tests that consume the changed contracts or intentionally superseded route closure. List any additional caller changed only because type checking requires the new contract.</p>
+<p>You may not change migrations/schema, native Better Auth behaviour, token/cookie formats, central authority, roles, CI orchestration, rate values, global infrastructure or BG's destination/setup design. No runtime feature flag for the options. Stop for an unanswered owner choice, an unsupported projection/component contract, extra public data/route requirements, new persisted state or a proof weakening. Diagnose and return the precise source contradiction; do not patch the library or invent a new membership/flow layer.</p>
+<h3 id="implementation-returns">Return to the Lead</h3>
+<p><code>work/implementer-handback.md</code>: PR/base/head; owner choice references and final selected branch; exact changed-file/caller inventory; each gate with command, counts and numeric exit; raw log locations/hashes; old-code removals; upstream-copy differences and retained cast; and every blocked/unverified interaction. Say whether pre-fix assertion reds were observed; never count an import/setup failure as the intended red. Include the paired Verifier's original report link without substituting it for your own product-test evidence.</p>
+
+<h2 id="verifier">Packet 2 · Paired Verifier</h2>
+<p><strong>Duty:</strong> challenge and observe the delivered behaviour at its real boundary, on the frozen PR head supplied by the Implementer. Read original U9/U21/U46/U27/U51, R13/R14/R53/R58/R62, this Specification/Program Design/Verification Design, the final owner answers and the existing <code>.agents/skills/verify-auth/</code>. Your expected outcomes come from those sources, not from the Implementer's summary. You do not repair product or permanent test code.</p>
+<p><strong>Where:</strong> all heavy host/browser runs on Sunclaw. Execute host proof once on default local workerd/D1 and once with <code>SIGN_IN_TEST_HOST=node</code> for Node/better-sqlite3. The real-browser file must execute both parameterized hosts, with its event-only protocol helper from merged B1-A. Freeze source/build/target for your observation; if it moves, bind new evidence to the new target instead of mixing runs.</p>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Observation and permanent home</th><th>What you decide from</th><th>Wrong build to run, then restore</th></tr></thead><tbody>
+<tr><td>V1: <code>people-organization-context.host.e2e.test.ts</code>; contract/context unit cases</td><td>Actual own rows, empty vs unavailable, current/expired session, normalized selection and no second-factor stamp/write.</td><td>Use caller-supplied person ID; return stale active ID; turn store failure into empty success. Separate red per break.</td></tr>
+<tr><td>V2: extended <code>people-owner-page.host.e2e.test.ts</code> and context cases</td><td>Two choices in the same session, actual stored IDs, next scoped lookup, foreign 403 with stored null, old confirmation unchanged.</td><td>Restore hide-after-selection; reuse old self-context; restore old selection after refusal; stamp confirmation on choose.</td></tr>
+<tr><td>V3: <code>people-membership-lookup.host.e2e.test.ts</code>; existing people test rows/records; storage cases</td><td>Member/role, unexpired invite and absent; exact-expiry boundary; member precedence; byte-equal O2-only/nonexistent negatives; unchanged authority/audit snapshots.</td><td>Drop each organization filter separately; use non-strict expiry; leak global user existence; write outcome from lookup.</td></tr>
+<tr><td>V4: same lookup host file; native permission unit cases; existing test query watchers</td><td>Zero subject reads on initial refusal, ended-session/permission in-flight refusal, real query failures as 503, old-factor read succeeds while invite refuses.</td><td>Skip initial permission; use role name or wrong permission literal; skip final recheck; swallow database error.</td></tr>
+<tr><td>V5: <code>people-organization-read-projection.host.e2e.test.ts</code>; projection unit and internal/public integration cases</td><td>Real bodies whitelisted for owner/member; internal full shape retained; native clearing/error/headers; no explicit native query target, fresh self-session and unrelated routes closed.</td><td>Never call projection; spread unknown fields; pass malformed success; project internal results; allow explicit foreign query; skip current verified-session check.</td></tr>
+<tr><td>V6: <code>people-organization-browser.host.e2e.test.ts</code>, <code>test-fixtures/native-organization-browser-scenario.ts</code></td><td>Actual chosen controls, repeated choice/clearing, no roster network body or member-list call, visible lookup/failure, stale reply rejection, 400 px/keyboard.</td><td>Base build for missing second choice; enable shipped role query; remove generation guard; leave old result on failed read. Keep real service replies in the held-response case.</td></tr>
+<tr><td>V7: existing people/CLI/agent journeys, route inventory and B1-A architecture rules</td><td>Existing protected behaviour and exact old-code removal, no duplicate owner/schema, copied-source parity, both-host final gates.</td><td>Reintroduce old listener; open list-members; plant runtime crypto and non-v7 mint. Never weaken proof to obtain green.</td></tr>
+</tbody></table></div>
+<p>New test-fixture hold/fault controls live in the existing recording D1 and Node host query boundaries plus <code>local-auth-harness.ts</code>, not in production routes. Use explicit reached/release events. If that driver/control is broken, diagnose it separately and notify the Implementer for product-fixture ownership; a driver failure is not evidence of product failure or a passing negative test.</p>
+<ex-code lang="sh" title="Required final gates; record exact counts, skips and numeric exits"><script type="text/plain">
+pnpm install --frozen-lockfile
+pnpm build
+pnpm check
+pnpm test:unit
+pnpm test:integration
+pnpm test:e2e:host
+SIGN_IN_TEST_HOST=node pnpm test:e2e:host
+pnpm exec tsx scripts/verify-auth/verify-auth.ts people --target-file "$AUTH_VERIFY_TARGET_FILE"
+pnpm exec tsx scripts/verify-auth/verify-auth.ts agent --target-file "$AUTH_VERIFY_TARGET_FILE"
+</script></ex-code>
+<p>Run people with separate valid local-workerd and local-node target files, and agent on its supported existing local-workerd/bridge target. Inspect the source recipe before building those targets. Preserve expected old regressions. Every deliberate wrong build is isolated, produces its named assertion red, is restored, then passes again. No code is shipped in a mutated state. A sensitivity case cannot mutate and silently retain an upstream library patch.</p>
+<p><strong>Return:</strong> <code>work/verifier-observation.md</code> and <code>work/evidence/</code>, with per-V supported/unsupported/unknown, target tuple, commands/counts/exits, original red/green logs, fixture/stand-in inventory, Chrome/origin/host and asset hashes, redacted network/step records and captures. Unverified includes deployed hosts, real providers/Turnstile, staging/isolation/release and BG's full six journeys. Report an unavailable required layer as open, never as passed or replaced by source review.</p>
+
+<h2 id="reviewer">Packet 3 · Independent Reviewer</h2>
+<p><strong>Duty:</strong> independently judge the complete selected B1-C feature against the owner's approved meaning. A fresh reviewer has no authoring history. The Lead commissions it only after reading the diff and evidence itself. This review is not owner acceptance or authority to merge.</p>
+<ex-callout title="Your first question" tone="question" icon="users"><p>What does this change drop from the owner's words, earlier designs or existing tests? List those differences before judging the new design or handback.</p></ex-callout>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Required input</th><th>Exact location and use</th></tr></thead><tbody>
+<tr><td>Owner meaning and decisions</td><td><code>requirements.html</code> and <code>decisions.html</code>, linked original <code>docs/specs/2026-11-02-fleet-access/requirements.source.html</code> U9/U21/U27/U46/U51 and OD25/OD26; Fleet transcript:71226/71230/86867; actual new answer records. These are the yardstick.</td></tr>
+<tr><td>Approved external contract</td><td>Original Specification R13/R14/R53/R58/R62 and C4; current <code>specification.html</code> S1–S12. No narrowed Plan or handback supersedes them.</td></tr>
+<tr><td>Earlier boundaries and audit</td><td>Original B1/BG deliverables; <code>../audit.html</code> R1-O10/O25 and V10/V25; this <code>audit.html</code>. Check that BG work has a named home rather than disappearing.</td></tr>
+<tr><td>Old/current code and libraries</td><td>Switchboard pinned base and final head; files in this packet; installed Better Auth 1.7.11; upstream Better Auth UI 2b028ec5 source/exports/dependency closure; B1-A merge and any integrated B1-B/B2 changes.</td></tr>
+<tr><td>Evidence and Lead claims</td><td><code>work/implementer-handback.md</code>, <code>work/verifier-observation.md</code>, <code>work/evidence/</code>, <code>work/lead-check.html</code>; the PR and exact head. Treat all summaries as claims to inspect.</td></tr>
+<tr><td>Report format</td><td><code>docs/specs/2026-11-15-fleet-access-overview/report-format.md</code>. Return <code>work/reviewer-report.html</code>, ending READY or NOT READY with anchored findings.</td></tr>
+</tbody></table></div>
+<ol>
+<li>Open each S1–S12 rule and its authority; state the observable closure before reading the implementation claim.</li>
+<li>Follow native request to store/response. Inspect the fresh actor, requested organization and permission at both checks; inspect subject filters/expiry/error mapping. A selected ID or role-name comparison must not substitute for permission.</li>
+<li>Inspect the actual public list/full HTTP projection and internal native API path. Confirm whitelist, error handling, cookies and selected native clearing; inspect shipped cache/refetch and hidden-role calls. Find any route capable of returning a roster to a member.</li>
+<li>Compare actual copied UI source/imports/dependencies to the exact upstream; confirm no silent fork or undeclared dependency. Check all three owner answers were adopted in the documents and code; no default or runtime option flag was invented.</li>
+<li>Open original logs for every required real-host/browser path and deliberate wrong build. Check the frozen source/build tuple, both hosts and proper failures, not just suite totals. Confirm old people/record/CLI/agent coverage and no weakened assertions.</li>
+<li>Check the old selector condition/controller and any obsolete route closure are removed only where the selected path replaces them. Confirm one schema owner, no new persisted flow/role store or native library patch.</li>
+</ol>
+<p>A valid finding quotes the approved obligation, names the current code/evidence anchor and the smallest correction within the scope. An open owner choice or changed contract goes to the Lead, not an implementer guess. Source/design readiness does not certify unseen runtime or hosted proof.</p>
+
+<h2 id="acceptance">Packet 4 · Lead acceptance</h2>
+<p>The Lead owns design reconciliation, final integration and acceptance. Before commissioning implementation, it records the three actual owner answers, removes/revises unselected branch text and obtains the required targeted design review. It fills the pair/session/work-log fields and pins a base containing B1-A. Heavy proof uses Sunclaw; procedural grouping stays the Lead's call.</p>
+<p>Before independent review, open the final diff and original evidence and write <code>work/lead-check.html</code>. After review, disposition every finding with inspected proof. To accept, hold the filled map below, the Verifier's original report/evidence, a READY independent report, final gates/CI and proof of the chosen old-code removal. Anything still missing comes to the owner before acceptance; no approval is inferred from the absence of a reply.</p>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Obligation</th><th>Evidence the Lead must open</th><th>Acceptance state</th></tr></thead><tbody>
+<tr><td>S1 own context</td><td>V1 strict HTTP and row/fault observations, both hosts</td><td>Not started</td></tr>
+<tr><td>S2 repeat choice</td><td>V2/V6, same-session second choice and real stored/lookup result</td><td>Not started</td></tr>
+<tr><td>S3 native selection</td><td>V2/V5/V6 foreign refusal with stored null and settled cache</td><td>Not started</td></tr>
+<tr><td>S4 no artificial step-up</td><td>V1/V2/V4 old confirmation and unchanged protected invite failure</td><td>Not started</td></tr>
+<tr><td>S5 live permission</td><td>V4 initial/final native permission and forced in-flight end</td><td>Not started</td></tr>
+<tr><td>S6 scoped answer</td><td>V3 role/invitation/expiry and byte-identical other-org/nonexistent negatives</td><td>Not started</td></tr>
+<tr><td>S7 no change/history inference</td><td>V3/V7 unchanged snapshots and retained record/fault tests</td><td>Not started</td></tr>
+<tr><td>S8 input</td><td>Actual owner answer; V3/V6 chosen input and invalid/absent cases</td><td>Awaiting owner answer</td></tr>
+<tr><td>S9 placement/lifecycle</td><td>Actual owner answer; V6 real entry, safe failure and stale-reply cases</td><td>Awaiting owner answer</td></tr>
+<tr><td>S10 chosen component</td><td>Actual owner answer; V5/V6 public-vs-internal/native/cache proof and source parity</td><td>Awaiting owner answer</td></tr>
+<tr><td>S11 BG boundary</td><td>V7 retained continuation and reusable contract; BG obligations still named</td><td>Not started</td></tr>
+<tr><td>S12 both hosts, quality/cutover</td><td>V6/V7, full gates/counts/exits, final head/CI and removed old paths</td><td>Not started</td></tr>
+<tr><td>Prerequisite and independent review</td><td>B1-A merge/contract; frozen target; original Verifier and READY reviewer reports</td><td>Not started</td></tr>
+</tbody></table></div>
+<p>Write <code>work/lead-acceptance.html</code> with final commit, exact inspected checks/results, risk and remaining unverified surfaces. The worst relevant failure is a public roster/other-organization disclosure or a read authorized by stale membership. No local gate grants staging, release or production acceptance; BG still owes those. Do not merge, tag, publish or deploy without the owner's separate authority.</p>
+</ex-document></body></html>

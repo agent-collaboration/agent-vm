@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B1-C · Organizations finished · Audit</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
+  <a href="../../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
+  <a href="audit.html">B1-C · 1 Audit</a>
+  <a href="requirements.html">B1-C · 2 Requirements</a>
+  <a href="specification.html">B1-C · 3 Specification</a>
+  <a href="program-design.html">B1-C · 4 Program Design</a>
+  <a href="verification-design.html">B1-C · 5 Verification Design</a>
+  <a href="plan.html">B1-C · 6 Plan</a>
+  <a href="decisions.html">B1-C · 7 Decisions</a>
+</nav></ex-nav>
+<ex-document id="doc">
+<h1>B1-C · Organizations finished: Audit</h1>
+<p><strong>Choose any organization you belong to, and, as its owner, look up one person's membership there.</strong> The selection exists today only during an unfinished login. The owner lookup is missing. This feature finishes those two paths in Switchboard; the complete getting-in flow stays with BG.</p>
+<p><a href="../../2026-11-15-fleet-access-overview/index.html">Back to the Fleet access overview</a>. This source audit is against Switchboard <code>f3b2b88b74225359970b0580a290cd34fe1e557b</code>. The Lead approved its scope cut; product work has not started.</p>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What you should check" tone="note" icon="shield-check">
+<ul>
+<li>The chooser stays available after a current organization has been selected. It shows only the signed-in person's own memberships.</li>
+<li>The owner lookup answers only about the organization requested: member and role, invited, or not a member. A person who exists elsewhere looks the same as someone who doesn't exist.</li>
+<li>The <a href="#uncarried">uncarried-work table</a> gives every missing B1 item a home. BG still owns the setup decision, invitation page, guarded Decline, CLI deadline, account page and six complete local journeys.</li>
+</ul>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p>Choosing another organization and looking someone up are already approved outcomes. The lookup's page, subject input and organization-choice component are the three open owner choices on <a href="decisions.html#open">Decisions</a>. Neither placement puts administration on the account page; no recommendation is an owner answer.</p>
+<p>A refused foreign selection keeps Better Auth's existing behaviour: it clears the current choice. This audit does not promise preservation of that choice or introduce a wrapper that changes it.</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>Your approved need U9 is to look up <em>“a person's role in your organization (from the sign-in service)”</em> (<a href="../../2026-11-02-fleet-access/requirements.source.html#requirements--needs">Requirements</a>, line 106). Your 6 November answer chose <em>“Your account page: your second factors, your organizations (choose one), and a clear ‘done’”</em> (<a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl">Fleet transcript</a>, line 86867, review <code>58647d30</code>).</p>
+<p>The independent <a href="../audit.html#b1-outcomes">B1 audit</a> calls the chooser partial (R1-O10) and the person lookup missing (R1-O25). I checked their owning code and tests below. <strong>These are source observations; no product test, browser journey or hosted service was run for this audit.</strong></p>
+</ex-callout>
+
+<h2 id="picture">What is built, and where the gaps are</h2>
+<p>Membership and role already belong to the sign-in service. The two gaps are in how people reach that truth. Central does not need a copy of the membership records.</p>
+<ex-mermaid id="current-model" label="Current organization choice and lookup" data-width="canvas"><script type="text/plain">
+flowchart TB
+  person["Signed-in person"] --> read["Read own memberships"]
+  read --> single["One membership selected at sign-in"]
+  read --> missing["Several, with none selected"]
+  missing --> choose["Choose during login"]
+  choose --> selected["Current organization selected"]
+  selected --> gone["Chooser no longer offered"]
+  owner["Organization owner"] --> lookup["Person lookup missing"]
+  class person,owner slot1
+  class read,single,choose,selected slot6
+  class missing slot2
+  class gone,lookup slot5
+</script></ex-mermaid>
+<p>Green is existing source behaviour; amber is the condition that exposes the chooser; rose is the gap. The picture describes the code at the pin, not an observed run.</p>
+
+<h2 id="inventory">Inventory, with the decisive sources</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Part</th><th>What exists at the pin</th><th>What B1-C must finish or preserve</th></tr></thead>
+<tbody>
+<tr><td>Own memberships</td><td><a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b74225359970b0580a290cd34fe1e557b/packages/sign-in-core/src/storage/organization-membership-store.ts#L25">organization-membership-store.ts:25–40, 78–92</a> defines <code>OrganizationMembership</code> and reads the person's memberships by joining <code>member</code> to <code>organization</code>. It returns organization ID, name, person ID and role.</td><td>Reuse this truth and derive a small self-view. Reading one's own organizations must not open a roster or another person's memberships.</td></tr>
+<tr><td>Selection at sign-in</td><td><a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b74225359970b0580a290cd34fe1e557b/packages/sign-in-core/src/better-auth/provider-configuration.ts#L283">provider-configuration.ts:283–300</a> selects the sole membership in the session's create hook; zero or several leave <code>activeOrganizationId</code> null.</td><td>Preserve the existing session and ID ownership. A choice is a selection within one's memberships, never a grant of membership or permission.</td></tr>
+<tr><td>Chooser on the delivered page</td><td><a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b74225359970b0580a290cd34fe1e557b/packages/sign-in-core/src/better-auth/sign-in-http-handler.ts#L217">sign-in-http-handler.ts:217–248</a> supplies choices only when there are several memberships and the current selection matches none. <a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b74225359970b0580a290cd34fe1e557b/packages/sign-in-core/src/pages/owner-page.tsx#L210">owner-page.tsx:210–270</a> renders one selectable row per membership; its main render prioritizes the factor form before the chooser.</td><td>Make the membership list and selection available after selection too. Separate that capability from BG's decision about which whole page is shown and when setup is complete.</td></tr>
+<tr><td>Selecting a membership</td><td><a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b74225359970b0580a290cd34fe1e557b/packages/sign-in-core/src/better-auth/owner-page-script.ts#L47">owner-page-script.ts:47–52</a> POSTs <code>{ organizationId }</code> to native <code>/api/auth/organization/set-active</code>, then reloads on success. That exact route is already public for POST (<a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b74225359970b0580a290cd34fe1e557b/packages/sign-in-core/src/response-release/sign-in-request-handler.ts#L14">sign-in-request-handler.ts:14–26</a>).</td><td>Keep Better Auth as the selection writer. Prove the stored session and next organization-bound result, not merely the clicked label. No second copy in browser storage.</td></tr>
+<tr><td>Owner-authorized read</td><td><a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b74225359970b0580a290cd34fe1e557b/packages/sign-in-core/src/better-auth/organization-permission-check.ts#L24">organization-permission-check.ts:24–57</a> reads the actor's current member role and calls native <code>hasPermission</code>, with caching disabled. <code>organization:view</code> already exists; only owner receives it (<a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b74225359970b0580a290cd34fe1e557b/packages/sign-in-core/src/better-auth/organization-access-control.ts#L5">organization-access-control.ts:5–22</a>).</td><td>Use that permission for a new owner-scoped person read. Authenticate the session and authorize the requested organization before looking up the subject. Reads need no recent second factor (R53).</td></tr>
+<tr><td>Person lookup entry and data path</td><td>The public route list above has no person-membership lookup. Native <code>list-members</code>, <code>get-full-organization</code> and <code>list</code> are deliberately closed; their closure is asserted in <a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b74225359970b0580a290cd34fe1e557b/packages/sign-in-core/src/response-release/organization-public-routes.unit.test.ts#L22">organization-public-routes.unit.test.ts:22–42</a>. The existing <a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b74225359970b0580a290cd34fe1e557b/packages/sign-in-core/src/better-auth/organization-admin-page.ts#L39">organization-admin-page.ts:39–80</a> offers workspace creation, workspace lookups and change records, not a person lookup.</td><td>Offer a real lookup, with its permission guard, scoped Drizzle read, defined negative answer, visible result and failure handling. Opening a native directory route does not meet this requirement.</td></tr>
+<tr><td>People changes</td><td><a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b74225359970b0580a290cd34fe1e557b/packages/sign-in-core/src/better-auth/organization-provider-options.ts#L34">organization-provider-options.ts:34–83, 126–168</a> checks a recent factor, writes intent before invitation/accept/cancel/removal and writes outcome after. Creation is restricted to the configured, verified owner (87–100).</td><td>Retain these protections and their tests. Lookup is a read of current membership, never a way to settle an unconfirmed change record (OD26).</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="library">Two library behaviours that the design must respect</h2>
+<p>I used DeepWiki for pointers, then read the installed <code>better-auth</code> <code>1.7.11</code> distribution. The indexed description is not the version authority. The local distribution is under <code>switchboard.item2-b2-central-organizations/node_modules/.pnpm/</code>.</p>
+<ex-mermaid id="separate-reads" label="Own choices and owner lookup are different reads" data-width="canvas"><script type="text/plain">
+flowchart TB
+  self["Person reads own organizations"] --> own["Own membership rows"]
+  select["Person selects an organization"] --> native["Better Auth checks membership"]
+  native --> accepted["Member: set current choice"]
+  native --> refused["Foreign: clear choice and refuse"]
+  owner["Owner looks up one person"] --> permission["Live organization-view permission"]
+  permission --> scoped["Only requested organization's answer"]
+  class self,select,owner slot1
+  class own,native,permission slot3
+  class accepted,scoped slot6
+  class refused slot2
+</script></ex-mermaid>
+<p>Blue names the caller's action; teal the owning check or read; green a successful result; amber Better Auth's refusal effect.</p>
+<ul>
+<li><strong>Native selection refusal clears the previous selection.</strong> <code>dist/plugins/organization/routes/crud-org.mjs:419–433</code> checks membership; on failure it writes null before throwing 403. The existing foreign-choice test checks the 403 and that no foreign membership was made; it does not assert that an earlier selection survived. B1-C keeps the native effect and must re-read after a refusal. It must not label the selection as unchanged.</li>
+<li><strong>Native member listing is too broad for this lookup.</strong> <code>dist/plugins/organization/routes/crud-members.mjs:437–481</code> accepts any current member, then returns members and a total. It does not require <code>organization:view</code>. Native <code>get-full-organization</code> similarly checks membership (<code>crud-org.mjs:353–372</code>) and can clear a stale/foreign selection before refusing. Both are closed at the inspected pin. The shipped-component option opens exact native list/full GETs only behind mandatory public summary projection; list-members stays closed. The owner lookup remains a separate live-permission read.</li>
+</ul>
+
+<h2 id="tests">What the old tests establish, and what they cannot catch</h2>
+<p>These are assertions inspected in source, not fresh passing receipts. They give the implementation a stronger starting point than a new isolated mock test.</p>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Existing test at the pin</th><th>Behaviour its assertions exercise</th><th>Missing discriminator for B1-C</th></tr></thead>
+<tbody>
+<tr><td><a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b74225359970b0580a290cd34fe1e557b/packages/sign-in-test-support/src/people-organizations.host.e2e.test.ts#L215">people-organizations.host.e2e.test.ts:215–249, 446–483</a></td><td>A fresh social session selects the only membership; several memberships start with none selected; native set-active writes the chosen organization into the session.</td><td>A ready person can switch again; the control is present and usable without a fresh factor merely to choose. The next read reflects a removed membership rather than a cached list.</td></tr>
+<tr><td><a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b74225359970b0580a290cd34fe1e557b/packages/sign-in-test-support/src/people-owner-page.host.e2e.test.ts#L65">people-owner-page.host.e2e.test.ts:65–115</a></td><td>The delivered chooser is driven through served-page browser I/O and the real CLI; a foreign organization gets 403; the eventual token names the selected real membership.</td><td>The first choice hides the chooser on today's build. A second choice in the same signed-in session must fail on that build. Add readback of native clearing after a foreign choice. The existing page driver is not real Chrome.</td></tr>
+<tr><td><a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b74225359970b0580a290cd34fe1e557b/packages/sign-in-test-support/src/people-organizations.host.e2e.test.ts#L86">people-organizations.host.e2e.test.ts:86–185, 332–440, 485–535</a></td><td>Invite, accept, cancel and remove produce matching intent/outcome records with the authenticated actor; member actions, owner removal and signed-out calls are refused. These tests do not implement a lookup.</td><td>Use the resulting real member and invitation rows as lookup subjects; add another organization's person and a nonexistent person, and compare the negative replies. Preserve all change and record assertions.</td></tr>
+<tr><td><a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b74225359970b0580a290cd34fe1e557b/packages/sign-in-core/src/response-release/organization-public-routes.unit.test.ts#L15">organization-public-routes.unit.test.ts:15–42</a></td><td>Only the named mutation routes are public; native list/get/member routes stay closed for every tested method.</td><td>Add only the precise B1-C read route. Keep the broad native routes closed; a unit route test alone cannot prove the new read's permission or privacy.</td></tr>
+<tr><td><a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b74225359970b0580a290cd34fe1e557b/packages/sign-in-test-support/src/people-organization-page.host.e2e.test.ts#L137">people-organization-page.host.e2e.test.ts:137–230</a></td><td>Creation waits for app confirmation; the served controller handles an expired factor and a duplicate short name against the real endpoint.</td><td>Keep this coverage while moving organization-choice responsibilities. Completing all setup order, invitation and deadline combinations remains BG's proof.</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="uncarried">Every uncarried item has a home</h2>
+<p>The independent audit's <a href="../audit.html#limits">Uncarried work</a> paragraph is not a new scope grant. The approved deliverables already distinguish the people capabilities from the getting-in flow. The Lead confirmed this split on 15 November in <a href="router://0ff962c5-7fa3-4c18-a5ca-1bbe8db09e89/push/01a1e10d-8c1f-77f3-bafc-d22dbda258fa">the scope reply</a>.</p>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Uncarried item</th><th>Owner and closure</th><th>Source fixing that home</th></tr></thead>
+<tbody>
+<tr><td>Person membership lookup</td><td><strong>B1-C.</strong> A real owner-facing read, from permission check through scoped result and negative cases.</td><td><a href="../../2026-11-02-fleet-access/specification.source.html#specification--administration">R13/R14, lines 198–199</a>; B1 audit R1-O25/R1-V25.</td></tr>
+<tr><td>Complete active-organization choice and read</td><td><strong>B1-C.</strong> Own memberships and current choice remain available; choosing writes through Better Auth; BG consumes the same result.</td><td><a href="../../2026-11-02-fleet-access/specification.source.html#specification--getting-in">R58/R62, lines 249/253</a>; B1 audit R1-O10/R1-V10; Lead scope reply above.</td></tr>
+<tr><td>Complete page decision</td><td><strong>BG.</strong> One decision covers all step, readiness and destination combinations. B1-C supplies membership facts; it does not create a second setup decision.</td><td><a href="../../2026-11-02-fleet-access/deliverables/bg-getting-in.source.html#bg-scope">BG scope, line 83</a>; its parts, line 97.</td></tr>
+<tr><td>Invitation page and guarded Decline</td><td><strong>BG.</strong> Recipient-safe display, Accept/Decline, pending/expiry/concurrency guards and consumed destination. B1-C preserves today's native accept/cancel records and reads pending invitations only for the scoped lookup.</td><td><a href="../../2026-11-02-fleet-access/deliverables/bg-getting-in.source.html#bg-scope">BG scope, lines 84/87</a>; parts, lines 100–104; R60/R61.</td></tr>
+<tr><td>Timed command-line continuation</td><td><strong>BG.</strong> Keep and recheck the fixed CLI deadline through every step; no approval screen and no redirect after expiry. Existing untimed CLI coverage remains a regression here.</td><td><a href="../../2026-11-02-fleet-access/deliverables/bg-getting-in.source.html#bg-scope">BG scope, line 85</a>; parts, lines 102/105; R58.</td></tr>
+<tr><td>Account switching</td><td><strong>BG</strong> for signing out of the wrong person account and signing in as the invitee; <strong>B1-C</strong> for changing the current organization within the same person account. They are different actions.</td><td><a href="../../2026-11-02-fleet-access/specification.source.html#specification--getting-in">R61, line 252</a> requires another-account sign-in; R62, line 253 requires organization choice. BG owns those whole pages (line 84).</td></tr>
+<tr><td>Public passkey sign-in</td><td><strong>B1-B.</strong> User verification, both-factor session, button and real local passkey proof. B1-C reuses its final sign-in contract.</td><td><a href="../b1-b-passkey/requirements.html#needs">B1-B requirements</a>; R5/OD21; fixed feature brief boundary.</td></tr>
+<tr><td>All six local browser journeys</td><td><strong>BG</strong> owns the combined SO14 suite and release completeness. <strong>B1-B</strong> owns passkey sign-in's discriminating local journey. <strong>B1-C</strong> adds real-browser choice and lookup proof, but does not call that all six.</td><td><a href="../../2026-11-02-fleet-access/deliverables/bg-getting-in.source.html#bg-proof">BG proof, lines 193–196</a>; R63/R67. B1-B's V8 remains its own obligation.</td></tr>
+<tr><td>Staging identity/reset and journeys</td><td><strong>BG.</strong> Dedicated test identities and staging automation, after deploy, without the owner's accounts.</td><td><a href="../../2026-11-02-fleet-access/deliverables/bg-getting-in.source.html#bg-scope">BG scope, lines 88–89</a>; R65/R66.</td></tr>
+<tr><td>Production isolation and real release sign-in</td><td><strong>BG.</strong> Production refuses the test route and staging cookies; the actual release candidate gets its real sign-in check on staging.</td><td><a href="../../2026-11-02-fleet-access/deliverables/bg-getting-in.source.html#bg-see">BG visible outcomes, lines 63–66</a>; R65/R66 and SO16.</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="bg-contract">What B1-C hands to BG</h2>
+<p><strong>A self-view and the native selection operation, not another flow engine.</strong> The following is the integration contract developed in the Program Design. It changes no stored schema. BG chooses the page and destination; the sign-in service remains the only authority for membership, session and permission.</p>
+<ex-mermaid id="handoff-model" label="B1-C facts feed BG's page decision" data-width="canvas"><script type="text/plain">
+flowchart TB
+  rows["Memberships and native session"] --> read["B1-C reads current person's organizations"]
+  read --> facts["Choices, current selection, or explicit failure"]
+  facts --> bg["BG chooses setup or account page"]
+  bg --> action["Person chooses an organization"]
+  action --> native["Better Auth sets active organization"]
+  native --> rows
+  class rows,native slot3
+  class read,facts slot6
+  class bg slot2
+  class action slot1
+</script></ex-mermaid>
+<p>Teal owns the stored truth, green is B1-C's read contract, amber is BG's page decision, blue is the person. A read never creates a membership or silently chooses for a multi-membership person.</p>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Call or value</th><th>Proposed shape and guarantees</th><th>BG's use</th></tr></thead>
+<tbody>
+<tr><td><code>readPersonOrganizationContext</code></td><td>Request-local server call with parsed native actor/session references and the injected persons/membership store; its endpoint obtains those references from request headers. Result: <code>signed-out</code>, <code>unavailable</code>, or <code>available</code> with <code>choices</code> and nullable <code>activeOrganizationId</code>. Each choice is <code>{ organizationId, organizationName, role }</code>, derived from the existing membership schema. Current means the stored selection still matches a fresh membership; a stale selection is reported as null, never cached authority.</td><td>Use choices/current selection as facts for <code>decideSetupPage</code>, render the reusable choice surface and re-read after selection. Zero choices and unavailable are distinct; no empty-success fallback.</td></tr>
+<tr><td><code>POST /api/auth/organization/set-active</code></td><td>The existing native operation and <code>{ organizationId }</code> body. Better Auth checks the caller's membership and writes its session. Success is followed by a fresh context read; failure is also followed by a read because native foreign-choice refusal clears the selection. No owner permission is required to select one's own membership, and selection does not stamp a second factor.</td><td>Call through Better Auth's client, retain cookies, then return to BG's decision with the original destination. B1-C does not decide when a CLI deadline expired or where an invitation continues.</td></tr>
+<tr><td><code>readOrganizationPersonMembership</code></td><td>A separate owner-authorized read. Under the recommended input answer: organization UUIDv7 plus one exact email. Result after authorization: <code>member</code> with <code>role</code>, <code>invited</code> for a pending unexpired invitation, or <code>not-member</code>. Refused/unavailable carry no subject result. No other-organization existence or credentials are revealed; a roster alternative needs its explicit owner answer and revised contract.</td><td>Not an account-page dependency. It backs the owner lookup; BG may not use it to discover someone else's memberships or bypass invitation-recipient checks. Page and input remain open on <a href="decisions.html#open">Decisions</a>.</td></tr>
+</tbody>
+</table></div>
+<p>The new names are designed core contracts, not APIs that already exist. The <a href="program-design.html#contracts">Program Design</a> gives their exact schema homes, calls/routes, projection and error mapping; the Verification Design and Plan carry the real paths and wrong-build checks. Owner choices remain explicit before a build packet is issued.</p>
+
+<h2 id="replace">What is removed, kept and still undecided</h2>
+<ul>
+<li><strong>Replace</strong> the condition that hides organization choice as soon as a valid organization is selected. Extract and reuse the existing choice behaviour rather than maintaining separate B1-C and BG selectors.</li>
+<li><strong>Keep</strong> native set-active, its foreign-choice clearing, sole-membership session initialization, owner/member permissions, first-owner creation, people-change records and fresh-factor gates on changes. Native member-list remains closed; the shipped component option changes only exact native list/full GET offerings behind projection.</li>
+<li><strong>Add</strong> the owner-scoped membership lookup and its real user path. A new read is not a replacement for OD26's change records.</li>
+<li><strong>BG removes</strong> <code>/owner-ready</code> and its unconditional Continue action in its later page cutover (<a href="../../2026-11-02-fleet-access/deliverables/bg-getting-in.source.html#bg-parts">BG parts, line 107</a>). B1-C must leave a reusable choice contract, not another permanent account route that competes with BG.</li>
+<li><strong>Open:</strong> the lookup entry point, exact email versus a picker with fallback, and existing versus shipped organization component; all are compared with costs and answer controls on <a href="decisions.html#open">Decisions</a>. The conditional recommended branch is specified, not selected on the owner's behalf.</li>
+</ul>
+<p>The full B1 feature is not accepted by writing these pages. B1-C has seven design pages, still awaits owner answers and independent review, and then needs implementation/proof on both sign-in hosts. BG, B1-B, B2 and B3 remain responsible for their named obligations.</p>
+</ex-document>
+</body>
+</html>

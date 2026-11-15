@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B1-C · Organizations finished · Program Design</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css"><script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head><body>
+<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
+<a href="../../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
+<a href="audit.html">B1-C · 1 Audit</a><a href="requirements.html">B1-C · 2 Requirements</a><a href="specification.html">B1-C · 3 Specification</a><a href="program-design.html">B1-C · 4 Program Design</a><a href="verification-design.html">B1-C · 5 Verification Design</a><a href="plan.html">B1-C · 6 Plan</a><a href="decisions.html">B1-C · 7 Decisions</a>
+</nav></ex-nav>
+<ex-document id="doc">
+<h1>B1-C · Organizations finished: Program Design</h1>
+<p>The existing sign-in store supplies own-membership facts and a new scoped person read. Better Auth still checks and writes organization selection. The public response boundary narrows the native reads needed by the shipped switcher. BG receives facts and components, while keeping ownership of setup and destinations.</p>
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What you should check" tone="note" icon="shield-check"><p>The subject read is bracketed by live session/permission checks. The self-view never asks about another person. The native full-organization response is projected before any HTTP consumer sees it; internal native API calls keep their full shape.</p></ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users"><p>The <a href="decisions.html#open">three owner choices</a> remain open. The fully described recommendation is a separate lookup page, exact email and the shipped switcher. Choosing a roster or embedding the lookup reopens the named affected design before code starts; there is no runtime variant flag.</p></ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open"><p>The owner's account answer says “your organizations (choose one)” (<a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl">Fleet transcript:86867</a>). R13/R14 put the people authority in sign-in. Source was read at Switchboard <code>f3b2b88b</code>, Better Auth <code>1.7.11</code> and Better Auth UI <code>2b028ec5</code>/<code>1.7.34</code>. This is a design, not a build or feasibility run.</p></ex-callout>
+
+<h2 id="parts">Responsibilities and dependency direction</h2>
+<ex-mermaid id="parts-picture" label="B1-C owners and consumers" data-width="canvas"><script type="text/plain">
+flowchart TB
+  ui["auth-ui: shipped switcher and views"] --> island["Core browser island: selection and lookup"]
+  island --> http["Public sign-in HTTP boundary"]
+  http --> native["Better Auth: session and native selection"]
+  http --> reads["Core: context and owner lookup"]
+  reads --> store["Injected Drizzle membership store"]
+  bg["BG: page and destination decision"] --> reads
+  bg --> island
+  hosts["Cloudflare and Node: existing composition"] --> http
+  class ui,native slot3
+  class island,http,reads slot2
+  class store slot6
+  class bg slot4
+  class hosts slot1
+</script></ex-mermaid>
+<p>Arrows show use, not authority transfer. Teal is upstream UI/auth, amber is B1-C code, green owns stored rows, violet is the BG consumer, blue the existing hosts. No central call is on either read path.</p>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Home</th><th>Job and reason to change</th></tr></thead><tbody>
+<tr><td><code>contracts/organization-membership.ts</code> (new)</td><td>One runtime-free schema home for existing membership plus the public self-context and lookup result. Browser code imports no Drizzle module.</td></tr>
+<tr><td><code>organizations/person-organization-context.ts</code> (new)</td><td>Read a current verified session and its own memberships; validate its selected ID without writing it.</td></tr>
+<tr><td><code>better-auth/organization-membership-read-plugin.ts</code> (new)</td><td>Native endpoint context, cookie authentication, live permission checks, safe HTTP mapping and the guarded lookup page. It composes the store; it does not reimplement Better Auth selection.</td></tr>
+<tr><td><code>storage/organization-membership-store.ts</code></td><td>Existing membership persistence owner, extended with one exact organization/email read. No new store field or database.</td></tr>
+<tr><td><code>response-release/organization-read-projection.ts</code> (new)</td><td>Public organization-read request/error release, plus native GET summary projection when the shipped component is chosen. Only HTTP dispatch calls it; internal API results stay native.</td></tr>
+<tr><td><code>pages/person-organization-choice.tsx</code> and <code>pages/organization-person-lookup-page.tsx</code> (new)</td><td>The reusable self-membership summary/choice host and the selected lookup page. They use the shared page shell and injected nonce.</td></tr>
+<tr><td><code>pages/islands/person-organization-choice.tsx</code> and <code>pages/islands/organization-person-lookup.tsx</code> (new)</td><td>Browser composition and request lifecycle; upstream components remain unchanged. Server HTML has labeled read-only/fallback content until the island mounts.</td></tr>
+</tbody></table></div>
+
+<h2 id="contracts">The shapes, with one schema authority</h2>
+<p>Move the existing <code>organizationMembershipSchema</code> and inferred <code>OrganizationMembership</code> from <a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b74225359970b0580a290cd34fe1e557b/packages/sign-in-core/src/storage/organization-membership-store.ts#L25">the store's lines 25–31</a> into the new contract file, unchanged. Update the store and the two current type consumers (<code>owner-page.tsx:26</code>, <code>sign-in-http-handler.ts:60</code>) to import that home. The storage records interface stays in the store; no forwarding compatibility export is kept.</p>
+<ex-code lang="typescript" title="New derived contracts; all are inferred from these schemas"><script type="text/plain">
+export const organizationChoiceSchema = organizationMembershipSchema.pick({
+	organizationId: true, organizationName: true, role: true,
+});
+export const personOrganizationContextSchema = z.discriminatedUnion('kind', [
+	z.strictObject({ kind: z.literal('signed-out') }),
+	z.strictObject({ kind: z.literal('unavailable') }),
+	z.strictObject({
+		kind: z.literal('available'),
+		choices: z.array(organizationChoiceSchema).readonly(),
+		activeOrganizationId: organizationIdSchema.nullable(),
+	}),
+]);
+export const personMembershipAnswerSchema = z.discriminatedUnion('kind', [
+	z.strictObject({ kind: z.literal('member'), role: organizationMembershipSchema.shape.role }),
+	z.strictObject({ kind: z.literal('invited') }),
+	z.strictObject({ kind: z.literal('not-member') }),
+]);
+export const organizationPersonLookupRequestSchema = z.strictObject({
+	organizationId: organizationIdSchema,
+	email: z.string().trim().toLowerCase().pipe(z.email()),
+});
+export const organizationPersonLookupResultSchema = z.union([
+	personMembershipAnswerSchema,
+	z.strictObject({ kind: z.literal('refused') }),
+	z.strictObject({ kind: z.literal('unavailable') }),
+]);
+</script></ex-code>
+<p>The request schema is conditional on the exact-email answer. Define <code>PersonOrganizationContext</code>, <code>OrganizationChoice</code>, <code>PersonMembershipAnswer</code> and <code>OrganizationPersonLookupResult</code> only with <code>z.infer</code>. Validate the available context's cross-field invariant in its constructor: an active ID is null or occurs in choices. Sort choices by organization ID for deterministic output; order is an author call, not an ownership rule. IDs use the existing branded UUIDv7 schemas.</p>
+<p>Export the context reader and schemas from <code>sign-in-core/src/index.ts</code> for test support and BG. Native-response organization summaries have a different job and keep their own private whitelist schema in the projection module: <code>id</code>, <code>name</code>, <code>slug</code>, nullable <code>logo</code>, and ISO <code>createdAt</code> only. No membership shape is duplicated there.</p>
+
+<h2 id="self-context">Reading a person's own organizations</h2>
+<p><code>readPersonOrganizationContext</code> takes one props object: <code>actor</code> (null or parsed person/session IDs) and <code>store</code> narrowed to <code>persons.readPersonSession</code> and <code>organizations.membershipsForPerson</code>. Its result is <code>PersonOrganizationContext</code>. The existing session read already enforces verified email and expiry using the injected clock (<a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b74225359970b0580a290cd34fe1e557b/packages/sign-in-core/src/storage/person-session-store.ts#L88">person-session-store.ts:88–119</a>).</p>
+<ol><li>Null actor or a missing/expired session returns signed-out. Store failure returns unavailable.</li><li>Read only that stored person's memberships. Parse each row through the existing schema and map it through <code>organizationChoiceSchema</code>.</li><li>Keep the stored selection only if it matches a fresh membership; otherwise return null. Zero choices remains available. Never write the session or use the presence of a selection to grant a role.</li></ol>
+<p>The new <code>GET /api/auth/organization/self-context</code> endpoint accepts no person ID or query keys. It gets native session context with <code>getSessionFromCtx(context, { disableCookieCache: true, disableRefresh: true })</code>, following <a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b74225359970b0580a290cd34fe1e557b/packages/sign-in-core/src/better-auth/second-factor-authorization.ts#L23">second-factor-authorization.ts:23–36</a>, then passes parsed IDs to the reader. Status is 200 for available, 401 for signed-out, 503 for unavailable, with the corresponding strict body and <code>cache-control: no-store</code>.</p>
+<p>On <code>/owner-ready</code>, replace the handler's manual membership-selection block (<a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b74225359970b0580a290cd34fe1e557b/packages/sign-in-core/src/better-auth/sign-in-http-handler.ts#L217">sign-in-http-handler.ts:217–248</a>) with this same reader, using the native session already read there. A missing session redirects to sign-in; unavailable shows no memberships and returns the existing 503 path. Keep organization creation eligibility and Fleet setup status derived from the resulting current memberships, and keep factor-enrollment protection.</p>
+
+<h2 id="lookup-store">The scoped subject read</h2>
+<ex-mermaid id="subject-store-picture" label="Membership wins; invitation is checked only if no member was observed" data-width="canvas"><script type="text/plain">
+flowchart TB
+  query["Requested organization and normalized email"] --> member["Scoped member and user join"]
+  member -->|"row"| role["Member and validated role"]
+  member -->|"no row"| invite["Same organization/email, pending and unexpired"]
+  invite -->|"match"| invited["Invited"]
+  invite -->|"none"| absent["Not-member"]
+  member -->|"query or parse failure"| unavailable["Unavailable"]
+  invite -->|"query failure"| unavailable
+  class query slot1
+  class member,invite slot3
+  class role,invited,absent slot6
+  class unavailable slot5
+</script></ex-mermaid>
+<p>Teal reads the requested scope; green is an authorized domain answer; rose is a failure, kept separate from absence.</p>
+<p>Extend <code>OrganizationMembershipRecords</code> with <code>lookupPersonMembership({ organizationId, email, now }): Promise&lt;SignInStoreResult&lt;PersonMembershipAnswer&gt;&gt;</code>. The factory still receives only <code>SignInDatabaseFactory</code>; <code>now</code> is passed from <code>platform.clock.now()</code>, so the store never reads a global clock. The existing <code>SignInStore.organizations</code> field automatically carries the extension.</p>
+<ol>
+<li>Use injected Drizzle <code>select</code> over <code>member</code> joined to <code>user</code>, with <code>and(eq(member.organizationId, organizationId), eq(user.email, email))</code>, selecting only role and limiting to one row. Parse the role through the existing role schema. Do not first query the user's existence globally.</li>
+<li>If a member exists, return member and role. Otherwise read <code>invitation</code> with the same organization and email, <code>status = pending</code> and <code>expiresAt &gt; new Date(now)</code>, selecting its ID only and limiting to one. A match means invited; no match means not-member.</li>
+<li>Use the existing <code>readStoreValue</code>/<code>SignInStoreFailure</code> conventions. A query/parse failure propagates unavailable. Never catch it and return an empty array.</li>
+</ol>
+<p>The schema already owns these fields (<a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b74225359970b0580a290cd34fe1e557b/packages/sign-in-core/src/storage/sign-in-schema.ts#L355">sign-in-schema.ts:355–393</a>). There is no migration, raw SQL, index change or audit write. Membership takes precedence; two queries do not promise a shared transaction snapshot. The result represents the observed membership, or the observed current invitation if no membership was found.</p>
+
+<h2 id="lookup-guard">Authorization and the public lookup endpoint</h2>
+<ex-mermaid id="lookup-call-path" label="Lookup call path and recheck" data-width="canvas"><script type="text/plain">
+flowchart TB
+  request["POST: organization and exact email"] --> session["Native cookie session, no cache or refresh"]
+  session --> current["Stored session current and selected here"]
+  current --> permit["Native organization-view permission, fresh role"]
+  permit --> subject["Store: scoped member or invitation"]
+  subject --> recheck["Repeat current-session and permission checks"]
+  recheck --> release["Strict answer or generic refusal"]
+  class request slot1
+  class session,current,permit,recheck slot3
+  class subject,release slot6
+</script></ex-mermaid>
+<p>Do not borrow <code>requireFactorActor</code>: it reads factor state the lookup does not need. Follow its session acquisition pattern, then read <code>store.persons.readPersonSession</code>. Require stored <code>activeOrganizationId === request.organizationId</code> and call existing <code>checkOrganizationPermission</code> with <code>organization:view</code>, current person ID and <code>readMemberRole</code>. That helper delegates to native <code>hasPermission</code> with <code>useMemoryCache: false</code> (<a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b74225359970b0580a290cd34fe1e557b/packages/sign-in-core/src/better-auth/organization-permission-check.ts#L24">lines 24–57</a>).</p>
+<p>Implement the bracket in <code>readOrganizationPersonMembership</code> inside the new boundary plugin module. It takes the native endpoint context, parsed request, narrowed store and injected clock. Before subject read and again before release, require that same session, selection and permission. If any required store is unavailable, return unavailable; if authentication ends, 401/refused; if selection/permission fails, 403/refused. No subject value is returned in those endings. An actor removal while the subject read is held is thus refused. There is no promise about a removal committing after the final check, nor a new cross-read transaction.</p>
+<p>Expose only <code>POST /api/auth/organization/person-membership</code>, with the strict request schema and <code>application/json</code>. Successful answers are 200 and only the <code>PersonMembershipAnswer</code> fields; invalid request is 400 with <code>{ error: 'invalid-request' }</code>; refusals are 401/403 with <code>{ kind: 'refused' }</code>; failures are 503 with <code>{ kind: 'unavailable' }</code>. Set no-store. The client parses status plus body once and never reads a non-success body as a subject answer. Do not put email in URL, logs or observation payloads.</p>
+<p>Keep the shared schema as the only request-shape authority, but map its failure explicitly: the native project endpoint accepts unknown parsed JSON and calls that schema's <code>safeParse</code> before authorization/subject work, returning the generic 400 above on failure. Do not send Zod's issue/input dump to the browser or logger. Invalid JSON/content type is mapped to the same safe request error at the public boundary; no failed parse reaches a subject port.</p>
+<p>The public organization-read release module checks the lookup's content type before native dispatch and returns generic 400 for non-JSON. If native JSON decoding itself returns 400 before the endpoint callback, that HTTP boundary replaces its body with the same generic invalid-request body. The endpoint alone applies the shared request schema; the release module does not maintain or revalidate another request shape. Neither path adds body logging.</p>
+<p>The plugin uses <code>createAuthEndpoint</code>, like the existing <a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b74225359970b0580a290cd34fe1e557b/packages/sign-in-core/src/better-auth/passkey-confirmation-plugin.ts#L58">passkey plugin:58–70</a>. Register it beside <code>createOrganizationProviderPlugin</code> in <code>provider-configuration.ts:454–478</code>. It uses native endpoint origin/session handling; bearer tokens do not substitute for the cookie session.</p>
+
+<h2 id="projection">Recommended component option: project the public native reads</h2>
+<ex-mermaid id="projection-boundary-picture" label="Only public HTTP results are narrowed" data-width="canvas"><script type="text/plain">
+flowchart TB
+  browser["Shipped switcher's query-free request"] --> validate["Current verified session; reject explicit query"]
+  validate --> native["Native organization endpoint"]
+  native --> public["Public HTTP whitelist projection"]
+  public --> summary["Only organization summary reaches browser"]
+  server["Internal provider API call"] --> native
+  native --> internal["Internal full result unchanged"]
+  class browser,server slot1
+  class validate,public slot2
+  class native slot3
+  class summary,internal slot6
+</script></ex-mermaid>
+<p>The two result arrows are different call boundaries. Projection is not a global native hook; only the public HTTP path parses and narrows the result.</p>
+<p>The shipped switcher is compatible with a narrow reply. At upstream <code>2b028ec5</code>, <a href="https://github.com/better-auth-ui/better-auth-ui/blob/2b028ec5/packages/core/src/plugins/organization/active-organization-query.ts#L12">active-organization-query.ts:12–21</a> explicitly gives the cache a list-organization shape; its fetch uses <code>getFullOrganization</code> (112–116). <a href="https://github.com/better-auth-ui/better-auth-ui/blob/2b028ec5/examples/start-shadcn-baseui-example/src/components/auth/organization/organization-switcher.tsx#L126">The switcher:126–154, 201–210</a> passes <code>hideRole</code>, which disables <a href="https://github.com/better-auth-ui/better-auth-ui/blob/2b028ec5/examples/start-shadcn-baseui-example/src/components/auth/organization/organization-view.tsx#L59">OrganizationView's member-list query:59–65</a>. Those consumers need no member or invitation fields.</p>
+<p>Add <code>projectPublicOrganizationReadResponse({ request, response }): Promise&lt;Response&gt;</code> in the response-release directory, called in <code>handleSignInRequest</code> immediately after <code>providerHandler</code> and before <code>releaseSignInResponse</code>. Its lookup 400-body normalization is required in either component branch. With the shipped component, its native summary projection applies to successful GETs of <code>/api/auth/organization/list</code> and <code>/api/auth/organization/get-full-organization</code>; other native errors/routes are unchanged. Parsing success is mandatory: list is an array of whitelisted summaries; full is one summary or null. Invalid JSON, missing required fields or invalid UUID/date yields fresh 503/unavailable, never the original success body.</p>
+<p>Before dispatching either selected native read, reject every query key with generic 400/invalid-request, before any native subject read or selection effect. The shipped switcher sends no explicit organization/slug/member-limit query when its organization plugin has no slug, as configured here. Its full read therefore addresses only the current session choice, never a caller-selected foreign organization. This prevents native not-found-versus-not-member errors from becoming an organization-existence oracle. The projection module owns this small public-request validator as well as the response projection. Internal API queries are unaffected.</p>
+<p>For those two native paths, the existing provider before-hook also calls the same endpoint-context/self-context authentication helper: disable cookie cache/refresh, require verified current stored session, map signed-out to 401 and unavailable to 503. It adds no owner permission to a self read. The plugin's own self-context endpoint and the page handler reuse that helper/reader rather than maintaining a second authentication rule.</p>
+<p>Construct the projected JSON response with the native success status and copied headers, replacing the body/content type, deleting old content-length and setting <code>cache-control: no-store</code>. This retains native cookie headers. Apply no-store to all selected public organization-read replies, including errors; preserve native error status/body apart from the lookup's documented 400 normalization. Whitelist only summary fields; do not spread the object then subtract known secrets. Full/list replies omit members, invitations, counts, metadata, Fleet stamp fields and future extras for <em>all public callers, including owners</em>. Internal <code>provider.api</code> calls bypass this HTTP fence and remain native.</p>
+<p>Keep native membership checks and the following native effects, checked in installed <code>better-auth@1.7.11/dist/plugins/organization/routes/crud-org.mjs</code>: list reads only the signed-in user's organizations (436–452); full checks membership and can clear selection before a refusal (353–372); set-active can also clear before 403 (419–433). Projection changes only successful public reply contents. It adds no permission cache, preservation wrapper, new native endpoint or library patch.</p>
+
+<h2 id="choice-ui">Recommended component option: the shipped switcher and a self summary</h2>
+<ex-mermaid id="cache-settlement-picture" label="Native state replaces optimistic choice after settlement" data-width="canvas"><script type="text/plain">
+sequenceDiagram
+  participant P as Person
+  participant U as Shipped switcher
+  participant N as Native set-active
+  participant C as Active and self-context queries
+  P->>U: choose organization
+  U->>U: optimistic label
+  U->>N: native request
+  N-->>U: success or refusal, possibly cleared selection
+  U->>C: shipped active refetch; our self-context invalidation
+  C-->>U: fresh stored selection and own memberships
+  U-->>P: settled current choice, or unavailable
+</script></ex-mermaid>
+<p>The optimistic label is presentation only. Both the shipped cache and the surrounding membership summary must settle from fresh server state.</p>
+<p>Copy the Base UI example components from upstream <code>2b028ec5</code> into <code>auth-ui</code>, keeping behaviour unchanged and mapping imports exactly as existing auth-ui copies do. Required source files under <code>examples/start-shadcn-baseui-example/src/components/</code> are:</p>
+<ul><li><code>auth/organization/organization-switcher.tsx</code>, <code>organization-view.tsx</code>, <code>organization-view-skeleton.tsx</code>, <code>organization-logo.tsx</code>, <code>create-organization-dialog.tsx</code> and <code>slug-field.tsx</code>;</li><li><code>auth/user/user-view.tsx</code> and <code>user-avatar.tsx</code>;</li><li><code>ui/dropdown-menu.tsx</code> and <code>ui/avatar.tsx</code> into <code>tool-access-ui/src/components/ui/</code>. Its existing tsdown primitive discovery publishes these paths automatically (<code>tool-access-ui/tsdown.config.ts:6–14</code>).</li></ul>
+<p>Map <code>@/components/ui/*</code> to <code>@agent-collaboration/tool-access-ui/ui/*</code>; map the organization-plugin import to the pinned core plugin export; keep existing copied <code>auth-form</code>. Re-export switcher and organization plugin from <code>auth-ui/src/index.ts</code>. Preserve the upstream <code>UserView</code> cast at source line 64 as a named copied-source exception, not an authorization assertion. Copy formatting/import paths may follow Oxfmt; do not rewrite the component's control flow.</p>
+<p>The hidden creation dialog still imports <code>SlugField</code>, which imports <code>@tanstack/react-pacer</code>. Add that dependency to auth-ui at pinned <code>0.23.0</code>, from the upstream example's <code>^0.23.0</code> contract, with lockfile update; do not rely on a transitive package. The runtime uses this only in browser code; its debounce is not a test wall-clock allowance. The selected shipped UI option bears this source/dependency cost, and the independent review checks it. No new Radix dependency is added; dropdown/avatar use the already-declared Base UI.</p>
+<p>The choice island adds native <code>organizationClient()</code> to the existing auth client and the UI's organization plugin with <code>allowOrganizationCreation: false</code>, <code>checkSlug: false</code>, <code>teams: false</code>, <code>allowMultipleRoles: false</code> and the owner/member label mapping. Render <code>&lt;OrganizationSwitcher hideCreate hidePersonal hideSettings /&gt;</code>; do not provide a custom set-active callback. No creation, personal-account or management entry is visible. A separate read-only summary of the self-context shows every organization, its role and current state without querying native list-members.</p>
+<p><a href="https://github.com/better-auth-ui/better-auth-ui/blob/2b028ec5/packages/react/src/plugins/organization/hooks/mutations/use-set-active-organization.ts#L87">The shipped mutation hook:87–105</a> may temporarily roll back its optimistic cache on error, then always refetches the active organization on settlement. Do not remove that refetch. The surrounding choice island refreshes self-context on settlement too, through the auth client's completed request hook and the existing query client; on any selection completion invalidate the self-context query and clear its old summary until the fresh read settles. Thus the stored native clearing wins over an optimistic label. Page entry/window focus refetches; there is no polling timer or localStorage copy.</p>
+<p>Concretely, compose <code>fetchOptions.onResponse</code> with B1-B's existing <code>onRequest</code>, without replacing it. The hook receives <code>{ request, response }</code>; only a set-active response invalidates the self-context query for the current person/session. Better Fetch 1.3.2 documents this carrier at <code>dist/index.d.ts:216–247</code> and calls it before body parsing at <code>dist/index.js:458–467</code>, for successful and refused responses. Do not consume or replace the native response there. A transport error invalidates on the surrounding browser error ending/focus refresh; it never claims the write failed to land. Hide the old summary/choice surface while the context query is pending or errored, rather than rendering React Query's retained old data as a fresh success.</p>
+<p>On the existing owner page, supply the membership surface whenever the person has memberships, including when the factor state is <code>confirm</code> for later protected changes. Keep the enrollment page as the first-ever setup task and keep the creation form behind confirmation. Show the self-membership surface alongside the existing returning-person surface; do not grant a new readiness/destination rule. BG later moves this same surface into its account/choose page.</p>
+<p>If the owner selects the existing chooser option instead, extract <code>OrganizationChooserCard</code> from <code>owner-page.tsx</code> to <code>pages/person-organization-choice.tsx</code>, feed the same context, keep native POST set-active and re-read on both endings, and remove the hide-after-selection condition. Do not add shipped components, Pacer or native read-route openings for that branch. Remove the old inline controller from <code>owner-page-script.ts:47–52</code> when the chosen new island/controller owns it; do not leave competing event listeners.</p>
+
+<h2 id="lookup-page">Recommended placement/input: separate shared-shell page and exact email</h2>
+<ex-mermaid id="lookup-ui-states" label="A changed input invalidates the old request's right to render" data-width="canvas"><script type="text/plain">
+stateDiagram-v2
+  [*] --> Idle
+  Idle --> Pending: valid submit
+  Idle --> InvalidInput: invalid input
+  InvalidInput --> Idle: edit input
+  Pending --> Answered: current generation, strict answer
+  Pending --> Refused: current generation, 401 or 403
+  Pending --> Unavailable: current generation, failed read
+  Pending --> Idle: input or organization changes
+  Answered --> Idle: input or organization changes
+  Refused --> Pending: submit again
+  Unavailable --> Pending: submit again
+  Idle --> Idle: old generation reply ignored
+</script></ex-mermaid>
+<p>The local generation changes with input, organization, new submit and unmount. Every state ignores an old-generation completion; the Idle loop illustrates one such case. An old completion can never restore a cleared result or replace a newer answer.</p>
+<p>Add a GET endpoint <code>/api/auth/organization/people?organizationId=…</code> to the new plugin. It uses the same stored-session/selection/live-permission precheck as lookup, without a subject read. Signed-out redirects 303 to <code>/sign-in</code>; forbidden returns 403 with no organization details; unavailable returns 503. Once authorized, read the organization's name through the actor's own fresh memberships and render the page with <code>pageDocument</code> and <code>mintPageNonce(platform.crypto)</code>, as B1-A requires. The URL contains only the organization UUID, never the subject email. This native API-prefixed HTML endpoint avoids another independent HTTP dispatcher.</p>
+<p>Construct redirects with the existing handler's mutable-header 303 response pattern (<code>sign-in-http-handler.ts:142–151</code>), so each host can add its response headers. The dedicated page's own organization query is schema-validated; the no-query rule applies only to the two newly offered native self reads, not this guarded page or internal API calls.</p>
+<p>Add one link in the existing organization-admin page to this guarded page. Its shell, existing workspace operations and central calls remain owned by B2. The lookup page contains only the shared heading, organization label, exact-email field, Look up button, result region and back link to organization administration. The account page gets no admin link or action.</p>
+<p>Add an <code>organization-person-lookup</code> island state with only organization ID/name, and a <code>person-organization-choice</code> state for the choice surface. Extend the existing state union and island switch; load the existing nonce-bearing island bundle on pages carrying either root. The lookup component uses shared Field/Input/Button primitives and <code>authClient.$fetch</code> for the project endpoint, since no shipped Better Auth component performs this exact single-person read. It changes no shipped auth UI behaviour.</p>
+<p>Its state is <code>idle | pending(requestNumber) | answered(answer) | refused | unavailable | invalidInput</code>. On input change, organization change, a new submit or unmount, increment a component-local integer generation and clear the old result. That integer is only an in-memory ordering counter, not a domain ID. Capture it for each request and render a completion only if it still matches. Validate the server result with the shared schema. Render result text with React text nodes, not HTML. Pending, malformed, 401/403, 503 and network error clear all previous subject output; no result is cached across navigation.</p>
+<p>A submit sets pending and disables that attempt's button until settlement or input change. Editing the input returns to idle and enables a new submit even if the old response is still in flight; its old generation can no longer render. A changed organization/unmount similarly invalidates outstanding work. No network timeout or sleep is introduced to establish this ordering; the fixture releases the actual held response explicitly.</p>
+<p>The shared <code>pageDocument</code> security policy and B1-A nonce rules apply unchanged. No new third-party script or policy exception is needed. Keep labels, keyboard reachability, one top heading and 400 px dark layout. Screenshot evidence uses synthetic test emails, never actual people.</p>
+
+<h2 id="routes">The precise public surface</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Route/method</th><th>Owner and release</th></tr></thead><tbody>
+<tr><td>GET <code>/api/auth/organization/self-context</code></td><td>New plugin; own person only; strict context, no-store.</td></tr>
+<tr><td>POST <code>/api/auth/organization/person-membership</code></td><td>New plugin; exact organization/email and live owner permission; strict outcome, no-store.</td></tr>
+<tr><td>GET <code>/api/auth/organization/people</code></td><td>New plugin; guarded HTML only if separate page is chosen.</td></tr>
+<tr><td>GET <code>/api/auth/organization/list</code>, <code>get-full-organization</code></td><td>Only if shipped switcher is chosen; native checks, mandatory public response projection.</td></tr>
+<tr><td>POST <code>/api/auth/organization/set-active</code></td><td>Existing native writer, unchanged.</td></tr>
+<tr><td>Native <code>list-members</code>, <code>list-invitations</code>, <code>get-invitation</code>, <code>reject-invitation</code>, update/delete/leave</td><td>No new opening. Lookup is separate; BG owns its named invitation changes. Wrong methods for every new route remain closed.</td></tr>
+</tbody></table></div>
+<p>Add those selected exact method/path cases inside the existing organization-prefix branch of <code>isPublicSignInRoute</code>, before its current POST-only return; additions below that branch would be unreachable. Update both the hand-written route test and <code>better-auth/organization-route-inventory.unit.test.ts:5–42</code>, whose installed-plugin loop currently forbids every GET. Preserve its native endpoint census: admit precisely the selected list/full GETs and reject every other native route/method, rather than deleting the loop. The default <code>other</code> rate class already covers new reads (<code>request-limit-policy.ts:67–70, 95</code>); no counter value, new class or CI gate changes.</p>
+
+<h2 id="files">Change inventory and removal</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Files under <code>packages/</code></th><th>Change</th></tr></thead><tbody>
+<tr><td><code>sign-in-core/src/contracts/organization-membership.ts</code>; <code>organizations/person-organization-context.ts</code>; <code>better-auth/organization-membership-read-plugin.ts</code></td><td>New schemas/context/endpoints and live lookup guard.</td></tr>
+<tr><td><code>sign-in-core/src/storage/organization-membership-store.ts</code>; <code>index.ts</code></td><td>Move shared schema to the contract; extend the existing store; export public core contracts/read.</td></tr>
+<tr><td><code>sign-in-core/src/response-release/organization-read-projection.ts</code>; <code>sign-in-request-handler.ts</code></td><td>Mandatory safe lookup request/error release and exact project routes; additionally native GET whitelist/query validation for the shipped option.</td></tr>
+<tr><td><code>sign-in-core/src/better-auth/provider-configuration.ts</code>; <code>sign-in-http-handler.ts</code>; <code>owner-page-script.ts</code></td><td>Register plugin, use shared context on owner page and remove old selector listener when replaced. Keep other callbacks/bootstrap/factor paths.</td></tr>
+<tr><td><code>sign-in-core/src/pages/owner-page.tsx</code>; <code>owner-page-document.tsx</code>; two new page components; two new islands; <code>islands/sign-in-island-state.tsx</code>; <code>islands/sign-in-pages-island.tsx</code></td><td>Reusable choice and lookup UI; existing membership summary; chosen upstream switcher and request-lifecycle composition. Keep B1-B's client hooks and passkey state when integrating.</td></tr>
+<tr><td><code>sign-in-core/src/better-auth/organization-admin-page.ts</code></td><td>For recommended separate page: one safely escaped link using the selected organization ID. Embedded option needs the separately approved shell adaptation.</td></tr>
+<tr><td><code>auth-ui/src/components/auth/organization/</code>, <code>auth-ui/src/components/auth/user/</code>, <code>auth-ui/src/index.ts</code>, <code>auth-ui/package.json</code>, root <code>pnpm-lock.yaml</code>; <code>tool-access-ui/src/components/ui/{avatar,dropdown-menu}.tsx</code></td><td>Only for shipped option: the exact copy/dependency inventory above. Existing primitive discovery means no build-config edit.</td></tr>
+<tr><td>Permanent unit/host cases and browser fixture listed in <a href="verification-design.html#inventory">Verification Design</a>; existing route, people and owner-page tests</td><td>New path, negative cases and wrong-build proof; preserve existing assertions except precisely superseded route closure and chooser unavailability.</td></tr>
+</tbody></table></div>
+<p>Nothing writes schema, changes token/cookie format, patches Better Auth, changes central's membership authority or weakens record tests. The final selected branch has one selector, one lookup and one schema home. Open alternatives are reconciled in the design before any downstream agent consumes a build packet.</p>
+<h2 id="need-map">The requirements' concrete owners</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Need</th><th>Owning code and contract</th><th>Proof seam</th></tr></thead><tbody>
+<tr><td>U51/U27</td><td>Shared membership schema; current-person context; native set-active; chosen reusable UI</td><td>Actual session row and repeated served selection, not a label cache</td></tr>
+<tr><td>U9</td><td>Scoped member/invitation read and strict single-person answer</td><td>Requested-organization filters, strict expiry and equal absent/elsewhere bodies</td></tr>
+<tr><td>U46/U21</td><td>Existing native permission helper, before and after subject read</td><td>Current session/selection/role and exact organization-view permission</td></tr>
+<tr><td>U43</td><td>No factor capability in either new read; native choice does not stamp confirmation</td><td>Old confirmation allows read/choice while protected invite still refuses</td></tr>
+<tr><td>OD26</td><td>Existing people-change audit hooks retained; lookup has no audit outcome write</td><td>Unchanged authority/record snapshots and original fault cases</td></tr>
+</tbody></table></div>
+</ex-document></body></html>
