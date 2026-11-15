@@ -1163,3 +1163,10 @@ The workspace id equals the operation id.
   - Questions: correct wire cutover; R-adopt safe (rule 4 still gates calls); late-lookup can't claim someone else's workspace; tests can fail; contract mirror exact.
   - Return READY or findings at their anchors.
 - **Then:** merge #17 → `main`.
+- **R-code finding F1 accepted (2026-11-15T02:14Z; Reviewer, P2, required proof).** Proof rule 2 requires real page **and CLI output** assertions. The CLI's `nameInUse` (null, different name) and `conflict` outcomes are asserted only as parsed results (`fleet-admin-command.unit.test.ts:222–244`). Nothing asserts the printed text and exit code at `fleet-cli-commands.ts:159–169`.
+  - **Implementer:** add `runFleetCommand` cases with the existing scripted I/O and store:
+    - `nameInUse` with the lookup answering null → the exact "A workspace with that name already exists." text, a non-zero exit, one create, one lookup at the operation id;
+    - `nameInUse` with the lookup answering a different name → the same;
+    - `conflict` → the exact conflict text, a non-zero exit, one create, **no** lookup.
+  - Include a red: changing that branch to print "Workspace created" and exit 0 must fail. Then gates, re-freeze, and hand back.
+  - The Verifier checks the delta; the Reviewer re-checks F1 at the new head.
