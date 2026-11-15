@@ -24,17 +24,17 @@
 <p>Every decision that shaped B1, in three groups. <strong>Yours:</strong> each linked to your own words, with transcript line and time. <strong>Mine:</strong> each with a verdict on whether it was mine to make and whether it was right. <strong>Open:</strong> what's still undecided.</p>
 
 <ex-callout id="answer" title="The short version" tone="tldr">
-<p>You made seven decisions that shape B1 after the design. They cover the Better Auth UI, wrong-code display, jitless, the Vitest layout, no wall clock in tests, a separate pages package, and the Bridge design system. I made nine calls. <strong>Four were wrong, three were reversed by you, two stand.</strong> <strong>Nothing is open for you in B1:</strong> each gap is already decided by your design or by one of your decisions.</p>
+<p>You made seven decisions that shape B1 after the design. They cover the Better Auth UI, wrong-code display, jitless, the Vitest layout, no wall clock in tests, a separate pages package, and the Bridge design system. I made ten calls. <strong>Five were wrong, three were reversed by you, two stand.</strong> <strong>One thing is open for you:</strong> confirming the second-factor SQL that merged in #9. Every other gap is already decided by your design or by one of your decisions.</p>
 </ex-callout>
 
 <ex-mermaid data-width="canvas" id="who-decided" label="Who decided what in B1"><script type="text/plain">
 flowchart TB
   D["Approved design, 2 Nov"]:::owner --> Y["7 later owner decisions<br/>first-hand words linked"]:::owner
-  D --> L["9 Lead calls"]:::lead
-  L --> W["4 wrong: become fixes"]:::wrong
+  D --> L["10 Lead calls"]:::lead
+  L --> W["5 wrong: become fixes"]:::wrong
   L --> R["3 reversed by you"]:::rev
   L --> K["2 stand"]:::ok
-  Y --> N["Open for you in B1: none"]:::ok
+  Y --> N["Open for you: confirm second-factor SQL"]:::lead
   classDef owner fill:#dbe8f7,stroke:#2f5b8f,color:#0d2340
   classDef lead fill:#fff3cd,stroke:#b8860b,color:#3d2b00
   classDef wrong fill:#f8d7da,stroke:#b02a37,color:#3d0a0f
@@ -68,6 +68,7 @@ flowchart TB
 <tr><td>Test the flood limit with a stand-in counter instead of Miniflare's rate-limit binding.</td><td>#9, 5 Nov</td><td>No. Your Verification Design (U42) names "local workerd with Miniflare's rate-limit binding".</td><td><strong>Wrong.</strong> The fix is to run the threshold cases through Miniflare's binding. Deployed cross-location counting stays a named limit, as the design already says. (The auditor said this should have been yours. It needn't be: the design already decides it.)</td></tr>
 <tr><td>Let the browser test keep real 20/30-second watchdog timers.</td><td>Accepted in #13, 14 Nov</td><td>No. Your no-wall-clock rule forbids it.</td><td><strong>Wrong.</strong> The fix: the harness waits on events (process exit, readiness line, settled promise) and its timers run on the controlled clock.</td></tr>
 <tr><td>Let a server page take randomness straight from the global, and leave page files out of the boundary scan.</td><td>Accepted in #10, 13 Nov</td><td>No. Spec R30 says every runtime effect comes from the host.</td><td><strong>Wrong.</strong> The fix: the host supplies page randomness, and the scan covers every server page file.</td></tr>
+<tr><td>Check the second-factor SQL myself instead of bringing it to you.</td><td>4–5 Nov</td><td>No. Your design says the generated SQL comes to you.</td><td><strong>Wrong.</strong> It's now the one open confirmation <a href="#sql">above</a>.</td></tr>
 <tr><td>Accept #9 as "B1" while passkey sign-in, the membership lookup and organization switching were still open.</td><td>5 Nov</td><td>No. Acceptance has to be against the whole approved outcome.</td><td><strong>Wrong.</strong> B1 is reopened as partly delivered (this set).</td></tr>
 <tr><td>Print recovery codes from the page itself with a print stylesheet (R-print, R-print2).</td><td>13 Nov</td><td>It was a UI divergence, so it was yours.</td><td><strong>Reversed by you:</strong> Better Auth UI as shipped.</td></tr>
 <tr><td>Show wrong codes inline only, in our own words (R1).</td><td>12–13 Nov</td><td>It was a UI divergence, so it was yours.</td><td><strong>Reversed by you:</strong> C2 = B.</td></tr>
@@ -78,7 +79,31 @@ flowchart TB
 </section>
 
 <section id="open"><h2>Open for you</h2>
-<p><strong>None for B1.</strong> Here's why each gap the audit found is not a choice for you:</p>
+<h3 id="sql">One confirmation: the second-factor SQL</h3>
+<p><strong>What happened:</strong> on 4 Nov you approved the second-factor tables: "yes 5. for second factor tables are fine" (F line 69497, 4 Nov 11:23:31Z). Your design says the exact generated SQL also comes to you before code uses it (shared Program Design: "each migration's generated SQL comes to the owner"). That didn't happen. I checked the 7 generated statements (sha256 <code>755982dd…</code>) against the tables myself, and they merged in #9. The tables match what you approved, but the SQL step was yours and I skipped it.</p>
+<ex-mermaid data-width="canvas" id="sql-pic" label="How the second-factor SQL got in"><script type="text/plain">
+flowchart TB
+  a["4 Nov: you approve the tables"]:::owner --> b["Lead checks the 7 SQL statements"]:::lead
+  b --> c["Merged in #9, 5 Nov"]:::lead
+  c --> d["You confirm the SQL?"]:::open
+  classDef owner fill:#dbe8f7,stroke:#2f5b8f,color:#0d2340
+  classDef lead fill:#fff3cd,stroke:#b8860b,color:#3d2b00
+  classDef open fill:#f8d7da,stroke:#b02a37,color:#3d0a0f
+</script></ex-mermaid>
+<table>
+<thead><tr><th>Option</th><th>Gain</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><td><strong>A. Confirm</strong> (recommended): the merged SQL creates exactly the tables you approved</td><td>The gate closes and nothing changes.</td><td>You rely on my check of the SQL, not your own reading.</td></tr>
+<tr><td><strong>B. Show me the 7 statements first</strong></td><td>You see exactly what's in the database.</td><td>One more page to read. If you want a change, it's a new migration, after your stop.</td></tr>
+</tbody>
+</table>
+<ex-choice id="sql-confirm" title="Second-factor SQL (merged in #9)">
+  <ex-option id="sql-a" title="**A.** Confirm the merged SQL"><template slot="summary">Recommended. The tables match what you approved on 4 Nov.</template></ex-option>
+  <ex-option id="sql-b" title="**B.** Show me the 7 statements first"><template slot="summary">I'll put them on a page with each table they create.</template></ex-option>
+</ex-choice>
+<p><strong>If you defer:</strong> the gate stays recorded as open, and nothing else waits on it under your stop.</p>
+<h3 id="decided-gaps">Everything else is already decided</h3>
+<p>Here's why each other gap the audit found is not a choice for you:</p>
 <ex-mermaid data-width="canvas" id="gaps-decided" label="Each B1 gap and what already decides it"><script type="text/plain">
 flowchart TB
   g1["Passkey sign-in missing"]:::gap --> d1["Design: prove the hook, then turn on"]:::dec
@@ -91,7 +116,7 @@ flowchart TB
   classDef gap fill:#f8d7da,stroke:#b02a37,color:#3d0a0f
   classDef dec fill:#d9f2d9,stroke:#2e7d32,color:#0b2e13
 </script></ex-mermaid>
-<p>The one thing that is yours is <strong>whether this design is what you meant</strong>. If something on pages 2–5 isn't, say so there or here, and it becomes an open decision on this page with options and a picker.</p>
+<p>Beyond the SQL confirmation, what's yours is <strong>whether this design is what you meant</strong>. If something on pages 2–5 isn't, say so there or here, and it becomes an open decision on this page with options and a picker.</p>
 <p>Open choices in other deliverables: CLI <code>--device</code> sits with B2 additions, and machine-login storage and #11 sit with B3. BG's choices stay with BG. They appear on those sets' Decisions pages, not here.</p>
 </section>
 </ex-document>
