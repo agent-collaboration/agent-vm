@@ -28,12 +28,13 @@
 <li><strong>The core never reaches for the runtime itself.</strong> Its crypto comes from the host, like its clock and IDs already do, and the architecture check catches a slip.</li>
 <li><strong>No sign-in test reads the real clock or waits on real time,</strong> and a scan enforces it.</li>
 <li><strong>The flood limit is proven the way your design says:</strong> "limited" on Miniflare's real counter, the window reset on a controlled clock.</li>
-<li><strong>Every identifier the service generates is a UUIDv7,</strong> checked across the ten tables a full people journey fills. Derived keys, such as the client-assertion key, stay derived.</li>
+<li><strong>Every identifier the service generates is a UUIDv7,</strong> checked across the eight tables a full people journey fills, on both databases. Derived keys, such as the client-assertion key, stay derived.</li>
 <li><strong>Today's agents still get their token and make one allowed call,</strong> and people still can't get a tool credential.</li>
 </ul>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
 <p><strong>None.</strong> Pages, tokens, limits and the agent path behave exactly as today. This feature makes the existing behaviour structurally sound and honestly proven.</p>
+<p><strong>One boundary question is open for you:</strong> whether R30 also covers Better Auth's own internal crypto (<a href="decisions.html#open">Decisions</a>).</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
 <p>Each part is one of your needs in the <a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/requirements.source.html">approved Requirements</a>, with your words:</p>
@@ -83,8 +84,8 @@ flowchart TB
 <h2 id="not">Not in this feature</h2>
 <ul>
 <li><strong>Passkey sign-in</strong> is B1-B. <strong>Organization choice and membership lookup</strong> are B1-C.</li>
-<li><strong>The device-code single-use Hegel family,</strong> and the "device-code approval rule is in the core" part of proof row U23: the device-code grant isn't on <code>main</code> (it's in the frozen PR #11), so both are built with machine login (B3). No choice was made; there's no code here to test.</li>
-<li><strong>Better Auth's own internal crypto</strong> (its session tokens, sign-in state, two-factor codes): it's outside this feature by my reading of R30, which governs our sign-in rules, while Better Auth is the library they're built on. That reading isn't your decision, and it's on the <a href="decisions.html#mine">Decisions</a> page for you to overrule.</li>
+<li><strong>The device-code single-use Hegel family,</strong> and the "device-code approval rule is in the core" part of proof row U23: both go to machine login (B3). That's yours: the B1 you approved on 4 Nov lists "machine login and device codes (B3)" as not in B1 (<a href="decisions.html#owner">Decisions</a>). The device-code grant isn't on <code>main</code> either; it's in the frozen PR #11.</li>
+<li><strong>Better Auth's own internal crypto</strong> (its session tokens, sign-in state, two-factor codes): the design assumes it's outside R30, which governs our sign-in rules, while Better Auth is the library they're built on. No decision of yours settles this, so it's <a href="decisions.html#open">open for you</a>, with option A (outside) recommended.</li>
 <li><strong>Scripts that run in the browser</strong> keep using the browser's own crypto and <code>fetch</code>. They run in the person's browser, not in the service.</li>
 <li><strong>The real counter's reset, and counting across Cloudflare locations,</strong> are checked on the private stack, as your design says, not locally.</li>
 <li><strong>No format change:</strong> no token, proof, digest or page-policy format changes. Some exported function signatures change. Neither package is on the public npm registry, and every switchboard caller is updated in the same PR. Other consumers are unknown (<a href="decisions.html#published">Decisions</a>).</li>

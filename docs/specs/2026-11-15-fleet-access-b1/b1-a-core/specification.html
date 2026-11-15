@@ -34,7 +34,7 @@
 <ex-callout title="1 · What you should check" tone="note" icon="shield-check">
 <ul>
 <li><strong>S1–S6:</strong> every random value and every crypto operation the sign-in rules use comes from the host, and the architecture check fails if anyone puts the runtime's crypto, clock or timers back.</li>
-<li><strong>S7–S8:</strong> no sign-in test reads the real clock or waits on real time, and a scan enforces it. Two of the three Hegel families your rule names exist: token-kind dispatch (new) and the claims round trip. The third, device-code single use, is built with machine login (B3), because the device-code grant isn't on <code>main</code>.</li>
+<li><strong>S7–S8:</strong> no sign-in test reads the real clock or waits on real time, and a scan enforces it. Two of the three Hegel families your rule names exist: token-kind dispatch (new) and the claims round trip. The third, device-code single use, is built with machine login (B3), as the B1 you approved on 4 Nov says ("machine login and device codes (B3)"); the device-code grant isn't on <code>main</code> either.</li>
 <li><strong>S9:</strong> "limited" is proven on Miniflare's real counter.</li>
 <li><strong>S10:</strong> every stored ID is a UUIDv7.</li>
 <li><strong>S11:</strong> agents unchanged; people get no tool credential.</li>
@@ -154,9 +154,9 @@ flowchart TB
 <li><strong>Waits are on events only.</strong> A DevTools reply arrives, a socket opens, errors or closes, a process exits, a readiness line arrives, a promise settles.</li>
 <li><strong>Time comes from a controlled clock.</strong> Every timer runs on a controlled clock or on Vitest's fake timers. Any fixture value that depends on time, such as an invitation's expiry, is computed from the controlled clock, never from <code>Date.now()</code> or <code>new Date()</code>.</li>
 <li><strong>There's no real-time watchdog or "bound".</strong> If a browser or process hangs without an event, the test hangs. The test runner's own job limit, outside test code, ends the run. This follows from R33 itself: tests "wait only on events … and every timer runs on a controlled clock", so a real-time bound in a helper isn't allowed.</li>
-<li><strong>A scan enforces it:</strong> the same architecture check fails on <code>setTimeout</code>, <code>setInterval</code>, <code>Date.now()</code>, a zero-argument <code>new Date()</code> or <code>performance.now()</code> in those files. Vitest's own fake-timer APIs (<code>vi.useFakeTimers</code>, <code>vi.setSystemTime</code>, <code>vi.advanceTimersByTime</code>) and the names of timers passed as strings to them are allowed.</li>
+<li><strong>A scan enforces it:</strong> the same architecture check fails on any of these in those files: <code>setTimeout</code>, <code>setInterval</code>, <code>Date.now()</code>, a zero-argument <code>new Date()</code>, any read of <code>performance</code> (including <code>performance.timeOrigin</code>), <code>process.hrtime</code> or <code>process.uptime</code>. Vitest's own fake-timer APIs (<code>vi.useFakeTimers</code>, <code>vi.setSystemTime</code>, <code>vi.advanceTimersByTime</code>) and the names of timers passed as strings to them are allowed.</li>
 </ul>
-<p><strong>Wrong if:</strong> a planted <code>setTimeout</code> in a test helper passes the scan, or a fixture built with <code>Date.now()</code> passes.</p>
+<p><strong>Wrong if:</strong> a planted <code>setTimeout</code> in a test helper passes the scan, a fixture built with <code>Date.now()</code> passes, or a value derived from <code>performance.timeOrigin</code> (as the browser test's evidence folder does today) passes.</p>
 
 <h3 id="S8">S8 · The Hegel families exist</h3>
 <p>From R33: <em>"The tests MUST include Hegel property tests of at least: the token-kind dispatch over every client kind, grant and resource; the device code's single use under concurrent redemption; and the token claims' parse round trip."</em></p>
@@ -186,7 +186,7 @@ flowchart TB
 <h3 id="S10">S10 · Every stored ID is a UUIDv7</h3>
 <p>From R32: <em>"No UUID other than version 7 MAY be minted or stored by the sign-in service."</em></p>
 <ul>
-<li><strong>Every UUID the service stores is version 7, wherever it sits.</strong> That means any column, including UUIDs inside JSON or URLs, not just columns named as IDs. It holds after the people journey on each database (D1 and better-sqlite3), checked twice:
+<li><strong>Every UUID the service stores is version 7, wherever it sits.</strong> That means any column, including UUIDs inside JSON or URLs, not just columns named as IDs. It holds after the people journey on each database (D1 through the Cloudflare host, better-sqlite3 through the Node host), checked twice:
   <ul>
   <li><strong>before the member's removal,</strong> so rows that the removal deletes are seen;</li>
   <li><strong>at the end.</strong></li>
@@ -194,7 +194,15 @@ flowchart TB
   It already holds for the owner-and-agent journey, which the existing inventory covers.</li>
 <li><strong>Coverage:</strong> before the first check, <code>user</code>, <code>session</code>, <code>account</code>, <code>organization</code>, <code>member</code>, <code>invitation</code>, <code>twoFactor</code> and <code>signInAudit</code> must each hold at least one row, so an empty table can't pass by having nothing to check.</li>
 <li><strong>Derived keys stay derived.</strong> The client-assertion record's key (<code>oauthClientAssertion.id</code>) is a digest of the assertion's <code>jti</code>, which is what makes its replay refusable. It must stay that digest, not become a UUID, and a replay must be refused. The existing case in <code>storage-cases/provider-identifier-cases.ts</code> (lines 56–130) already proves this, and it stays.</li>
-<li><strong>Secrets and codes are never UUIDs:</strong> session tokens, client secrets, PKCE verifiers, signing keys, backup codes, device codes and user codes.</li>
+<li><strong>Secrets and codes are never UUIDs, of any version.</strong> The inventory can't show this, because a v7 UUID used as a secret would pass it. So each value reached gets its own non-UUID assertion:
+  <ul>
+  <li>the recovery codes shown to the person;</li>
+  <li>the stored two-factor secret and recovery codes;</li>
+  <li>the stored signing private key;</li>
+  <li>session tokens;</li>
+  <li>client secrets.</li>
+  </ul>
+  PKCE verifiers aren't stored, so their format is checked where they're made (S1, proven by V2). Device codes and user codes belong to B3.</li>
 <li><strong>Not reached by this journey:</strong> <code>passkey</code> (B1-B), <code>deviceCode</code> (machine login, B3), and the agent-path tables <code>oauthResource</code> and <code>oauthClientResource</code>. They're listed as uncovered, not claimed.</li>
 </ul>
 <p><strong>Wrong if:</strong> a version-4 UUID anywhere in a stored row passes, including in JSON or in a row later deleted; an expected table is empty and the check still passes; a secret is UUID-shaped; or the client-assertion key stops being the <code>jti</code> digest.</p>

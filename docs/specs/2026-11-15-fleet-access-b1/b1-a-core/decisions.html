@@ -31,7 +31,8 @@
 </ul>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p><strong>None open.</strong> Nothing in B1-A changes what a person sees or can do.</p>
+<p><strong>Nothing changes what a person sees or can do.</strong> One boundary decision is open for you, with a picker <a href="#open">at the end</a>: whether R30 covers Better Auth's own internal crypto.</p>
+<p>Where the device-code parts of R33 and U23 go is already yours: B3, from the B1 scope you approved on 4 Nov (<a href="#owner">card below</a>).</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
 <p>Every decision of yours below is quoted with where you said it. The design rests on your approval of 4 Nov: <em>"yes you need anytnhign?"</em>, answering my request to approve the overall design, B1 and B2 (<a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl">Fleet transcript</a> lines 71226 and 71230). Lines marked <strong>unconfirmed</strong> are ones I couldn't find in a transcript, and each has another line of yours that backs it up.</p>
@@ -43,7 +44,7 @@ flowchart TB
   design --> b1a["B1-A design"]
   mine["My calls<br/>each marked: should it have been yours?"] --> b1a
   assume["Assumptions<br/>each with: if it's wrong"] --> b1a
-  b1a --> open["Open for you: none"]
+  b1a --> open["Open for you: does R30 cover<br/>Better Auth's own crypto?"]
   class words,design slot1
   class mine slot2
   class assume slot3
@@ -58,6 +59,10 @@ flowchart TB
 <ex-card title="The design and B1 are approved" tone="done" icon="book-open" tag="F 71226, 71230 · 4 Nov" pick>
 <p><em>"yes you need anytnhign?"</em>, answering <em>"Still waiting on you: approve the overall design, B1 and B2"</em>.</p>
 <p><strong>Decides here:</strong> the approved rows are the yardstick.</p>
+</ex-card>
+<ex-card title="Device codes are built with machine login (B3)" tone="done" icon="key" tag="Same approval · B1 doc at ac83966c" pick>
+<p>The B1 you approved said, under "Not in B1": <em>"machine login and device codes (B3)"</em> (<a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/deliverables/b1-people-roles-sign-in.source.html#b1-scope">B1 scope</a>, unchanged since commit <code>ac83966c</code>, the version standing when you said yes).</p>
+<p><strong>Decides here:</strong> R33's device-code single-use Hegel family and U23's "device-code approval in the core" go to B3, where the device-code grant is built. The grant isn't on <code>main</code> today (only the <code>deviceCode</code> table; the code is in the frozen PR #11).</p>
 </ex-card>
 <ex-card title="One runtime-free core, runtimes injected (U23, R30)" tone="done" icon="stack" tag="Requirements line 174" pick>
 <p><em>"you inject stukff not pkul out engines"</em>; <em>"it shoudl be runtime seperated like fuckign codex router"</em>.</p>
@@ -102,8 +107,7 @@ flowchart TB
 <tr><td>Delete the flood stand-in</td><td>No test needs it after the change; your feature rule says old code goes</td><td>No: it follows your rule.</td></tr>
 <tr><td>The test-time scan covers <code>sign-in-test-support</code>, the sign-in <code>*.test.ts</code> files, and <code>scripts/verify-auth/</code></td><td>Proof row U25 names "the sign-in tests, helpers or harness"</td><td>No. It's what U25 asks.</td></tr>
 <tr><td>Treat U25's "<code>auth-proof-process.ts</code> kill deadlines" as already done</td><td>The file already waits on an <code>AbortController</code> and the controlled clock</td><td>No. It's a fact from the code.</td></tr>
-<tr><td>The device-code Hegel family and "device-code approval in the core" are built with machine login (B3), not here</td><td>The device-code grant doesn't exist on <code>main</code>. The schema has a <code>deviceCode</code> table, but no core code issues or redeems device codes; that code is in the frozen PR #11. A property test of single-use redemption, or a check that its approval rule is in the core, can only be written with that code.</td><td>No choice was made: the code that would be tested isn't on <code>main</code>. It's recorded so you can see where these parts of R33 and U23 go.</td></tr>
-<tr><td>Better Auth's own internal crypto (its session tokens, sign-in state, two-factor codes) is outside R30</td><td>R30 governs "every sign-in rule … in one runtime-free core", our code. Better Auth is the library that code is built on (R29), and changing its internals would mean patching it, which your rule on following Better Auth's own way avoids.</td><td><strong>Possibly yes.</strong> No decision of yours settles it. If you want Better Auth's own crypto routed through the host too, that's a larger change (a Better Auth crypto hook or a patch), and it would come to you as a choice.</td></tr>
+<tr><td>The design is written as if Better Auth's own internal crypto (its session tokens, sign-in state, two-factor codes) is outside R30</td><td>R30 governs "every sign-in rule … in one runtime-free core", our code. Better Auth is the library that code is built on (R29), and changing its internals would mean patching it, which your rule on following Better Auth's own way avoids.</td><td><strong>Yes.</strong> No decision of yours settles it, so it's <a href="#open">open for you below</a>. Until you answer, the design assumes option A.</td></tr>
 <tr><td>Regroup B1's nine slivers into three features (B1-A, B1-B, B1-C)</td><td>Your rules: "a feature done properly", "cannot be some bite size nonsense"</td><td>The grouping is mine; the rule is yours. Correct it on the overview if it's wrong.</td></tr>
 </tbody>
 </table></div>
@@ -152,17 +156,79 @@ flowchart TB
 <tr><td><code>page-document.tsx</code> minting a version-4-UUID nonce</td><td><code>mintPageNonce</code> from 16 host bytes, only for rendered pages</td><td>Replaced</td></tr>
 <tr><td>The architecture check: runtime imports and Cloudflare names, <code>.ts</code> only</td><td>The same rules, plus <code>.tsx</code> in the core, a core runtime-global rule, and a test-time rule</td><td>Kept and extended</td></tr>
 <tr><td>Five real-time bounds in the browser-test protocol helper</td><td>Event waits only</td><td>Replaced</td></tr>
-<tr><td>Real-clock rows in <code>authorization-fence.host.e2e.test.ts</code></td><td>Controlled-clock rows</td><td>Replaced</td></tr>
+<tr><td>Rows in <code>authorization-fence.host.e2e.test.ts</code> that read time through the mocked <code>Date</code></td><td>The same rows, reading the controlled clock by name</td><td>Replaced</td></tr>
 <tr><td>Hegel: claims round trip, record histories</td><td>The same, plus token-kind dispatch</td><td>Kept and extended</td></tr>
 <tr><td>Flood "limited" on a stand-in; the stand-in option and switch</td><td>"Limited" on Miniflare's binding; the stand-in deleted</td><td>Replaced</td></tr>
-<tr><td>Spot ID checks in host tests</td><td>Those, plus a full readback</td><td>Kept and extended</td></tr>
+<tr><td>The all-table UUID inventory, run over the owner-and-agent journey</td><td>The same inventory, also run over the people journey on both databases, plus named non-UUID checks on stored secrets</td><td>Kept and extended</td></tr>
 <tr><td>The agent journey</td><td>Unchanged, re-run on the final build</td><td>Kept</td></tr>
 <tr><td>The existing known-answer tests (digests, thumbprint, DPoP)</td><td>Unchanged except for passing a crypto</td><td>Kept</td></tr>
 </tbody>
 </table></div>
 
-<h2 id="open">Open for you</h2>
-<p><strong>None.</strong> If anything above isn't what you meant, say which row, and it becomes a choice here.</p>
+<h2 id="open">Open for you: does R30 cover Better Auth's own internal crypto?</h2>
+<p>It doesn't change what a person sees. It decides how far this feature's promise under R30 reaches.</p>
+
+<h3 id="d-ba">The question</h3>
+<p><strong>Today:</strong> R30 says "every sign-in rule … MUST live in one runtime-free core" that reaches crypto "only through capabilities its host supplies". B1-A routes all of our code's crypto through the host. Better Auth, the library our code is built on (R29), also does its own crypto inside: session tokens, sign-in state, two-factor codes. No decision of yours says whether R30 reaches inside the library.</p>
+<ex-mermaid id="d-ba-now" label="Whose crypto goes through the host" data-width="canvas"><script type="text/plain">
+flowchart TB
+  host["Host crypto capability"] --> ours["Our sign-in code<br/>B1-A routes it all here"]
+  lib["Better Auth inside the service"] --> own["Its own crypto<br/>session tokens, state, 2FA codes"]
+  class host slot6
+  class ours slot2
+  class lib slot1
+  class own slot4
+</script></ex-mermaid>
+<p><strong>Key:</strong> green the host's capability, amber our code, blue Better Auth, violet the library's own crypto.</p>
+<ex-compare label="How far R30 reaches" data-width="canvas">
+  <section id="d-ba-a" label="A · Our code only" icon="code">
+    <section data-compare-row="changes"><p><strong>What changes</strong></p><p>Nothing beyond B1-A: our code's crypto goes through the host. Better Auth keeps doing its own.</p></section>
+    <section data-compare-row="improves"><p><strong>What it improves</strong></p><p>Better Auth stays as shipped, matching your rule of following Better Auth's own way. No patches.</p></section>
+    <section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Some crypto inside the service doesn't go through the host, so a recording run can't see it.</p></section>
+    <section data-compare-row="payer"><p><strong>Who bears it</strong></p><p>The proof: U23's "every crypto call is recorded" covers our code, not the library's.</p></section>
+    <section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="d-ba-a-pic" label="Option A"><script type="text/plain">
+flowchart TB
+  aa1["Host crypto"] --> aa2["Our code"]
+  aa3["Better Auth"] --> aa4["Its own crypto"]
+  class aa1 slot6
+  class aa2 slot2
+  class aa3 slot1
+  class aa4 slot4
+</script></ex-mermaid></section>
+  </section>
+  <section id="d-ba-b" label="B · Better Auth's too" icon="gear">
+    <section data-compare-row="changes"><p><strong>What changes</strong></p><p>Better Auth's crypto is also routed through the host, through whatever hooks it offers, or by patching it where it offers none.</p></section>
+    <section data-compare-row="improves"><p><strong>What it improves</strong></p><p>Every crypto call in the service goes through the host and can be recorded.</p></section>
+    <section data-compare-row="costs"><p><strong>What it costs</strong></p><p>A larger feature, likely a patch or a fork of library internals, re-applied on every Better Auth upgrade.</p></section>
+    <section data-compare-row="payer"><p><strong>Who bears it</strong></p><p>Every later Better Auth upgrade.</p></section>
+    <section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="d-ba-b-pic" label="Option B"><script type="text/plain">
+flowchart TB
+  bb1["Host crypto"] --> bb2["Our code"]
+  bb1 --> bb3["Better Auth, patched"]
+  class bb1 slot6
+  class bb2 slot2
+  class bb3 slot5
+</script></ex-mermaid></section>
+  </section>
+</ex-compare>
+<ex-grid cols="2" data-width="canvas">
+<ex-card title="A · Our code only" tone="planned" icon="code" tag="Recommended">
+<p><strong>Cost:</strong> the library's own crypto isn't recorded.</p>
+</ex-card>
+<ex-card title="B · Better Auth's too" tone="planned" icon="gear" tag="Larger">
+<p><strong>Cost:</strong> patching Better Auth and carrying the patch through upgrades.</p>
+</ex-card>
+</ex-grid>
+<ex-callout title="Recommended: A" tone="decision" icon="code">
+<p>R30 is about our sign-in rules, and you've asked to follow Better Auth's own way rather than patch it. <strong>Not decided.</strong></p>
+</ex-callout>
+<ex-callout title="If you defer" tone="risk" icon="clock">
+<p>B1-A's design stands as written (option A). If you later pick B, it becomes its own feature.</p>
+</ex-callout>
+<ex-choice id="d-ba-choice" title="Does R30 cover Better Auth's own internal crypto?">
+  <ex-option id="d-ba-choice-a" title="**A.** Our code only (recommended)"><template slot="summary">Better Auth stays as shipped; our code's crypto goes through the host.</template></ex-option>
+  <ex-option id="d-ba-choice-b" title="**B.** Better Auth's too"><template slot="summary">Route the library's crypto through the host as well, by hook or patch.</template></ex-option>
+</ex-choice>
 </ex-document>
 </body>
 </html>
