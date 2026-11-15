@@ -49,9 +49,9 @@ flowchart TB
 
 <h2 id="implementer">Packet 1 · Implementer</h2>
 <ol>
-<li><strong>Device (option B).</strong> <code>deviceAuthorization({ validateClient })</code> and <code>bearer()</code> in <code>provider-configuration.ts</code>; move the organization actor capture into a plugin after <code>bearer()</code>; the bearer-session allowlist and <code>set-auth-token</code> stripping in the release layer; <code>pages/device-approval-page.tsx</code> and island.</li>
+<li><strong>Device (option B).</strong> <code>deviceAuthorization({ validateClient })</code> in <code>provider-configuration.ts</code> (no <code>bearer()</code>); <code>response-release/terminal-session.ts</code>: browser-or-terminal classification, device routes terminal-only, terminal bearer session converted with <code>better-call</code>'s <code>serializeSignedCookie</code> on the six paths, <code>organization/list</code> admitted only there; <code>pages/device-approval-page.tsx</code> and island.</li>
 <li><strong>CLI.</strong> <code>fleet/device-login-transitions.ts</code> (M3) and <code>fleet/device-login.ts</code> with an injected <code>wait</code>; session secret in <code>ProofKeyStore</code>; remove the “not available” exit and its test; organization selection and second-factor prompts.</li>
-<li><strong>Sync view.</strong> <code>better-auth/access-sync.ts</code>; M2 island; status card on the admin page; member line on the lookup page.</li>
+<li><strong>Sync view.</strong> The <code>organizationWithPeople</code> scope in <code>authorization-revision-delivery-store.ts</code> (one read); <code>better-auth/access-sync.ts</code> resolving a person's retained subject in this organization by email; M2 island; status card on the admin page; member and removed-person line on the lookup page.</li>
 <li><strong>Delivery.</strong> <code>organizations/revision-delivery-transitions.ts</code> (M1); the drainer as its runner with the same writes; fix the stale comment.</li>
 <li><strong>Tests.</strong> V1–V5 and every sign-in row of the r3 table; wrong builds to red and back.</li>
 <li><strong>Gates and PR</strong>, on Sunclaw.</li>

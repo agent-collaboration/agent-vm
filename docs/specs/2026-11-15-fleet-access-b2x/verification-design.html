@@ -43,30 +43,31 @@
 <ol>
 <li>Run the real CLI with <code>--device</code> and controlled waits; a test browser session approves the printed code on the approval page. The CLI ends signed in; the stored token's claims name a real session ID; a Fleet command succeeds against Central.</li>
 <li>Redeem the same device code again: refused. Deny a second code: CLI ends failed. Expire a third on Better Auth's clock: failed.</li>
-<li>Two memberships: the CLI asks; the token names the chosen organization.</li>
-<li>A protected command gets <code>secondFactorRequired</code>; entering a code in the CLI confirms the device session; the approving browser's confirmation is unchanged.</li>
+<li>Two memberships, through the real outer handler with only the device session: the CLI's <code>organization/list</code> returns both; the token names the chosen organization.</li>
+<li>A protected command gets <code>secondFactorRequired</code>; with no Cookie header and no injected session, the CLI posts a valid TOTP (then a recovery code) with the device session through the production handler; only that session's confirmation changes; the approving browser's is unchanged; a same-key refresh then the retried command succeed.</li>
 <li>Delete the device session: revisions bump; after Central's ACK the old token gets RefreshRequired; refresh fails; custody is cleared.</li>
-<li>Containment: a page fetch in the browser after any sign-in sees no <code>set-auth-token</code> header; a bearer session on a non-allowlisted path gets 401.</li>
+<li>Containment in real Chrome: same-origin page script tries the whole device sequence (create code with the Fleet CLI client ID, approve as the signed-in person, poll the token route); every device-route call gets 404 and no response body or header contains a session token. A terminal bearer session on a non-allowlisted path is not a session there (for example <code>get-session</code> returns null), in both the raw and the signed form issued by Better Auth.</li>
 </ol>
-<p><strong>Wrong builds:</strong> use the OAuth device grant (token without a session, step 1 fails); leave <code>set-auth-token</code> in replies (step 6); copy the browser's confirmation (step 4).</p>
+<p><strong>Wrong builds:</strong> use the OAuth device grant (token without a session, step 1 fails); admit browser requests to the device routes (step 6 sees the token in the JSON body); rely on <code>bearer()</code> hook order (step 4 gets 401); copy the browser's confirmation (step 4).</p>
 
 <h2 id="V3">V3 · Revocation and delivery (S5, S7)</h2>
 <ul>
 <li>Kept: <code>authorization-fence.host.e2e.test.ts</code> (add, change, remove, rejoin, session fan-out), <code>authorization-revision-drain.host.e2e.test.ts</code>, now against real Central.</li>
 <li>Drop an ACK: the row stays pending; the next Fleet call pushes it before its own work, and Central saw the push first.</li>
 <li>Advance the source during an ACK: the newer revision stays pending and is pushed next.</li>
+<li>The 7/8 interleaving on both stores and real Central: runner A holds a push of 7, runner B pushes 8, A's push lands and Central ACKs 8: recorded with source 8. ACK 9 with source 8: discrepancy. ACK 7 with source 8: recorded, row still pending.</li>
 <li>No timer exists: with the clock advanced and no Fleet call, nothing is pushed.</li>
 </ul>
 <p><strong>Wrong builds:</strong> record an ACK above the source revision; lower a revision on discrepancy.</p>
 
 <h2 id="V4">V4 · The owner's sync view (S6)</h2>
 <ol>
-<li>Owner removes a member through the real people flow; hold Central's ACK at the fault proxy.</li>
-<li>Admin page and lookup page show “waiting for Central”.</li>
-<li>Release the ACK; refresh: “all access changes have reached Central”.</li>
+<li>Start with the organization row already acknowledged. Owner removes a member through the real people flow (only that person's row advances); hold Central's ACK at the fault proxy.</li>
+<li>The admin card shows “waiting for Central” although the organization row alone is synced; the lookup page, looking up the removed person by email, shows “removed; waiting for Central”.</li>
+<li>Release the ACK; refresh: “all access changes have reached Central” and “removed; reached Central”. Another organization's retained person can't be looked up this way (<code>none</code>).</li>
 <li>Fail the store read: unavailable. A member calling the endpoint: 403. The read issues no push (proxy counter unchanged).</li>
 </ol>
-<p><strong>Wrong builds:</strong> show synced from the source commit alone; trigger delivery from the read.</p>
+<p><strong>Wrong builds:</strong> show synced from the source commit alone; read only the organization fence for the card (step 2 shows synced); require current membership for the person line (step 2 shows nothing); trigger delivery from the read.</p>
 
 <h2 id="V5">V5 · Machines, removal, gates (S9, S10)</h2>
 <p>Hegel families in <code>packages/sign-in-test-support/src/core-tests/</code> with <code>{ testCases: 1000, derandomize: true, database: hegel.Database.disabled }</code>:</p>
@@ -74,7 +75,7 @@
 <thead><tr><th>Family</th><th>Invariants</th><th>Wrong builds</th></tr></thead>
 <tbody>
 <tr><td><code>person-fleet-issuance.hegel.unit.test.ts</code></td><td>No token when any refusal condition holds; bounds are the minimum; snapshot never redated</td><td>Skip policy-mismatch; use native expiry only</td></tr>
-<tr><td><code>revision-delivery-transitions.hegel.unit.test.ts</code> (M1)</td><td>Acknowledged only from an ACK equal to the pushed revision; person rows never acknowledged before their fence row; discrepancy never lowers</td><td>Accept a higher ACK as acknowledged; push person before fence</td></tr>
+<tr><td><code>revision-delivery-transitions.hegel.unit.test.ts</code> (M1)</td><td>An ACK at most the current source revision is recorded (higher than pushed is fine); acknowledged only when it equals the current revision; above the source is a discrepancy; person rows never pushed before their fence row is acknowledged; nothing ever lowers</td><td>Treat ACK above source as acknowledged; reject a valid higher-than-pushed ACK; push person before fence</td></tr>
 <tr><td><code>access-sync-view.hegel.unit.test.ts</code> (M2)</td><td>Only the current generation settles</td><td>No generation check</td></tr>
 <tr><td><code>device-login-transitions.hegel.unit.test.ts</code> (M3)</td><td>Signed in only after exchange; failure always clears custody; slow-down lengthens the wait</td><td>Store custody before exchange; poll without waiting</td></tr>
 </tbody></table></div>
@@ -87,9 +88,9 @@
 <tr><td>Role change for A in X leaves B/X and A/Y valid</td><td>Sign-in (exists)</td><td>V3 fence cases plus Central admission of the untouched tokens</td></tr>
 <tr><td>Remove and rejoin keeps the subject, higher revision</td><td>Sign-in (exists)</td><td>V3; old token refused</td></tr>
 <tr><td>Session ends after switching organizations: every retained row bumps</td><td>Sign-in (exists)</td><td>V3 fan-out</td></tr>
-<tr><td>Concurrent first membership or issuance and session deletion</td><td>Sign-in</td><td>Real race on D1 and better-sqlite3 with barriers</td></tr>
+<tr><td>Concurrent first membership or issuance and session deletion</td><td>Sign-in</td><td><strong>Needed:</strong> on D1 and better-sqlite3, hold issuance after its snapshot read (the existing fleet-snapshot hold in <code>node-auth-proof-host.ts</code> / D1 wrapper), delete the session in the fence batch, release. Assert every organization the snapshot could issue for has a bumped person revision, and Central refuses the issued token after the ACK. Wrong build: fan-out that reads organizations outside the batch.</td></tr>
 <tr><td>Session deadline before native expiry</td><td>Sign-in + Central</td><td>V1</td></tr>
-<tr><td>Contributor tries to override native expiry</td><td>Sign-in (exists)</td><td>Unit and V1</td></tr>
+<tr><td>Contributor tries to override native expiry</td><td>Sign-in (exists)</td><td><strong>Needed:</strong> a native issuance fixture where the contributor returns an earlier reserved <code>exp</code>; inspect the signed token: native <code>exp</code> stands, the application bounds are present; then with session and native expiry still future, Central refuses at the application snapshot bound. Wrong build: a fixture that bypasses Better Auth's issuance.</td></tr>
 <tr><td>Snapshot paused past S+L</td><td>Sign-in + Central</td><td>V1</td></tr>
 <tr><td>Old process after a policy change</td><td>Sign-in (exists)</td><td>Issuance refuses <code>policy-mismatch</code> (B2 V8 covers the rollout)</td></tr>
 <tr><td>Policy stop and resume reordered; deletion never resumes</td><td>Central (Lead A)</td><td>Joint delivery cases</td></tr>

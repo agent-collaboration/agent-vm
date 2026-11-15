@@ -57,7 +57,8 @@
 <thead><tr><th>Call</th><th>Why</th><th>Should it have been yours?</th></tr></thead>
 <tbody>
 <tr><td>The sync view appears on B2's admin page status card and beside a member on B1-C's lookup page</td><td>Those are where an owner looks after changing access.</td><td>Possibly: placement changes what you see.</td></tr>
-<tr><td>Bearer sessions accepted only on five terminal paths; <code>set-auth-token</code> stripped from every reply</td><td>Keeps the session token out of page scripts, matching your B1-B card.</td><td>No: protection inside the agreed scope.</td></tr>
+<tr><td>Browsers can't call the device routes (requests with browser fetch headers or cookies get 404), and the device session is usable only from a terminal on six paths, converted to Better Auth's own signed cookie before dispatch; no <code>bearer()</code> plugin</td><td>Keeps the session token out of page scripts, matching your B1-B card, and lets our factor hooks see the session.</td><td>No: protection inside the agreed scope.</td></tr>
+<tr><td>The organization card counts every person's row, and a removed person can still be looked up for sync status</td><td>Removals only move person rows; the card would otherwise say “reached” too early.</td><td>No.</td></tr>
 <tr><td>The device session confirms its own second factor in the CLI</td><td>Copying the browser's confirmation would invent a factor event.</td><td>No.</td></tr>
 <tr><td>Delivery stays on use; no new timer</td><td>Your crons rule.</td><td>No.</td></tr>
 </tbody></table></div>
@@ -85,8 +86,8 @@ flowchart TB
 </section>
 <section id="dev-b" label="B · Better Auth's device flow with a real session" icon="key">
 <section data-compare-row="sees"><p><strong>What a person sees</strong></p><p>A code to approve in their browser; then, if needed, an organization pick and a second-factor prompt in the CLI.</p></section>
-<section data-compare-row="changes"><p><strong>What changes</strong></p><p>Better Auth's own <code>deviceAuthorization()</code> and <code>bearer()</code>; the CLI completes the existing PKCE login with the new session; the release layer strips the bearer header and limits bearer sessions to five paths; the CLI stores the session secret beside its key.</p></section>
-<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>A long-lived session secret on the machine (Keychain or memory). The containment rules and their tests.</p></section>
+<section data-compare-row="changes"><p><strong>What changes</strong></p><p>Better Auth's own <code>deviceAuthorization()</code>; browsers refused on the device routes; the terminal's session converted to Better Auth's own signed cookie on six paths before dispatch; the CLI completes the existing PKCE login with the new session and stores the session secret beside its key.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>A long-lived session secret on the machine (Keychain or memory). A small terminal adapter in the outer handler and its containment tests.</p></section>
 <section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="dev-b-pic" label="Option B"><script type="text/plain">
 flowchart TB
   code["Device code"] --> sess["Native session"] --> pkce["Existing PKCE login"] --> tok["Token with session ID"]
@@ -95,7 +96,7 @@ flowchart TB
 <section id="dev-a" label="A · Sessionless tokens" icon="package">
 <section data-compare-row="sees"><p><strong>What a person sees</strong></p><p>A code to approve; signed in.</p></section>
 <section data-compare-row="changes"><p><strong>What changes</strong></p><p>The OAuth device grant as shipped; a new token profile without a session; the contributor and Central's admission change.</p></section>
-<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Signing out no longer kills a device token; only role, membership or expiry does. A changed contract on both sides.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>There's no device session to end or expire, so ending “the device's login” has no handle; a device token still dies on any role or membership change, on any session end for that person (person-wide), and at expiry. Its refresh lifetime needs designing. A changed contract on both sides.</p></section>
 <section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="dev-a-pic" label="Option A"><script type="text/plain">
 flowchart TB
   code["OAuth device grant"] --> tok["Token, no session"]
@@ -105,13 +106,13 @@ flowchart TB
 <ex-grid cols="3" data-width="canvas">
 <ex-card title="C · Browser only" tone="planned" icon="path" tag="No change"><p><strong>Cost:</strong> your choice undelivered.</p></ex-card>
 <ex-card title="B · Real session" tone="planned" icon="key" tag="Recommended"><p><strong>Cost:</strong> a session secret on the machine; containment rules.</p></ex-card>
-<ex-card title="A · Sessionless" tone="planned" icon="package" tag="Contract change"><p><strong>Cost:</strong> sign-out no longer revokes device tokens.</p></ex-card>
+<ex-card title="A · Sessionless" tone="planned" icon="package" tag="Contract change"><p><strong>Cost:</strong> no device session to end; refresh lifetime to design.</p></ex-card>
 </ex-grid>
 <ex-callout title="Recommendation: B" tone="decision" icon="key"><p>It delivers <code>--device</code> and keeps “ending the session ends the token”, using only Better Auth's own parts.</p></ex-callout>
 <ex-callout title="If you defer" tone="risk" icon="clock"><p>B2X can't start: it would ship with device login unfinished.</p></ex-callout>
 <ex-choice id="choice-device" title="How should --device keep a session?">
 <ex-option id="device-b" title="B · Better Auth's device flow with a real session (recommended)"><template slot="summary">Session secret kept like the key; containment rules.</template></ex-option>
-<ex-option id="device-a" title="A · Sessionless tokens"><template slot="summary">Changed contract; sign-out doesn't revoke.</template></ex-option>
+<ex-option id="device-a" title="A · Sessionless tokens"><template slot="summary">Changed contract; no device session to end.</template></ex-option>
 <ex-option id="device-c" title="C · Browser only"><template slot="summary">--device stays unavailable.</template></ex-option>
 </ex-choice>
 </ex-document>
