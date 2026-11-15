@@ -114,44 +114,105 @@ flowchart TB
 <p>Under the old process #9 was accepted as "B1". That acceptance is withdrawn. B1 is partly delivered until every row above says yes.</p>
 </section>
 
-<section id="review"><h2>3. What the reviewer gets, and how they check</h2>
-<p><strong>Who:</strong> a fresh Sol xhigh session with no history of writing this work, using the <code>role-checker</code> and <code>design-review</code> skills and the principles <code>verify-before-accepting</code>, <code>prove-it-works</code> and <code>write-tests-that-can-fail</code>. It writes its report as an HTML page in the shared audit format.</p>
-<h3 id="packet">The packet (fixed; nothing else)</h3>
-<table>
-<thead><tr><th>Item</th><th>Where</th><th>Used as</th></tr></thead>
-<tbody>
-<tr><td>Your approved design</td><td>This set's pages 2–5, and <code>docs/specs/2026-11-02-fleet-access/</code></td><td>The yardstick</td></tr>
-<tr><td>Your first-hand decisions</td><td><a href="decisions.html#owner">Decisions: Yours</a>, each with transcript line and time</td><td>Changes to the yardstick, only where your words are linked</td></tr>
-<tr><td>The PRs and the pinned build</td><td>switchboard PR numbers with head and merge commits; central commit where involved</td><td>What is judged</td></tr>
-<tr><td>The evidence</td><td>The Verifier's folders with build pins; CI run IDs</td><td>Claims to re-check against the code</td></tr>
-<tr><td>The shared audit format</td><td><code>tmp/2026-11-15-full-review/report-format.md</code></td><td>How the report is laid out</td></tr>
-<tr><td>Lead records (plan, acceptances, these Plan and Decisions pages)</td><td>Paths only</td><td><strong>Claims to audit, never the standard</strong></td></tr>
-</tbody>
-</table>
+<section id="review"><h2>3. The packets: what each role gets, from whom, and where</h2>
+<p>Every handoff is a fixed packet at a fixed place. Each piece of B1 work, a <em>slice</em>, gets one folder. Everything for that slice lives there: the brief, what the Implementer hands back, what the Verifier saw, my acceptance, and the reviewer's report. You can open the folder and see exactly what each role was given and what it returned.</p>
+<p><strong>The folder:</strong> <code>docs/specs/2026-11-15-fleet-access-b1/work/&lt;slice&gt;/</code>. The five slices are in <a href="#order">section 4</a>, named <code>s1-honest-tests</code>, <code>s2-lookup-and-switching</code>, <code>s3-passkey-sign-in</code>, <code>s4-ids-and-agent-path</code> and <code>s5-release-check</code>. None is created yet: your stop holds.</p>
+
+<ex-mermaid id="packet-flow" label="One slice, from brief to your review" data-width="canvas"><script type="text/plain">
+flowchart TB
+  brief["Lead writes brief.html<br/>gap, design rows, cases, scope"] --> impl["Implementer builds<br/>returns implementer-handback.md"]
+  brief --> ver["Verifier observes the pinned build<br/>returns verifier-observation.md"]
+  impl --> ver
+  ver --> acc["Lead accepts against your design<br/>writes lead-acceptance.html"]
+  acc --> rev["Fresh reviewer<br/>returns reviewer-report.html"]
+  rev --> terra["Terra medium checks the report"]
+  terra --> you["You: the B1 home agreements list<br/>is updated from these files"]
+  class brief,acc slot2
+  class impl slot3
+  class ver slot4
+  class rev,terra slot1
+  class you slot6
+</script></ex-mermaid>
+<p><strong>Key:</strong> amber is the Lead, teal the Implementer, violet the Verifier, blue the review, green you.</p>
+
+<ex-card id="pkt-implementer" title="1 · Implementer packet (from the Lead)" tone="note" icon="code">
+<p><strong>Who:</strong> the Implementer (Opus high), one per slice.</p>
+<p><strong>Gets exactly:</strong></p>
+<ul>
+<li><code>work/&lt;slice&gt;/brief.html</code>: the gap in plain words, "fully fixed means", the design rows it must meet (links into the four design pages), the cases from the Plan it must pass, the files it may change in switchboard, when to stop, and the paired Verifier's address.</li>
+<li>The four B1 design pages: <a href="requirements.html">requirements</a>, <a href="specification.html">specification</a>, <a href="program-design.html">program design</a>, <a href="verification-design.html">verification design</a>.</li>
+<li>Your decisions: <a href="decisions.html#owner">decisions.html#owner</a>.</li>
+<li>The repo's rules: <code>switchboard/AGENTS.md</code>.</li>
+</ul>
+<p><strong>Returns to:</strong> <code>work/&lt;slice&gt;/implementer-handback.md</code>. It holds the PR and commit, the gate commands with counts and exit codes, what it couldn't do, and every place it thinks the design is wrong.</p>
+<p><strong>Never gets:</strong> permission to change the design, a public contract or a check gate. Those come back to me, and then to you.</p>
+</ex-card>
+
+<ex-card id="pkt-verifier" title="2 · Verifier packet (from the Lead)" tone="note" icon="test-tube">
+<p><strong>Who:</strong> the paired Verifier (Sol high), a different model from the Implementer. It observes and never repairs product code.</p>
+<p><strong>Gets exactly:</strong></p>
+<ul>
+<li>The same <code>brief.html</code> and the four design pages.</li>
+<li>The slice's cases from <a href="#cases">the case table</a>. Each names the boundary and the wrong build it must catch.</li>
+<li>The pinned build: the PR head commit, filled into the brief at handoff.</li>
+<li>The verification skill: <code>switchboard/.agents/skills/verify-auth/</code>.</li>
+</ul>
+<p><strong>Returns to:</strong> <code>work/&lt;slice&gt;/verifier-observation.md</code>, with an evidence folder named in it. The observation holds the build pin, the commands, counts, exit codes and file hashes. For each case it records what was seen, and whether the wrong build would have failed.</p>
+<p><strong>Never gets:</strong> the Implementer's own results as proof. It runs the cases itself.</p>
+</ex-card>
+
+<ex-card id="pkt-acceptance" title="3 · What the accepting Lead holds" tone="note" icon="shield-check">
+<p><strong>Who:</strong> me, before any review starts.</p>
+<p><strong>I hold:</strong></p>
+<ul>
+<li>the design rows from the brief;</li>
+<li>the Verifier's observation and evidence;</li>
+<li>the Implementer's handback;</li>
+<li>the PR diff at the pinned commit;</li>
+<li>CI.</li>
+</ul>
+<p>I open the code and the evidence myself.</p>
+<p><strong>Writes:</strong> <code>work/&lt;slice&gt;/lead-acceptance.html</code>. It runs the five checks from <a href="#accept">section 2</a>, each citing the file and line it rests on. Each outcome is marked accepted, partial or missing. Any gap or narrowing goes to you as a decision first.</p>
+<p><strong>Never:</strong> accepts against my own brief instead of your design, or counts a summary as evidence.</p>
+</ex-card>
+
+<ex-card id="pkt-reviewer" title="4 · Reviewer packet (from the Lead, after acceptance)" tone="note" icon="users">
+<p><strong>Who:</strong> a fresh Sol xhigh session with no history of this work. It loads <code>role-checker</code>, <code>design-review</code> and the three verification principles.</p>
+<p><strong>Gets exactly:</strong></p>
+<ul>
+<li>The yardstick: the four B1 design pages.</li>
+<li>Your words: <a href="decisions.html#owner">decisions.html#owner</a>, each item linked to a transcript line.</li>
+<li>The PR number and the pinned commit.</li>
+<li>The evidence folder named in <code>verifier-observation.md</code>.</li>
+<li>The report format: <code>docs/specs/2026-11-15-fleet-access-overview/report-format.md</code>.</li>
+<li>As <strong>claims to check only</strong>: <code>brief.html</code>, <code>implementer-handback.md</code>, <code>lead-acceptance.html</code>.</li>
+</ul>
+<p><strong>Returns to:</strong> <code>work/&lt;slice&gt;/reviewer-report.html</code>. Every finding cites your design row, your words where they apply, and the code line. I reject any finding, or any "done", that doesn't.</p>
+<p><strong>Never gets:</strong> my plan or rulings as a standard.</p>
+</ex-card>
+
 <h3 id="how-review">How the reviewer validates</h3>
 <ol>
-<li>For each obligation, read your design row and any linked words of yours first, then write down what "done" means before opening the code.</li>
+<li>For each obligation, read your design row and any linked words of yours first, and write down what "done" means before opening the code.</li>
 <li>Read the code at the pinned commit, not the PR description.</li>
-<li>Open the evidence and check it ran on that build, at the boundary the design names, and would fail on the wrong build.</li>
+<li>Open the evidence and check that it ran on that build, at the boundary the design names, and would fail on the wrong build.</li>
 <li>Any place my records narrow, defer or reinterpret an obligation is a finding. Never adopt it.</li>
 <li>A decision counts as yours only with a link to your own words. A relay stays "relayed, unconfirmed".</li>
-<li>Report every obligation: delivered, partial, missing or contradicted, with "fully fixed means".</li>
 </ol>
-<p>Every page then gets a Terra medium check before it reaches you.</p>
 </section>
 
 <section id="order"><h2>4. The order of work once you lift the stop</h2>
 <ex-mermaid data-width="canvas" id="work-order" label="B1 work order after the stop lifts"><script type="text/plain">
 flowchart TB
-  w1["1 Fix the three defects:<br/>page randomness, watchdogs, flood binding"]:::fix --> w2["2 Build lookup and org switching"]:::build
-  w2 --> w3["3 Passkey hook proof,<br/>then turn on passkey sign-in"]:::build
-  w3 --> w4["4 Full identifier readback;<br/>agent path at final build"]:::fix
-  w4 --> w5["5 Release check on staging,<br/>with BG's staging proof"]:::later
+  w1["s1-honest-tests<br/>page randomness, watchdogs, flood binding"]:::fix --> w2["s2-lookup-and-switching<br/>membership lookup, organization choice"]:::build
+  w2 --> w3["s3-passkey-sign-in<br/>prove the hook, then turn it on"]:::build
+  w3 --> w4["s4-ids-and-agent-path<br/>identifier readback, agent path"]:::fix
+  w4 --> w5["s5-release-check<br/>real sign-in on staging, with BG"]:::later
   classDef fix fill:#f8d7da,stroke:#b02a37,color:#3d0a0f
   classDef build fill:#fff3cd,stroke:#b8860b,color:#3d2b00
   classDef later fill:#e7e9ee,stroke:#59606e,color:#1d2129
 </script></ex-mermaid>
-<p>Each step is one PR with its own Verifier observation, Lead acceptance and review, as above.</p>
+<p>Each slice is one PR with its own folder, packets, Verifier observation, Lead acceptance and review, as in <a href="#review">section 3</a>.</p>
 </section>
 </ex-document>
 </body>
