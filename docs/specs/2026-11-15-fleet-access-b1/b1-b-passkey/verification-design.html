@@ -182,6 +182,7 @@ flowchart TB
   <li><code>attachPasskeySignInTurnstile</code> leaves other requests unchanged;</li>
   <li>for the challenge request, it calls <code>reset</code> then <code>execute</code> on a fake <code>window.turnstile</code>, and sets <code>x-captcha-response</code> to the token the fake's callback gives;</li>
   <li>two challenge requests get two different tokens;</li>
+  <li><strong>overlap:</strong> two token requests started together, with the fake's first callback held. The second doesn't call <code>execute</code> until the first settles. Releasing the callbacks in order settles each request with its own token. When the first gets <code>error-callback</code>, it rejects and the second still gets a token. A helper that overwrites the first resolver, or gives both requests one token, fails this case;</li>
   <li>each of <code>error-callback</code>, <code>expired-callback</code> and <code>timeout-callback</code> rejects the pending attempt, and the next call starts a new one;</li>
   <li><code>onSignInTurnstileReady</code> sets <code>ready</code> and dispatches <code>sign-in-turnstile-ready</code>;</li>
   <li><strong>a script load failure:</strong> an <code>error</code> event on <code>#sign-in-turnstile-script</code> sets <code>failed</code> and dispatches <code>sign-in-turnstile-failed</code>. A token request pending at that moment rejects, and so does every later one, at once.</li>
@@ -191,6 +192,7 @@ flowchart TB
   <li>With <code>passkeyPlugin({ autoFill: false })</code>, the recommended answer, loading sends no challenge request.</li>
   <li>With <code>autoFill: true</code>, on Chrome, which supports conditional mediation, loading sends exactly one.</li>
   </ul>
+  <strong>If you choose autofill (B or C),</strong> V8 adds one more run on both hosts. The scenario holds the Turnstile stand-in's first callback, so the background request is waiting, then clicks the still-enabled button. It releases the callbacks in order, and observes: both requests settle; each challenge request carries its own token; no "already used" refusal; the click's sign-in completes.
   This runs through the real island and Better Auth UI's own hook, not a fake.</li>
 <li><strong>Fails on:</strong> today's page (no root, no container); a deliberate break that sets the same token twice; and one that ignores the script's load error. The DOM case starts a token request, dispatches the error event, lets pending promise callbacks run, then asserts the request is settled as rejected. On the broken build it's still pending, so the assertion fails at once; nothing waits.</li>
 </ul>

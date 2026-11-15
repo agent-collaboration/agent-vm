@@ -128,7 +128,7 @@ flowchart TB
 
 <h2 id="open">Open for you: autofill on the passkey button?</h2>
 <p><strong>Today, in Better Auth UI:</strong> its <code>PasskeyButton</code> signs in on click. When its passkey plugin's <code>autoFill</code> setting is on (the default), loading the page also asks the browser to list passkeys in its autofill dropdown, in browsers that support it (current Chrome, Edge and Safari). That list appears under a username or email field marked for passkeys. Our sign-in page has no such field: people only choose Google, GitHub or now a passkey.</p>
-<p><strong>Both answers keep Better Auth UI's button unchanged.</strong> The choice is one setting on its own plugin: <code>passkeyPlugin({ autoFill: false })</code> or <code>true</code>.</p>
+<p><strong>Every answer keeps Better Auth UI's button unchanged.</strong> The choice is one setting on its own plugin: <code>passkeyPlugin({ autoFill: false })</code> or <code>true</code>. The Turnstile helper already serves overlapping token requests one at a time, so autofill's background request and a click can't share a token. If you choose autofill, one more real-browser run proves that overlap (<a href="verification-design.html#V7">V7</a>).</p>
 <ex-mermaid id="open-now" label="What the shipped button does on page load" data-width="canvas"><script type="text/plain">
 flowchart TB
   load["Sign-in page loads"] --> auto["With autoFill on, the button asks<br/>for a challenge for autofill"]

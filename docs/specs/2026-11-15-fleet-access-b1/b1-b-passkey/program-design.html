@@ -299,7 +299,14 @@ export async function attachPasskeySignInTurnstile(context: RequestContext): Pro
   <li><code>callback</code> resolves with the token;</li>
   <li><code>error-callback</code>, <code>expired-callback</code> and <code>timeout-callback</code> each reject that attempt with the same message.</li>
   </ul>
-  Only one attempt is pending at a time, because the button is disabled while its request runs.</li>
+  </li>
+<li><strong>Overlapping requests:</strong> two token requests can be pending at once. With autofill on, Better Auth UI's background challenge runs under a separate mutation key (<code>["auth", "passkey", "autoFill"]</code>, <code>passkey-mutation-keys.ts</code> at <code>2b028ec5</code>), so it doesn't disable the button, and a click can start a second request. The helper therefore serves token requests one at a time, first in, first out:
+  <ul>
+  <li>a request that arrives while another is executing waits in the queue;</li>
+  <li>when the current execution settles (a token, or a failure callback), the next request in the queue runs its own <code>reset</code> and <code>execute</code>;</li>
+  <li>each request settles with its own token or its own failure. No request replaces another's execution, and no token is given to two requests;</li>
+  <li>after a script failure, every queued request rejects at once.</li>
+  </ul></li>
 <li><strong>A rejection</strong> makes the client's request fail before it's sent. The button shows Better Auth UI's error notice and is enabled again. The next click starts a new attempt; after a script failure, every attempt fails at once until the page is reloaded.</li>
 </ul>
 <p><strong>Why two widgets:</strong> Turnstile fixes a widget's action when it's rendered, and the service checks the action (<code>expectedAction: 'passkey_sign_in'</code>, <code>turnstile-captcha.ts:136–137</code>). The Google and GitHub widget's tokens carry <code>sign_in_social</code> and would be refused.</p>
