@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B2X · Person tokens and revocation · Requirements</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
+<a href="../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
+<a href="audit.html">B2X · 1 Audit</a>
+<a href="requirements.html">B2X · 2 Requirements</a>
+<a href="specification.html">B2X · 3 Specification</a>
+<a href="program-design.html">B2X · 4 Program Design</a>
+<a href="verification-design.html">B2X · 5 Verification Design</a>
+<a href="plan.html">B2X · 6 Plan</a>
+<a href="decisions.html">B2X · 7 Decisions</a>
+</nav></ex-nav>
+<ex-document id="doc">
+<h1>B2X · Person tokens and revocation: Requirements</h1>
+<p><strong>A person signs in to the CLI by the route you chose, including <code>--device</code> on a machine with no browser, and gets a token that only works with their key and only for what their role allows. When the owner removes someone, changes a role, or a session ends, the owner can see when Central has caught up, and nothing is called “revoked everywhere” before it has.</strong></p>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What to check" tone="note" icon="shield-check">
+<ul>
+<li><code>--device</code> works and the token still dies with its session.</li>
+<li>The owner sees “waiting for Central” after a removal, then “reached Central” only after Central's acknowledgement.</li>
+<li>Every counterexample in the r3 design's proof list has an owner and a planned check.</li>
+</ul>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p>How <code>--device</code> keeps a session: <a href="decisions.html#device">Decisions</a>. It was promised to you on 8 Nov and never answered.</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>Quotes below are yours with transcript lines. The approved additions page records its own 8 Nov approval and the 6 Nov token model.</p>
+</ex-callout>
+
+<h2 id="who">Who needs what</h2>
+<ex-mermaid id="who-picture" label="People and outcomes" data-width="canvas"><script type="text/plain">
+flowchart TB
+  term["Person at a terminal"] --> login["Sign in, browser or --device"]
+  login --> use["Use only what the role allows, with their key"]
+  owner["Owner"] --> change["Remove, change role, end session"]
+  change --> see["See pending, then reached Central"]
+  class term,owner slot1
+  class login,use,change,see slot3
+</script></ex-mermaid>
+
+<h2 id="tokens">Person tokens</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Need</th><th>Your words or approved row</th><th>Existing proof</th><th>Missing</th></tr></thead>
+<tbody>
+<tr id="X1"><td><strong>X1 · Key-bound, role-limited token</strong></td><td>Approved additions: <em>“a reusable person token carrying role and permissions, bound to the caller's key”</em>; <em>“central verifying the key-bound proof itself”</em>.</td><td><code>person-fleet-token.host.e2e.test.ts:198–344</code></td><td>Observed against the final Central on every login path.</td></tr>
+<tr id="X2"><td><strong>X2 · Never outlives its snapshot or session</strong></td><td>r3 §4: the snapshot S and deadline S+L are fixed; equality is expired.</td><td>Host issuance test :232–265; release refuses at the minimum bound.</td><td>Session and snapshot expiry tested independently against Central.</td></tr>
+<tr id="X3"><td><strong>X3 · Refresh with the same key</strong></td><td>Your selection: <em>“Add a refresh credential, bound to the key”</em> (Fleet transcript 90948, 7 Nov).</td><td><code>fleet-cli.host.e2e.test.ts:173–243</code></td><td>Kept on every login path.</td></tr>
+<tr id="X4"><td><strong>X4 · <code>--device</code> login</strong></td><td>Your selection: <em>“Add device-code sign-in to the CLI, as --device”</em> (Fleet transcript 90948, 7 Nov); <em>“login i want login to work with device codes in codex”</em> (Fleet transcript 12490).</td><td>None; exits “not available”.</td><td>The whole login, by the option you choose.</td></tr>
+<tr id="X5"><td><strong>X5 · No credential in the admin page</strong></td><td>Your 8 Nov decision: the sign-in server holds the page's credential and signs each request.</td><td><code>fleet-admin-forwarding.ts</code> and its tests.</td><td>Kept.</td></tr>
+</tbody></table></div>
+
+<h2 id="revocation">Revocation</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Need</th><th>Your words or approved row</th><th>Existing proof</th><th>Missing</th></tr></thead>
+<tbody>
+<tr id="X6"><td><strong>X6 · Revocation follows the real change</strong></td><td>Approved additions: <em>“a role change, removal or sign-out bumps a revision in the same database step as the Better Auth write”</em>.</td><td><code>authorization-fence.host.e2e.test.ts</code>: add, change, remove, rejoin, session fan-out.</td><td>Kept; failed or zero-row changes never claim a revoke.</td></tr>
+<tr id="X7"><td><strong>X7 · See when Central has caught up</strong></td><td>Approved additions: <em>“"revoked everywhere" shown only with central's acknowledgements”</em>; you decided <em>“revoke shown only after central confirms”</em> (6 Nov, in the additions' decided list).</td><td>Store read exists; no caller.</td><td>The owner's view.</td></tr>
+<tr id="X8"><td><strong>X8 · Delivery is retried honestly, without timers</strong></td><td><em>“you should have never done cloudflare crons”</em> (recorded in Switchboard's 8 Nov trace with commit <code>6f94ed4d</code>).</td><td><code>authorization-revision-drain.host.e2e.test.ts:168–257</code>.</td><td>Pure delivery machine; real Central.</td></tr>
+<tr id="X9"><td><strong>X9 · Central admits each request once</strong></td><td>Approved additions: used-requests table, watermark, DPoP at Central.</td><td>Joint sign-out case on older Central.</td><td>The full r3 §9 list on the final Central.</td></tr>
+</tbody></table></div>
+
+<h2 id="rules">Standing rules</h2>
+<ul>
+<li><em>“righ ok let smake srue we use hegel then an dpure transiton fucitons with exatsutiveness in enukms or helpers and make good plans on hegel then”</em> (Fleet transcript 142100): delivery and the views as closed machines with Hegel.</li>
+<li><em>“you inject stukff not pkul out engines”</em>, <em>“we ony use uuidv7”</em>, <em>“i dont allow wall clock time ever in tests”</em> (Requirements lines 174–176).</li>
+<li>Follow Better Auth's grain; no plugin patches or custom codecs.</li>
+<li>Agent session tokens are minted by Central (your 15 Nov decision, Lead A's deliverable 5); not B2X.</li>
+</ul>
+</ex-document>
+</body>
+</html>

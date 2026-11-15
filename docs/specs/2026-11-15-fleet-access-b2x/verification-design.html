@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B2X · Person tokens and revocation · Verification Design</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
+<a href="../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
+<a href="audit.html">B2X · 1 Audit</a>
+<a href="requirements.html">B2X · 2 Requirements</a>
+<a href="specification.html">B2X · 3 Specification</a>
+<a href="program-design.html">B2X · 4 Program Design</a>
+<a href="verification-design.html">B2X · 5 Verification Design</a>
+<a href="plan.html">B2X · 6 Plan</a>
+<a href="decisions.html">B2X · 7 Decisions</a>
+</nav></ex-nav>
+<ex-document id="doc">
+<h1>B2X · Person tokens and revocation: Verification Design</h1>
+<p>How each rule is shown to hold, on both sign-in hosts paired with the real current Central. Nothing has run.</p>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What to check" tone="note" icon="shield-check">
+<p>V2 signs in with <code>--device</code>, then deletes the device session and requires Central to refuse the token. V4 removes a member, holds Central's ACK, and requires “waiting”, then “reached” only after the ACK lands. The <a href="#r3">r3 table</a> gives every counterexample an owner.</p>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p>V2 follows your device choice.</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>Each row traces to <a href="specification.html">Specification</a>. A recording Central peer never stands in for real Central here.</p>
+</ex-callout>
+
+<h2 id="where">Where it runs</h2>
+<p>The joint fixture (<code>sign-in-test-support/src/test-fixtures/b2e/</code>) pairs local workerd + D1 sign-in with Central's Worker, and Node + better-sqlite3 sign-in with native Tokio Central, using <code>B2E_CENTRAL_*</code> inputs; pins move to Central's final artifacts. Faults: the link fault proxy (hold, drop a reply). Controlled clocks; barrier waits. Heavy runs on Sunclaw.</p>
+
+<h2 id="V1">V1 · Tokens and refresh (S1, S2)</h2>
+<p>Kept and run against real Central: <code>person-fleet-token.host.e2e.test.ts:198–344</code>, <code>fleet-cli.host.e2e.test.ts:173–243</code>. Added: session expiry ten seconds away with native expiry five minutes away → Central refuses at the session deadline, equality included; snapshot paused past S+L with session and native expiry still future → refused. <strong>Wrong builds:</strong> admit until native expiry only; redate the snapshot.</p>
+
+<h2 id="V2">V2 · Device login (S3, S4), option B</h2>
+<ol>
+<li>Run the real CLI with <code>--device</code> and controlled waits; a test browser session approves the printed code on the approval page. The CLI ends signed in; the stored token's claims name a real session ID; a Fleet command succeeds against Central.</li>
+<li>Redeem the same device code again: refused. Deny a second code: CLI ends failed. Expire a third on Better Auth's clock: failed.</li>
+<li>Two memberships: the CLI asks; the token names the chosen organization.</li>
+<li>A protected command gets <code>secondFactorRequired</code>; entering a code in the CLI confirms the device session; the approving browser's confirmation is unchanged.</li>
+<li>Delete the device session: revisions bump; after Central's ACK the old token gets RefreshRequired; refresh fails; custody is cleared.</li>
+<li>Containment: a page fetch in the browser after any sign-in sees no <code>set-auth-token</code> header; a bearer session on a non-allowlisted path gets 401.</li>
+</ol>
+<p><strong>Wrong builds:</strong> use the OAuth device grant (token without a session, step 1 fails); leave <code>set-auth-token</code> in replies (step 6); copy the browser's confirmation (step 4).</p>
+
+<h2 id="V3">V3 · Revocation and delivery (S5, S7)</h2>
+<ul>
+<li>Kept: <code>authorization-fence.host.e2e.test.ts</code> (add, change, remove, rejoin, session fan-out), <code>authorization-revision-drain.host.e2e.test.ts</code>, now against real Central.</li>
+<li>Drop an ACK: the row stays pending; the next Fleet call pushes it before its own work, and Central saw the push first.</li>
+<li>Advance the source during an ACK: the newer revision stays pending and is pushed next.</li>
+<li>No timer exists: with the clock advanced and no Fleet call, nothing is pushed.</li>
+</ul>
+<p><strong>Wrong builds:</strong> record an ACK above the source revision; lower a revision on discrepancy.</p>
+
+<h2 id="V4">V4 · The owner's sync view (S6)</h2>
+<ol>
+<li>Owner removes a member through the real people flow; hold Central's ACK at the fault proxy.</li>
+<li>Admin page and lookup page show “waiting for Central”.</li>
+<li>Release the ACK; refresh: “all access changes have reached Central”.</li>
+<li>Fail the store read: unavailable. A member calling the endpoint: 403. The read issues no push (proxy counter unchanged).</li>
+</ol>
+<p><strong>Wrong builds:</strong> show synced from the source commit alone; trigger delivery from the read.</p>
+
+<h2 id="V5">V5 · Machines, removal, gates (S9, S10)</h2>
+<p>Hegel families in <code>packages/sign-in-test-support/src/core-tests/</code> with <code>{ testCases: 1000, derandomize: true, database: hegel.Database.disabled }</code>:</p>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Family</th><th>Invariants</th><th>Wrong builds</th></tr></thead>
+<tbody>
+<tr><td><code>person-fleet-issuance.hegel.unit.test.ts</code></td><td>No token when any refusal condition holds; bounds are the minimum; snapshot never redated</td><td>Skip policy-mismatch; use native expiry only</td></tr>
+<tr><td><code>revision-delivery-transitions.hegel.unit.test.ts</code> (M1)</td><td>Acknowledged only from an ACK equal to the pushed revision; person rows never acknowledged before their fence row; discrepancy never lowers</td><td>Accept a higher ACK as acknowledged; push person before fence</td></tr>
+<tr><td><code>access-sync-view.hegel.unit.test.ts</code> (M2)</td><td>Only the current generation settles</td><td>No generation check</td></tr>
+<tr><td><code>device-login-transitions.hegel.unit.test.ts</code> (M3)</td><td>Signed in only after exchange; failure always clears custody; slow-down lengthens the wait</td><td>Store custody before exchange; poll without waiting</td></tr>
+</tbody></table></div>
+<p>Exhaustiveness: one added literal per union fails <code>pnpm typecheck</code> at its <code>satisfies never</code>. Runner: a lost conditional write executes no push. Diff read: the “not available” exit removed under B; stale comment fixed. Gates on <a href="plan.html#gates">Plan</a>.</p>
+
+<h2 id="r3">The r3 §9 counterexamples, each with an owner</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Counterexample (r3 §9)</th><th>Builds it</th><th>Observation</th></tr></thead>
+<tbody>
+<tr><td>Role change for A in X leaves B/X and A/Y valid</td><td>Sign-in (exists)</td><td>V3 fence cases plus Central admission of the untouched tokens</td></tr>
+<tr><td>Remove and rejoin keeps the subject, higher revision</td><td>Sign-in (exists)</td><td>V3; old token refused</td></tr>
+<tr><td>Session ends after switching organizations: every retained row bumps</td><td>Sign-in (exists)</td><td>V3 fan-out</td></tr>
+<tr><td>Concurrent first membership or issuance and session deletion</td><td>Sign-in</td><td>Real race on D1 and better-sqlite3 with barriers</td></tr>
+<tr><td>Session deadline before native expiry</td><td>Sign-in + Central</td><td>V1</td></tr>
+<tr><td>Contributor tries to override native expiry</td><td>Sign-in (exists)</td><td>Unit and V1</td></tr>
+<tr><td>Snapshot paused past S+L</td><td>Sign-in + Central</td><td>V1</td></tr>
+<tr><td>Old process after a policy change</td><td>Sign-in (exists)</td><td>Issuance refuses <code>policy-mismatch</code> (B2 V8 covers the rollout)</td></tr>
+<tr><td>Policy stop and resume reordered; deletion never resumes</td><td>Central (Lead A)</td><td>Joint delivery cases</td></tr>
+<tr><td>After-hook crash after the native write</td><td>Sign-in (exists)</td><td>Fence committed; drain recovers</td></tr>
+<tr><td>Zero-row delete or failed batch</td><td>Sign-in (exists)</td><td>No revoke claimed; no half state</td></tr>
+<tr><td>Lost push or ACK; revision moves during ACK</td><td>Sign-in</td><td>V3</td></tr>
+<tr><td>Misrouted push; same revision different state</td><td>Central (Lead A)</td><td>Refused; never acknowledged</td></tr>
+<tr><td>Token issued while Central lacks the floor</td><td>Central (Lead A)</td><td>AuthorizationSyncRequired</td></tr>
+<tr><td>Central offline after a revoke</td><td>Sign-in</td><td>V4 pending view</td></tr>
+<tr><td>Request copied concurrently or edited</td><td>Central (Lead A)</td><td>One admission; edited intent refused</td></tr>
+<tr><td>Reply lost after the effect</td><td>Central (Lead A)</td><td>Same operation, existing decision</td></tr>
+<tr><td>Marker purged, clock rolled back</td><td>Central (Lead A)</td><td>Watermark refuses</td></tr>
+<tr><td>Central restored from an older backup</td><td>Central (Lead A)</td><td>Closed until floors and replay history are recovered</td></tr>
+<tr><td>Native AS replay marker cleanup</td><td>—</td><td>Superseded by your accepted limitation t15c (approved additions); not part of this gate</td></tr>
+<tr><td>One-year statement crosses 120/60</td><td>B2</td><td>B2 V6</td></tr>
+</tbody></table></div>
+<p>Rows owned by Lead A are built in Lead A's deliverables and observed here on the joint pairings; if one isn't delivered, B2X acceptance names it as outstanding rather than passing it.</p>
+</ex-document>
+</body>
+</html>

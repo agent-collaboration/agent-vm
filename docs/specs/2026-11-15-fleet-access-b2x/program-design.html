@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B2X · Person tokens and revocation · Program Design</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
+<a href="../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
+<a href="audit.html">B2X · 1 Audit</a>
+<a href="requirements.html">B2X · 2 Requirements</a>
+<a href="specification.html">B2X · 3 Specification</a>
+<a href="program-design.html">B2X · 4 Program Design</a>
+<a href="verification-design.html">B2X · 5 Verification Design</a>
+<a href="plan.html">B2X · 6 Plan</a>
+<a href="decisions.html">B2X · 7 Decisions</a>
+</nav></ex-nav>
+<ex-document id="doc">
+<h1>B2X · Person tokens and revocation: Program Design</h1>
+<p>How it's built. Sign-in core paths are under <code>packages/sign-in-core/src/</code>; CLI paths under <code>packages/sign-in-owner-cli/src/</code>. The detail follows the recommended device option B.</p>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What to check" tone="note" icon="shield-check">
+<p><a href="#device">Device login</a> uses only Better Auth's own parts; the session token never reaches a page script because the release layer strips the bearer plugin's header and only terminal paths accept a bearer session. <a href="#sync">The sync view</a> is a read with no side effects.</p>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p><a href="#branches">Branch notes</a> give A and C.</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>Built on <a href="specification.html">S1–S10</a>; Better Auth and its OAuth provider at 1.7.11 as installed.</p>
+</ex-callout>
+
+<h2 id="parts">Parts</h2>
+<ex-mermaid id="parts-picture" label="B2X parts" data-width="canvas"><script type="text/plain">
+flowchart TB
+  cli["CLI --device: M3"] --> dev["Better Auth deviceAuthorization: code, approve, redeem"]
+  dev --> sess["New native session"]
+  cli --> auth["OAuth authorize with bearer session, PKCE"]
+  auth --> exch["Existing token exchange: token carries session ID"]
+  release["Release layer: strip set-auth-token, bearer sessions only on terminal paths"] --> auth
+  owner["Owner page"] --> sync["access-sync read: M2"]
+  sync --> store["readSynchronization"]
+  guard["Fleet-call guard"] --> m1["Delivery M1 + runner"]
+  m1 --> central["Central"]
+  class cli,owner slot1
+  class auth,exch,release,sync,m1 slot2
+  class dev,sess,store,guard slot3
+  class central slot4
+</script></ex-mermaid>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>File</th><th>New / changed</th><th>Job</th></tr></thead>
+<tbody>
+<tr><td><code>better-auth/provider-configuration.ts</code></td><td>Changed</td><td>Adds <code>deviceAuthorization({ validateClient })</code> for the Fleet CLI client only, and <code>bearer()</code>.</td></tr>
+<tr><td><code>response-release/sign-in-request-handler.ts</code>, <code>response-release/sign-in-response-release.ts</code></td><td>Changed</td><td>Bearer-session path allowlist before dispatch; strip <code>set-auth-token</code> and its expose header from every reply.</td></tr>
+<tr><td><code>pages/device-approval-page.tsx</code> and island</td><td>New</td><td>The browser page where the signed-in person enters or confirms the code, then approves or denies.</td></tr>
+<tr><td><code>fleet/device-login.ts</code>, <code>fleet/device-login-transitions.ts</code> (CLI)</td><td>New</td><td>M3 and its runner.</td></tr>
+<tr><td><code>fleet/proof-key-store.ts</code> (CLI)</td><td>Changed</td><td>Also stores the device session secret, Keychain or memory.</td></tr>
+<tr><td><code>owner-cli.ts</code>, <code>fleet/fleet-cli-commands.ts</code> (CLI)</td><td>Changed</td><td>Removes the “not available” exit; wires <code>--device</code>.</td></tr>
+<tr><td><code>better-auth/access-sync.ts</code>; island on the admin and lookup pages</td><td>New</td><td><code>GET /api/auth/organization/access-sync</code> and M2.</td></tr>
+<tr><td><code>organizations/revision-delivery-transitions.ts</code>; <code>organizations/authorization-revision-drainer.ts</code></td><td>New / changed</td><td>M1; the drainer becomes its runner.</td></tr>
+</tbody></table></div>
+
+<h2 id="device">Device login, option B</h2>
+<ex-mermaid id="device-sequence" label="Device login keeps a real session" data-width="canvas"><script type="text/plain">
+sequenceDiagram
+  participant C as CLI
+  participant SI as Sign-in
+  participant B as Person's browser
+  C->>SI: POST /device/code (Fleet CLI client)
+  SI-->>C: user code, URL, device code, interval
+  C->>C: print code and URL
+  B->>SI: signed in, opens URL, approves
+  C->>SI: POST /device/token (poll)
+  SI-->>C: native session token
+  C->>SI: GET /oauth2/authorize, Bearer session, PKCE
+  SI-->>C: code tied to that session
+  C->>SI: token exchange with DPoP, as today
+  SI-->>C: person token carrying session ID, refresh credential
+</script></ex-mermaid>
+<ul>
+<li><strong>Configuration.</strong> <code>deviceAuthorization()</code> from Better Auth 1.7.11 with <code>validateClient</code> admitting only the Fleet CLI client ID; its own expiry and polling interval. Approval is Better Auth's endpoint, reached from our approval page; the approving browser must be signed in. Better Auth stores and expires the code; redeeming creates the session (<code>routes.mjs:433–475</code>).</li>
+<li><strong>Bearer sessions, contained.</strong> <code>bearer()</code> is added so the CLI can use that session. Its after-hook would put the session token in a <code>set-auth-token</code> header on any reply carrying a session cookie (<code>bearer/index.mjs:54–66</code>); the release layer deletes that header and removes it from <code>access-control-expose-headers</code> on every reply, so no page script ever sees it. Before dispatch, an <code>Authorization: Bearer</code> value without dots (a session token, not a JWT) is accepted only on: <code>GET /api/auth/oauth2/authorize</code>, <code>POST /api/auth/organization/set-active</code>, <code>POST /api/auth/two-factor/verify-totp</code>, <code>POST /api/auth/two-factor/verify-backup-code</code>, <code>POST /api/auth/sign-out</code>; elsewhere it gets 401.</li>
+<li><strong>Hook order.</strong> Better Auth runs the user before-hook before plugin before-hooks. The organization actor capture in <code>provider-configuration.ts:230–238</code> runs before bearer converts the header, so for a bearer request to set-active it would see no session. The capture moves into a small plugin registered after <code>bearer()</code>, keeping the same behaviour for cookie requests.</li>
+<li><strong>Authorize and exchange.</strong> The CLI calls authorize with the bearer session, S256 PKCE and <code>redirect: 'manual'</code>, reads the code from the <code>Location</code> header of the registered loopback redirect without listening on it, and exchanges as today. Authorize reads the session through <code>getSessionFromCtx</code> and the Fleet CLI client skips consent (<code>owner-client-bootstrap.ts</code>), so the code carries the session; the existing contributor and Central accept the token unchanged.</li>
+<li><strong>Organization.</strong> A fresh session with one membership selects it; with several, the CLI lists them and calls set-active with the bearer session before authorizing.</li>
+<li><strong>Second factor.</strong> The new session has no confirmation. When Central answers <code>secondFactorRequired</code>, the CLI prompts for an app or recovery code and posts it with the bearer session, which confirms that session. The approving browser's confirmation is never copied.</li>
+<li><strong>Custody.</strong> <code>ProofKeyStore</code> (<code>fleet/proof-key-store.ts:11–27</code>) gains the session secret beside the key and refresh credential: macOS Keychain through the injected runner, otherwise memory for that command only, never a file. Losing any of the three clears all three.</li>
+</ul>
+
+<h3 id="m3">M3 · The CLI's device login</h3>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>From</th><th>Event</th><th>Next and effects</th></tr></thead>
+<tbody>
+<tr><td>start</td><td><code>begin</code></td><td>requesting; [request-code]</td></tr>
+<tr><td>requesting</td><td><code>code(userCode, uri, deviceCode, interval, expiresAt)</code></td><td>waiting; [print-code, wait(interval)]</td></tr>
+<tr><td>waiting</td><td><code>waited</code></td><td>polling; [poll(deviceCode)]</td></tr>
+<tr><td>polling</td><td><code>pending</code> / <code>slow-down</code></td><td>waiting; [wait(interval)] / [wait(interval + 5 s)]</td></tr>
+<tr><td>polling</td><td><code>session(token)</code></td><td>choosing-organization; [list-memberships]</td></tr>
+<tr><td>polling</td><td><code>denied</code> / <code>expired</code></td><td>failed(reason); none</td></tr>
+<tr><td>choosing-organization</td><td><code>one</code> / <code>chose(id)</code></td><td>authorizing; [authorize-pkce] / [set-active(id), authorize-pkce]</td></tr>
+<tr><td>authorizing</td><td><code>auth-code(code)</code></td><td>exchanging; [exchange(code)]</td></tr>
+<tr><td>exchanging</td><td><code>tokens</code></td><td>signed-in; [store-custody]</td></tr>
+<tr><td>any live</td><td><code>failed(reason)</code></td><td>failed; [clear-custody]</td></tr>
+</tbody></table></div>
+<p>The runner's <code>wait</code> is an injected capability: real time in the CLI, controlled in tests. Better Auth owns the code's own states and single use.</p>
+
+<h2 id="sync">The owner's sync view</h2>
+<p><code>better-auth/access-sync.ts</code>: <code>GET /api/auth/organization/access-sync?organizationId=…[&amp;personId=…]</code>. Checks the person's current organization and <code>organization:view</code>. Calls <code>readSynchronization({ kind: 'organization', organizationId })</code> and, when <code>personId</code> is given and is a member, <code>{ kind: 'personInOrganization', … }</code>. Reply: <code>{ organization: 'synced' | 'pending', person?: 'synced' | 'pending' }</code>, or 503 unavailable; no-store. Shown on B2's admin page status card (“All access changes have reached Central” / “Waiting for Central”) and beside a member answer on B1-C's lookup page.</p>
+<h3 id="m2">M2 · The view in the browser</h3>
+<p>States <code>loading | synced | pending | unavailable</code>, each with a request generation; events <code>refresh</code>, <code>reply(generation, value)</code>, <code>failed(generation)</code>. Only the current generation settles; refresh is manual or on page entry, no polling.</p>
+
+<h2 id="delivery">Delivery, as a machine</h2>
+<h3 id="m1">M1 · One revision row</h3>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>From</th><th>Event</th><th>Next and effects</th></tr></thead>
+<tbody>
+<tr><td>pending(rev)</td><td><code>deliver</code> (guard run or hint)</td><td>pushing(rev); [push(row at rev)]</td></tr>
+<tr><td>pushing(rev)</td><td><code>ack(r)</code>, r = rev</td><td>acknowledged; [record-ack(rev)] conditional on rev still current</td></tr>
+<tr><td>pushing(rev)</td><td><code>ack(r)</code>, r &gt; source revision</td><td>discrepancy; [report]</td></tr>
+<tr><td>pushing(rev)</td><td><code>refused(reason)</code> / <code>unknown</code> / <code>central-unavailable</code></td><td>deferred(reason); [record-defer(rev, due)]</td></tr>
+<tr><td>acknowledged</td><td><code>source-advanced(rev')</code></td><td>pending(rev')</td></tr>
+<tr><td>deferred</td><td><code>deliver</code></td><td>pushing; [push]</td></tr>
+</tbody></table></div>
+<p>An organization's person rows are only pushed after its fence row is acknowledged (<code>organization-not-delivered</code> defers them). The runner is today's drainer, keeping its batch loop, deadline and conditional ACK and defer writes (<code>authorization-revision-delivery-store.ts:229–291</code>). The retry time stays 60,000 ms as a due time, not a timer.</p>
+
+<h2 id="branches">Other device options</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>If you choose</th><th>Change</th></tr></thead>
+<tbody>
+<tr><td>A · Sessionless</td><td>Use <code>oauthDeviceAuthorization</code>; no <code>bearer()</code>; the contributor accepts a token without a session under a new profile, and Central's admission and r3 §4 bounds change to match (Lead A). Designed and reviewed before build.</td></tr>
+<tr><td>C · Browser only</td><td>No device parts; the “not available” exit stays and is documented.</td></tr>
+</tbody></table></div>
+
+<h2 id="trace">Rule homes</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Rule</th><th>Home</th><th>Proof seam</th></tr></thead>
+<tbody>
+<tr><td>S1, S2</td><td>Issuance, release, refresh (existing)</td><td>Real token against Central</td></tr>
+<tr><td>S3, S4</td><td>Device configuration, release containment, M3</td><td>CLI run with a test browser approval; session deletion</td></tr>
+<tr><td>S5, S7</td><td>Fence, M1 runner</td><td>Lost ACKs; advancing revisions</td></tr>
+<tr><td>S6</td><td>access-sync, M2</td><td>Pending then synced after ACK</td></tr>
+<tr><td>S8</td><td>Central (Lead A) and sign-in</td><td>Joint pairings</td></tr>
+<tr><td>S10</td><td>M1, M2, M3, issuance</td><td>Hegel</td></tr>
+</tbody></table></div>
+</ex-document>
+</body>
+</html>
