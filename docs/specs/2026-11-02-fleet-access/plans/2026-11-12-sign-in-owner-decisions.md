@@ -1291,3 +1291,19 @@ The workspace id equals the operation id.
     1. the timestamp predicate must not throw `RangeError` on regex-valid but impossible dates;
     2. M2 needs the immediate no-effect baseline (machine, approval, records) and the control machine kept;
     3. M1 asserts the `machineId` association.
+
+### WS15 final pin: central #288 merged (Lead, 2026-11-15T13:12Z; Lead A push 01a1df55)
+#288 (machine and approval rows in launcher `observe`) is merged to codex-router `main` as **`e7b709f6aea27f9be267051674de335b4651372a`**. It's test support only. Lead A logged three test-strength nits from the review; none blocks us.
+- **Diff from the interim `32a84cd1f`:** 5 files, all in `crates/collaboration-client/**` (#287's provider-wait test). No central crate, launcher, bridge, contract or lock input changed.
+- **Ruling: a fresh final build anyway,** to close the interim procedural gap.
+  1. The Operator fetches the exact `e7b709f6` and runs the **tree gate before checkout, with its own receipt**.
+  2. Build and sign the launcher copy with the repository runner; re-hash the four bundles.
+- **Implementer, on #11 then #14:**
+  1. Re-pin B2e and the machine journey to `e7b709f6`.
+  2. Gates: check, unit, B2e on both pairings with the central-row assertions, and the full host lane on Sunclaw.
+  3. Freeze.
+- **Verifier:**
+  1. Audit the build, including the pre-checkout gate receipt.
+  2. Run the independent observation at the frozen heads: the B2e machine journey with central rows on both pairings.
+  3. Drive the published #14 `verify-auth` machine recipe end to end (ruling 4).
+- **Then:** Lead acceptance → R-code (#11 and #14) → CI → merge #11 → #14.
