@@ -1,253 +1,192 @@
 <!doctype html>
-<html lang="en"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>B1-C · Organizations finished · Decisions</title>
-<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css"><script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
-</head><body>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
 <ex-nav for="doc"><nav slot="pages" aria-label="Pages">
-<a href="../../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a><a href="audit.html">B1-C · 1 Audit</a><a href="requirements.html">B1-C · 2 Requirements</a><a href="specification.html">B1-C · 3 Specification</a><a href="program-design.html">B1-C · 4 Program Design</a><a href="verification-design.html">B1-C · 5 Verification Design</a><a href="plan.html">B1-C · 6 Plan</a><a href="decisions.html">B1-C · 7 Decisions</a>
+<a href="../../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
+<a href="audit.html">B1-C · 1 Audit</a>
+<a href="requirements.html">B1-C · 2 Requirements</a>
+<a href="specification.html">B1-C · 3 Specification</a>
+<a href="program-design.html">B1-C · 4 Program Design</a>
+<a href="verification-design.html">B1-C · 5 Verification Design</a>
+<a href="plan.html">B1-C · 6 Plan</a>
+<a href="decisions.html">B1-C · 7 Decisions</a>
 </nav></ex-nav>
 <ex-document id="doc">
 <h1>B1-C · Organizations finished: Decisions</h1>
-<p>Three choices are open: where the owner opens person lookup, how they identify the person, and which organization chooser they use. The underlying rule is settled: read only your own memberships, or, as the permitted owner, one person's membership in your organization. Recommendations below are not answers.</p>
+<p>What you have already decided, the calls I made with whether they should have been yours, what was there before, and three choices that are yours to make.</p>
+
 <h2 id="three">The three things for you</h2>
-<ex-callout title="1 · What you should check" tone="note" icon="shield-check"><p>Each choice has the current picture, corresponding gains/costs, a picture of each option and what waits. The source checks behind the shipped switcher are explicit; the assumption table names what source compatibility has not proven.</p></ex-callout>
-<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users"><p>Open: <a href="#open">lookup page</a>, <a href="#lookup-input">lookup input</a>, <a href="#choice-component">organization component</a>. I recommend a separate page, exact email and the shipped component with narrowed server replies. Neither the owner nor the Lead has picked those options.</p></ex-callout>
-<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open"><p>The owner selected “Your account page: your second factors, your organizations (choose one), and a clear ‘done’” on 6 November (<a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl">Fleet transcript:86867</a>). U9/R14 require the person lookup; R62 prohibits admin actions on that account page. The new pages and recommendations have not been implemented or independently accepted.</p></ex-callout>
+<ex-callout title="1 · What to check" tone="note" icon="shield-check">
+<p>The <a href="#calls">calls table</a>: disagree with any row and I change it. Two calls deserve a look: dropping a state machine for the session's current organization, and dropping tests of Better Auth's own concurrent writes.</p>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p>Three open: <a href="#placement">where the lookup lives</a>, <a href="#input">how the owner names a person</a>, <a href="#component">which chooser component</a>. Each shows what you'd see, what it costs, a picture, and my recommendation.</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>Every decided card quotes you and links the transcript line. Nothing on this page has been built.</p>
+</ex-callout>
 
-<h2 id="owner">What the owner already decided</h2>
-<ex-card title="Your organizations, with one to choose" tone="done" icon="users" tag="6 November · review 58647d30" pick>
-<p>Owner selected the wording: “Your account page: your second factors, your organizations (choose one), and a clear ‘done’” (<a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl">Fleet transcript:86867</a>).</p><p>This fixes the ongoing choice outcome and BG's account destination. It does not choose the component or locate administration there.</p>
+<h2 id="decided">Already decided by you</h2>
+<ex-card title="Your organizations, with one to choose, on your account page" tone="done" icon="users" tag="6 Nov · review 58647d30" pick>
+<p><em>“Your account page: your second factors, your organizations (choose one), and a clear ‘done’”</em> (<a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl">Fleet transcript 86867</a>). B1-C builds the choice; BG builds the account page around it.</p>
 </ex-card>
-<ex-card title="Returning sign-in asks for a second factor only on a change" tone="done" icon="shield-check" tag="Same owner answer" pick>
-<p>Owner selected the build order containing “returning sign-in (step-up only for changes)” (Fleet transcript:86867). R53 separately states that reading lookups needs no second factor.</p><p>Initial factor setup and existing protected changes remain required. Choosing a membership does not confirm a factor.</p>
+<ex-card title="A second factor only for changes" tone="done" icon="shield-check" tag="6 Nov · same review" pick>
+<p><em>“returning sign-in (step-up only for changes)”</em> (Fleet transcript 86867). Reading, switching and looking up need no fresh factor.</p>
 </ex-card>
-<ex-card title="Organizations stay apart; only owners administer" tone="done" icon="shield-check" tag="Approved Requirements U21/U27/U46" pick>
-<p>The approved Requirements quote the owner's words: “i dont want cross organization any sharing stuff or comm” and “yes lets keep it all owner only” (<a href="../../2026-11-02-fleet-access/requirements.source.html#requirements--needs">lines 98–103</a>).</p><p>R13/R14 settle permission and scope. An owner of O2 learns nothing about O1 through this lookup; a member can read their own choices but not another person's memberships.</p>
+<ex-card title="Owner only; organizations kept apart" tone="done" icon="lock" tag="Approved Requirements" pick>
+<p><em>“yes lets keep it all owner only”</em>; <em>“i dont want cross organization any sharing stuff or comm”</em> (<a href="../../2026-11-02-fleet-access/requirements.source.html#requirements--needs">Requirements lines 98, 103</a>).</p>
 </ex-card>
-<ex-card title="Overall design and B1 are approved" tone="done" icon="book-open" tag="4 November" pick>
-<p>“yes you need anytnhign?” answered the explicit request to approve the overall design, B1 and B2 (<a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl">Fleet transcript:71226/71230</a>).</p><p>It makes those obligations the yardstick. It does not make every later implementation inference an owner decision.</p>
+<ex-card title="Pure transitions, exhaustive checks, Hegel" tone="done" icon="code" tag="15 Nov" pick>
+<p><em>“righ ok let smake srue we use hegel then an dpure transiton fucitons with exatsutiveness in enukms or helpers and make good plans on hegel then”</em> (Fleet transcript 142100), with no state-machine library.</p>
 </ex-card>
-<p>The governing writer brief also carries the owner's standing rules: injected runtime capabilities and Drizzle, UUIDv7, no wall-clock tests, Better Auth/UI as shipped with named divergences brought to the owner, heavy proof on Sunclaw and no new CI gates. They constrain this design; the Lead's relay is their authority here, not a newly invented first-hand quotation.</p>
+<ex-card title="Overall design and B1 approved" tone="done" icon="book-open" tag="4 Nov" pick>
+<p><em>“yes you need anytnhign?”</em>, answering the request to approve the overall design, B1 and B2 (Fleet transcript 71226, 71230).</p>
+</ex-card>
 
-<h2 id="open">Open 1 · Where do you open the person lookup?</h2>
-<p>The lookup is already required; its page is not fixed. R62 rules out putting administration on the account page. The current organization-admin page is a separate raw HTML page with workspace operations and records (<a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b74225359970b0580a290cd34fe1e557b/packages/sign-in-core/src/better-auth/organization-admin-page.ts#L39">source:39–80</a>); it does not use the shared sign-in page shell.</p>
-<ex-mermaid id="placement-now" label="Current page responsibilities and missing lookup" data-width="canvas"><script type="text/plain">
+<h2 id="calls">My calls, and should they have been yours?</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Call</th><th>Why</th><th>Should it have been yours?</th></tr></thead>
+<tbody>
+<tr><td>No state machine for the session's current organization; one pure function checks it against fresh memberships</td><td>Only Better Auth moves that value. A machine would model transitions we don't own. Your rule targets states our code moves; this design has three: M1, M2, M3.</td><td>Possibly. If you want every stored state modelled whoever writes it, say so and I add it.</td></tr>
+<tr><td>No tests of Better Auth's own races (two switches at once; accept against cancel)</td><td>Those test the library's writes, which we neither own nor wrap. We test our reads of their results.</td><td>Possibly, for the same reason.</td></tr>
+<tr><td>Keep Better Auth's behaviour where a foreign switch clears the current choice</td><td>Your rule is to follow Better Auth's grain. Memberships are unchanged; the page reads state back.</td><td>No, unless you want the earlier choice kept; that needs a wrapper you'd approve.</td></tr>
+<tr><td>Read the session through Better Auth's own <code>getSession</code> endpoint, not the helper that hides failures</td><td>The helper turns a database failure into “signed out” (<code>session.mjs:261</code>). The endpoint is Better Auth's own export.</td><td>No: a correctness fix inside the agreed scope.</td></tr>
+<tr><td>Lookup checks permission twice, before and after the read</td><td>A removal during the read can't leak an answer.</td><td>No: follows R13.</td></tr>
+<tr><td>The lookup says “invited” only when expiry is strictly after now; Better Auth's own accept refuses only when expiry is before now</td><td>The two disagree only at the exact millisecond. We don't change Better Auth.</td><td>No.</td></tr>
+<tr><td>Byte-identical answers for “elsewhere” and “nowhere”, but not equal timing</td><td>C4 asks for the same answer. Equal timing would need deliberate delays.</td><td>Possibly, if you want timing equality too.</td></tr>
+</tbody></table></div>
+
+<h2 id="before">What was there before</h2>
+<ul>
+<li>The chooser card appeared only while a choice was missing (<code>sign-in-http-handler.ts:239–248</code>); it is replaced by the always-available choice surface and the <code>selectionRequired</code> fact.</li>
+<li>Selection was posted by an inline script (<code>owner-page-script.ts:47–52</code>); it is replaced by the island.</li>
+<li>Native member listing stays closed, as before.</li>
+</ul>
+
+<h2 id="open">Open: your three choices</h2>
+<p>The current model these choices sit in:</p>
+<ex-mermaid id="current-model" label="Where the choices land" data-width="canvas"><script type="text/plain">
 flowchart TB
-  person["Signed-in person"] --> account["Account surface: own security and organizations"]
-  owner["Owner"] --> admin["Separate admin page: workspaces and records"]
-  admin --> missing["Person lookup absent"]
+  person["Person"] --> account["Account surface: own factors and organizations"]
+  account --> chooser["Chooser component: choice 3"]
+  owner["Owner"] --> admin["Organization admin page: workspaces and records"]
+  admin --> lookup["Person lookup: choice 1 places it, choice 2 shapes its input"]
   class person,owner slot1
   class account,admin slot3
-  class missing slot5
+  class chooser,lookup slot2
 </script></ex-mermaid>
-<p>Blue is the caller, teal the existing/approved responsibility, rose what is missing. Both options leave the account page free of administration.</p>
+
+<h3 id="placement">1 · Where does the owner's lookup live?</h3>
+<p>The admin page today is a separate raw HTML page with workspaces and records (<code>organization-admin-page.ts:39–80</code>) that doesn't use the shared page shell.</p>
 <ex-compare label="Lookup placement" data-width="canvas">
-<section id="place-admin" label="A · Embed in organization admin" icon="users">
-<section data-compare-row="sees"><p><strong>What you see</strong></p><p>A person-lookup section beside workspace administration and change records.</p></section>
-<section data-compare-row="gains"><p><strong>What you gain</strong></p><p>One admin page and no extra navigation step.</p></section>
-<section data-compare-row="costs"><p><strong>Cost and who pays</strong></p><p>The developer must adapt the raw admin page to the shared shell without losing B2 controls. The owner sees both people and workspace tasks. The lookup still must work while central is unavailable.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="place-admin-pic" label="Lookup embedded with existing administration"><script type="text/plain">
+<section id="place-separate" label="A · Its own page, linked from admin" icon="path">
+<section data-compare-row="sees"><p><strong>What you see</strong></p><p>A “Look up a person” link on the admin page, opening a small page with one field and a result.</p></section>
+<section data-compare-row="changes"><p><strong>What changes in code</strong></p><p>One new guarded page on the shared shell, one link added to the admin page.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>One extra click. Nothing in B2's page changes.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="place-separate-pic" label="Option A"><script type="text/plain">
 flowchart TB
-  owner["Owner"] --> page["Adapted shared admin page"]
-  page --> people["Sign-in: person lookup"]
-  page --> workspaces["Central: workspace tasks"]
-  class owner slot1
-  class page slot2
-  class people slot6
-  class workspaces slot3
+  admin["Admin page"] --> link["Link"]
+  link --> page["Lookup page"]
 </script></ex-mermaid></section>
 </section>
-<section id="place-separate" label="B · Separate owner lookup page" icon="book-open">
-<section data-compare-row="sees"><p><strong>What you see</strong></p><p>A “Look up a person” link in organization administration opens one guarded page for that task.</p></section>
-<section data-compare-row="gains"><p><strong>What you gain</strong></p><p>The new page uses the shared shell directly and depends only on sign-in membership. Existing workspace controls keep their current owning page.</p></section>
-<section data-compare-row="costs"><p><strong>Cost and who pays</strong></p><p>The developer maintains one new guarded page endpoint and link. The owner takes one more navigation step; the page must authorize independently of the link.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="place-separate-pic" label="Lookup on its own shared-shell page"><script type="text/plain">
+<section id="place-embedded" label="B · Inside the admin page" icon="users">
+<section data-compare-row="sees"><p><strong>What you see</strong></p><p>A lookup section beside workspaces and records.</p></section>
+<section data-compare-row="changes"><p><strong>What changes in code</strong></p><p>The admin page first moves onto the shared shell, keeping all B2 controls; then the lookup is added.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>A rework of B2's page that B2's own redesign also touches; must be designed with B2 before build.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="place-embedded-pic" label="Option B"><script type="text/plain">
 flowchart TB
-  owner["Owner"] --> admin["Existing organization admin"]
-  admin --> page["Shared-shell person lookup page"]
-  page --> people["Sign-in: person lookup"]
-  class owner slot1
-  class admin,page slot2
-  class people slot6
+  admin["Admin page on shared shell"] --> people["Lookup section"]
+  admin --> work["Workspaces and records"]
 </script></ex-mermaid></section>
 </section>
 </ex-compare>
-<ex-card title="A · Embed in organization admin" tone="planned" icon="users" tag="Not chosen"><p>One page, but a broader shared-shell adaptation that must preserve B2's workspace UI and proof.</p></ex-card>
-<ex-card title="B · Separate owner lookup page" tone="planned" icon="book-open" tag="Recommended, not chosen"><p>One new guarded page and link; membership lookup remains independent of central and the existing admin-page structure.</p></ex-card>
-<ex-callout title="Recommendation: B" tone="note" icon="book-open"><p>I recommend the separate page. My Stage 1 recommendation was A; tracing the existing raw page into the shared shell exposed a larger adaptation cost. That changes my recommendation, not an owner decision. The Lead has been told; no owner answer or Lead adoption is claimed.</p></ex-callout>
-<ex-callout title="If you defer" tone="note" icon="clock"><p>The lookup page binding and implementation packet wait. Core reads, authorization and organization-choice design can proceed. B1-C is not complete with the visible lookup entry point unresolved.</p></ex-callout>
-<ex-choice id="choose-lookup-place" title="Where should the owner open the person lookup?">
-<ex-option id="choose-place-separate" title="B · Separate owner lookup page (recommended)"><template slot="summary">Use the shared sign-in shell on a new guarded page, linked from organization administration.</template></ex-option>
-<ex-option id="choose-place-admin" title="A · Embed in organization administration"><template slot="summary">Keep one page, and include the existing page's shared-shell adaptation and B2 regression proof in the design before building.</template></ex-option>
+<ex-grid cols="2" data-width="canvas">
+<ex-card title="A · Its own page" tone="planned" icon="path" tag="Recommended"><p><strong>Cost:</strong> one extra click.</p></ex-card>
+<ex-card title="B · Inside admin" tone="planned" icon="users" tag="Larger"><p><strong>Cost:</strong> reworking B2's page.</p></ex-card>
+</ex-grid>
+<ex-callout title="Recommendation: A" tone="decision" icon="path"><p>Smallest change, and it doesn't collide with B2's redesign of the admin page.</p></ex-callout>
+<ex-callout title="If you defer" tone="risk" icon="clock"><p>The lookup page isn't built; everything else in B1-C can be built and proven.</p></ex-callout>
+<ex-choice id="choice-placement" title="Where should the lookup live?">
+<ex-option id="placement-separate" title="A · Its own page, linked from admin (recommended)"><template slot="summary">One small guarded page and one link.</template></ex-option>
+<ex-option id="placement-embedded" title="B · Inside the admin page"><template slot="summary">Admin page moves to the shared shell first.</template></ex-option>
 </ex-choice>
 
-<h2 id="lookup-input">Open 2 · How do you identify the person?</h2>
-<p>R14 fixes the answer—member with role, invited, or not a member—but names no input control. Invitations name an email before a user account exists. A list-only picker cannot ask about someone absent from both membership and invitation lists, so the credible list option retains an exact-email fallback.</p>
-<ex-mermaid id="input-now" label="Subject records exist before and after account creation" data-width="canvas"><script type="text/plain">
+<h3 id="input">2 · How does the owner name the person?</h3>
+<ex-compare label="Lookup input" data-width="canvas">
+<section id="input-email" label="A · Type an exact email" icon="envelope">
+<section data-compare-row="sees"><p><strong>What you see</strong></p><p>One email field. Answers: member and role, invited, or not a member.</p></section>
+<section data-compare-row="changes"><p><strong>What changes in code</strong></p><p>One POST endpoint and one scoped read. No list.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>You need to know the email. You can't browse.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="input-email-pic" label="Option A"><script type="text/plain">
 flowchart TB
-  email["Invited email, perhaps no person account"] --> invitation["Pending invitation in one organization"]
-  invitation --> acceptance["Native acceptance"]
-  acceptance --> membership["Person's membership and role"]
-  absent["Someone absent here"] --> negative["Must still be answerable as not-member"]
-  class email,absent slot1
-  class invitation,membership slot3
-  class acceptance slot2
-  class negative slot6
-</script></ex-mermaid>
-<p>Blue is the subject the owner asks about; teal the existing stored states; amber acceptance; green the required negative answer. An account ID alone cannot identify a not-yet-created invitee.</p>
-<ex-compare label="How to ask about one person" data-width="canvas">
-<section id="input-email" label="A · Exact email" icon="envelope">
-<section data-compare-row="sees"><p><strong>What you see</strong></p><p>One Email field and Look up. Type the whole email; receive its state in this organization.</p></section>
-<section data-compare-row="gains"><p><strong>What you gain</strong></p><p>The same input reaches a current member, an invited person without an account and someone absent here. No directory needs to be returned to the browser.</p></section>
-<section data-compare-row="costs"><p><strong>Cost and who pays</strong></p><p>The owner must know and type the exact address. The developer maintains normalization and invalid-input feedback. Typos can truthfully produce not-member; no fuzzy matching is promised.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="input-email-pic" label="Exact email becomes one scoped read"><script type="text/plain">
-flowchart TB
-  owner["Owner types exact email"] --> one["One owner-authorized scoped read"]
-  one --> answer["Member, invited or not-member"]
-  class owner slot1
-  class one slot3
-  class answer slot6
+  email["Email"] --> answer["One answer"]
 </script></ex-mermaid></section>
 </section>
-<section id="input-picker" label="B · Pick from people, with email fallback" icon="users">
-<section data-compare-row="sees"><p><strong>What you see</strong></p><p>An owner-only member/pending-invitation list to choose from, plus exact email for someone not listed.</p></section>
-<section data-compare-row="gains"><p><strong>What you gain</strong></p><p>Known people are discoverable without retyping an address; the fallback preserves the absent-person question.</p></section>
-<section data-compare-row="costs"><p><strong>Cost and who pays</strong></p><p>This exposes a roster of this organization to its owner and changes Stage 1's author-proposed “no roster” scope. The developer must design authorization, pagination, list privacy and stale-list proof; the owner scans a list and still needs exact email for absence. It must not simply open native list-members to every member.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="input-picker-pic" label="An owner-only roster and exact-email fallback"><script type="text/plain">
+<section id="input-list" label="B · Pick from this organization's list, email as fallback" icon="users">
+<section data-compare-row="sees"><p><strong>What you see</strong></p><p>Your organization's members and invitations to pick from, plus the email field for someone not listed.</p></section>
+<section data-compare-row="changes"><p><strong>What changes in code</strong></p><p>A new owner-only list read with paging and its own privacy rules and proof, plus everything in A.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>A roster read to design, review and prove before build.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="input-list-pic" label="Option B"><script type="text/plain">
 flowchart TB
-  owner["Owner"] --> roster["Guarded member and invitation list"]
-  roster --> pick["Choose a listed person"]
-  owner --> email["Exact email for someone unlisted"]
-  pick --> answer["Scoped membership answer"]
-  email --> answer
-  class owner slot1
-  class roster slot2
-  class pick,email slot3
-  class answer slot6
+  list["Member and invitation list"] --> pick["Pick one"]
+  email["Or email"] --> answer["One answer"]
+  pick --> answer
 </script></ex-mermaid></section>
 </section>
 </ex-compare>
-<ex-card title="A · Exact email" tone="planned" icon="envelope" tag="Recommended, not chosen"><p>One narrow lookup covers member, invitee and absence; no roster release. It requires knowing the address.</p></ex-card>
-<ex-card title="B · Pick from people, with email fallback" tone="planned" icon="users" tag="Not chosen"><p>Adds owner-visible discovery and a new list contract. Selecting B explicitly reopens the list scope and its design/proof before implementation.</p></ex-card>
-<ex-callout title="Recommendation: A" tone="note" icon="envelope"><p>I recommend exact email because it covers invitees before any person row exists and answers the complete R14 question without a directory. “No roster” was my proposed boundary, not a direct prohibition from the owner; B can be chosen, but its additional disclosure and contract must be designed openly. A list alone is not offered as a complete R14 solution.</p></ex-callout>
-<ex-callout title="If you defer" tone="note" icon="clock"><p>The request schema, input component and final implementation packet wait. The fixed permission and answer semantics remain designable. No agent assumes exact email merely because it is recommended.</p></ex-callout>
-<ex-choice id="choose-lookup-input" title="How should the owner identify the person?">
-<ex-option id="choose-input-email" title="A · Exact email (recommended)"><template slot="summary">One full email field covers members, pending invitees and someone absent from this organization.</template></ex-option>
-<ex-option id="choose-input-picker" title="B · Owner-only people picker, with email fallback"><template slot="summary">Add a member/invitation list, and retain exact email for absence. Reconcile the roster endpoint, pagination and proof before the implementation packet is issued.</template></ex-option>
+<ex-grid cols="2" data-width="canvas">
+<ex-card title="A · Exact email" tone="planned" icon="envelope" tag="Recommended"><p><strong>Cost:</strong> no browsing.</p></ex-card>
+<ex-card title="B · List with fallback" tone="planned" icon="users" tag="Larger"><p><strong>Cost:</strong> a roster read to design and prove.</p></ex-card>
+</ex-grid>
+<ex-callout title="Recommendation: A" tone="decision" icon="envelope"><p>It answers U9 as written (“a person's role in your organization”) and reaches invitations before an account exists. A list can come later.</p></ex-callout>
+<ex-callout title="If you defer" tone="risk" icon="clock"><p>The lookup isn't built until you answer.</p></ex-callout>
+<ex-choice id="choice-input" title="How should the owner name the person?">
+<ex-option id="input-exact-email" title="A · Exact email (recommended)"><template slot="summary">One field; no roster.</template></ex-option>
+<ex-option id="input-list-fallback" title="B · Pick from a list, email fallback"><template slot="summary">Adds an owner-only roster read.</template></ex-option>
 </ex-choice>
 
-<h2 id="choice-component">Open 3 · Which organization-choice component?</h2>
-<p>The standing rule is to use Better Auth UI as shipped, adjust our side, and bring a named divergence to the owner. Keeping Switchboard's existing chooser instead is therefore an explicit choice. The shipped component is feasible in source with narrow server replies; it is not yet runtime-proven.</p>
-<ex-mermaid id="component-now" label="The current chooser and closed native read routes" data-width="canvas"><script type="text/plain">
+<h3 id="component">3 · Which chooser component?</h3>
+<p>Your rule is to use Better Auth UI as shipped and bring any divergence to you. The shipped switcher needs two Better Auth reads opened, and those reads would return members and invitations unless cut down. Today's Switchboard card needs nothing opened.</p>
+<ex-compare label="Chooser component" data-width="canvas">
+<section id="comp-card" label="A · Today's Switchboard card, kept available" icon="code">
+<section data-compare-row="sees"><p><strong>What you see</strong></p><p>The existing list of your organizations with a choose button on each, now always available.</p></section>
+<section data-compare-row="changes"><p><strong>What changes in code</strong></p><p>Extract the existing card; it uses our self read and Better Auth's set-active. No native read opened.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Not Better Auth UI's component: a named divergence from your rule.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="comp-card-pic" label="Option A"><script type="text/plain">
 flowchart TB
-  ours["Existing Switchboard choice rows"] --> native["Native set-active"]
-  upstream["Shipped organization switcher"] --> full["Native full-organization read"]
-  full --> roster["Full response contains members and invitations"]
-  closed["Public route currently closed"] -.-> full
-  class ours,upstream slot1
-  class native slot3
-  class full,closed slot2
-  class roster slot5
-</script></ex-mermaid>
-<p>Blue identifies UI, teal the existing mutation, amber the read/route boundary and rose the data that must not reach ordinary members. Native membership is not owner permission.</p>
-<ex-compare label="Organization choice UI and its data boundary" data-width="canvas">
-<section id="component-existing" label="A · Keep the existing Switchboard chooser" icon="code">
-<section data-compare-row="sees"><p><strong>What a person sees</strong></p><p>The existing organization rows, now retained after selection, with own organization names and roles.</p></section>
-<section data-compare-row="gains"><p><strong>What it gains</strong></p><p>Reuses the existing narrow self-context/native mutation path. No native full-read exposure or new copied switcher dependency closure.</p></section>
-<section data-compare-row="costs"><p><strong>Cost and who pays</strong></p><p>This is a named exception to using the shipped component. Switchboard's developer owns the custom selector and request settlement; the owner sees that existing interaction instead of the upstream dropdown.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="component-existing-pic" label="Existing selector with narrow self-context"><script type="text/plain">
-flowchart TB
-  rows["Switchboard choice rows"] --> self["Own-context read"]
-  rows --> write["Native set-active and re-read"]
-  class rows slot1
-  class self,write slot3
+  card["Switchboard card"] --> self["Our self read"]
+  card --> set["Native set-active"]
 </script></ex-mermaid></section>
 </section>
-<section id="component-shipped" label="B · Shipped switcher; narrow our server replies" icon="package">
-<section data-compare-row="sees"><p><strong>What a person sees</strong></p><p>Better Auth UI's unchanged dropdown with creation, personal-account and settings entries hidden, plus a separate own-membership summary for role labels.</p></section>
-<section data-compare-row="gains"><p><strong>What it gains</strong></p><p>Follows the standing UI rule. The shipped cache handles selection and refetch, while the public server releases organization summaries only, not a directory.</p></section>
-<section data-compare-row="costs"><p><strong>Cost and who pays</strong></p><p>The developer adds current verified-session checks, mandatory native list/full response projection, eight copied auth components, avatar/dropdown primitives and a declared Pacer dependency. These public reads accept no explicit organization/slug query: the component uses only the stored session choice. The native full GET can clear a stale/foreign current selection before refusing. Selecting B would accept that disclosed native behaviour; proof covers body privacy, query refusal and cache settlement on both hosts.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="component-shipped-pic" label="The unchanged switcher behind a public projection"><script type="text/plain">
+<section id="comp-shipped" label="B · Better Auth UI's shipped switcher" icon="package">
+<section data-compare-row="sees"><p><strong>What you see</strong></p><p>Better Auth UI's dropdown switcher, with creation, personal account and settings hidden, plus a summary of your roles.</p></section>
+<section data-compare-row="changes"><p><strong>What changes in code</strong></p><p>Copy 10 upstream files unchanged and add one dependency (Pacer). Open Better Auth's organization list and full-organization reads, with a whitelist that cuts their replies to ID, name, slug, logo and created time, and reject any query parameter.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>The projection layer, its route-test changes and its proof (V5). If the projection were ever bypassed, members and invitations would reach the browser.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="comp-shipped-pic" label="Option B"><script type="text/plain">
 flowchart TB
-  shipped["Shipped switcher, management hidden"] --> native["Native list/full and set-active"]
-  native --> fence["Public HTTP projection, fail closed"]
-  fence --> summary["Organization summaries only"]
-  internal["Internal server API"] --> native
-  class shipped slot1
-  class native,internal slot3
-  class fence slot2
-  class summary slot6
+  sw["Shipped switcher"] --> lists["Native list and full reads"]
+  lists --> cut["Whitelist projection"]
+  sw --> set["Native set-active"]
 </script></ex-mermaid></section>
 </section>
 </ex-compare>
-<ex-card title="A · Keep Switchboard's existing chooser" tone="planned" icon="code" tag="Not chosen"><p>Named reason for divergence: avoid the shipped switcher's broad native read and own the existing narrow rows. Native selection itself is unchanged.</p></ex-card>
-<ex-card title="B · Shipped switcher; adjust our server" tone="planned" icon="package" tag="Recommended, not chosen"><p>Keep upstream UI unchanged and project public native reads. It costs copying/import mapping, dependency closure and explicit privacy/cache proof.</p></ex-card>
-<ex-callout title="Recommendation: B, supported by the inspected source" tone="note" icon="package">
-<p>The shipped <a href="https://github.com/better-auth-ui/better-auth-ui/blob/2b028ec5/examples/start-shadcn-baseui-example/src/components/auth/organization/organization-switcher.tsx#L33">switcher:33–44</a> provides the three hide settings. Its organization views pass <code>hideRole</code>, disabling member-list queries. <a href="https://github.com/better-auth-ui/better-auth-ui/blob/2b028ec5/packages/core/src/plugins/organization/active-organization-query.ts#L12">The active cache:12–21</a> intentionally uses the smaller list shape, so it need not cache a roster. <a href="https://github.com/better-auth-ui/better-auth-ui/blob/2b028ec5/packages/react/src/plugins/organization/hooks/mutations/use-set-active-organization.ts#L100">Its onSettled:100–105</a> always refetches after success or error. These are source facts, not a passing browser run.</p>
-<p>The Lead requested this “adjust our side” option and recommended preferring it if feasible. My check supports it. Neither of us can supply the owner's answer. Projection is applied to all public callers including owners; the internal native full API remains unchanged, and owner lookup remains a separate permission-guarded read.</p>
-</ex-callout>
-<ex-callout title="If you defer" tone="note" icon="clock"><p>The selector binding, selected native route openings and implementation packet wait. Contract, scoped lookup and proof design can continue. No component is forked and no native full route is opened merely to get a page working.</p></ex-callout>
-<ex-choice id="choose-organization-component" title="Which organization-choice component should B1-C use?">
-<ex-option id="choose-component-shipped" title="B · Shipped switcher, with narrowed server replies (recommended)"><template slot="summary">Keep upstream UI unchanged; open only its exact native reads behind mandatory summary projection, and retain native clearing/refetch behaviour.</template></ex-option>
-<ex-option id="choose-component-existing" title="A · Keep the existing Switchboard chooser"><template slot="summary">Approve the named shipped-UI exception; reuse the self-context/native selection path and keep native list/full public reads closed.</template></ex-option>
+<ex-grid cols="2" data-width="canvas">
+<ex-card title="A · Today's card" tone="planned" icon="code" tag="Least machinery"><p><strong>Cost:</strong> a divergence from “as shipped”.</p></ex-card>
+<ex-card title="B · Shipped switcher" tone="planned" icon="package" tag="Recommended, per your rule"><p><strong>Cost:</strong> the projection layer and its proof.</p></ex-card>
+</ex-grid>
+<ex-callout title="Recommendation: B" tone="decision" icon="package"><p>Your standing rule is Better Auth UI as shipped. The extra machinery is bounded and proven by V5. Choose A if you'd rather avoid opening native reads.</p></ex-callout>
+<ex-callout title="If you defer" tone="risk" icon="clock"><p>The choice surface isn't built; the self read, lookup and page split can still be built.</p></ex-callout>
+<ex-choice id="choice-component" title="Which chooser component?">
+<ex-option id="component-card" title="A · Today's Switchboard card"><template slot="summary">No native read opened; divergence from as-shipped.</template></ex-option>
+<ex-option id="component-shipped" title="B · Better Auth UI's shipped switcher (recommended)"><template slot="summary">Two native reads opened behind a whitelist.</template></ex-option>
 </ex-choice>
-<p>Each picker is a separate answer. Selecting locally does not notify an agent or authorize implementation; use the existing Comments handoff to return the answers. No open option has <code>pick</code>.</p>
-
-<h2 id="pure-transitions">Settled: pure exhaustive transitions and Hegel</h2>
-<ex-card title="Use Hegel and pure transition functions with exhaustive unions/helpers" tone="done" icon="git-branch" tag="Owner decision · 15 November · relayed" pick>
-<p><em>“righ ok let smake srue we use hegel then an dpure transiton fucitons with exatsutiveness in enukms or helpers and make good plans on hegel then”</em> — owner words relayed by the Lead in <a href="../../../../tmp/2026-11-15-design-writers/brief-common.md">the common brief's State machines section</a>. <a href="router://0ff962c5-7fa3-4c18-a5ca-1bbe8db09e89/push/01a1e144-7888-7191-92fa-ed3945e84f2c">The B1-C correction commission</a> explicitly applies this to active organization, invitation observations and lookup answers. No first-hand transcript line is claimed for this relayed ruling.</p>
-<p>The owner chose this over XState or another state-machine library. <a href="program-design.html#machines">M1–M4</a> inventory states/events, source and storage homes, closed schema-derived unions, pure exhaustive transition tables and invariants. <a href="verification-design.html#V8">V8</a> specifies four full Hegel families, independent models, complete per-prefix equality/invariants, injected clock moves, retries and paired completions, deterministic settings with database disabled, mutants and expected minimized examples. Native races and strict decoders get real proof on both hosts.</p>
-<p>Better Auth keeps its native writes. Cleared is an explanation of a known refusal plus fresh null readback, not stored provenance; expiry is a derived pending-row view. Native accept's pending claim and conditional rollback remain; native selection/cancel do not gain a project CAS wrapper. Lookup answer and browser generation stay local. No effects runner is needed. This settled engineering constraint leaves the three presentation/input/component choices open.</p>
-</ex-card>
-
-<h2 id="mine">My calls, with whether they should have been the owner's</h2>
-<div class="ex-table-scroll" data-width="canvas"><table>
-<thead><tr><th>Call</th><th>Authority, gain and cost</th><th>Should it have been yours?</th></tr></thead><tbody>
-<tr><td>Keep setup decision/invitation/Decline/deadline/account shell and six combined journeys with BG</td><td>Approved BG scope:83–89; Lead's Stage 1 confirmation. B1-C supplies reusable facts and choice, not another setup engine.</td><td>No new domain choice. This preserves the approved ownership split.</td></tr>
-<tr><td>Keep native foreign-choice clearing</td><td>Pinned native behaviour; Lead explicitly approved retaining it. Gain: no library divergence. Cost: the previous current choice can be cleared by a refused selection.</td><td>No new behaviour; disclosed and proven. Preserving selection would need a named owner-approved divergence.</td></tr>
-<tr><td>Project all successful public native list/full reads, owners included</td><td>Conditional on component B. Gain: one safe public shape and no role-dependent roster release. Cost: explicit transport projection plus tests. Internal native API is untouched.</td><td>Part of the component picker; no authority to open the routes before the answer.</td></tr>
-<tr><td>Use HTTP response projection rather than a global native after-hook</td><td>Our HTTP dispatch is already the public response fence. Gain: internal native callers keep their full shape. Cost: parse/re-encode successful bodies and preserve headers correctly.</td><td>No, once component B is approved. This is the smallest existing owning boundary for public-only release.</td></tr>
-<tr><td>Move membership schemas out of the store; derive all public types</td><td>Existing schema is unchanged. Gain: browser imports no Drizzle and no circular schema/store dependency. Cost: update two existing type imports and one schema import.</td><td>No. No stored meaning or API authority moves.</td></tr>
-<tr><td>Recheck actor permission after the subject read</td><td>R13's live current-session/permission requirement. Gain: forced in-flight session/role loss is refused. Cost: a second fresh authorization read; no cross-read transaction promise.</td><td>No new product outcome. It realizes the current authorization obligation.</td></tr>
-<tr><td>Use POST JSON for exact-email read; no body/email telemetry</td><td>Conditional exact-email contract, R51 privacy. Gain: subject email is not in URLs. Cost: a read uses POST and needs strict body/status parsing.</td><td>A technical call within input A, not an input answer on the owner's behalf.</td></tr>
-<tr><td>Use a component-local integer to reject stale replies</td><td>S9's current-result behaviour. Gain: no old result overwrites a new input. Cost: one local lifecycle state, reset on unmount; it is not an ID or stored truth.</td><td>No. No new domain identity or persisted state.</td></tr>
-<tr><td>Model four local machines, keeping native transitions native</td><td>Settled pure/Hegel ruling. Gain: explicit state, guards, refusal and proof without library divergence. Cost: four small pure modules, closed schemas, a shared assertNever helper and four lasting generated families. No effects runner.</td><td>The method is the owner's choice above; the local decomposition is an author call within it.</td></tr>
-<tr><td>Read all invitation history for one organization/email after member absence</td><td>The prior pending-only design would hide unknown stored states. Gain: strict decoding and correct any-current-invitation answer despite older terminal rows. Cost: that email's whole invitation history per read, still no roster or new index.</td><td>No new visibility or storage authority. It realizes the owner's fail-loud state rule at the existing store boundary.</td></tr>
-<tr><td>Sort the own choices by organization ID</td><td>Author's reversible presentation call. Gain: deterministic response and stable tests. Cost: not alphabetical; tests compare the real membership set, not a required order.</td><td>No. The owner can correct this without changing authority or storage.</td></tr>
-<tr><td>Recommend a different placement after Stage 1</td><td>Read the raw existing admin page and the shared-shell requirement. Gain: avoid an unacknowledged page rewrite; cost: one extra navigation step.</td><td>Yes: placement is the first picker, not an implemented decision.</td></tr>
-</tbody></table></div>
-
-<h2 id="assumptions">Every load-bearing assumption and its closing check</h2>
-<div class="ex-table-scroll" data-width="canvas"><table>
-<thead><tr><th>Assumption or source limit</th><th>Basis</th><th>If false / closing proof</th></tr></thead><tbody>
-<tr><td>Native summary-shaped active data works with the shipped UI/cache</td><td>Exact upstream cache type, hidden-role consumers and mutation settlement source inspected.</td><td>V5/V6 real bodies and browser behaviour decide it. A runtime mismatch returns to the Lead; do not expose a roster or fork the component silently.</td></tr>
-<tr><td>All needed copied imports have an owned dependency</td><td>Exact switcher/view/dialog/user/primitive imports inspected; auth-ui already has the core/UI/form packages; Pacer 0.23.0 is a declared addition. Registry version was read, not installed here.</td><td>Frozen install/build/typecheck and auth-ui boundary checks. An import failure is a setup failure, not an intended feature red.</td></tr>
-<tr><td>Native user emails are stored lowercase</td><td>Installed Better Auth 1.7.11 <code>dist/db/internal-adapter.mjs:121–146, 616–635</code> lowercases create/update email; current invitation/sign-in matching already normalizes.</td><td>V3 exercises case/whitespace through native-created rows. Unexpected legacy mixed-case rows are a source/data finding, not authority for a silent migration or raw-SQL workaround.</td></tr>
-<tr><td>The current context can represent a stale selection as null without writing</td><td>Fresh membership read and stored session are already separate owners. No new current-selection cache is introduced.</td><td>V1 observes unchanged rows and normalized self-view. Native full/set-active reads may independently clear selection under component B; that effect remains distinct.</td></tr>
-<tr><td>Native invitation status changes are not uniformly conditional or terminal</td><td>Pinned <code>crud-invites.mjs:267–348,428–450</code>, <code>adapter.mjs:793–808</code>: accept claims pending, rollback conditions on accepted, cancel updates by ID. Cancel after acceptance can leave canceled plus a real member.</td><td>V8 forces both orders and rollback, preserves audit facts and member precedence. No pending-only cancel guarantee, new guarded Decline or native patch is inferred.</td></tr>
-<tr><td>Native expiry admission and the injected lookup view differ at exact equality</td><td>Native accept refuses expiry &lt; its own now; lookup accepts an invitation view only when expiry &gt; injected now.</td><td>V8 tests the injected read boundary exactly. Native races use ordinary unexpired fixtures, without pretending to control the library's clock or changing its acceptance policy.</td></tr>
-<tr><td>Unknown stored states are observable failures</td><td>Session decoder currently permits any nullable string; invitation status is text. Strict ID/status/expiry decoding is part of the owner ruling, not a migration.</td><td>V1/V3/V8 seed malformed stored values and require 503; pending-only filtering must fail. No production data is rewritten or unknown status treated as absent.</td></tr>
-<tr><td>Native headers survive successful public projection</td><td>The design copies response headers and replaces JSON/content-length only.</td><td>V5 checks actual multiple cookie headers and browser behaviour. No source-only cookie proof is claimed.</td></tr>
-<tr><td>Two subject reads may observe different moments</td><td>No multi-read transaction is added; membership takes precedence, then invitation if no membership was observed.</td><td>Explicit limit: no atomic snapshot or historical completion inference. V3/V4 prove the stated answers and actor recheck, not serializable subject history.</td></tr>
-<tr><td>Host query watchers can hold/fail a real scoped read without replacing it</td><td>Existing D1 recording and Node logger boundaries; the pattern is already used by planned B1-B faults.</td><td>V4 must observe reached/release events and both real stores. A fixture limitation stays a proof gap; do not substitute sleeps or fake permission.</td></tr>
-<tr><td>B1-A's final merged contract matches these callers</td><td>This design consumes its required crypto/nonce/global/UUID contract; implementation starts only after merge.</td><td>Re-pin base and inspect B1-A before issuing packets. Any material contract change is reconciled first.</td></tr>
-<tr><td>BG will consume the shared context/selection surface</td><td>Approved scope and Lead Stage 1 agreement.</td><td>B1-C proves the capability on the current served surface. BG's later actual account/setup integration remains open until its own full path passes.</td></tr>
-<tr><td>Local browser/service proof is sufficient for the B1-C local claim</td><td>R67 permits local provider/Turnstile/central stand-ins; BG owns staging and real release checks.</td><td>V1–V8 remain local. Hegel models do not replace native-host or browser receipts. No staging, production isolation, real-provider or release claim is inferred.</td></tr>
-</tbody></table></div>
-
-<h2 id="before">What is replaced, kept and still open</h2>
-<div class="ex-table-scroll" data-width="canvas"><table>
-<thead><tr><th>Before at the pin</th><th>After the selected B1-C branch</th></tr></thead><tbody>
-<tr><td>Chooser offered only before a valid selection</td><td>Own membership summary and chosen selector remain available; the old hide condition is removed.</td></tr>
-<tr><td>Inline selector listener in owner-page-script</td><td>One selected controller/island; the superseded listener is deleted, not left competing.</td></tr>
-<tr><td>Membership schema inside storage module</td><td>Same schema in one runtime-free contract module; storage and browser consumers derive from it.</td></tr>
-<tr><td>No public person membership lookup</td><td>One live owner-authorized scoped read, selected real input/page, exact negative and unavailable outcomes.</td></tr>
-<tr><td>Native list/full reads closed</td><td>Remain closed with component A; with B, only exact GETs open behind mandatory whitelist projection. Native member-list remains closed in either current branch.</td></tr>
-<tr><td>Native selection and session-create initialization</td><td>Kept, including foreign-choice clearing; no new library patch or selection store.</td></tr>
-<tr><td>Prose-only answer/generation lifecycle; pending-only invitation query in <code>a37eac7e</code>'s design</td><td>Closed pure exhaustive local transitions, strict stored decoders and Hegel/native race plans. Query returns parsed scoped facts; time classification belongs to the pure read model. No shipped port or database schema changes.</td></tr>
-<tr><td>People-change records and second-factor checks</td><td>Kept and rerun. Lookup changes no record and cannot settle unconfirmed history.</td></tr>
-<tr><td>Old owner-ready/setup surface</td><td>B1-C adds its reusable capability there. BG still owes the full page decision, invitation/Decline, deadline/account cutover and combined six journeys.</td></tr>
-</tbody></table></div>
-<p>Open owner answers remain exactly the three pickers above. Once returned, the Lead reconciles the affected design and packet, commissions the needed independent check and obtains implementation go-ahead. Until then, this is a reviewable conditional design, not build authority or feature completion.</p>
-</ex-document></body></html>
+</ex-document>
+</body>
+</html>
