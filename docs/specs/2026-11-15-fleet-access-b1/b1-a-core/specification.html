@@ -33,11 +33,12 @@
 <h2 id="three">The three things for you</h2>
 <ex-callout title="1 · What you should check" tone="note" icon="shield-check">
 <ul>
-<li><strong>S1–S6:</strong> every random value and every crypto operation the sign-in rules use comes from the host, and the architecture check fails if anyone puts the runtime's crypto, clock or timers back.</li>
+<li><strong>S1–S6:</strong> every random value and every crypto operation the sign-in rules use comes from the host. The architecture check fails on any runtime global outside a short allowed list, so crypto, clock, timers, <code>fetch</code> or anything else can't come back.</li>
 <li><strong>S7–S8:</strong> no sign-in test reads the real clock or waits on real time, and a scan enforces it. Two of the three Hegel families your rule names exist: token-kind dispatch (new) and the claims round trip. The third, device-code single use, is built with machine login (B3), as the B1 you approved on 4 Nov says ("machine login and device codes (B3)"); the device-code grant isn't on <code>main</code> either.</li>
 <li><strong>S9:</strong> "limited" is proven on Miniflare's real counter.</li>
 <li><strong>S10:</strong> every stored ID is a UUIDv7.</li>
 <li><strong>S11:</strong> agents unchanged; people get no tool credential.</li>
+<li><strong>S12:</strong> no UUID other than v7 is made anywhere in the sign-in packages, tests included, and a check enforces it.</li>
 </ul>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
@@ -126,22 +127,23 @@ flowchart TB
 <p><strong>Wrong if:</strong> a fixed input gives a different digest or thumbprint than <code>main</code> at <code>f3b2b88b</code>, central refuses a proof it accepts today, or the page policy text changes.</p>
 
 <h3 id="S6">S6 · The architecture check catches a slip</h3>
-<p>The architecture check (<code>pnpm test:portal-architecture</code>, part of <code>pnpm check</code>) MUST fail when any source file under <code>packages/sign-in-core/src/</code>, both <code>.ts</code> and <code>.tsx</code>, uses any of these as runtime globals:</p>
+<p>The architecture check (<code>pnpm test:portal-architecture</code>, part of <code>pnpm check</code>) MUST fail when any source file under <code>packages/sign-in-core/src/</code>, both <code>.ts</code> and <code>.tsx</code>, uses a runtime global that isn't on a short allowed list. It's an allowed list, not a banned list, so a primitive nobody thought of is caught too: R30 names storage, time, identifiers, cryptography <em>and outbound requests</em>, and a bare <code>fetch</code> must fail as surely as a bare <code>crypto</code>.</p>
+<p><strong>Allowed:</strong> plain language and web data types that do no I/O and read no clock or randomness. They are exactly those the core's server code uses today, measured at <code>f3b2b88b</code>:</p>
 <ul>
-<li><code>crypto</code> or <code>globalThis.crypto</code>;</li>
-<li><code>Math.random</code>;</li>
-<li><code>Date.now</code>, or <code>new Date()</code> with no argument;</li>
-<li><code>performance.now</code>;</li>
-<li><code>setTimeout</code> or <code>setInterval</code>.</li>
+<li>the language's own: <code>Array</code>, <code>Boolean</code>, <code>Date</code> (only as <code>new Date(value)</code>), <code>Error</code>, <code>RangeError</code>, <code>SyntaxError</code>, <code>TypeError</code>, <code>JSON</code>, <code>Map</code>, <code>Set</code>, <code>Math</code> (not <code>Math.random</code>), <code>Number</code>, <code>Object</code>, <code>Promise</code>, <code>String</code>, <code>Uint8Array</code>;</li>
+<li>web data types: <code>Headers</code>, <code>Request</code>, <code>Response</code>, <code>URL</code>, <code>URLSearchParams</code>, <code>TextEncoder</code>, <code>AbortController</code>, <code>atob</code>, <code>btoa</code>, <code>encodeURIComponent</code>.</li>
 </ul>
+<p><strong>Everything else fails,</strong> including <code>crypto</code>, <code>globalThis</code>, <code>fetch</code>, <code>setTimeout</code>, <code>setInterval</code>, <code>performance</code>, <code>process</code>, <code>navigator</code>, <code>console</code>, <code>Date.now()</code>, a zero-argument <code>new Date()</code> and <code>Math.random()</code>. Adding a name to the allowed list is a reviewed change to the check, with its reason.</p>
 <p>Your proof row U23 already asks for this check to point at <code>packages/sign-in-core/src/</code>.</p>
 <p><strong>Edge cases:</strong></p>
 <ul>
 <li>A browser script written as text in a string is not code the service runs, so the check MUST NOT flag it.</li>
 <li>A property or local name that happens to be called <code>crypto</code>, such as <code>platform.crypto</code>, MUST NOT be flagged.</li>
+<li>Type-only names (in type positions) aren't runtime use and aren't flagged.</li>
+<li>The browser components under <code>src/pages/islands/</code> run in the person's browser, like the text scripts, and aren't checked by this rule.</li>
 <li>Test files keep their own rules.</li>
 </ul>
-<p><strong>Wrong if:</strong> a planted <code>crypto.randomUUID()</code> in a <code>.tsx</code> page passes the check, or the check flags the admin page's browser script.</p>
+<p><strong>Wrong if:</strong> a planted <code>crypto.randomUUID()</code> in a <code>.tsx</code> page, or a planted <code>fetch(…)</code>, passes the check; or the check flags the admin page's browser script or one of today's allowed uses.</p>
 
 <h3 id="S7">S7 · No sign-in test reads the real clock or waits on real time</h3>
 <p>From R33. This covers every test, test helper and harness of the sign-in packages:</p>
@@ -215,6 +217,24 @@ flowchart TB
 </ul>
 <p><strong>Wrong if:</strong> either breaks on that build.</p>
 
+<h3 id="S12">S12 · No UUID other than v7 is made, anywhere in the sign-in packages</h3>
+<p>From R32 (<em>"No UUID other than version 7 MAY be minted or stored by the sign-in service"</em>) and your words, U24 <em>"we ony use uuidv7"</em>, restated on 15 Nov: <em>"also said enver use uuid ony kuuidv7?"</em>. S10 checks what's stored; this rule covers what's made, in product code and in tests.</p>
+<ul>
+<li><strong>The only UUID source is the injected ID capability:</strong> <code>platform.ids.nextId()</code>, which the shared builder makes with <code>uuid</code>'s <code>v7</code> (<code>sign-in-platform-web/src/index.ts:8</code>), or the tests' controlled ID source.</li>
+<li><strong>Today's two v4s go:</strong>
+  <ul>
+  <li>the page nonce, <code>crypto.randomUUID()</code> at <code>page-document.tsx:181</code>, becomes 16 random bytes from the host (S1). It's a secret, not an identifier, so it isn't a UUID at all. A v7 would be weaker: it starts with a timestamp.</li>
+  <li>the keychain test's service name, <code>randomUUID()</code> from <code>node:crypto</code> at <code>sign-in-owner-cli/src/fleet/macos-keychain-proof-key-store.host.e2e.test.ts:1, 17</code>, uses a v7 from the shared builder's ID source instead.</li>
+  </ul></li>
+<li><strong>A check enforces it:</strong> the architecture check fails on any of these, in every file under <code>packages/sign-in-*/src/</code> (tests included) and <code>scripts/verify-auth/</code>:
+  <ul>
+  <li>a <code>randomUUID</code> call or import;</li>
+  <li>an import from <code>uuid</code> of anything but <code>v7</code>;</li>
+  <li>any other UUID library.</li>
+  </ul></li>
+</ul>
+<p><strong>Wrong if:</strong> a planted <code>crypto.randomUUID()</code> in a test, or <code>import { v4 } from 'uuid'</code>, passes the check; or the base tree's check doesn't report today's two v4s.</p>
+
 <h2 id="failure">When something fails</h2>
 <ul>
 <li><strong>The capability throws while a page is being rendered:</strong> the handler's existing error handling (<code>sign-in-http-handler.ts:168–404</code>) attempts to delete the sessions issued in this request and to clean up people created without a linked account. Both are best-effort, so a failed cleanup is ignored, as today. It replies <code>503 {"error":"sign-in-unavailable"}</code>. No page is sent. Anything already written earlier in the same request stands, as it does today for any error at that point. For example, a factor just enabled, or a recorded sign-in.</li>
@@ -238,6 +258,7 @@ flowchart TB
 <tr><td><a href="#S9">S9</a></td><td>R52; journey SO2 (flood limits)</td><td><a href="verification-design.html#V8">V8</a></td></tr>
 <tr><td><a href="#S10">S10</a></td><td>R32; proof row U24</td><td><a href="verification-design.html#V9">V9</a></td></tr>
 <tr><td><a href="#S11">S11</a></td><td>R38; journey SO2 ("today's agent path still works")</td><td><a href="verification-design.html#V10">V10</a></td></tr>
+<tr><td><a href="#S12">S12</a></td><td>R32; U24; your 15 Nov restatement</td><td><a href="verification-design.html#V11">V11</a></td></tr>
 </tbody>
 </table>
 </ex-document>

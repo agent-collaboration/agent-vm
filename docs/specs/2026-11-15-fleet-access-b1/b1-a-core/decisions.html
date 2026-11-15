@@ -31,7 +31,12 @@
 </ul>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p><strong>Nothing changes what a person sees or can do.</strong> One boundary decision is open for you, with a picker <a href="#open">at the end</a>: whether R30 covers Better Auth's own internal crypto.</p>
+<p><strong>Nothing changes what a person sees or can do, and nothing is open for you.</strong> On 15 Nov you decided three things (<a href="#owner">cards below</a>):</p>
+<ul>
+<li>R30 covers our code, not Better Auth's own crypto;</li>
+<li>capabilities stay injected, with no DI library;</li>
+<li>no UUID other than v7, tests included.</li>
+</ul>
 <p>Where the device-code parts of R33 and U23 go is already yours: B3, from the B1 scope you approved on 4 Nov (<a href="#owner">card below</a>).</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
@@ -44,7 +49,7 @@ flowchart TB
   design --> b1a["B1-A design"]
   mine["My calls<br/>each marked: should it have been yours?"] --> b1a
   assume["Assumptions<br/>each with: if it's wrong"] --> b1a
-  b1a --> open["Open for you: does R30 cover<br/>Better Auth's own crypto?"]
+  b1a --> open["Open for you: nothing"]
   class words,design slot1
   class mine slot2
   class assume slot3
@@ -59,6 +64,18 @@ flowchart TB
 <ex-card title="The design and B1 are approved" tone="done" icon="book-open" tag="F 71226, 71230 · 4 Nov" pick>
 <p><em>"yes you need anytnhign?"</em>, answering <em>"Still waiting on you: approve the overall design, B1 and B2"</em>.</p>
 <p><strong>Decides here:</strong> the approved rows are the yardstick.</p>
+</ex-card>
+<ex-card title="R30 covers our code, not Better Auth's own crypto" tone="done" icon="code" tag="Fleet session · 15 Nov" pick>
+<p><em>"but auth libary is trhe same on al platforms sso wehres the issue here?"</em>; <em>"yes do a."</em>; <em>"why shoudl we care if better auth does if its suspeod to work in durable objects?"</em></p>
+<p><strong>Decides here:</strong> B1-A routes all of our code's crypto through the host. Better Auth stays as shipped (<a href="#open">the choice, kept below</a>).</p>
+</ex-card>
+<ex-card title="Capabilities stay injected; no DI library" tone="done" icon="plug" tag="Fleet session · 15 Nov" pick>
+<p><em>"no tsyringe o rlibrary please"</em>; <em>"inejcted is fine"</em>.</p>
+<p><strong>Decides here:</strong> functions receive <code>platform</code> (or a slice of it) as today. No container, no service locator, no request-scoped getter (<a href="program-design.html#choice">Program Design</a>).</p>
+</ex-card>
+<ex-card title="UUIDv7 only, tests included" tone="done" icon="key" tag="Fleet session · 15 Nov; U24" pick>
+<p><em>"also said enver use uuid ony kuuidv7?"</em>, restating U24 (<em>"we ony use uuidv7"</em>).</p>
+<p><strong>Decides here:</strong> the v4 nonce goes, the keychain test's v4 goes, and a new check rejects any non-v7 UUID mint in the sign-in packages, tests included (<a href="specification.html#S12">S12</a>).</p>
 </ex-card>
 <ex-card title="Device codes are built with machine login (B3)" tone="done" icon="key" tag="Same approval · B1 doc at ac83966c" pick>
 <p>The B1 you approved said, under "Not in B1": <em>"machine login and device codes (B3)"</em> (<a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/deliverables/b1-people-roles-sign-in.source.html#b1-scope">B1 scope</a>, unchanged since commit <code>ac83966c</code>, the version standing when you said yes).</p>
@@ -107,7 +124,7 @@ flowchart TB
 <tr><td>Delete the flood stand-in</td><td>No test needs it after the change; your feature rule says old code goes</td><td>No: it follows your rule.</td></tr>
 <tr><td>The test-time scan covers <code>sign-in-test-support</code>, the sign-in <code>*.test.ts</code> files, and <code>scripts/verify-auth/</code></td><td>Proof row U25 names "the sign-in tests, helpers or harness"</td><td>No. It's what U25 asks.</td></tr>
 <tr><td>Treat U25's "<code>auth-proof-process.ts</code> kill deadlines" as already done</td><td>The file already waits on an <code>AbortController</code> and the controlled clock</td><td>No. It's a fact from the code.</td></tr>
-<tr><td>The design is written as if Better Auth's own internal crypto (its session tokens, sign-in state, two-factor codes) is outside R30</td><td>R30 governs "every sign-in rule … in one runtime-free core", our code. Better Auth is the library that code is built on (R29), and changing its internals would mean patching it, which your rule on following Better Auth's own way avoids.</td><td><strong>Yes.</strong> No decision of yours settles it, so it's <a href="#open">open for you below</a>. The pages are written for option A, but nothing is built until you answer.</td></tr>
+<tr><td>The design is written as if Better Auth's own internal crypto (its session tokens, sign-in state, two-factor codes) is outside R30</td><td>R30 governs "every sign-in rule … in one runtime-free core", our code. Better Auth is the library that code is built on (R29), and changing its internals would mean patching it, which your rule on following Better Auth's own way avoids.</td><td><strong>Yes, and you decided it on 15 Nov:</strong> option A (<a href="#open">below</a>).</td></tr>
 <tr><td>Regroup B1's nine slivers into three features (B1-A, B1-B, B1-C)</td><td>Your rules: "a feature done properly", "cannot be some bite size nonsense"</td><td>The grouping is mine; the rule is yours. Correct it on the overview if it's wrong.</td></tr>
 </tbody>
 </table></div>
@@ -165,11 +182,11 @@ flowchart TB
 </tbody>
 </table></div>
 
-<h2 id="open">Open for you: does R30 cover Better Auth's own internal crypto?</h2>
-<p>It doesn't change what a person sees. It decides how far this feature's promise under R30 reaches.</p>
+<h2 id="open">Decided by you on 15 Nov: R30 covers our code, not Better Auth's own crypto</h2>
+<p><strong>Open for you: nothing.</strong> This was the one open question, and you answered it: <em>"but auth libary is trhe same on al platforms sso wehres the issue here?"</em> and <em>"yes do a."</em> (Fleet session, 15 Nov). It's kept here so the choice and what it gave up stay visible.</p>
 
-<h3 id="d-ba">The question</h3>
-<p><strong>Today:</strong> R30 says "every sign-in rule … MUST live in one runtime-free core" that reaches crypto "only through capabilities its host supplies". B1-A routes all of our code's crypto through the host. Better Auth, the library our code is built on (R29), also does its own crypto inside: session tokens, sign-in state, two-factor codes. No decision of yours says whether R30 reaches inside the library.</p>
+<h3 id="d-ba">What the question was</h3>
+<p><strong>Before:</strong> R30 says "every sign-in rule … MUST live in one runtime-free core" that reaches crypto "only through capabilities its host supplies". B1-A routes all of our code's crypto through the host. Better Auth, the library our code is built on (R29), also does its own crypto inside: session tokens, sign-in state, two-factor codes. No decision of yours says whether R30 reaches inside the library.</p>
 <ex-mermaid id="d-ba-now" label="Whose crypto goes through the host" data-width="canvas"><script type="text/plain">
 flowchart TB
   host["Host crypto capability"] --> ours["Our sign-in code<br/>B1-A routes it all here"]
@@ -212,23 +229,14 @@ flowchart TB
   </section>
 </ex-compare>
 <ex-grid cols="2" data-width="canvas">
-<ex-card title="A · Our code only" tone="planned" icon="code" tag="Recommended">
-<p><strong>Cost:</strong> the library's own crypto isn't recorded.</p>
+<ex-card title="A · Our code only" tone="done" icon="code" tag="Your choice, 15 Nov" pick>
+<p><em>"yes do a."</em> Better Auth is the same library on both hosts and stays as shipped.</p>
+<p><strong>What it gave up:</strong> the crypto Better Auth does inside itself isn't recorded by tests. Ours is.</p>
 </ex-card>
-<ex-card title="B · Better Auth's too" tone="planned" icon="gear" tag="Larger">
-<p><strong>Cost:</strong> patching Better Auth and carrying the patch through upgrades.</p>
+<ex-card title="B · Better Auth's too" tone="planned" icon="gear" tag="Not chosen">
+<p><strong>Would have cost:</strong> patching Better Auth and carrying the patch through upgrades.</p>
 </ex-card>
 </ex-grid>
-<ex-callout title="Recommended: A" tone="decision" icon="code">
-<p>R30 is about our sign-in rules, and you've asked to follow Better Auth's own way rather than patch it. <strong>Not decided.</strong></p>
-</ex-callout>
-<ex-callout title="If you defer" tone="risk" icon="clock">
-<p>Nothing is built: B1-A's packets go out only after you answer this and give the go-ahead. The pages are written for A, so answering A needs no further change. Answering B means I revise the affected design and proof first.</p>
-</ex-callout>
-<ex-choice id="d-ba-choice" title="Does R30 cover Better Auth's own internal crypto?">
-  <ex-option id="d-ba-choice-a" title="**A.** Our code only (recommended)"><template slot="summary">Better Auth stays as shipped; our code's crypto goes through the host.</template></ex-option>
-  <ex-option id="d-ba-choice-b" title="**B.** Better Auth's too"><template slot="summary">Route the library's crypto through the host as well, by hook or patch.</template></ex-option>
-</ex-choice>
 </ex-document>
 </body>
 </html>

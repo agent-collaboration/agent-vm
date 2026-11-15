@@ -23,7 +23,7 @@
 <p>How each rule on the <a href="specification.html">Specification</a> will be shown to hold, and what stays unproven. <strong>This is a plan: nothing here has been run.</strong></p>
 <ul>
 <li><strong>Who runs it:</strong> the paired Verifier, on the pinned PR commit.</li>
-<li><strong>Must fail on a named wrong build:</strong> V1–V4 and V6–V9.</li>
+<li><strong>Must fail on a named wrong build:</strong> V1–V4, V6–V9 and V11.</li>
 <li><strong>Regression checks:</strong> V5 and V10, on the hosts and targets they name.</li>
 </ul>
 
@@ -147,11 +147,22 @@ flowchart TB
     <li><code>`${crypto.randomUUID()}`</code> inside a template;</li>
     <li>each of <code>Date.now()</code>, <code>new Date()</code>, <code>performance.now()</code>, <code>setTimeout</code>, <code>setInterval</code> and <code>Math.random()</code>;</li>
     <li><code>globalThis['crypto']</code>;</li>
+    <li>names not on the allowed list, each in a core file: <code>fetch(url)</code>, <code>console.log(x)</code>, <code>navigator.userAgent</code>, <code>process.env.X</code>, <code>queueMicrotask(f)</code>, <code>new WebSocket(u)</code>;</li>
     <li>a Node import (<code>import 'node:fs'</code>) in a core file, the mutant your proof row U23 names.</li>
     </ul></li>
-  <li><strong>Accepted:</strong> <code>platform.crypto.getRandomValues(…)</code>; a parameter named <code>crypto</code>; the same calls as literal text inside a browser-script template; <code>new Date(now)</code>; a <code>*.unit.test.ts</code> file.</li>
+  <li><strong>Accepted:</strong>
+    <ul>
+    <li><code>platform.crypto.getRandomValues(…)</code>;</li>
+    <li>a parameter or local named <code>crypto</code> or <code>fetch</code>;</li>
+    <li>the same calls as literal text inside a browser-script template;</li>
+    <li><code>new Date(now)</code>;</li>
+    <li>each allowed global in use, for example <code>new URL(x)</code>, <code>new Response(body)</code>, <code>JSON.stringify(v)</code>, <code>Math.floor(n)</code>, <code>btoa(s)</code>;</li>
+    <li><code>typeof fetch</code> in a type position;</li>
+    <li>a file under <code>src/pages/islands/</code> using <code>location</code>;</li>
+    <li>a <code>*.unit.test.ts</code> file.</li>
+    </ul></li>
   </ul></li>
-<li><strong>The base tree:</strong> the PR's checker, run over the base commit's <code>packages/sign-in-core/src/</code>, reports exactly the six sites. Run over the PR's tree, it reports none. (Today's checker on <code>main</code> doesn't have the rule, so it reports nothing either way.)
+<li><strong>The base tree:</strong> the PR's checker, run over the base commit's <code>packages/sign-in-core/src/</code>, reports exactly the six sites: <code>crypto</code> at <code>page-document.tsx:181</code>, and <code>globalThis</code> at the nine lines in the other five files. Any other name it reports means the allowed list is wrong, and the run fails V4. Run over the PR's tree, it reports none. (Today's checker on <code>main</code> doesn't have the rule, so it reports nothing either way.)
   <ul>
   <li><strong>How to run it on the base:</strong> the script scans the tree it sits in (<code>audit-portal-architecture.ts:1298–1309, 1332–1340</code> fix the root from the script's own location), and it has no root argument. So the Verifier, in order:
     <ol>
@@ -303,6 +314,21 @@ flowchart TB
 <li><strong>Unverified:</strong> the agent path on the Node host, which the journey reaches only through its Node bridge, as today.</li>
 </ul>
 
+<h3 id="V11">V11 · No UUID other than v7 is made, anywhere in the sign-in packages (S12)</h3>
+<p><strong>Proven by:</strong> planting non-v7 UUID mints, in product and test files, and seeing the check reject each one; then running it over the base tree and seeing today's two v4s reported.</p>
+<ul>
+<li><strong>Tests:</strong> new cases in <code>scripts/audit-portal-architecture.unit.test.ts</code>:
+  <ul>
+  <li><strong>Rejected:</strong> <code>crypto.randomUUID()</code> in a <code>*.host.e2e.test.ts</code>; <code>import { randomUUID } from 'node:crypto'</code> in a <code>sign-in-owner-cli</code> test; <code>import { v4 } from 'uuid'</code> in <code>sign-in-test-support</code>; <code>import { v1 as uuid } from 'uuid'</code> in <code>scripts/verify-auth/</code>; an import of another UUID package.</li>
+  <li><strong>Accepted:</strong> <code>import { v7 as uuid7 } from 'uuid'</code> in <code>sign-in-platform-web</code>; <code>platform.ids.nextId()</code>; the text <code>randomUUID</code> inside a string.</li>
+  </ul></li>
+<li><strong>The base tree:</strong> the PR's checker, run over the base commit the same way as <a href="#V4">V4</a>, reports exactly <code>page-document.tsx:181</code> and <code>macos-keychain-proof-key-store.host.e2e.test.ts:1, 17</code>. Over the PR's tree, it reports nothing.</li>
+<li><strong>The keychain test still runs:</strong> on a Mac, <code>macos-keychain-proof-key-store.host.e2e.test.ts</code> passes with its v7 service name.</li>
+<li><strong>Fails on:</strong> today's checker, which has no UUID rule.</li>
+<li><strong>Reference:</strong> R32 and U24; your 15 Nov restatement.</li>
+<li><strong>Unverified:</strong> the macOS keychain test runs only on a Mac, as today.</li>
+</ul>
+
 <h2 id="u23">The U23 split: what this deliverable proves, and what it leaves</h2>
 <table>
 <thead><tr><th>Part of proof row U23</th><th>Here?</th></tr></thead>
@@ -323,11 +349,11 @@ flowchart TB
 <tr><td><strong>U16</strong> one design on any host</td><td><a href="specification.html#S4">S4</a></td><td><code>createWebSignInCapabilities</code></td><td>V5, the source read, V4's type mutation</td><td>As V5</td><td>The hosts pass with the capability handed in by the shared builder, and add no crypto code</td><td>Deployed hosts</td></tr>
 <tr><td><strong>U25</strong> no wall clock; Hegel</td><td><a href="specification.html#S7">S7</a>, <a href="specification.html#S8">S8</a></td><td>event waits in <code>native-browser-protocol.ts</code>; controlled-clock rows; the test-time rule; the dispatch family</td><td>V6, V7</td><td>Unit lane; host e2e on both storage hosts</td><td>The scan is clean on the PR tree and catches the planted calls; the family matches its model and catches the mutation</td><td>How a hung Chrome is ended (runner configuration); the device-code family (B3)</td></tr>
 <tr><td><strong>U42</strong> flood limits</td><td><a href="specification.html#S9">S9</a></td><td><code>startLocalAuthHarness</code> real binding; <code>createBindingRequestLimiter</code></td><td>V8</td><td>"Limited": local workerd with Miniflare's binding. Reset: Better Auth's provider-layer limit in the host e2e lane, and the Node host's counter in the unit lane</td><td>"Limited" with nothing changed; failing without the binding</td><td>The binding's reset and cross-location counting (private stack); the window-boundary risk</td></tr>
-<tr><td><strong>U24</strong> UUIDv7 only</td><td><a href="specification.html#S10">S10</a></td><td>the existing <code>readStoredUuidInventory</code>, over the people journey</td><td>V9</td><td>Two runs: D1 (default host) and better-sqlite3 (<code>SIGN_IN_TEST_HOST=node</code>)</td><td>Only v7 UUIDs before and after the removal; the expected tables are filled; each named secret is not a UUID; the planted v4 and the v7 recovery code are caught</td><td>Flows the journey doesn't reach (B3)</td></tr>
+<tr><td><strong>U24</strong> UUIDv7 only</td><td><a href="specification.html#S10">S10</a>, <a href="specification.html#S12">S12</a></td><td>the existing <code>readStoredUuidInventory</code>, over the people journey; the UUID check in <code>audit-portal-architecture.ts</code></td><td>V9, V11</td><td>Two runs: D1 (default host) and better-sqlite3 (<code>SIGN_IN_TEST_HOST=node</code>)</td><td>Only v7 UUIDs before and after the removal; the expected tables are filled; each named secret is not a UUID; the planted v4 and the v7 recovery code are caught</td><td>Flows the journey doesn't reach (B3)</td></tr>
 <tr><td><strong>R38</strong> agents unchanged</td><td><a href="specification.html#S11">S11</a></td><td>the existing agent path</td><td>V10</td><td><code>local-workerd</code> target</td><td>The agent journey passes on the final build</td><td>The Node bridge path</td></tr>
 </tbody>
 </table></div>
-<p><strong>Journeys needed:</strong> none new. New permanent tests: the recording run (V2), the dispatch family (V7) and the ID readback (V9).</p>
+<p><strong>Journeys needed:</strong> none new. New permanent tests: the recording run (V2), the dispatch family (V7), the ID readback (V9), and the allowed-globals and UUID check cases (V4, V11).</p>
 </ex-document>
 </body>
 </html>

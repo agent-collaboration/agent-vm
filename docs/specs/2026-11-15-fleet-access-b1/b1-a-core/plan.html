@@ -25,7 +25,7 @@
 <h2 id="three">The three things for you</h2>
 <ex-callout title="1 · What you should check" tone="note" icon="shield-check">
 <ul>
-<li><strong><a href="#acceptance">The acceptance map</a>:</strong> each of the eleven rules goes to its check and its evidence, and nothing is accepted from a summary.</li>
+<li><strong><a href="#acceptance">The acceptance map</a>:</strong> each of the twelve rules goes to its check and its evidence, and nothing is accepted from a summary.</li>
 <li><strong><a href="#reviewer">The reviewer's packet</a>:</strong> your words and your design are the yardstick, my records are only claims, and the first question is "what does this drop?"</li>
 <li><strong>Anything not delivered comes to you before I accept.</strong></li>
 </ul>
@@ -58,7 +58,7 @@ flowchart TB
 <p><strong>Where everything lives:</strong> every file the roles return goes in <code>docs/specs/2026-11-15-fleet-access-b1/b1-a-core/work/</code> (the "work folder" below), in the agent-vm worktree <code>/Users/shravansunder/code/projects/agent-vm.design-portal-remediation</code>. The code is in switchboard, <code>/Users/shravansunder/code/projects/switchboard</code>, on a new branch from <code>main</code> in an Agent Studio worktree.</p>
 
 <h2 id="implementer">Packet 1 · The Implementer (Opus high)</h2>
-<p><strong>You build B1-A.</strong> Read these first: the <a href="specification.html">Specification</a> (rules S1–S11), the <a href="program-design.html">Program Design</a> (every file and type), the <a href="verification-design.html">Verification Design</a> (what must pass), and switchboard <code>AGENTS.md</code>. Your paired Verifier's address is filled in here at go-ahead.</p>
+<p><strong>You build B1-A.</strong> Read these first: the <a href="specification.html">Specification</a> (rules S1–S12), the <a href="program-design.html">Program Design</a> (every file and type), the <a href="verification-design.html">Verification Design</a> (what must pass), and switchboard <code>AGENTS.md</code>. Your paired Verifier's address is filled in here at go-ahead.</p>
 <h3 id="order">The order of the work</h3>
 <ol>
 <li><strong>The contract.</strong> Add <code>SignInCrypto</code> and the required <code>SignInPlatform.crypto</code> to <code>packages/sign-in-core/src/contracts/sign-in-platform.ts</code>. Make <code>createWebSignInCapabilities</code> in <code>packages/sign-in-platform-web/src/index.ts</code> take an optional <code>crypto</code> and return it, defaulting to <code>globalThis.crypto</code>, and update its README line. Run <code>pnpm typecheck</code>: every place that builds a platform now fails, and that's your list for step 2.</li>
@@ -80,8 +80,9 @@ flowchart TB
 <li><strong>The check.</strong> In <code>scripts/audit-portal-architecture.ts</code>:
   <ul>
   <li>collect <code>.tsx</code> under <code>packages/sign-in-core/src/</code>;</li>
-  <li>add the core runtime-global rule (including inside <code>${…}</code>);</li>
-  <li>add the test-time rule for the sign-in tests.</li>
+  <li>add the core allowed-globals rule, with the type checker and the <code>signInCoreAllowedGlobals</code> list exactly as <a href="program-design.html#scan">the Program Design</a> gives it (including inside <code>${…}</code>);</li>
+  <li>add the test-time rule for the sign-in tests;</li>
+  <li>add the UUIDv7-only rule across <code>packages/sign-in-*/src/</code> and <code>scripts/verify-auth/</code>, tests included. Change the keychain test's <code>randomUUID()</code> (<code>macos-keychain-proof-key-store.host.e2e.test.ts:1, 17</code>) to <code>createWebSignInCapabilities().ids.nextId()</code>.</li>
   </ul>
   Add their cases to <code>scripts/audit-portal-architecture.unit.test.ts</code>.</li>
 <li><strong>No wall clock in tests.</strong> Turn the five bounds in <code>native-browser-protocol.ts</code> into event waits, as <a href="program-design.html#time-protocol">the table</a> says. Build the <code>authorization-fence.host.e2e.test.ts</code> rows from <code>controlledSignInClock</code>. Take the evidence folder's date in <code>native-browser-scenario.ts:43</code> from <code>controlledSignInClock</code> instead of <code>performance.timeOrigin</code> (<a href="program-design.html#time-evidence">Program Design</a>).</li>
@@ -103,7 +104,7 @@ flowchart TB
 <li>the existing tests that call a changed function, argument or field only, with assertions unchanged. They're listed in <a href="program-design.html#tests-become">what tests become</a>, including <code>proof-key-store.unit.test.ts</code> and <code>b2e-joint-journey.host.e2e.test.ts</code>;</li>
 <li>any other in-repo caller that <code>pnpm typecheck</code> flags because of the new <code>crypto</code>, argument or field only. List each one in your handback.</li>
 </ul>
-<p><strong>You may not change:</strong> any other check script or CI workflow, storage or migrations, any token, proof, digest or page-policy format, or Better Auth's own internal crypto. The plan builds option A of the <a href="decisions.html#open">open owner decision</a>: Better Auth stays as shipped. This packet is sent only after the owner answers that decision and gives the go-ahead. If they pick B, the Lead revises the affected design, proof and this packet before sending it. <strong>Stop and come back</strong> if a fix needs anything outside this list, or if you think the design is wrong.</p>
+<p><strong>You may not change:</strong> any other check script or CI workflow, storage or migrations, any token, proof, digest or page-policy format, or Better Auth's own internal crypto: the owner decided on 15 Nov that it stays as shipped (<a href="decisions.html#open">Decisions</a>). Don't add a DI container, a service locator or a request-scoped getter; capabilities are passed as <code>platform</code> or a slice of it (the owner's 15 Nov decision). This packet is sent only after the owner's go-ahead. <strong>Stop and come back</strong> if a fix needs anything outside this list, or if you think the design is wrong.</p>
 <h3 id="impl-returns">You return</h3>
 <p><code>work/implementer-handback.md</code>. It holds:</p>
 <ul>
@@ -143,6 +144,7 @@ flowchart TB
   <li>make recovery codes v7 UUIDs through Better Auth's <code>customBackupCodesGenerate</code>: the recovery-code assertion must fail.</li>
   </ul></td></tr>
 <tr><td><a href="verification-design.html#V10">V10</a> agents (regression)</td><td><code>verify-auth.ts agent</code>, <code>local-workerd</code> target</td><td>The agent gets its token and makes one allowed call. A person is refused.</td><td>None (regression).</td></tr>
+<tr><td><a href="verification-design.html#V11">V11</a> UUIDv7 only</td><td><code>pnpm test:unit</code> (audit cases); the PR's checker over the base tree, as for V4; the keychain test on a Mac</td><td>The planted v4, v1, <code>randomUUID</code> and other-library mints are rejected, in product and test files; <code>v7</code> is accepted. The base tree reports exactly <code>page-document.tsx:181</code> and the keychain test's lines 1 and 17, and the PR tree nothing.</td><td>Put back the keychain test's <code>randomUUID()</code>: the check must fail. Restore it: the check passes.</td></tr>
 </tbody>
 </table></div>
 <p><strong>Versions to record:</strong> the switchboard commit, Node 24.7.0, <code>better-auth</code> 1.7.11, miniflare 5.20260815.0-alpha, and the Chrome version. Heavy runs go to Sunclaw.</p>
@@ -183,9 +185,9 @@ flowchart TB
 <h3 id="rev-steps">How you validate</h3>
 <ol>
 <li>Answer the first question.</li>
-<li>For each rule S1–S11, read the rule and the owner's linked words, and write down what "done" means before opening the code.</li>
+<li>For each rule S1–S12, read the rule and the owner's linked words, and write down what "done" means before opening the code.</li>
 <li>Read the code at the pinned commit, not the PR description. Search the whole of <code>packages/sign-in-core/src/</code> and the sign-in tests for any remaining runtime crypto, clock or timer, including aliasing.</li>
-<li>Open the evidence. Check that it ran on that commit, on the hosts named, that V1–V4 and V6–V9 failed on their deliberate breaks, and that the old code is gone: the six global calls, the five bounds, the fixture rows, the evidence folder's real-clock date, and the stand-in.</li>
+<li>Open the evidence. Check that it ran on that commit, on the hosts named, that V1–V4, V6–V9 and V11 failed on their deliberate breaks, and that the old code is gone: the six global calls, the two v4 UUID mints, the five bounds, the fixture rows, the evidence folder's real-clock date, and the stand-in. Check that no DI container or service getter was added.</li>
 <li>Any place the Plan, the handback or my check narrows, defers or reinterprets a rule is a finding. Never adopt it.</li>
 <li>A decision counts as the owner's only with a link to his words.</li>
 </ol>
@@ -214,6 +216,7 @@ flowchart TB
 <tr><td><a href="specification.html#S9">S9</a> "limited" on the real counter</td><td>V8</td><td>Not started</td><td>Not started</td></tr>
 <tr><td><a href="specification.html#S10">S10</a> every stored ID v7</td><td>V9</td><td>Not started</td><td>Not started</td></tr>
 <tr><td><a href="specification.html#S11">S11</a> agents unchanged</td><td>V10</td><td>Not started</td><td>Not started</td></tr>
+<tr><td><a href="specification.html#S12">S12</a> UUIDv7 only, tests included</td><td>V11</td><td>Not started</td><td>Not started</td></tr>
 <tr><td>Old code removed</td><td>Source read</td><td>Not started</td><td>Not started</td></tr>
 <tr><td>Gates and CI</td><td><code>pnpm check</code>, <code>test:unit</code>, <code>test:integration</code>, <code>test:e2e:host</code>; PR checks</td><td>Not started</td><td>Not started</td></tr>
 <tr><td>Independent review</td><td><code>work/reviewer-report.html</code> READY</td><td>Not started</td><td>Not started</td></tr>

@@ -85,7 +85,13 @@ flowchart TB
 <li>nothing proves every random value and signature went through the host.</li>
 </ul></td><td><p>The contract gains a required <code>crypto</code>. The six places use <code>platform.crypto</code>. Both hosts and the CLI hand in the standard Web Crypto, so behaviour is identical.</p>
 <p>A test hands in a crypto that records every call and sees all six. The architecture check fails if a bare <code>crypto</code> comes back.</p></td></tr>
-<tr><td><strong>Architecture check</strong> (R30, U23)</td><td>Broken. It blocks runtime imports and Cloudflare-only names, but not shared globals (<code>crypto</code>, <code>Date.now</code>, <code>setTimeout</code>, <code>Math.random</code>), and it collects only <code>.ts</code> files (<code>collectFilesUnderDirectory</code>, lines 1272–1288).</td><td>A planted slip anywhere in the core's source, <code>.ts</code> or <code>.tsx</code>, including inside a <code>${…}</code> expression, fails the check.</td></tr>
+<tr><td><strong>Architecture check</strong> (R30, U23)</td><td>Broken. It blocks runtime imports and Cloudflare-only names, but not shared globals (<code>crypto</code>, <code>Date.now</code>, <code>setTimeout</code>, <code>Math.random</code>), and it collects only <code>.ts</code> files (<code>collectFilesUnderDirectory</code>, lines 1272–1288). It also checks a list of banned names rather than allowed ones, so a bare <code>fetch</code> (outbound requests, also R30) would pass.</td><td>Any runtime global outside a short allowed list fails the check, anywhere in the core's source, <code>.ts</code> or <code>.tsx</code>, including inside a <code>${…}</code> expression. The list is exactly the plain language and web data types the core uses today.</td></tr>
+<tr><td><strong>UUIDv7 only, when UUIDs are made</strong> (R32, U24)</td><td>Broken in two places, and nothing checks it:
+<ul>
+<li>the page nonce is a v4: <code>crypto.randomUUID()</code> at <code>page-document.tsx:181</code>;</li>
+<li>a test makes a v4 keychain service name: <code>randomUUID()</code> from <code>node:crypto</code> at <code>sign-in-owner-cli/src/fleet/macos-keychain-proof-key-store.host.e2e.test.ts:1, 17</code>.</li>
+</ul>
+The only real ID source, <code>sign-in-platform-web/src/index.ts:8</code>, is <code>uuid</code>'s <code>v7</code>.</td><td>Neither v4 remains: the nonce is random bytes, not a UUID, and the test uses a v7 from the ID source. A check rejects any non-v7 UUID mint in the sign-in packages, tests included.</td></tr>
 <tr><td><strong>No wall clock in tests</strong> (R33)</td><td>Broken:
 <ul>
 <li>five real-time bounds in <code>native-browser-protocol.ts</code> (84, 115, 148, 218, 274);</li>

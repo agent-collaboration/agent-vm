@@ -34,7 +34,7 @@
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
 <p><strong>None.</strong> Pages, tokens, limits and the agent path behave exactly as today. This feature makes the existing behaviour structurally sound and honestly proven.</p>
-<p><strong>One boundary question is open for you:</strong> whether R30 also covers Better Auth's own internal crypto (<a href="decisions.html#open">Decisions</a>).</p>
+<p><strong>Nothing is open for you.</strong> On 15 Nov you decided that R30 covers our code, not Better Auth's own crypto, and that capabilities stay injected with no DI library (<a href="decisions.html#owner">Decisions</a>).</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
 <p>Each part is one of your needs in the <a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/requirements.source.html">approved Requirements</a>, with your words:</p>
@@ -85,7 +85,7 @@ flowchart TB
 <ul>
 <li><strong>Passkey sign-in</strong> is B1-B. <strong>Organization choice and membership lookup</strong> are B1-C.</li>
 <li><strong>The device-code single-use Hegel family,</strong> and the "device-code approval rule is in the core" part of proof row U23: both go to machine login (B3). That's yours: the B1 you approved on 4 Nov lists "machine login and device codes (B3)" as not in B1 (<a href="decisions.html#owner">Decisions</a>). The device-code grant isn't on <code>main</code> either; it's in the frozen PR #11.</li>
-<li><strong>Better Auth's own internal crypto</strong> (its session tokens, sign-in state, two-factor codes): the design assumes it's outside R30, which governs our sign-in rules, while Better Auth is the library they're built on. No decision of yours settles this, so it's <a href="decisions.html#open">open for you</a>, with option A (outside) recommended.</li>
+<li><strong>Better Auth's own internal crypto</strong> (its session tokens, sign-in state, two-factor codes): outside R30, as you decided on 15 Nov: <em>"but auth libary is trhe same on al platforms sso wehres the issue here?"</em>, <em>"yes do a."</em> (<a href="decisions.html#open">Decisions</a>).</li>
 <li><strong>Scripts that run in the browser</strong> keep using the browser's own crypto and <code>fetch</code>. They run in the person's browser, not in the service.</li>
 <li><strong>The real counter's reset, and counting across Cloudflare locations,</strong> are checked on the private stack, as your design says, not locally.</li>
 <li><strong>No format change:</strong> no token, proof, digest or page-policy format changes. Some exported function signatures change. Neither package is on the public npm registry, and every switchboard caller is updated in the same PR. Other consumers are unknown (<a href="decisions.html#published">Decisions</a>).</li>
