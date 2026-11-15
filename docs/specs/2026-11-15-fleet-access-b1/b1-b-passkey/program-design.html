@@ -329,7 +329,7 @@ type QueueEvent =
 	| { readonly kind: 'widgetToken'; readonly token: string }
 	| { readonly kind: 'widgetFailed'; readonly cause: 'error' | 'expired' | 'timeout' };
 type QueueEffect =
-	| { readonly kind: 'renderWidgetOnce' }
+	| { readonly kind: 'ensureWidget' } // idempotent: the runner renders on the first one only
 	| { readonly kind: 'resetAndExecute' }
 	| { readonly kind: 'resolve'; readonly id: TokenRequestId; readonly token: string }
 	| { readonly kind: 'reject'; readonly id: TokenRequestId; readonly reason: 'verification-unavailable' };
@@ -361,12 +361,16 @@ export function turnstileQueueTransition(
   </ul></li>
 <li><strong>The protocol, defined for every state and event.</strong> The starting state is <code>{ script: 'loading', executing: null, waiting: [] }</code>.
   <ul>
+  <li><strong>"Execute" always means the same two effects, in order:</strong> <code>ensureWidget</code>, then <code>resetAndExecute</code>, wherever a request starts. That's from idle, from <code>scriptReady</code>, and in a handoff.</li>
+  <li><code>ensureWidget</code> is idempotent and owned by the runner. It renders the widget the first time and does nothing after that, because the runner holds the widget handle. So the pure state needs no "rendered yet" fact, and the same state always gives the same effects.</li>
+  </ul>
+  <ul>
   <li><code>scriptReady</code> while <code>loading</code> becomes <code>ready</code>, and starts the head of <code>waiting</code> if there is one. In any other state it's a no-op with no effects.</li>
   <li><code>scriptFailed</code> while <code>loading</code> or <code>ready</code> becomes <code>failed</code>. It rejects the executing request, then every waiting one in order, with no <code>resetAndExecute</code>. Once <code>failed</code>, it's a no-op. <code>failed</code> is terminal.</li>
   <li><code>tokenRequested(id)</code>:
     <ul>
     <li>while <code>failed</code>, it rejects at once;</li>
-    <li>while <code>ready</code> with nothing executing, it executes (<code>renderWidgetOnce</code> on the first execution, then <code>resetAndExecute</code>);</li>
+    <li>while <code>ready</code> with nothing executing, it executes;</li>
     <li>otherwise, while <code>loading</code> or busy, it joins the back of <code>waiting</code>.</li>
     </ul></li>
   <li><code>widgetToken</code> and <code>widgetFailed</code> while a request is executing settle it first (<code>resolve</code> or <code>reject</code>). Then, in the same effect batch, they start the head of <code>waiting</code> with <code>resetAndExecute</code>, if any. With nothing executing, they're no-ops: a stray callback changes nothing.</li>

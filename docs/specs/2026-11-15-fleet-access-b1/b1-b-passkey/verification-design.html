@@ -195,6 +195,8 @@ flowchart TB
   <li><strong>Drain:</strong> after the generated prefix, the test appends a deterministic tail that brings the run to a drained end. That's <code>scriptReady</code> if still loading, then one <code>widgetToken</code> per remaining started or waiting request. In a second variant, the tail is a single <code>scriptFailed</code>. Completion is asserted only after the drain, so a run that never ends can't count as proof.</li>
   <li><strong>The model:</strong> written in the test from the protocol, independently of the code, as three plain values: a script flag, an executing id or null, and a waiting array. After each event, the transition's next state and effect list equal the model's.</li>
   <li><strong>Checks:</strong> the safety invariants after every step, and the completion property at the drained end (both listed on the Program Design).</li>
+  <li><strong>The execution effect pair:</strong> every execution the model starts emits <code>ensureWidget</code>, then <code>resetAndExecute</code>, from idle, from <code>scriptReady</code> or in a handoff. The model holds no "rendered" fact, so <code>scriptReady</code> on its own and <code>scriptReady</code>, request, token reach the same state and give the same effects for the next request.</li>
+  <li><strong>Render-once is the runner's, checked separately:</strong> a unit test drives the DOM runner with a fake <code>window.turnstile</code> through two executions. <code>render</code> is called once, and <code>reset</code> and <code>execute</code> once per execution.</li>
   <li><strong>Every branch is reached.</strong> The family records which protocol branch each step took, and fails if any of these was never hit:
     <ul>
     <li>a request while loading;</li>
