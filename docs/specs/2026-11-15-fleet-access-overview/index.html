@@ -35,23 +35,23 @@ flowchart TB
 </script></ex-mermaid>
 <p><strong>Key:</strong> violet waits on you, amber has its design written, blue comes later, teal is another Lead's deliverable.</p>
 <ol>
-<li><strong>B1-A</strong> One sign-in core, injected and honestly tested. Designed and reviewed. Your 15 Nov decisions are in (Better Auth's own crypto stays as shipped; capabilities stay injected, no DI library; UUIDv7 only, tests included), with a stronger allowed-globals check. Sol's review passed after four rounds; nothing is open for you, and it waits only on your go-ahead.</li>
-<li><strong>B1-B</strong> Passkey sign-in. Designed; its own Sol review passed after two rounds of fixes. You chose click only for the passkey button on 15 Nov; nothing is open for you.</li>
-<li><strong>B1-C</strong> Organizations finished: choose your organization, look up members.</li>
-<li><strong>B2</strong> Central organizations.</li>
+<li><strong>B1-A</strong> One sign-in core, injected and honestly tested. Designed and reviewed. Your 15 Nov decisions are in (Better Auth's own crypto stays as shipped; capabilities stay injected, no DI library; UUIDv7 only, tests included), with a stronger allowed-globals check. Sol's review passed after four rounds. <strong>Go-ahead given 15 Nov; being built now.</strong></li>
+<li><strong>B1-B</strong> Passkey sign-in. Designed; its own Sol review passed after two rounds of fixes. You chose click only for the passkey button on 15 Nov. <strong>Go-ahead given 15 Nov;</strong> it's built once B1-A is merged.</li>
+<li><strong>B1-C</strong> Organizations finished: choose your organization, look up members. Its design is being written now, by hand, by a Sol writer; I read every page before its own Sol review.</li>
+<li><strong>B2</strong> Central organizations. Its design is being written now, the same way.</li>
 <li><strong>B2 additions</strong> Person tokens, revocation.</li>
 <li><strong>BG</strong> Getting in: setup pages, staging proof.</li>
 <li><strong>B3</strong> Machine login, locked link.</li>
 <li><strong>B4, B5</strong> Sessions through their machine; authenticated CLI. B6 to B9 follow later.</li>
 </ol>
-<p>B2, B2 additions, BG and B3 will be regrouped into whole features the way B1 was, so their names may change. Their designs come one at a time, after B1-A.</p>
+<p>B2, B2 additions, BG and B3 will be regrouped into whole features the way B1 was, so their names may change. B1-C and B2 are being designed in parallel (your yes, 15 Nov); the others follow.</p>
 
 <h2 id="table">Blockers, parallel work, what each unblocks, approval</h2>
 <div class="ex-table-scroll" data-width="canvas"><table>
 <thead><tr><th>Feature</th><th>Blocked by</th><th>Runs in parallel with</th><th>Unblocks</th><th>Approved with go-ahead?</th></tr></thead>
 <tbody>
-<tr><td><strong>B1-A</strong> One sign-in core (<a href="../2026-11-15-fleet-access-b1/b1-a-core/audit.html">design</a>)</td><td>Your go-ahead</td><td>None: it goes first</td><td>B1-B, B1-C and B2 (they build on its core contract and test changes)</td><td>No</td></tr>
-<tr><td><strong>B1-B</strong> Passkey sign-in (<a href="../2026-11-15-fleet-access-b1/b1-b-passkey/audit.html">design</a>)</td><td>B1-A merged; your approval. Staging covers journey 5 from adding the passkey onward, in BG's run.</td><td>B1-C, B2</td><td>Nothing else in this lane</td><td>No: designed, reviewed, waiting on you</td></tr>
+<tr><td><strong>B1-A</strong> One sign-in core (<a href="../2026-11-15-fleet-access-b1/b1-a-core/audit.html">design</a>)</td><td>Nothing: being built</td><td>None: it goes first</td><td>B1-B, B1-C and B2 (they build on its core contract and test changes)</td><td><strong>Yes, 15 Nov</strong> ("yes to b1a and b1b")</td></tr>
+<tr><td><strong>B1-B</strong> Passkey sign-in (<a href="../2026-11-15-fleet-access-b1/b1-b-passkey/audit.html">design</a>)</td><td>B1-A merged. Staging covers journey 5 from adding the passkey onward, in BG's run.</td><td>B1-C, B2</td><td>Nothing else in this lane</td><td><strong>Yes, 15 Nov</strong> ("yes to b1a and b1b")</td></tr>
 <tr><td><strong>B1-C</strong> Organizations finished</td><td>B1-A merged; your approval of its design</td><td>B1-B, B2</td><td>Nothing else in this lane</td><td>No: not designed</td></tr>
 <tr><td><strong>B2</strong> Central organizations</td><td>B1-A merged; your approval of its design</td><td>B1-B, B1-C</td><td>B2 additions, BG</td><td>No: not designed</td></tr>
 <tr><td><strong>B2 additions</strong> Person tokens, revocation</td><td>B2 merged; your answer on CLI <code>--device</code> login (on its Decisions page); your approval</td><td>BG</td><td>B3</td><td>No: not designed</td></tr>

@@ -1,0 +1,44 @@
+# B1-A commission (Lead: claude-local cd5902e2-2105-4472-adde-031ae6496e30)
+
+## Authority
+- The owner gave the go-ahead to build B1-A and B1-B on 15 Nov 2026, in the Fleet session: "yes to b1a and b1b". Their stop on development is lifted for these two features only.
+- The design is final and reviewed. Sol's review passed (READY) at agent-vm `2e5e33ce`, and the overview was updated at `2ddf2e77`.
+- The governing pages are the seven in `docs/specs/2026-11-15-fleet-access-b1/b1-a-core/`. Your packet is on `plan.html`:
+  - the Implementer reads Packet 1;
+  - the Verifier reads Packet 2.
+
+  The yardstick is the design pages and the owner's decisions on `decisions.html#owner`. This file is only logistics.
+
+## Repositories and base
+- Code: switchboard, `/Users/shravansunder/code/projects/switchboard`, base `origin/main` `f3b2b88b`. That is still current at commission time.
+  - The Implementer creates an Agent Studio worktree on a new branch `b1a/one-sign-in-core` from `origin/main`: `/Applications/AgentStudio.app/Contents/Helpers/agentstudio worktree new -c b1a/one-sign-in-core --repo /Users/shravansunder/code/projects/switchboard`.
+  - Don't work in the main checkout. It's on another branch and is someone else's.
+- Design and work folder: agent-vm worktree `/Users/shravansunder/code/projects/agent-vm.design-portal-remediation`.
+  - Returns go in `docs/specs/2026-11-15-fleet-access-b1/b1-a-core/work/`.
+  - Write only your own return files there. Never edit the design pages.
+
+## The pair
+- 🐒 Implementer: Claude Opus, high effort. agent-router SessionRef `{serviceId: 0ff962c5-7fa3-4c18-a5ca-1bbe8db09e89, endpointId: claude-local, sessionId: 13abb87b-9781-487c-b1f2-c994f0c30621}`.
+- 🔬 Verifier: OpenAI Sol, high effort, a different lineage. SessionRef `{serviceId: 0ff962c5-7fa3-4c18-a5ca-1bbe8db09e89, endpointId: codex-local, sessionId: 01a1e108-8877-7e32-8ce8-889bc694377c}`.
+- Talk to each other directly through agent-router about setup, reproductions, repairs and rechecks. Bring blockers, design questions and any place you think the design is wrong to the Lead. Don't take them to the owner.
+
+## Where things run
+- Targeted unit and integration tests run locally.
+- Heavy runs go to the owner's Sunclaw test agent as self-contained packets. That covers `pnpm test:e2e:host` on both hosts, the real-Chrome browser test, the `verify-auth` journeys and whole-suite sweeps.
+  - Address: serviceId `8b61218b-d5f3-4ae9-a2db-d2fb4075dbc2`, endpoint `codex-local`, session `01a1b755-5c31-7690-b2b4-5b116d355a7a`.
+  - Each packet gives the commit, exact commands, its own working root and what to report.
+  - No SSH to Sunclaw.
+- macOS Keychain test (V11's "the keychain test still runs"): **waiting on the owner.** The Lead asked whether it may run on the owner's Mac. Until the answer is here, it stays unrun and is listed as unverified. Don't run it on the owner's Mac without that answer.
+
+## Standing rules (owner's)
+- Never print secrets.
+- No new CI gates or check-script changes beyond what the design names. The design's changes to `audit-portal-architecture.ts` are authorized.
+- No wall clock in tests. UUIDv7 only. Drizzle injected; no raw SQL.
+- No stash, `--amend`, `--no-verify` or force-push.
+- No DI library or service getter (owner, 15 Nov).
+- Commits are signed with 1Password. After two failed signing attempts, `git commit --no-gpg-sign` is allowed.
+- The Implementer opens the PR as a draft. Merging is the Lead's, after review and acceptance.
+
+## Returns
+- Implementer: `work/implementer-handback.md`, as Packet 1 says.
+- Verifier: `work/verifier-observation.md` and `work/evidence/`, as Packet 2 says.
