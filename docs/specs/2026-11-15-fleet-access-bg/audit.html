@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BG · Getting in · Audit</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
+<a href="../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
+<a href="audit.html">BG · 1 Audit</a>
+<a href="requirements.html">BG · 2 Requirements</a>
+<a href="specification.html">BG · 3 Specification</a>
+<a href="program-design.html">BG · 4 Program Design</a>
+<a href="verification-design.html">BG · 5 Verification Design</a>
+<a href="plan.html">BG · 6 Plan</a>
+<a href="decisions.html">BG · 7 Decisions</a>
+</nav></ex-nav>
+<ex-document id="doc">
+<h1>BG · Getting in: Audit</h1>
+<p><strong>Getting in is still two pages: <code>/sign-in</code> and <code>/owner-ready</code>.</strong> <code>/owner-ready</code> stacks every task on one screen with a Continue button. There is no step-by-step setup, no invitation page, no account page, no fixed command-line deadline, and no staging run without a person. BG builds all of that and removes <code>/owner-ready</code>.</p>
+<p><a href="../2026-11-15-fleet-access-overview/index.html">Back to the Fleet access overview.</a> Switchboard at <code>f3b2b88b</code>; Better Auth 1.7.11. Source, not runs.</p>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What to check" tone="note" icon="shield-check">
+<ul>
+<li>The <a href="#gaps">gap table</a>: what's missing for the six journeys.</li>
+<li>The <a href="#admission">admission note</a>: the old allowed-email admission is already gone, so BG removes nothing there; it keeps today's native admission.</li>
+<li>The <a href="#native">native behaviour</a> BG works around: Better Auth's own invitation reject has no pending guard.</li>
+</ul>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p>You approved getting in on 6 Nov. The 30 Oct assumption lists for BG pages, BG staging and the BG release record were never answered; they're on <a href="decisions.html#assumptions">Decisions</a> with agree/disagree pickers.</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>The <a href="../2026-11-02-fleet-access/deliverables/bg-getting-in.source.html">approved BG</a> and your 6 Nov answer in review <code>58647d30</code> (<a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl">Fleet transcript 86867</a>).</p>
+</ex-callout>
+
+<h2 id="today">Today's two pages</h2>
+<ex-mermaid id="today-picture" label="Getting in today" data-width="canvas"><script type="text/plain">
+flowchart TB
+  cli["CLI opens the browser, waits 300 s"] --> signin["/sign-in: Google, GitHub"]
+  signin --> ready["/owner-ready: factor, choice, create, setup card, Continue"]
+  ready --> cont["Continue to management CLI"]
+  invite["Invited person"] --> nothing1["No invitation page"]
+  staging["Staging deploy"] --> nothing2["No automatic journeys"]
+  class cli,signin,ready,cont slot3
+  class invite,nothing1,staging,nothing2 slot5
+</script></ex-mermaid>
+
+<h2 id="gaps">Gaps</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Needed</th><th>Today</th><th>Gap</th></tr></thead>
+<tbody>
+<tr><td>One step at a time, in order</td><td><code>pages/owner-page.tsx</code> renders factor, choice, create, setup and Continue together; <code>OwnerPageFooter</code> always offers Continue.</td><td>No single page decision; no step pages.</td></tr>
+<tr><td>Recovery codes shown until Finish</td><td>The factor controls enrol and verify.</td><td>No “stay until Finish” guarantee.</td></tr>
+<tr><td>Back to the command line, no approve screen, within its deadline</td><td><code>sign-in-owner-cli/src/loopback-authorization.ts</code> waits 300,000 ms; the page carries <code>authorize</code> but no deadline (<code>sign-in-http-handler.ts</code>, the <code>resume</code> parameter).</td><td>No fixed deadline in the browser; Continue doesn't check one.</td></tr>
+<tr><td>Readiness vs step-up</td><td>The handler decides <code>enroll-app | confirm | confirmed</code> from enrolment and a recent confirmation (<code>sign-in-http-handler.ts:249–264</code>).</td><td>A returning person with an old confirmation is shown “confirm” as if setup were pending; readiness and step-up need separating (R53, R57).</td></tr>
+<tr><td>Invitation page, Accept or Decline</td><td>Accept exists natively; no page.</td><td>Page and guarded Decline.</td></tr>
+<tr><td>Account page</td><td>None.</td><td>Account page with your factors and B1-C's choice surface.</td></tr>
+<tr><td>Staging without you</td><td>None.</td><td>Staging entrypoint, test identities, reset, journeys after each deploy, production refusal.</td></tr>
+</tbody></table></div>
+
+<h2 id="admission">Admission</h2>
+<p>The old allowed-email and deployment-owner admission is gone: migration <code>0001_organization_access.sql:1–7</code> drops its tables. Admission today is native: the configured owner, members, or a verified email with a pending unexpired invitation (<code>storage/person-session-store.ts:35–86</code>). BG keeps it and removes nothing here.</p>
+
+<h2 id="native">Native behaviour BG must respect</h2>
+<ul>
+<li><strong>Accept</strong> (<code>crud-invites.mjs:264–349</code>) checks the recipient, claims <code>pending → accepted</code> conditionally, creates the member, and rolls back on failure. It is not one atomic write.</li>
+<li><strong>Reject</strong> (<code>crud-invites.mjs:373–406</code>) checks pending and then writes by ID with no condition and no expiry check; it stays closed. BG adds its own Decline that writes only while pending.</li>
+<li><strong>Get invitation</strong> (<code>crud-invites.mjs:498–522</code>) checks the signed-in recipient's verified email before details, so a wrong account learns nothing.</li>
+<li><strong>testUtils</strong> provides helpers, not routes; its login uses <code>internalAdapter.createSession</code>, so our session hooks still run.</li>
+</ul>
+
+<h2 id="deps">What BG consumes</h2>
+<ul>
+<li><strong>B1-C:</strong> <code>readPersonOrganizationContext</code>, native set-active, and the choice surface; B1-C's split of “memberships shown” from “selection required”.</li>
+<li><strong>B1-B:</strong> passkey sign-in, for journey 5.</li>
+<li><strong>B2:</strong> real organization setup at Central, for the organization step.</li>
+</ul>
+
+<h2 id="tests">Existing tests</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Test</th><th>Asserts</th><th>Fate</th></tr></thead>
+<tbody>
+<tr><td><code>people-owner-page.host.e2e.test.ts</code></td><td>Served-page choice and real CLI continuation.</td><td>Retargeted to the new pages.</td></tr>
+<tr><td><code>people-organization-page.host.e2e.test.ts:84–86</code></td><td>Short-name autofill refills after the field is cleared.</td><td>Contradicts R60 (stop following once edited); retarget.</td></tr>
+<tr><td><code>people-organization-page.host.e2e.test.ts:137–230</code></td><td>Creation needs app confirmation; duplicate short name.</td><td>Kept.</td></tr>
+<tr><td>Factor enrolment tests</td><td>Enable and verify.</td><td>Kept, plus recovery-code Finish.</td></tr>
+</tbody></table></div>
+
+<h2 id="state">States our code moves</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>State</th><th>Where</th><th>BG treatment</th></tr></thead>
+<tbody>
+<tr><td>Which page a request gets</td><td>New: <code>decideSetupPage</code></td><td>M1, pure decision with Hegel.</td></tr>
+<tr><td>Our Decline on an invitation</td><td>Invitation row (native table)</td><td>M2, conditional write pending → rejected.</td></tr>
+<tr><td>The page's command-line continuation</td><td>Page URL and script</td><td>M3, with the fixed deadline.</td></tr>
+<tr><td>A staging test identity</td><td>Staging database only</td><td>M4: absent, created, signed in, reset.</td></tr>
+</tbody></table></div>
+
+<h2 id="removes">Removed and kept</h2>
+<ul>
+<li><strong>Removed:</strong> <code>/owner-ready</code> and its Continue button (hard cutover, no redirect); the owner-page component and footer; the inline page scripts it uses.</li>
+<li><strong>Kept:</strong> native admission, Accept, Get invitation; second-factor rules; owner bootstrap; B1-C's choice surface (moved to the account page).</li>
+</ul>
+</ex-document>
+</body>
+</html>

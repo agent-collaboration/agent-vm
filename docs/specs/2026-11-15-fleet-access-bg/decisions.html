@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BG · Getting in · Decisions</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
+<a href="../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
+<a href="audit.html">BG · 1 Audit</a>
+<a href="requirements.html">BG · 2 Requirements</a>
+<a href="specification.html">BG · 3 Specification</a>
+<a href="program-design.html">BG · 4 Program Design</a>
+<a href="verification-design.html">BG · 5 Verification Design</a>
+<a href="plan.html">BG · 6 Plan</a>
+<a href="decisions.html">BG · 7 Decisions</a>
+</nav></ex-nav>
+<ex-document id="doc">
+<h1>BG · Getting in: Decisions</h1>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What to check" tone="note" icon="shield-check">
+<p>The three assumption groups below have waited since 30 Oct. Each has an agree or disagree picker.</p>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p>Notably P03 (the 300-second command-line deadline), P16 (no redirect from <code>/owner-ready</code>), S08 (only Google checked at release) and S06 (what a staging reset deletes).</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>The 6 Nov approval is quoted; the assumption lists come from <code>tmp/2026-10-30-lead-pages/assumptions-by-deliverable.html</code>, unanswered.</p>
+</ex-callout>
+
+<h2 id="decided">Already decided by you</h2>
+<ex-card title="Getting in, all six journeys, account landing, staging helpers, real release sign-in" tone="done" icon="path" tag="6 Nov · review 58647d30" pick>
+<p>Your selections in review 58647d30 (Fleet transcript 86867), including <em>“Your account page: your second factors, your organizations (choose one), and a clear ‘done’”</em> and <em>“returning sign-in (step-up only for changes)”</em>.</p>
+</ex-card>
+<ex-card title="Overall design approved" tone="done" icon="book-open" tag="4 Nov" pick>
+<p><em>“yes you need anytnhign?”</em> (Fleet transcript 71226, 71230).</p>
+</ex-card>
+<ex-card title="Pure transitions and Hegel" tone="done" icon="code" tag="15 Nov · 142100" pick>
+<p><em>“righ ok let smake srue we use hegel then an dpure transiton fucitons with exatsutiveness in enukms or helpers and make good plans on hegel then”</em>.</p>
+</ex-card>
+
+<h2 id="calls">My calls</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Call</th><th>Why</th><th>Should it have been yours?</th></tr></thead>
+<tbody>
+<tr><td>Readiness depends on enrolment only, not on how recent the confirmation is</td><td>R53, your “step-up only for changes”.</td><td>No.</td></tr>
+<tr><td>Decline writes an intent and an outcome record like other people changes</td><td>OD26 “record first, then confirm”.</td><td>No.</td></tr>
+<tr><td>Staging reset also removes the test organizations' Central stores</td><td>Otherwise Central keeps orphaned stores across runs.</td><td>Possibly: part of S06's scope.</td></tr>
+</tbody></table></div>
+
+<h2 id="assumptions">Open: the three assumption groups</h2>
+<p>Each group's full list, with sources and what changes if you disagree, is on the <a href="../../../tmp/2026-10-30-lead-pages/assumptions-by-deliverable.html">30 Oct assumptions page</a>. The short version:</p>
+
+<h3 id="pages">BG pages (P01–P19)</h3>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>ID</th><th>Assumption</th></tr></thead>
+<tbody>
+<tr><td>P01</td><td>Our validated authorize continuation, not Better Auth's native postLogin.</td></tr>
+<tr><td>P02</td><td>The CLI deadline in the URL is unsigned.</td></tr>
+<tr><td>P03</td><td>The deadline is the CLI's existing ~300-second wait, never extended.</td></tr>
+<tr><td>P04</td><td>Return destination only in page URLs; no stored flow record.</td></tr>
+<tr><td>P05</td><td>Malformed destination → none, not a 503.</td></tr>
+<tr><td>P06</td><td>An invitation destination can carry a remaining CLI destination.</td></tr>
+<tr><td>P07–P09</td><td>Stay on recovery codes until Finish; codes only in page memory; reload loses them.</td></tr>
+<tr><td>P10–P12</td><td>Server-rendered React with small controllers; dark only; 400 px floor.</td></tr>
+<tr><td>P13</td><td>Short-name autofill stops once edited.</td></tr>
+<tr><td>P14</td><td>A setup read error is 503.</td></tr>
+<tr><td>P15</td><td>Bootstrap on continuation, Try again on failure; a member fails if the owner client doesn't exist yet.</td></tr>
+<tr><td>P16</td><td>Remove <code>/owner-ready</code> with no redirect.</td></tr>
+<tr><td>P18</td><td>No invitation resend: cancel and invite again.</td></tr>
+<tr><td>P19</td><td>Our pending-guarded Decline, not native reject.</td></tr>
+</tbody></table></div>
+<ex-choice id="pick-bg" title="BG pages: P01–P19">
+<ex-option id="pick-bg-agree" title="Agree with all"><template slot="summary">Build on them as written.</template></ex-option>
+<ex-option id="pick-bg-some" title="Disagree with some"><template slot="summary">Name the IDs and what you want instead.</template></ex-option>
+</ex-choice>
+
+<h3 id="staging">BG staging (S01–S17)</h3>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>ID</th><th>Assumption</th></tr></thead>
+<tbody>
+<tr><td>S01, S02</td><td>Test identities under <code>.invalid</code>; staging's configured owner is a test identity.</td></tr>
+<tr><td>S03, S04</td><td>A separate staging entrypoint with testUtils, same factory and options otherwise.</td></tr>
+<tr><td>S05</td><td>Staging routes protected by a secret from agent-vault.</td></tr>
+<tr><td>S06</td><td>Each run resets test users, sessions, memberships and organizations owned only by test users.</td></tr>
+<tr><td>S07</td><td>The dedicated real test account sits outside the test domain and is re-invited after each reset.</td></tr>
+<tr><td>S08</td><td>Google only for the release check; GitHub unverified hosted.</td></tr>
+<tr><td>S09, S10</td><td>Virtual authenticator for passkeys; headless Chrome with phone emulation.</td></tr>
+<tr><td>S11, S12</td><td>TOTP from the shown key and the server's Date; timing proven locally only.</td></tr>
+<tr><td>S13, S14</td><td>Staging D1 read remotely for the oracle; four production negatives suffice.</td></tr>
+<tr><td>S16, S17</td><td>BG waits for B2; separate databases and secrets.</td></tr>
+</tbody></table></div>
+<ex-choice id="pick-bgs" title="BG staging: S01–S17">
+<ex-option id="pick-bgs-agree" title="Agree with all"><template slot="summary">Build on them as written.</template></ex-option>
+<ex-option id="pick-bgs-some" title="Disagree with some"><template slot="summary">Name the IDs and what you want instead.</template></ex-option>
+</ex-choice>
+
+<h3 id="release">BG release record (S15)</h3>
+<p>Staging and production are separate Workers built from the same git SHA with different entrypoints and config; the release record holds the git SHA and, per environment, the Worker version ID and the recorded observations.</p>
+<ex-choice id="pick-bgg" title="BG release record: S15">
+<ex-option id="pick-bgg-agree" title="Agree"><template slot="summary">Build on it as written.</template></ex-option>
+<ex-option id="pick-bgg-some" title="Disagree"><template slot="summary">Say what you want instead.</template></ex-option>
+</ex-choice>
+<ex-callout title="If you defer" tone="risk" icon="clock"><p>BG can't start; every page and staging step rests on these.</p></ex-callout>
+</ex-document>
+</body>
+</html>

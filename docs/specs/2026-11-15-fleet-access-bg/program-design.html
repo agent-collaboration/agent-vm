@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BG · Getting in · Program Design</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
+<a href="../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
+<a href="audit.html">BG · 1 Audit</a>
+<a href="requirements.html">BG · 2 Requirements</a>
+<a href="specification.html">BG · 3 Specification</a>
+<a href="program-design.html">BG · 4 Program Design</a>
+<a href="verification-design.html">BG · 5 Verification Design</a>
+<a href="plan.html">BG · 6 Plan</a>
+<a href="decisions.html">BG · 7 Decisions</a>
+</nav></ex-nav>
+<ex-document id="doc">
+<h1>BG · Getting in: Program Design</h1>
+<p>How it's built in <code>packages/sign-in-core/src/</code>, the owner CLI and the Cloudflare host.</p>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What to check" tone="note" icon="shield-check">
+<p><a href="#m1">The page decision</a> is one pure function with no stored flow state. <a href="#m2">Decline</a> is one conditional write. <a href="#staging">Staging</a> is a separate entrypoint built from the same factory.</p>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p>Follows the 30 Oct assumptions as proposed (P01–P19, S01–S17, S15).</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>Matches the approved BG parts tree; Better Auth 1.7.11.</p>
+</ex-callout>
+
+<h2 id="parts">Parts</h2>
+<ex-mermaid id="parts-picture" label="BG parts" data-width="canvas"><script type="text/plain">
+flowchart TB
+  req["GET /sign-in, /setup, /invitation/:id, /account"] --> facts["Read facts: session, factors, B1-C context, invitation"]
+  facts --> decide["decideSetupPage: M1"]
+  decide --> pages["One page component per kind"]
+  pages --> cont["Continuation script: M3"]
+  pages --> decline["Decline endpoint: M2"]
+  cli["Owner CLI: adds deadline"] --> req
+  staging["Staging entrypoint + testUtils: M4"] --> req
+  class req,cli slot1
+  class facts,decide,pages,cont,decline,staging slot2
+</script></ex-mermaid>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>File</th><th>New / changed</th><th>Job</th></tr></thead>
+<tbody>
+<tr><td><code>setup-flow/decide-setup-page.ts</code></td><td>New</td><td>M1: facts, destination, now → page.</td></tr>
+<tr><td><code>setup-flow/return-destination.ts</code></td><td>New</td><td>Parse and serialize the URL destination; invalid → none.</td></tr>
+<tr><td><code>setup-flow/setup-facts.ts</code></td><td>New</td><td>Reads session, factor enrolment, B1-C's <code>readPersonOrganizationContext</code>, the configured owner, and invitation status for a destination.</td></tr>
+<tr><td><code>pages/setup/*.tsx</code></td><td>New</td><td>Sign-in, authenticator, organization, invitation, choose organization, account pages on the shared shell, with a step indicator.</td></tr>
+<tr><td><code>pages/islands/command-line-continuation.ts</code></td><td>New</td><td>M3: checks the deadline, bootstraps (owner), navigates to authorize.</td></tr>
+<tr><td><code>better-auth/invitation-decline-plugin.ts</code></td><td>New</td><td>M2 endpoint <code>POST /api/auth/organization/decline-invitation</code>.</td></tr>
+<tr><td><code>better-auth/sign-in-http-handler.ts</code>, <code>response-release/sign-in-request-handler.ts</code></td><td>Changed</td><td>Routes for the four pages; allowlist adds <code>get-invitation</code>, Decline and passkey sign-in; <code>/owner-ready</code> removed.</td></tr>
+<tr><td><code>pages/owner-page.tsx</code>, <code>better-auth/owner-page-script.ts</code></td><td>Removed</td><td>Replaced by the step pages.</td></tr>
+<tr><td><code>packages/sign-in-owner-cli/src/owner-cli-login.ts</code>, <code>loopback-authorization.ts</code></td><td>Changed</td><td>Adds <code>deadline</code> = start + the existing 300,000 ms wait to the opened URL; the wait ends at that same instant.</td></tr>
+<tr><td><code>packages/sign-in-host-cloudflare/src/staging/</code></td><td>New</td><td>Staging entrypoint, two routes, test identities.</td></tr>
+</tbody></table></div>
+
+<h2 id="m1">M1 · The page decision</h2>
+<ex-code lang="typescript" title="setup-flow/decide-setup-page.ts"><script type="text/plain">
+type SetupFacts =
+  | { kind: 'signed-out' }
+  | { kind: 'unavailable' }
+  | { kind: 'signed-in';
+      factor: 'never-enrolled' | 'enrolled';
+      context: PersonOrganizationContext; // from B1-C
+      configuredOwner: boolean;
+      invitation: { id: Uuid7; forThisPerson: boolean; status: 'pending' | 'answered' | 'expired' } | null };
+type ReturnDestination =
+  | { kind: 'commandLine'; authorize: string; deadlineMs: EpochMilliseconds }
+  | { kind: 'invitation'; invitationId: Uuid7; then: ReturnDestination | null }
+  | { kind: 'none' };
+type SetupPage =
+  | { kind: 'signIn' } | { kind: 'unavailable' }
+  | { kind: 'step'; step: { kind: 'secondFactor' } | { kind: 'organization'; offer: 'create' | 'invitations' | 'askForInvitation' } }
+  | { kind: 'invitation'; invitationId: Uuid7 }
+  | { kind: 'chooseOrganization' }
+  | { kind: 'continueCommandLine'; authorize: string; deadlineMs: EpochMilliseconds }
+  | { kind: 'account'; notice: 'commandLineExpired' | null };
+export function decideSetupPage(facts: SetupFacts, destination: ReturnDestination, now: EpochMilliseconds): SetupPage;
+</script></ex-code>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Facts and destination</th><th>Page</th></tr></thead>
+<tbody>
+<tr><td>signed-out</td><td>signIn (destination kept in the URL)</td></tr>
+<tr><td>unavailable</td><td>unavailable (503)</td></tr>
+<tr><td>factor never-enrolled</td><td>step secondFactor</td></tr>
+<tr><td>no memberships, destination is a pending invitation for this person</td><td>invitation</td></tr>
+<tr><td>no memberships</td><td>step organization: create if configured owner, invitations if any pending for this email, else askForInvitation</td></tr>
+<tr><td>invitation destination, pending, for this person</td><td>invitation</td></tr>
+<tr><td>commandLine, now &lt; deadline, no current organization (several memberships)</td><td>chooseOrganization</td></tr>
+<tr><td>commandLine, now &lt; deadline, ready</td><td>continueCommandLine</td></tr>
+<tr><td>commandLine, now ≥ deadline</td><td>account, notice commandLineExpired</td></tr>
+<tr><td>otherwise</td><td>account</td></tr>
+</tbody></table></div>
+<p>Each row is a case in a switch on the facts' kind with an inline <code>x satisfies never</code>. Readiness reads enrolment only; a stale confirmation never routes to a setup step. The handler reads facts once per request and renders the chosen page; GET never writes.</p>
+
+<h2 id="factor">Authenticator step and recovery codes</h2>
+<p>The step page uses Better Auth's <code>two-factor/enable</code> and <code>verify-totp</code>. After a correct code, the island holds the recovery codes from <code>enable</code>'s reply in memory only and shows them with a Finish button; navigation away is disabled until Finish, which then GETs <code>/setup</code>. A reload re-decides: the factor is enrolled, so the codes are gone.</p>
+
+<h2 id="m2">M2 · Decline</h2>
+<p>States <code>pending | accepted | rejected | canceled</code> as Better Auth stores them; our only transition is <code>pending → rejected</code>. Endpoint (in <code>invitation-decline-plugin.ts</code>, beside <code>passkey-confirmation-plugin.ts</code>): require a verified current session whose email equals the invitation's; then one Drizzle update <code>status = 'rejected' WHERE id = ? AND status = 'pending' AND expiresAt &gt; now</code>. One row changed → declined; zero rows → re-read: accepted or rejected → <code>already-answered</code>; expired → <code>expired</code>; not found or not the recipient → <code>not-found</code> (no detail). An intent record is written before and an outcome after, like the other people changes.</p>
+
+<h2 id="m3">M3 · Command-line continuation</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>From</th><th>Event</th><th>Next and effects</th></tr></thead>
+<tbody>
+<tr><td>ready(authorize, deadline)</td><td><code>start</code>, now &lt; deadline, owner</td><td>bootstrapping; [post-bootstrap]</td></tr>
+<tr><td>ready</td><td><code>start</code>, now &lt; deadline, member</td><td>navigating; [check-deadline-then-navigate(authorize)]</td></tr>
+<tr><td>bootstrapping</td><td><code>bootstrapped</code></td><td>navigating; [check-deadline-then-navigate]</td></tr>
+<tr><td>bootstrapping</td><td><code>bootstrap-failed</code></td><td>retryable; [show Try again]</td></tr>
+<tr><td>any</td><td><code>deadline-reached</code></td><td>expired; [go /account?notice=commandLineExpired]</td></tr>
+</tbody></table></div>
+<p>The script reads the injected page clock; tests control it. Authorize uses skip-consent for the Fleet CLI client, as today.</p>
+
+<h2 id="staging">Staging</h2>
+<ul>
+<li><strong>Entrypoint.</strong> <code>sign-in-host-cloudflare/src/staging/index.ts</code> builds the same configuration with the same core factory and options, plus Better Auth's <code>testUtils</code> plugin. Its own Worker, D1 and auth secret.</li>
+<li><strong>Routes,</strong> each requiring the staging secret (from agent-vault): <code>POST /__staging/test-identity</code> creates or finds a user under the <code>.invalid</code> test domain with verified email and signs it in through <code>testUtils</code>, returning its cookie; <code>POST /__staging/reset</code> deletes test-domain users, their sessions and memberships, organizations owned only by test users, and asks Central to remove those organizations' stores.</li>
+<li><strong>M4 · test identity:</strong> absent → created → signed-in → reset; reset only matches the test domain.</li>
+<li><strong>Run.</strong> A script <code>scripts/verify-auth/staging-journeys.mts</code> resets, creates identities, drives the six journeys in headless Chrome from signed-in identities, and computes TOTP codes from the displayed key and the server's Date header.</li>
+<li><strong>Production checks</strong> in the same script against production: <code>/__staging/*</code> → 404; a staging cookie → refused; artifact search finds no <code>testUtils</code>; configured owner not under the test domain.</li>
+</ul>
+
+<h2 id="trace">Rule homes</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Rule</th><th>Home</th><th>Proof seam</th></tr></thead>
+<tbody>
+<tr><td>S1</td><td>M1, handler</td><td>Hegel over facts × destination × time; served pages</td></tr>
+<tr><td>S2</td><td>Authenticator island</td><td>Real enable and verify; reload</td></tr>
+<tr><td>S3</td><td>CLI, M3</td><td>Controlled deadline; real CLI</td></tr>
+<tr><td>S4, S5</td><td>Account and invitation pages</td><td>Real Chrome</td></tr>
+<tr><td>S6</td><td>M2</td><td>Accept vs Decline races on both databases</td></tr>
+<tr><td>S7–S9</td><td>Staging entrypoint, script</td><td>Staging deploy; production checks</td></tr>
+<tr><td>S10, S11</td><td>Pages; machines</td><td>Browser; Hegel</td></tr>
+</tbody></table></div>
+</ex-document>
+</body>
+</html>
