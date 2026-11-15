@@ -70,7 +70,7 @@ flowchart TB
 <tr><td><strong>Release check</strong> (R52, U42)</td><td>Staging, after deploy, no owner action</td><td>One real provider sign-in with the real Turnstile check</td><td>Turnstile skipped, or siteverify faked</td><td><strong>Not run</strong>: runs with BG's staging proof</td></tr>
 </tbody>
 </table></div>
-<p><strong>Named limits, as your design already states:</strong> Better Auth's own expiry clock is checked on Node only. Resetting the rate-limit binding and its counting across Cloudflare locations is checked on the private stack, not locally.</p>
+<p><strong>Named limits, as your design already states:</strong> Better Auth's own expiry clock is checked on Node only. The binding's reset is checked once on the private stack. Counting across deployed Cloudflare locations stays unverified, as your design says.</p>
 </section>
 
 <section id="accept"><h2>2. How acceptance happens, and the map</h2>
