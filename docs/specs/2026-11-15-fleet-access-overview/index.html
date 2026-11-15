@@ -12,73 +12,43 @@
   <a href="index.html">Fleet access overview</a>
   <a href="../2026-11-15-fleet-access-b1/index.html">B1 People, roles, sign-in</a>
 </nav></ex-nav>
-<ex-document id="home" document-id="fleet-access-overview-2026-11-15" revision="2026-11-15.1">
-<h1>Fleet access: every deliverable, and the order they come in</h1>
+<ex-document id="home">
+<h1>Fleet access: overview</h1>
 
-<ex-callout id="answer" title="Where things stand" tone="tldr">
-<p><strong>Your stop holds:</strong> there's no development, only verification, review and design documents. Each deliverable gets its own set of eight pages: <strong>Audit · Requirements · Specification · Program Design · Verification Design · Plan · Decisions · Inventory</strong>. We go one at a time. <strong>B1 is first</strong>; its set is being written now. When you've read it, B2 follows.</p>
-<p><strong>Verdicts from the independent review:</strong> all five are partly delivered. B3 is the furthest off: login and refresh work, but its core outcomes are missing and one step is built wrong.</p>
-</ex-callout>
-
-<h2 id="sequence">The order</h2>
-<p>This is the order you approved on 2 Nov (design index §10). Each arrow means the next one builds on the one before. <strong>Key:</strong> amber is partly delivered, rose is the furthest off, blue is not started.</p>
-<ex-mermaid data-width="canvas" id="order" label="Fleet access deliverables in order, coloured by state"><script type="text/plain">
+<h2 id="sequence">Sequence: what comes first, and what runs in parallel</h2>
+<p>Each arrow means the next deliverable builds on the one before. Boxes side by side after the same arrow can run in parallel. <strong>Key:</strong> amber has its design set written, blue doesn't yet.</p>
+<ex-mermaid id="order" label="Fleet access deliverables: sequence and parallel work" data-width="canvas"><script type="text/plain">
 flowchart TB
-  B1["B1 People, roles, sign-in<br/>partly delivered"] --> B2["B2 Central organizations<br/>partly delivered"]
-  B2 --> B2X["B2 additions: person tokens, revocation<br/>partly delivered"]
-  B2 --> BG["BG Getting in, staging proof<br/>partly delivered"]
-  B2X --> B3["B3 Machine login, locked link<br/>partly: core missing, one defect"]
-  B3 --> B4["B4 Sessions through their machine<br/>not started"]
-  B3 --> B5["B5 Authenticated CLI<br/>not started"]
+  B1["B1 People, roles, sign-in"] --> B2["B2 Central organizations"]
+  B2 --> B2X["B2 additions<br/>person tokens, revocation"]
+  B2 --> BG["BG Getting in<br/>setup pages, staging proof"]
+  B2X --> B3["B3 Machine login, locked link"]
+  B3 --> B4["B4 Sessions through their machine"]
+  B3 --> B5["B5 Authenticated CLI"]
   BG --> SW(["Your switch: every machine logs in again"])
   B4 --> SW
   B5 --> SW
-  SW --> B6["B6 to B9: traces, who is in,<br/>remote start, members view"]
-  class B1,B2,B2X,BG slot2
-  class B3 slot5
-  class B4,B5,SW,B6 slot1
+  SW --> B6["B6 to B9<br/>traces, who is in, remote start, members view"]
+  class B1 slot2
+  class B2,B2X,BG,B3,B4,B5,SW,B6 slot1
 </script></ex-mermaid>
+<p><strong>In parallel:</strong> B2 additions and BG, after B2. B4 and B5, after B3. <strong>In sequence:</strong> the 2–4 hour items inside each deliverable, each behind its gate.</p>
 
-<h2 id="items">Each deliverable is cut into 2–4 hour items</h2>
-<p>Each item is something tangible the Implementer and Verifier pair can finish in 2–4 hours, with a gate that must pass before the next item starts. Anything not delivered comes to you before an item is accepted. B1's seven items and their gates are on <a href="../2026-11-15-fleet-access-b1/plan.html#order">the B1 Plan</a>. The other deliverables are cut the same way when their sets are written.</p>
-
-<h2 id="how">How each deliverable's set is made</h2>
-<ex-mermaid data-width="canvas" id="set-flow" label="How one deliverable's set is made and checked"><script type="text/plain">
-flowchart TB
-  A["1 Audit: independent review<br/>against your approved design"] --> D["2 to 5: the four design documents<br/>split from your approved set"]
-  D --> P["6 Plan: verification, acceptance,<br/>reviewer packet"]
-  P --> C["7 Decisions: yours, mine, open"]
-  C --> I["8 Inventory: built, mistakes, replacements"]
-  I --> T["Terra medium checks every page"]
-  T --> O["You read it and decide"]
-  class A,D,P,C,I slot1
-  class T,O slot6
-</script></ex-mermaid>
-<p>The four design documents are split from your approved Fleet access design (2 Nov). They aren't rewritten. Every row keeps its original ID and links back to its source. Where you later decided something different, the original is shown, marked superseded, with your newer words and where you said them.</p>
-
-<h2 id="deliverables">The deliverables</h2>
+<h2 id="deliverables">Deliverables and approval</h2>
+<p>You approved the overall design, B1 and B2 on 4 Nov (<a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl">Fleet transcript</a> line 71230). Your stop on 15 Nov paused all development until you understand each design. So nothing has a go-ahead now. Each deliverable gets one when you approve its design set.</p>
 <table>
-<thead><tr><th>#</th><th>Deliverable</th><th>What it gives you</th><th>Verdict now</th><th>Its pages</th></tr></thead>
+<thead><tr><th>Deliverable</th><th>Design set</th><th>Approved with go-ahead</th></tr></thead>
 <tbody>
-<tr><td>1</td><td><strong>B1</strong> People, roles and sign-in</td><td>Sign in with a second factor, create your organization, invite and remove people with records.</td><td>Partly delivered: passkey sign-in, the membership lookup and organization switching are missing; three proof defects.</td><td><a href="../2026-11-15-fleet-access-b1/index.html">B1 set</a> (being written)</td></tr>
-<tr><td>2</td><td><strong>B2</strong> Central's organizations</td><td>Central sets up the organization for real; admin actions run under the checked permission; organizations stay apart.</td><td>Partly delivered: the full workspace list, renewal status and safe key retirement are missing.</td><td>Set next. Audit so far: <a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-15-full-review/report-B2.html">report-B2</a></td></tr>
-<tr><td>3</td><td><strong>B2 additions</strong> Person tokens and revocation</td><td>Signed-in people get short tokens; signing out or removal ends them; the CLI logs in.</td><td>Partly delivered: CLI device-code login is missing; pending confirmations aren't visible; main can't read some new central records.</td><td>Audit so far: <a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-15-full-review/report-B2-additions.html">report-B2-additions</a></td></tr>
-<tr><td>4</td><td><strong>BG</strong> Getting in, and the staging proof</td><td>The six setup and invitation journeys on designed pages, proven on staging after each deploy, without you touching staging.</td><td>Partly delivered: the full setup and invitation flow, passkey sign-in and the staging run are missing.</td><td>Audit so far: <a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-15-full-review/report-BG.html">report-BG</a></td></tr>
-<tr><td>5</td><td><strong>B3</strong> Machine login and the locked link</td><td>Approve a machine by device code; it connects only through sign-in; revoking it refuses it at once.</td><td>Partly delivered, the furthest off: login and refresh work, but revoke, workspace choice, the live connection and safe local saving are missing, and denying a code skips the recent second factor.</td><td>Audit so far: <a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-15-full-review/report-B3.html">report-B3</a></td></tr>
-<tr><td>6+</td><td><strong>B4–B9</strong></td><td>Sessions through their machine, the authenticated CLI, then traces, who is logged in, remote start and members in the view.</td><td>Not started.</td><td>None yet.</td></tr>
+<tr><td><strong>B1</strong> People, roles, sign-in</td><td><a href="../2026-11-15-fleet-access-b1/index.html">B1 design set</a></td><td>Not yet. Waiting for your approval of this set.</td></tr>
+<tr><td><strong>B2</strong> Central organizations</td><td>Not written yet</td><td>Not yet</td></tr>
+<tr><td><strong>B2 additions</strong> Person tokens, revocation</td><td>Not written yet</td><td>Not yet</td></tr>
+<tr><td><strong>BG</strong> Getting in</td><td>Not written yet</td><td>Not yet</td></tr>
+<tr><td><strong>B3</strong> Machine login, locked link</td><td>Not written yet</td><td>Not yet</td></tr>
+<tr><td><strong>B4</strong> Sessions through their machine</td><td>Not written yet</td><td>Not yet</td></tr>
+<tr><td><strong>B5</strong> Authenticated CLI</td><td>Not written yet</td><td>Not yet</td></tr>
+<tr><td><strong>B6–B9</strong></td><td>Not written yet</td><td>Not yet</td></tr>
 </tbody>
 </table>
-<p>The one register across all deliverables (every finding, with its owner): <a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-15-full-review/integration.html">integration.html</a>.</p>
-
-<h2 id="open">Waiting on you across the lane</h2>
-<p>Each one lives on its deliverable's Decisions page once that set exists. Until then they're on <a href="file:///Users/shravansunder/dev/memory-logs/projects/2026/2026-11-codex-router/owner-pages/2026-11-15-fleet-access-audit.html">the audit-of-my-assumptions page</a>:</p>
-<ul>
-<li><strong>B3:</strong> machine-login storage A, confirm or discuss (you asked about the costs and didn't confirm).</li>
-<li><strong>B2 additions:</strong> how CLI <code>--device</code> login keeps sign-out ending the token (A/B/C).</li>
-<li><strong>BG:</strong> the BG choices from 30 Oct that were never answered (to come as their own page).</li>
-<li><strong>B3:</strong> what happens to the frozen #11 and #14, once you've read the design.</li>
-</ul>
-<p><strong>B1:</strong> one confirmation, the second-factor SQL that merged in #9 without coming to you (<a href="../2026-11-15-fleet-access-b1/decisions.html#sql">B1 Decisions</a>). Everything else open in B1 is build or proof work your design already decides.</p>
 </ex-document>
 </body>
 </html>
