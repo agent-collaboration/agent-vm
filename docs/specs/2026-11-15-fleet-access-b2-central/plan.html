@@ -1,211 +1,104 @@
 <!doctype html>
-<html lang="en"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>B2 · Central organizations · Plan</title>
 <link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
 <script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
-</head><body>
+</head>
+<body>
 <ex-nav for="doc"><nav slot="pages" aria-label="Pages">
 <a href="../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
-<a href="audit.html">B2 · 1 Audit</a><a href="requirements.html">B2 · 2 Requirements</a>
-<a href="specification.html">B2 · 3 Specification</a><a href="program-design.html">B2 · 4 Program Design</a>
-<a href="verification-design.html">B2 · 5 Verification Design</a><a href="plan.html">B2 · 6 Plan</a><a href="decisions.html">B2 · 7 Decisions</a>
+<a href="audit.html">B2 · 1 Audit</a>
+<a href="requirements.html">B2 · 2 Requirements</a>
+<a href="specification.html">B2 · 3 Specification</a>
+<a href="program-design.html">B2 · 4 Program Design</a>
+<a href="verification-design.html">B2 · 5 Verification Design</a>
+<a href="plan.html">B2 · 6 Plan</a>
+<a href="decisions.html">B2 · 7 Decisions</a>
 </nav></ex-nav>
 <ex-document id="doc">
 <h1>B2 · Central organizations: Plan</h1>
-<p><strong>One Switchboard feature PR, after its real dependencies, with independent observation and review.</strong> This page contains the four packets. It commissions no product work now. The owner choices and design approval remain prerequisites; production key execution remains an owner step.</p>
-<h2 id="three">The three things for you</h2>
-<ex-callout title="1 · What you should check" tone="note" icon="shield-check"><p>The acceptance map covers S1–S16, H1–H4 and old-code removal. The Verifier observes both real pairings; the reviewer begins with your words and what the change drops. State/effect models and real host races are distinct required evidence.</p></ex-callout>
-<ex-callout title="2 · Decisions that change what people see or do" tone="question" icon="users"><p>The <a href="decisions.html#open">retry, retirement and engine-surface choices</a> govern implementation. Live keys or a whole engine console here require the additional complete structural/proof design first. The owner separately supplies and runs production policy/key maintenance controls.</p></ex-callout>
-<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open"><p>Approved B2's whole-feature and real-pair proof remain the standard, with the owner's 4 Nov approval and later answers quoted in Requirements/Decisions. The Lead's 15 Nov Stage 2 direction fixes the sequencing and production boundary below. Nothing has been implemented or run by writing this plan.</p></ex-callout>
+<p>Four packets. <strong>Starts only when B1-A is merged, Lead A's directory-read slice and engine deliverable 1 are merged with their artifacts, you have answered the three choices, I have removed the unchosen branches and had the pages rechecked, and you give the go-ahead.</strong></p>
 
-<h2 id="sequence">Dependencies and order</h2>
-<ex-mermaid id="sequence-map" label="B2's actual dependencies and delivery order" data-width="canvas"><script type="text/plain">
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What to check" tone="note" icon="shield-check">
+<p>The two Central dependencies are named exactly. Production steps (key withdrawal, running the digest roll in production) are yours.</p>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p>Packets follow the recommendations; another answer changes the steps listed under Branch notes on Program Design.</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>The Reviewer judges against your words and the approved B2, never this plan.</p>
+</ex-callout>
+
+<h2 id="deps">Order and dependencies</h2>
+<ex-mermaid id="deps-picture" label="B2 dependencies" data-width="canvas"><script type="text/plain">
 flowchart TB
-  b1["B1-A merged<br/>injected capabilities and checks"] --> ready["Owner choices, reviewed B2 design<br/>and implementation go"]
-  engine["Lead A · deliverable 1<br/>Central engine merged"] --> directory["Lead A: central workspace directory read<br/>plus retired people-contract removal"]
-  engine --> policy["B2 native owner policy/refusals<br/>safe digest rollout design"]
-  policy --> ready
-  directory --> ready
-  ready --> build["Implementer<br/>one complete Switchboard PR"]
-  build --> verify["Independent Verifier<br/>both pairings on Sunclaw"]
-  verify --> lead["Lead reads source and receipts"]
-  lead --> review["Fresh independent review"]
-  review --> accept["Lead accepts scoped local delivery"]
-  accept --> production["Owner's separate production key operation"]
-  class b1,engine,directory slot4
-  class ready,production slot1
-  class build slot3
-  class verify,review slot2
-  class lead,accept slot6
+  b1a["B1-A merged"] --> go["Your go-ahead"]
+  dir["Lead A: workspace directory read merged, artifacts exported"] --> go
+  eng["Lead A: engine deliverable 1 merged"] --> go
+  answers["Your three answers"] --> go
+  go --> build["Implementer"]
+  build --> verify["Verifier, both pairings, Sunclaw"]
+  verify --> review["Reviewer"]
+  review --> accept["Lead acceptance"]
+  class b1a,dir,eng,answers slot1
+  class build slot2
+  class verify,review slot4
+  class accept slot6
 </script></ex-mermaid>
-<p><strong>Key:</strong> violet dependencies, blue owner authority, teal implementation, amber independent checks, green Lead acceptance. The engine was authorized for build on 15 Nov; neither that authorization nor this graph claims its merge has happened. B2's directory consumer starts after the named slice lands. No Central implementation is delegated to the B2 writer/Implementer.</p>
-<p><strong>Artifact home:</strong> all role returns below live in <code>docs/specs/2026-11-15-fleet-access-b2-central/work/</code> in <code>/Users/shravansunder/code/projects/agent-vm.design-portal-remediation</code>. The product is Switchboard, built in a new isolated AgentStudio worktree from its then-current main after B1-A. The Lead fills exact base/head, paired session addresses, Central dependency commit and source/artifact manifest at commission. Missing authority/target/pair holds implementation; it is not supplied by a model's guess.</p>
+<p><strong>Code:</strong> a new Agent Studio worktree of <code>/Users/shravansunder/code/projects/switchboard</code> from <code>main</code> after B1-A (and B1-C if merged). <strong>Hand-back:</strong> <code>docs/specs/2026-11-15-fleet-access-b2-central/work/</code>. I fill the pair's addresses and the pinned Central artifacts in <code>work/commission.md</code> first.</p>
 
 <h2 id="implementer">Packet 1 · Implementer</h2>
-<p><strong>Outcome:</strong> deliver S1–S16 through the real page/consumer/private maintenance path, with all four pure machines and exhaustive effect runners. Remove competing old transition branches and preserve meaningful tests. Owner-selected branches bind; a whole engine console or live key fence requires its complete approved extra design before implementation. The Lead supplies the model and paired Verifier address at commission.</p>
-<h3 id="impl-read">Read first</h3>
-<ul>
-<li>Switchboard's current <code>AGENTS.md</code>, its language/monorepo rules, B1-A's landed contract/diff, this set's Requirements, Specification, Program Design, Verification Design and selected Decisions.</li>
-<li>The approved B2 deliverable and later owner sources listed on Decisions. The Audit supplies source/history leads, not permission to weaken an outcome.</li>
-<li>The actual Central directory slice and exported fixtures at the Lead-supplied commit, including the corrupt-row body and removal receipt. The old baseline <code>e7b709f6</code> is not a substitute for that future commit.</li>
-<li>Installed Better Auth 1.7.11 native JWT/server-only/public adapter source before changing key composition. No private adapter imports or library patch.</li>
-</ul>
-<h3 id="impl-order">Implementation order</h3>
-<ex-mermaid id="implementation-order" label="Implementation follows its actual contract and state dependencies"><script type="text/plain">
-flowchart TB
-  deps["Frozen B1-A and Central slice"] --> contracts["Closed producer contracts<br/>and response/cursor decisions"]
-  contracts --> state["Authorized status and injected IDs"]
-  state --> page["Delivered island and shared confirmation"]
-  state --> keys["Selected private key procedure"]
-  page --> proof["Real pairings, browser, wrong builds<br/>old code removed and final gates"]
-  keys --> proof
-  class deps,contracts,state slot1
-  class page,keys slot3
-  class proof slot6
-</script></ex-mermaid>
-<p>Page and key work share the frozen authority contracts; their integrated proof is the final dependency, not an optional later phase.</p>
 <ol>
-<li><strong>Freeze dependencies:</strong> establish B1-A merged, accepted directory slice merged, owner choices recorded and explicit implementation go. Pin base, producer and fixture manifests. Create the single feature worktree/PR; leave Central code to Lead A.</li>
-<li><strong>Closed contracts:</strong> mirror the exact current producer fixtures. Add ListWorkspaces request/result, corrupt-row outcome, route/intent mapping and existing organization:view permission mapping. Admit every current record kind/origin. Add parser/cursor positive/negative unit cases; keep private/CLI result shapes unchanged except the agreed new directory family.</li>
-<li><strong>Engine compatibility and policy:</strong> read final Lead A engine P8 exports separately from the directory slice. Map owner-only repairWork and all four closed refusal variants; recompute the native-derived ten-permission artifact/digest. Add the small private existing-fence CAS writer and M4. Stop is N+1/old; resume is N+2/new after stopped ACK and compatible map; hold actual target issuance through resumed ACK, surviving runner restart. Normal pre-ACK issuance remains unchanged. Scope A exposes no new engine route; scope B waits for its complete approved consumer/UI/CLI/proof revision.</li>
-<li id="corrected-machine-packet"><strong>Pure lifecycle owners:</strong> retarget setup/renewal/key through M1–M3 and remove competing imperative decisions. Strictly parse stored variants; use inline <code>value satisfies never</code> at every state/event/effect switch boundary, with generic unreachable throws where needed; add no helper module. Preserve all matching in-flight results after pending expiry, including counts and stale reconciliation. Ready/unseeded enters M2 key-change seed/re-sign; setting-up remains blocked on explicit retry. Compare candidate state/proposed effects against independent models, then call production injected runners with deterministic store outcomes/recording ports to prove zero executed calls on lost writes. Keep phases ephemeral and real keys/stamps as reconstruction truth. Implement the H1–H4 shrinking mutants at their actual reducer/runner/storage/admission boundary and real D1/better-sqlite3 races.</li>
-<li><strong>Authorized state:</strong> add the coherent Drizzle joined read, native authorized state endpoint and pure sanitized status derivation. Test all status branches, private sentinels, permission/session expiry and zero renewal sends on status refresh. No schema migration or new attempt/status store.</li>
-<li><strong>IDs:</strong> extend the cookie-only create refusal variants with injected nextOperationId. Preserve original operation/content on unknown outcomes and uncertain lookup. Add exact source/response/island cases; do not reintroduce browser UUID formatting.</li>
-<li><strong>Page:</strong> replace the old standalone HTML controller with the existing page shell and strict island state. Reuse shared controls, AuthProvider and ConfirmSecondFactorStep unchanged. Add independent directory/history cursors, visible incomplete/corrupt states and sanitized status refresh. Consume a saved confirmation action at most once, ignoring late callbacks after cancel. Remove the old string page and controller together.</li>
-<li><strong>Selected retry:</strong> implement only the owner-selected contract and retarget the existing joint page/CLI replay tests. Branch A requires Lead A's indefinite-answer producer change first; branch B preserves bounded replay with honest own-ID reconciliation. Never turn a green old test into authority for a different promise.</li>
-<li><strong>Selected key operation:</strong> if A, implement native private preparation/re-sign/withdrawal with explicit host control and per-org nonsecret reports. Use the same core on Node and a separate named Worker maintenance entrypoint; ordinary gateway management and public HTTP receive no capability. Honor credential-safety and actual traffic drain. If B, stop this step for its approved epoch design; do not implement the maintenance branch as a fallback.</li>
-<li><strong>Real proof apparatus:</strong> extend both joint fixtures with preserving-state restart beside empty restart. Retain captured process exit/readiness and the same storage root. Integrate Lead A's actual record-insert/corruption proof seam or receipt; add no Central hook under this grant. Rebuild/re-pin final producer artifacts; retain all existing pin checks.</li>
-<li><strong>Product tests and real browser:</strong> retarget old admin/statement/relay/joint cases and page component driver. Add the permanent status/pagination/admin/key files and B2 Chrome scenario named below. Keep controlled clocks/events. Observe a pre-fix or wrong-build red for each changed outcome; installation/setup failure is not that red.</li>
-<li><strong>Required gates and handoff:</strong> run the actual checks below on the final head, retain counts/exits and qualified proof. Open the PR as a draft. Declare the immutable target to the paired Verifier; further repairs create a new target after all corrections.</li>
+<li><strong>Client.</strong> <code>ListWorkspaces</code>, page checks and the corruption body in <code>central-link/fleet-admin-client.ts</code>; widen record kinds and origins.</li>
+<li><strong>Forwarding.</strong> Add <code>ListWorkspaces</code>; attach <code>nextOperationId</code> from <code>platform.ids.nextId()</code> on definite <code>nameInUse</code>/<code>conflict</code>.</li>
+<li><strong>Status.</strong> <code>better-auth/organization-status.ts</code> with the strict reply; permission <code>organization:view</code>.</li>
+<li><strong>Page.</strong> Replace <code>organization-admin-page.ts</code> with <code>pages/organization-admin-page.tsx</code> and <code>pages/islands/organization-admin.tsx</code>; shipped <code>ConfirmSecondFactorStep</code>; delete the inline script and <code>freshOperationId</code>.</li>
+<li><strong>Machines.</strong> <code>organization-setup-transitions.ts</code> (M1), <code>organization-stamp-transitions.ts</code> (M2: move <code>decideOrganizationStampStep</code>, add <code>settleStampAnswer</code>), <code>key-retirement-transitions.ts</code> (M3), M4 in the island module. Turn the existing provisioning, renewal and key-change code into their runners without changing any conditional write.</li>
+<li><strong>Engine permission.</strong> Add <code>organization:repairWork</code> to the owner; new refusals; digest test; <code>organizations/policy-digest-roll.ts</code> with its conditional fence write.</li>
+<li><strong>Maintenance entry.</strong> <code>better-auth/sign-in-maintenance.ts</code>; a separate <code>WorkerEntrypoint</code> in the Cloudflare host; a Node host CLI subcommand.</li>
+<li><strong>Tests.</strong> Every file in V1–V10; move joint pins to Lead A's final artifacts; run each wrong build to red and back.</li>
+<li><strong>Gates and PR</strong> (below), on Sunclaw. One draft PR.</li>
 </ol>
-<h3 id="impl-grant">Allowed product and test files</h3>
-<div class="ex-table-scroll" data-width="canvas"><table><thead><tr><th>Home under Switchboard</th><th>Allowed work</th></tr></thead><tbody>
-<tr><td><code>packages/sign-in-core/src/central-link/fleet-admin-client.ts</code>; <code>organizations/fleet-admin-operation.ts</code>, <code>fleet-permission.ts</code>; <code>contract-fixtures/central-organization-admin/</code></td><td>Directory/record/corruption schemas, mappings and exact producer mirrors; associated existing unit cases.</td></tr>
-<tr><td><code>better-auth/fleet-admin-forwarding.ts</code>, <code>sign-in-http-handler.ts</code>, <code>provider-configuration.ts</code>, <code>response-release/sign-in-request-handler.ts</code>, actual relay consumers</td><td>Cookie response IDs, authorized page/status dispatch, native plugin composition and exact routes. Keep admission/release/factor semantics.</td></tr>
-<tr><td><code>organizations/organization-stamp-status.ts</code>, <code>better-auth/organization-admin-state-plugin.ts</code> (new); <code>storage/organization-stamp-store.ts</code> and existing model/store composition</td><td>Joined fact read, strict sanitized DTO and pure derivation; no persisted format change.</td></tr>
-<tr><td><code>pages/organization-admin-page.tsx</code>, <code>pages/islands/organization-admin-island.tsx</code> (new), island state/entry</td><td>Existing shell/design system and shipped confirmation. Delete <code>better-auth/organization-admin-page.ts</code> after callers switch.</td></tr>
-<tr><td><code>organizations/organization-key-maintenance.ts</code>, <code>better-auth/organization-key-maintenance-plugin.ts</code> (new), <code>storage/organization-membership-store.ts</code>, <code>native-jwt-options.ts</code>, public package exports</td><td>Selected private native-key operation, all-organization readonly inventory and unchanged explicit grace value. No new key store or library modification.</td></tr>
-<tr><td><code>packages/sign-in-host-node/</code> and <code>packages/sign-in-host-cloudflare/</code> maintenance composition/exports and their existing README/example binding guidance</td><td>Private host capability wiring; separate maintenance entrypoint with no automatic deployment or ordinary gateway binding.</td></tr>
-<tr><td><code>packages/sign-in-test-support/src/</code> existing admin/provision/statement/relay/joint/browser tests and their fixtures</td><td>Retargeted cases, secret/cursor/control observations, preserving-state restart, final producer pins and scoped new permanent tests.</td></tr>
-<tr><td>New tests</td><td>Core status unit test, admin-response/cursor unit cases, <code>core-tests/organization-admin-pagination.hegel.unit.test.ts</code>, <code>organization-admin-completion.host.e2e.test.ts</code>, <code>organization-key-maintenance.host.e2e.test.ts</code>, and the existing native-browser scenario's B2 case.</td></tr>
-<tr><td><code>.agents/skills/verify-auth/</code> organization/native-browser guidance and relevant package README</td><td>Update only changed instructions and evidence limits. Retain component/joint/browser distinctions.</td></tr>
-<tr id="machine-file-grant"><td>Core <code>organizations/organization-setup-machine.ts</code>, <code>organization-setup-effects.ts</code>, <code>organization-stamp-renewal-machine.ts</code>, <code>organization-stamp-renewal-effects.ts</code>, <code>organization-key-retirement-machine.ts</code>, existing provisioning/renewal/key entrypoints/stores</td><td>M1–M3 schema-derived unions, pure transition/reconstruct and injected runners with inline satisfies-never boundaries; conditional existing fields, old branches removed. No shared exhaustiveness module, new run/attempt rows or columns.</td></tr>
-<tr><td>Core <code>organizations/fleet-permission.ts</code>, <code>fleet-permission-policy-digest.ts</code>; <code>better-auth/fleet-permission-policy.ts</code> and its test, <code>organization-access-control.ts</code>, <code>organization-permission-check.ts</code>; new <code>organizations/organization-policy-machine.ts</code>, <code>organization-policy-maintenance.ts</code>, <code>storage/organization-policy-store.ts</code> and private native plugin</td><td>Owner-only repairWork/native mapping and exact new policy digest; M4 existing-fence conditional stop/resume and ACK effects. Node/Cloudflare compose a separate private policy capability and injected target admission controls; no ordinary gateway/public route.</td></tr>
-<tr><td>Test-support <code>src/core-tests/organization-{setup,stamp-renewal,key-retirement,policy}-machine.hegel.unit.test.ts</code>, <code>organization-policy-maintenance.host.e2e.test.ts</code> and existing host fixtures</td><td>H1–H4 permanent models/settings/generators/shrinking mutants, two-database CAS races, crash reconstruction, actual target pause and V14 joint floor/token proof. These exact files enter existing lanes.</td></tr>
-</tbody></table></div>
-<p>Additional current callers that fail solely because a listed type/route changed may receive the corresponding mechanical change; list them in the handback. Stop for a new migration, permission beyond the authorized owner-only repairWork, public authority path, CI gate, library patch, contract beyond accepted shapes, behavior outside S1–S16 or a contradiction in selected branches. Never edit the Verifier's independent drivers under the product grant.</p>
-<p><strong>Return:</strong> <code>work/implementer-handback.md</code> with PR/base/head, producer/artifact/fixture identities, owner-choice sources, changed files/removals, exact gates and counts/exits, intended reds/restored greens, known limits, and every departure. Link the paired Verifier's original report; do not summarize it as acceptance.</p>
+<p><strong>May not change:</strong> migrations, Better Auth, Central's code, token formats, CI or check scripts. <strong>Stop</strong> if a Central artifact differs from the agreed contract, or proof would weaken. <strong>Return</strong> <code>work/implementer-handback.md</code> with heads, files, commands, counts, exits, red and green receipts, and anything unobserved.</p>
 
-<h2 id="verifier">Packet 2 · Independent Verifier</h2>
-<p><strong>Duty:</strong> challenge and observe V1–V14 and H1–H4 on the final target independently of the Implementer's green summary. Follow role-checker and Switchboard's pinned verify-auth skill. The Lead supplies session addresses, worktree/artifact tuple and access. Own independent drivers/receipts; repair no product code. Report deciding failures with exact target/evidence and bring design contradictions to the Lead.</p>
-<h3 id="commands">Commands and admission</h3>
-<p>All commands execute from the isolated Switchboard monorepo root. Use its pinned tools, normally Node 24.7.0/pnpm 10.33.0 for sign-in. Central's workerd bridge uses its separately pinned Node from the final producer manifest; do not substitute the sign-in Node. The commands below come from the existing root manifest and verify-auth reference; new files are permanent named additions from this plan.</p>
-<ex-code lang="sh" title="Final non-secret quality and host gates; heavy runs on Sunclaw"><script type="text/plain">
-mise exec node@24.7.0 pnpm@10.33.0 -- pnpm install --frozen-lockfile
-mise exec node@24.7.0 pnpm@10.33.0 -- pnpm build
-mise exec node@24.7.0 pnpm@10.33.0 -- pnpm check
-mise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:unit
-mise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:integration
-mise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:e2e:host
-SIGN_IN_TEST_HOST=node mise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:e2e:host
-</script></ex-code>
-<p>The broad host lanes may leave unselected joint cases skipped when artifact selection is absent. Preserve those counts. They do not replace the selected no-skip runs. Set <code>CHROME_BIN</code> to the existing installed Chrome path per the browser reference; a missing executable is a prerequisite failure, not an intended product red. New tests must enter these established lanes; add no CI orchestration.</p>
-<ex-code lang="sh" title="Focused permanent machine models in the existing unit lane"><script type="text/plain">
-mise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:unit packages/sign-in-test-support/src/core-tests/organization-setup-machine.hegel.unit.test.ts packages/sign-in-test-support/src/core-tests/organization-stamp-renewal-machine.hegel.unit.test.ts packages/sign-in-test-support/src/core-tests/organization-key-retirement-machine.hegel.unit.test.ts packages/sign-in-test-support/src/core-tests/organization-policy-machine.hegel.unit.test.ts
-</script></ex-code>
-<p>Add <code>packages/sign-in-test-support/src/organization-policy-maintenance.host.e2e.test.ts</code> to each of the two selected real-pairing commands below, with the same admitted artifacts/host inputs. It is mandatory V14 proof, not an optional broad-lane skip. H1–H4's host write-race cases also run under both host selections; report each separately from pure property counts.</p>
-<ex-code lang="sh" title="Selected real producer/consumer proof, with admitted artifact paths"><script type="text/plain">
-B2E_CENTRAL_ARTIFACTS="$B2_ARTIFACTS" B2E_CENTRAL_CHECKOUT="$B2_CENTRAL_CHECKOUT" B2E_CENTRAL_NODE="$B2_CENTRAL_NODE" SIGN_IN_TEST_HOST=cloudflare mise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:e2e:host packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts packages/sign-in-test-support/src/organization-admin-completion.host.e2e.test.ts packages/sign-in-test-support/src/organization-key-maintenance.host.e2e.test.ts
-B2E_CENTRAL_ARTIFACTS="$B2_ARTIFACTS" SIGN_IN_TEST_HOST=node mise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:e2e:host packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts packages/sign-in-test-support/src/organization-admin-completion.host.e2e.test.ts packages/sign-in-test-support/src/organization-key-maintenance.host.e2e.test.ts
-</script></ex-code>
-<p><code>B2_ARTIFACTS</code>, <code>B2_CENTRAL_CHECKOUT</code> and <code>B2_CENTRAL_NODE</code> are runner-local paths from the declared producer manifest, not guessed defaults. The selected new files fail admission if those inputs are missing. Record offered/executed/failed/skipped counts and direct exits for each pairing; selected B2 cases must not skip. Build/sign Central artifacts using its own approved recipes; Central's original receipt is required.</p>
-<p>The B2 browser scenario uses these same pairing inputs through the existing native-browser test, run once per host selection with its B2 scenario selected by the permanent scenario inventory. The Implementer must add that selection to the existing driver without altering earlier scenario assertions. If the driver cannot select a scenario independently, run its complete native-browser file with the joint inputs and report the actual per-host/scenario inventory; never claim the unrelated earlier browser case proves B2.</p>
-<ex-code lang="sh" title="Existing component journey; each target file is private and frozen"><script type="text/plain">
-mise exec node@24.7.0 pnpm@10.33.0 -- pnpm exec tsx scripts/verify-auth/verify-auth.ts organization --target-file "$AUTH_VERIFY_TARGET_FILE"
-mise exec node@24.7.0 pnpm@10.33.0 -- pnpm exec tsx scripts/verify-auth/verify-auth.ts agent --target-file "$AUTH_VERIFY_TARGET_FILE"
-</script></ex-code>
-<p>Organization runs once with an admitted local-workerd target and once with local-node. Agent regression retains the supported target/bridge limits from its current reference. The component journey's recording Central cannot earn real joint/key/browser credit. Run existing owner CLI/relay host cases on both host selections; their output/refresh/credential custody assertions stay intact.</p>
-<h3 id="observation-map">What each check must observe and deliberately break</h3>
-<div class="ex-table-scroll" data-width="canvas"><table><thead><tr><th>Check</th><th>Deciding evidence</th><th>Wrong build/control</th></tr></thead><tbody>
-<tr><td>V1 setup</td><td>Real setup/store readback, lost-answer pending, repeat with one identity/record</td><td>Ready on unknown; page-read retry</td></tr>
-<tr><td>V2 authority</td><td>Two-org sentinels, member/foreign status/list/create refusal, unchanged stores, no public maintenance</td><td>Bypass status permission or new read's shared guard</td></tr>
-<tr><td>V3 atomic create</td><td>Real failed record insert leaves no workspace, correct successful person/permission record</td><td>Split effect/record commit, supplied by Central owner as an isolated counterfactual</td></tr>
-<tr><td>V4 IDs</td><td>Injected source output equals nextOperationId, unchanged ID/content on uncertainty, no browser mint</td><td>Browser formatter or ID reset on unknown</td></tr>
-<tr><td>V5 retry</td><td>Owner-selected branch at exact cutoff and preserving-state restart; exact answer/effect set</td><td>One-day cutoff under A; any-same-name success or uncertain lookup reset under B</td></tr>
-<tr><td>V6 directory/history</td><td>Exact complete ID sets beyond 100, independent cursor/error state, real corrupt-row 503 diagnosis</td><td>History-derived directory, dropped page, skipped corrupt row</td></tr>
-<tr><td>V7 variants</td><td>Every current producer fixture, real machine/automatic history, closed unknown negatives</td><td>Old parser or permissive unknown filtering</td></tr>
-<tr><td>V8 status</td><td>All displayed states, zero sends on refresh, no secret sentinels anywhere in output</td><td>Serialize stored row; valid-plus-failure shown blocked</td></tr>
-<tr><td>V9 renewal</td><td>120/60, exact pending ownership; start send before expiry, release every matching answer after expiry and preserve counts/clear/stale recovery; successor negative on both pairings</td><td>Pending-only late-result arms, lost counter/clear/facts recovery; regenerate pending or settle successor</td></tr>
-<tr><td>V10 keys</td><td>Actual keys/JWKS/drain/credential safety/cold reads; mark-ready then interrupt before seed, recover through maintenance alone, one applied replacement; setting-up sibling sends none</td><td>Blanket-unconfirmed blocker, missing unconfirmed key-change arm, skip idle/settingUp, early withdrawal, warm cache/empty store or failed-cold reopen</td></tr>
-<tr><td>V11 browser</td><td>Delivered island/shipped confirmation, one retry/cancel/late callback, page lists/status and 400 px usability on both real pairings</td><td>Old page/controller, omitted nonce/island, retry after cancel</td></tr>
-<tr><td>V12 cutover</td><td>Final diff/source inventory and Central's original removal receipt</td><td>Restore formatter/history list/retired export</td></tr>
-<tr><td>V13 gates</td><td>Actual counts/exits, selected inventories and existing agent/CLI behavior on frozen target</td><td>Runtime-global/UUID/type violation, omitted selected case</td></tr>
-<tr><td>V14 policy/engine</td><td>Exact native policy/digest; stop N+1/resume N+2/ACK/pause; below/equal/above × active/stopped/deleted × digest matrix on both producers. Deleted first, then ahead, then Stopped, then Active older/digest</td><td>Stopped-first exact-reply mutant; same-version change, early/runner-local release, global ACK gate or member repairWork</td></tr>
-<tr><td>H1–H4 machines</td><td>Independent candidate-state/proposed-effect equality; actual production runner with losing/delayed store and recording ports; separate committed state/executed trace; host races/crashes; inline-site compile reds</td><td>Actual runner sends/seeds/pushes before commit; pending-only late results; ready/unseeded dead end; Stopped-first oracle; unhandled variant fails at inline satisfies-never site</td></tr>
-</tbody></table></div>
-<p>For every sensitivity control, keep the patch or fixture identity, exact intended assertion failure and restored-green run. Counterfactual product edits happen only in the Verifier's isolated target copy, never the declared shared target. A missing artifact, compiler/import error or no selected cases is not the intended red. Central mutations belong to its owner; request its exact counterfactual artifact instead of editing Central under this packet.</p>
-<p><strong>Return:</strong> <code>work/verifier-observation.md</code> and <code>work/evidence/</code>. Name every V row supported/unsupported/unknown, exact commands/counts/exits, target/config/client/source/artifact/fixture identities, browser step records, phase/process receipts, mutation red/restored green, Central original proof links, skips/stand-ins and remaining interactions. Keep raw secret-bearing state in the private evidence home named at execution; publish only redacted receipts and no signed statement bytes.</p>
+<h2 id="verifier">Packet 2 · Verifier</h2>
+<p>Observe V1–V10 on the frozen head, both pairings, real Chrome; expected results from the approved rows. Never repair product code. <strong>Return</strong> <code>work/verifier-observation.md</code> and <code>work/evidence/</code>. Unverified always includes hosted bindings, staging and production.</p>
 
-<h2 id="reviewer">Packet 3 · Fresh independent reviewer</h2>
-<p><strong>Duty:</strong> a fresh Sol reviewer, as the writer brief requires, judges the final source and evidence against the owner's words and governing design. Load <code>role-checker</code>, the applicable implementation-review skill, verify-before-accepting, prove-it-works and write-tests-that-can-fail. The Lead selects its exact isolated target and supplies the owner-message export. Implementation and Lead narratives are claims only.</p>
-<ex-callout title="Your first question" tone="question" icon="book-open"><p>What does this change drop that the owner's words, the approved B2, later decisions or old tests had? Answer it first as a list, including any narrowed retry, key, isolation or proof promise.</p></ex-callout>
-<div class="ex-table-scroll" data-width="canvas"><table><thead><tr><th>You receive</th><th>Location and use</th></tr></thead><tbody>
-<tr><td>Governing outcome</td><td>This set's Requirements/S1–S16 and actual selected Decisions; approved <code>2026-11-02-fleet-access/</code> B2/linked rows; attributed owner sources on Decisions. These are the standard.</td></tr>
-<tr><td>Current and previous implementations</td><td>Final Switchboard PR base/head, B1-A commit, Central dependency commit/exports, old <code>f3b2b88b</code>/<code>e7b709f6</code> source anchors. Read actual code/old cases, not only PR descriptions.</td></tr>
-<tr><td>Proposed realization and proof</td><td>Program Design P1–P9, Verification V1–V14/H1–H4 and this Plan. Any departure from selected outcomes is a finding. Read Central engine P8 and actual policy source, not a handback summary.</td></tr>
-<tr><td>Observed evidence</td><td><code>work/verifier-observation.md</code>, <code>work/evidence/</code> and Central's original receipts; compare actual identities and intended reds.</td></tr>
-<tr><td>Claims to challenge</td><td><code>work/implementer-handback.md</code> and <code>work/lead-check.html</code>. Neither grants acceptance.</td></tr>
-<tr><td>Report format</td><td><code>docs/specs/2026-11-15-fleet-access-overview/report-format.md</code>, with each finding anchored to rule, owner source, code and decisive observation.</td></tr>
-</tbody></table></div>
-<ol>
-<li>Write the outcome for each S row before opening the implementation; distinguish selected branches from recommendations.</li>
-<li>Trace cookie request, native authority, shared guard, actual Central read/write and browser release. Check status authorization/secret projection, unknown/refusal ID state and every paging termination/error path.</li>
-<li>Inspect the producer mirrors, actual known/unknown variant fixtures and corrupt-row closed union. Verify the directory comes from its authoritative owner and the producer slice removed retired exports.</li>
-<li>Inspect actual maintenance trust wiring and key-native seams. Challenge claimed quiescence, lifetime completeness, stale readiness, idle organizations, cold-cache/preserved-state checks and post-withdrawal failure handling. Production authority stays with the owner.</li>
-<li>Inspect all four pure transitions, strict parsers, inline satisfies-never switch sites and conditional writes. Check Hegel's candidate/proposed equality separately from actual runner execution: a correct candidate may propose send on a losing commit, while the runner executes none. Confirm ordering mutants live in production interpreters. Check every late reply after expiry, ready/unseeded maintenance, exact Deleted→ahead→Stopped→Active older/digest admission order and its full matrix. Challenge key reconstruction/pause custody; no new global ACK rule or stamp format.</li>
-<li>Open original receipts on the exact final tuple. Check both pairings, no selected skips, actual browser flow and each wrong-build failure. Historical reports and component mocks cannot fill missing proof.</li>
-<li>Check the final old-code/removal inventory and every extra caller. Surface any unapproved schema/permission/public boundary/CI/library change.</li>
-</ol>
-<p><strong>Return:</strong> <code>work/reviewer-report.html</code>, ending READY or NOT READY for its stated review boundary. Preserve gaps and the worst consequence of accepting today; do not merge, deploy, retire production keys or accept on the owner's behalf.</p>
+<h2 id="reviewer">Packet 3 · Reviewer</h2>
+<p>Fresh, independent; inputs are <code>requirements.html</code>, <code>decisions.html</code>, the approved B2 deliverable, the approved Requirements and Specification, Lead A's directory contract and engine P8, the PR and the evidence. First question: what does this drop compared with your words, the approved rows, or the existing code and tests? Then follow each request to Central and back, the late-answer settlement, key retirement's finish condition, and the digest roll. <strong>Return</strong> <code>work/reviewer-report.html</code>, READY or NOT READY.</p>
 
 <h2 id="acceptance">Packet 4 · Lead acceptance</h2>
-<p>Before review, the Lead opens the final diff and original evidence itself and writes <code>work/lead-check.html</code>. The reviewer receives that as a claim. The Lead then disposes of every finding, verifies corrections on a new declared target and fills this map with actual anchors rather than a green summary.</p>
-<div class="ex-table-scroll" data-width="canvas"><table><thead><tr><th>Obligation</th><th>Required evidence</th><th>Lead read/result</th><th>Reviewer disposition</th></tr></thead><tbody>
-<tr><td>S1 setup</td><td>V1/V11 final real links and pending/ready rows</td><td>Not observed</td><td>Not reviewed</td></tr>
-<tr><td>S2–S3 authority/atomic effect</td><td>V2/V3 real refusal/fault and both store readbacks</td><td>Not observed</td><td>Not reviewed</td></tr>
-<tr><td>S4–S5 IDs/selected retry</td><td>Owner answer, V4/V5 exact identity/cutoff/history outcomes</td><td>Owner answer open; not observed</td><td>Not reviewed</td></tr>
-<tr><td>S6–S7 complete directory/history</td><td>Accepted producer slice, V6/V7 exact sets/variants/corrupt diagnosis</td><td>Not observed</td><td>Not reviewed</td></tr>
-<tr><td>S8 page/factors</td><td>V11 actual browser on both pairings, cancel/late callback/one retry</td><td>Not observed</td><td>Not reviewed</td></tr>
-<tr><td>S9–S10 status/renewal</td><td>V8/V9/H2 no secrets or status sends; all late-result count/clear/stale branches and successor guards after expiry on both pairings</td><td>Not observed</td><td>Not reviewed</td></tr>
-<tr><td>S11–S12 selected key safety</td><td>Owner answer; V10/H3 ready/unseeded recovery after mark-ready interruption, setting-up zero automatic sends, native keys/drain/credential/cold proof</td><td>Owner answer open; not observed</td><td>Not reviewed</td></tr>
-<tr><td>S13 removal/data boundary</td><td>V12 final consumer/producer diff and backup-only authority</td><td>Not observed</td><td>Not reviewed</td></tr>
-<tr><td>S14 final proof/gates</td><td>V13 commands/counts/exits, final artifacts, both selected pairings and regressions</td><td>Not observed</td><td>Not reviewed</td></tr>
-<tr><td>S15 engine/policy</td><td>Selected scope, exact native map/digest, V14/H4 real rollout/normal issuance and complete ordered admission matrix</td><td>Scope open; not observed</td><td>Not reviewed</td></tr>
-<tr><td>S16 pure machines</td><td>H1–H4 full candidate/proposed models plus production-runner executed traces/shrinking reds; inline-site compile failures, runtime parsing and real CAS/crash proof; old paths removed</td><td>Not observed</td><td>Not reviewed</td></tr>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Rule</th><th>Evidence I open</th><th>State</th></tr></thead>
+<tbody>
+<tr><td>S1</td><td>V1 on both pairings</td><td>Not started</td></tr>
+<tr><td>S2, S3</td><td>V2 insert-failure and refusals</td><td>Not started</td></tr>
+<tr><td>S4, S5</td><td>V3 dropped replies; your answer</td><td>Awaiting your answer</td></tr>
+<tr><td>S6, S7</td><td>V4 130 workspaces, 230 records, all kinds</td><td>Not started</td></tr>
+<tr><td>S8, S9</td><td>V5 browser and status</td><td>Not started</td></tr>
+<tr><td>S10</td><td>V6 late answers</td><td>Not started</td></tr>
+<tr><td>S11, S12</td><td>V7 real keys and restarts; your answer</td><td>Awaiting your answer</td></tr>
+<tr><td>S15</td><td>V8; your console answer</td><td>Awaiting your answer</td></tr>
+<tr><td>S13, S14, S16</td><td>V9, V10, gates, CI</td><td>Not started</td></tr>
 </tbody></table></div>
-<p><strong>Local delivery acceptance requires:</strong> all selected owner branches built, required checks green at one final tuple, independent review findings closed with evidence, exact old-code removal, and every deferred boundary named. The Lead writes <code>work/lead-acceptance.html</code> with commit/artifacts, original proof links, risks/worst failure and any remaining owner action. A new UI/API page cannot be accepted from source lint alone. This plan grants no merge or production execution.</p>
 
-<h2 id="production">The owner's production steps</h2>
-<ex-mermaid id="production-owner-path" label="Production remains a separate owner-controlled operation"><script type="text/plain">
-flowchart TB
-  local["Qualified local release and private capability"] --> owner["Owner supplies actual deployment controls<br/>and credential inventory"]
-  owner --> window["Selected mode's production handover"]
-  window --> verify["Original production cold-recheck receipts"]
-  verify --> reopen["Owner reopens after verified success"]
-  class local slot3
-  class owner,window,reopen slot1
-  class verify slot6
-</script></ex-mermaid>
-<p>The local feature acceptance supplies a tested capability. It does not supply the owner's production authority, controls or execution receipt.</p>
-<p>These are explicitly the owner's actions after local qualification, review and release/deployment approval. Local proof does not authorize them or make them complete.</p>
-<ol>
-<li><strong>Permission-policy rollout, before enabling new-map issuance:</strong> verify the actual source/native artifact and provide the trusted target pause which remains held across runner failure/restart. Invoke private stop: active N/old → stopped N+1/old. Wait for Central's ACK, deploy/load compatible native map, then invoke private resume: active N+2/new. Hold target issuance through that ACK and release only on verified completion. Unknown replies retry the exact payload; no same-version rewrite, optimistic ACK, global ACK gate or stamp re-sign. Preserve production source/floor/pause receipts. This policy operation is distinct from the optional signing-key window below.</li>
-<li>Choose the retirement mode and accept its cost. Confirm the released source/artifacts and deployment match the locally qualified capability. Provision the private maintenance binding/tool access only to the owner's maintenance tooling; the gateway and public HTTP remain without it.</li>
-<li>Inventory every production key-dependent credential family, maximum outstanding expiry and explicit client key pins. Establish the actual admission pause/drain and preserving-state restart controls for that deployment. Unknown consumers/controls block withdrawal.</li>
-<li>If A, reserve the measured maintenance window, pause sign-in/affected administration, drain old requests and run private prepare/re-sign/confirmation. Keep the old published key until all organizations and credential-safety checks pass.</li>
-<li>Invoke withdrawal, perform preserving-state cold rechecks of every organization, and reopen only after verified success. A pre-withdrawal failure keeps the old key; a post-withdrawal failure stays in maintenance for owner recovery. No automatic successful rollback is promised.</li>
-<li>Retain the nonsecret production report and actual target identities. This is production evidence distinct from the local acceptance. Any backup or later selected old-data import follows the owner's separate 13 Nov decision.</li>
-</ol>
-<p>If key option B is chosen, replace the key-window preparation/withdrawal procedure only after its live-epoch design, schema/contracts and no-pause proof are approved and delivered. The policy rollout still uses its confirmed target pause. There is no silent fallback and no production run is commissioned by this writer task.</p>
-</ex-document></body></html>
+<h2 id="gates">Gates</h2>
+<ex-code lang="sh" title="Sunclaw"><script type="text/plain">
+pnpm install --frozen-lockfile
+pnpm build
+pnpm check
+pnpm test:unit
+pnpm test:integration
+pnpm test:e2e:host
+SIGN_IN_TEST_HOST=node pnpm test:e2e:host
+B2E_CENTRAL_ARTIFACTS=<dir> B2E_CENTRAL_CHECKOUT=<codex-router checkout> pnpm test:e2e:host
+SIGN_IN_TEST_HOST=node B2E_CENTRAL_ARTIFACTS=<dir> B2E_CENTRAL_NODE=<path> pnpm test:e2e:host
+</script></ex-code>
+<p>The <code>B2E_CENTRAL_*</code> variables are the joint fixture's existing inputs (<code>b2e-joint-journey.host.e2e.test.ts</code>, <code>test-fixtures/b2e/</code>); without them the joint cases skip, and a skip is not a pass. Production: you withdraw the old key and run the maintenance operations; I prepare the exact commands for you.</p>
+</ex-document>
+</body>
+</html>

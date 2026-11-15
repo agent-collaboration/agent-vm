@@ -1,211 +1,186 @@
 <!doctype html>
-<html lang="en"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>B2 · Central organizations · Decisions</title>
 <link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
 <script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
-</head><body>
+</head>
+<body>
 <ex-nav for="doc"><nav slot="pages" aria-label="Pages">
 <a href="../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
-<a href="audit.html">B2 · 1 Audit</a><a href="requirements.html">B2 · 2 Requirements</a>
-<a href="specification.html">B2 · 3 Specification</a><a href="program-design.html">B2 · 4 Program Design</a>
-<a href="verification-design.html">B2 · 5 Verification Design</a><a href="plan.html">B2 · 6 Plan</a><a href="decisions.html">B2 · 7 Decisions</a>
+<a href="audit.html">B2 · 1 Audit</a>
+<a href="requirements.html">B2 · 2 Requirements</a>
+<a href="specification.html">B2 · 3 Specification</a>
+<a href="program-design.html">B2 · 4 Program Design</a>
+<a href="verification-design.html">B2 · 5 Verification Design</a>
+<a href="plan.html">B2 · 6 Plan</a>
+<a href="decisions.html">B2 · 7 Decisions</a>
 </nav></ex-nav>
 <ex-document id="doc">
 <h1>B2 · Central organizations: Decisions</h1>
-<p><strong>Three choices remain yours:</strong> the late-retry promise, key-retirement interruption, and when to deliver the whole engine-operations console. Everything else below identifies a settled decision, bounded implementation call or falsifiable assumption.</p>
+<p>Your decisions, my calls with whether they should have been yours, what was there before, and three choices.</p>
+
 <h2 id="three">The three things for you</h2>
-<ex-callout title="1 · What you should check" tone="note" icon="shield-check"><p>The three comparisons show current behavior, each option's gain/cost and who pays. No recommendation has a chosen marker. The assumptions identify what needs another design pass.</p></ex-callout>
-<ex-callout title="2 · Decisions that change what people see or do" tone="question" icon="users"><p><a href="#retry-choice">Retry</a>: preserve the first answer or accept one-day recovery. <a href="#key-choice">Keys</a>: maintenance or a live fence. <a href="#engine-choice">Engine operations</a>: compatibility here and a named later whole console, or the whole console here. These govern S5/S12/S15; deferral selects none.</p></ex-callout>
-<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open"><p>The 4 Nov approval is your “yes you need anytnhign?” in the <a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl">Fleet transcript</a>, line 71230, answering the approval request at 71226. Later selected answers are distinguished from your own typed words below. Current code is evidence of behavior, never evidence that you approved a new promise.</p></ex-callout>
+<ex-callout title="1 · What to check" tone="note" icon="shield-check">
+<p>The <a href="#calls">calls table</a>, especially: the engine permission now rolls out with one revision per organization, not the earlier two-step with an issuance pause; and how production maintenance is run.</p>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p>Three open: <a href="#retry">lost create replies</a>, <a href="#retire">key retirement pause</a>, <a href="#console">engine console scope</a>.</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>Decided cards quote you with transcript lines. Nothing here is built.</p>
+</ex-callout>
 
-<h2 id="owner">Your settled decisions</h2>
-<ex-card title="Organizations stay separate behind sign-in" tone="done" icon="shield-check" tag="U27/U45 · approved Requirements:103–104" pick><p><em>“i dont want cross organization any sharing stuff or comm”</em>; <em>“we dont need a worker per orgnizaiton i think, we need a durable object per orgnaizaiotn”</em>. <a href="../2026-11-02-fleet-access/requirements.source.html">Source</a>. Central's organization gate and separate storage remain obligations.</p></ex-card>
-<ex-card title="Only the owner administers" tone="done" icon="users" tag="U21 · approved Requirements:98" pick><p><em>“yes lets keep it all owner only”</em>. This governs directory/history/status visibility and creation. Membership alone cannot grant administration.</p></ex-card>
-<ex-card title="Backup only; choose old data later" tone="done" icon="database" tag="Central transcript:97881 · 13 Nov" pick><p>You selected the option worded <em>“No migration, backup only”</em>, then wrote <em>“we will manauly talk thtough whta i awnt to keep or write one off scripts later”</em>. <a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-codex-router/13635880-b8f1-47f9-8d66-ca6aa9ddc134.jsonl">Source</a>. This replaces approved B2's same-store automatic adoption. Central's backup and later selected import remain separate owner-controlled actions.</p></ex-card>
-<ex-card title="Descriptions and unique workspace names" tone="done" icon="folder" tag="Central transcript:111553 · 15 Nov" pick><p>You selected the option worded <em>“(a) Description + unique names”</em>. It replaces the earlier same-name “return the existing workspace” rule. It does not itself choose how long an operation answer is retained.</p></ex-card>
-<ex-card title="Expired Central facts can be adopted for recovery" tone="done" icon="key" tag="Central transcript:105129 · 14 Nov" pick><p><em>“yes i agree to chagne r29”</em>. Approved B2's Rule 3 now adopts the differing verified digest even when expired, then replaces it. This grants no authority to work under an expired stamp.</p></ex-card>
-<ex-card title="Injected capabilities, UUIDv7 and controlled tests" tone="done" icon="plug" tag="U23–U25; B1-A owner decisions · 15 Nov" pick><p><em>“you inject stukff not pkul out engines”</em>; <em>“we ony use uuidv7”</em>; <em>“i dont allow wall clock time ever in tests”</em>; <em>“use hegal”</em> (<a href="../2026-11-02-fleet-access/requirements.source.html">Requirements:174–176</a>). Your later <em>“no tsyringe o rlibrary please”</em> and <em>“yes do a. inejcted is fine”</em> settle B1-A's injected boundary, leaving Better Auth's internals as shipped (<a href="../2026-11-15-fleet-access-b1/b1-a-core/decisions.html#owner">B1-A sources</a>).</p></ex-card>
-<p><strong>The existing approved renewal policy:</strong> 120-day statements, renewal at 60 days or less on use, one unanswered statement, separate refused/unanswered tracking, and every organization re-signed before retiring a key, including cold restart confirmation. These are recorded in <a href="../2026-11-02-fleet-access/deliverables/b2-central-organizations.source.html#b2-flows">B2's approved renewal rules</a>. The operation and interruption choices below implement that outcome; they do not waive it.</p>
+<h2 id="decided">Already decided by you</h2>
+<ex-card title="Old data: backup only" tone="done" icon="package" tag="13 Nov · Central transcript 97881" pick>
+<p><em>“No migration, backup only”</em>; <em>“we will manauly talk thtough whta i awnt to keep or write one off scripts later”</em>.</p>
+</ex-card>
+<ex-card title="Workspace descriptions and unique names" tone="done" icon="code" tag="15 Nov · Central transcript 111553" pick>
+<p><em>“(a) Description + unique names”</em>.</p>
+</ex-card>
+<ex-card title="Recover from an expired stored stamp" tone="done" icon="key" tag="14 Nov · Central transcript 105129" pick>
+<p><em>“yes i agree to chagne r29”</em>.</p>
+</ex-card>
+<ex-card title="One Durable Object per organization, behind sign-in" tone="done" icon="lock" tag="Requirements line 104; 1 Nov" pick>
+<p><em>“we need a durable object per orgnaizaiotn”</em>; <em>“central worker is not exposed to itnernet”</em>.</p>
+</ex-card>
+<ex-card title="Pure transitions, effects as data, Hegel" tone="done" icon="code" tag="15 Nov · Fleet transcript 142100, 142119" pick>
+<p><em>“righ ok let smake srue we use hegel then an dpure transiton fucitons with exatsutiveness in enukms or helpers and make good plans on hegel then”</em>; <em>“we can use the ideas like effects and transition fucitons then?”</em></p>
+</ex-card>
+<ex-card title="B2 approved with the overall design" tone="done" icon="book-open" tag="4 Nov · Fleet transcript 71226, 71230" pick>
+<p><em>“yes you need anytnhign?”</em>, answering the approval request.</p>
+</ex-card>
 
-<ex-card title="Pure exhaustive machines, effect data and Hegel" tone="done" icon="plug" tag="Owner correction · 15 Nov, governing brief relay" pick><p>The Lead's updated common brief relays your words: <em>“righ ok let smake srue we use hegel then an dpure transiton fucitons with exatsutiveness in enukms or helpers and make good plans on hegel then”</em> and <em>“we can use the ideas like effects and transition functions”</em>. <a href="../../../tmp/2026-11-15-design-writers/brief-common.md">Governing brief</a>. This is attributed to that relay, not a newly verified first-hand transcript extract. P8–P9 define all four machines; H1–H4 require full state/effect reference models and real host races.</p></ex-card>
-
-<h2 id="my-calls">My calls, and whether they should have been yours</h2>
-<div class="ex-table-scroll" data-width="canvas"><table><thead><tr><th>Call</th><th>Why and cost</th><th>Should it have been yours?</th></tr></thead><tbody>
-<tr><td>Read the authoritative directory with independent keyset paging</td><td>Completes the already-approved workspace list. Costs a small Central admin read, scheduled as <strong>Lead A: central workspace directory read</strong>; sign-in adds no workspace store. Lead A accepted the contract and corrupt-row refinement on 15 Nov, with retired people-command removal and test-only fault/mutation roles in the same slice.</td><td>No new outcome is chosen. The two Leads own the interface agreement; new product restrictions would return to you.</td></tr>
-<tr><td>Use all current record variants as a closed union; unknown variants remain malformed</td><td>Current producer/consumer drift is fixed without silently dropping history. A future producer change can make history visibly unavailable until the mirror is updated. That is today's closed-parser policy.</td><td>No. It preserves the existing failure contract. Changing it to omit or invent unknown events would be a new choice.</td></tr>
-<tr><td>Supply a next operation ID on definite cookie-route name/conflict refusals</td><td>Removes the browser UUID formatter and preserves the injected-source rule. The private Central and CLI answers stay unchanged; the cookie-only response gains the documented field.</td><td>No. The outcome is your constraint and the Lead explicitly approved this cut. Any wider API use must be identified before implementation.</td></tr>
-<tr><td>Use the existing page shell/island and shipped confirmation component</td><td>The old string controller has no shared-page structure or typed response boundary. This removes that parallel controller, reuses the current CSP and styling, and keeps factor behavior in Better Auth UI.</td><td>No. It follows your existing UI rule. No third-party source, new auth method or new factor promise is selected.</td></tr>
-<tr><td>Expose a sanitized projection of the existing stamp record</td><td>Shows the approved failure limit without leaking pending statement bytes or adding another status store. A valid stamp plus failed renewal is displayed as two facts.</td><td>No. The approved flow already reserves this condition for the admin page.</td></tr>
-<tr id="ready-seed-call"><td>Inventory setting-up organizations, preserve ready/unseeded recovery and drain deferred signers</td><td>A lost setup reply can leave an old Central stamp outside the ready-only inventory. Setting-up blocks retirement until explicit retry; no automatic setup send. A ready row with absent confirmed facts instead uses existing seed/re-sign, including mark-ready-before-seed interruption; setup retry is no remedy for ready. HTTP completion does not drain deferred signers.</td><td>No new outcome. This preserves “every organization,” the empty-record key-change test and safe handover. The interruption cost remains your open choice.</td></tr>
-<tr><td>Separate private key maintenance from ordinary gateway management</td><td>Uses the same core on both hosts while keeping a high-privilege capability out of the ordinary gateway binding. The Lead confirmed this path on 15 Nov. Production binding/invocation remains yours.</td><td>The operational pause is yours and remains open below. The internal separation is my call under the trusted-path commission.</td></tr>
-<tr><td>Keep native key storage/encryption and make its existing grace value explicit</td><td>Allows actual JWKS withdrawal to be checked through the native endpoint. The value remains the pinned library's 30-day default, not a new credential-retention policy.</td><td>No policy change is intended. An upgraded native default or different deployed policy is an explicit recheck, never a silent replacement.</td></tr>
-<tr><td>State-preserving fixture restart, plus new producer/artifact pins</td><td>The old empty restart proves recovery, not survival of the stored replacement. Real process exit/start over the same root is necessary to eliminate warm verifier caches.</td><td>No. This is proof of the existing cold-restart obligation.</td></tr>
-<tr><td>Owner-only repairWork mapping and closed engine refusals</td><td>Lead A engine deliverable 1 P8 adds these contracts. This changes the native-derived policy from nine to ten owner permissions and changes person-token digest, not organization stamps. Costs an ordered rollout.</td><td>The Lead confirmed this compatibility work on 15 Nov. Whether the whole console belongs here is your third choice below.</td></tr>
-<tr><td>A private CAS lifecycle writer over the existing organization fence</td><td>The current delivery store cannot stop/activate a policy revision. The new small writer guards existing fields: active N/old → stopped N+1/old → active N+2/new, with stopped and resumed ACKs. No migration, new permission mechanism or attempt table.</td><td>The Lead explicitly authorized the writer and confirmed exact Central replies. Production deployment/issuance control remains yours; normal pre-ACK issuance remains unchanged.</td></tr>
-<tr><td>Ephemeral key phases and a rollout-specific issuance pause</td><td>Reconstruct key work from native keys/stamps and policy work from existing source/floor/ACK plus actual deployment controls. Local phase commits precede effects; the external target pause survives runner failure/restart. Costs repeated harmless reads/cold probes on recovery.</td><td>The Lead confirmed both readings on 15 Nov. No new durable run state or global ACK gate was inferred. Real host/crash proof must establish them before acceptance.</td></tr>
-<tr id="proof-convention-call"><td>Inline exhaustiveness and separate proposed/actually executed effect proof</td><td>Inline value satisfies never follows your later direction relayed by the Lead; runtime Zod/throws remain separate. A reducer may correctly propose a send before a losing write; test ordering on the production runner's observed ports and put the early-send mutant there.</td><td>No new owner tradeoff. This corrects convention and proof at existing boundaries, preserving required behavior and compile/runtime checks without a shared helper or new mechanism.</td></tr>
+<h2 id="calls">My calls, and should they have been yours?</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Call</th><th>Why</th><th>Should it have been yours?</th></tr></thead>
+<tbody>
+<tr><td>Engine permission rolls out with one fence revision per organization; the earlier draft's stop-then-resume and issuance pause are dropped</td><td>Lead A confirmed Central never admits on a mismatched digest and a repairWork token is inert until the engine routes exist (<code>request_admission.rs:135–137,182–196</code>; push <code>01a1e186-03f8</code>). The window refuses, it doesn't leak.</td><td>Possibly: during the window people get “refresh required” until Central acknowledges, usually seconds.</td></tr>
+<tr><td>Production maintenance (key retirement, digest roll) runs through a separate server-only entry: a Cloudflare <code>WorkerEntrypoint</code> no public route binds, and a Node CLI subcommand</td><td>Keeps maintenance off every public path.</td><td><strong>Yes:</strong> how you run production steps is yours. Disagree and I change the entry.</td></tr>
+<tr><td>Status shows facts, not advice: expiry, pending, counts, last outcome</td><td>Rule 5 says the record keeps the condition for the page; notifications come later.</td><td>No.</td></tr>
+<tr><td>Ready organizations without a local record are seeded on first use and by key retirement, as today</td><td>Existing behaviour and test (<code>organization-statement.host.e2e.test.ts:624–654</code>).</td><td>No.</td></tr>
+<tr><td>Settlement of a send ignores the clock</td><td>An answer to bytes already sent is still true after they expire; dropping it would strand the organization.</td><td>No.</td></tr>
+<tr><td>Unknown record kinds keep failing the history page</td><td>Safer than silently skipping something we don't understand.</td><td>Possibly.</td></tr>
 </tbody></table></div>
 
-<h2 id="assumptions">Assumptions and their cheapest falsifiers</h2>
-<div class="ex-table-scroll" data-width="canvas"><table><thead><tr><th>Assumption</th><th>Opened basis or explicit gap</th><th>If false</th></tr></thead><tbody>
-<tr><td>Directory pages can reuse current person-proof admission and <code>organization:view</code></td><td>Lead A accepted this reuse on 15 Nov. Actual implementation/producer fixtures still have to establish it. No new permission is needed.</td><td>Return an implementation contradiction before adding a permission or changing its policy digest.</td></tr>
-<tr><td>The producer implements the accepted stable keyset order</td><td>IDs are unique UUIDv7; Lead A accepted bytewise canonical-ID order. Each page is live, not a snapshot; the implementation remains to land.</td><td>Producer fixture cases with shuffled insert order/nonexistent cursor catch ordering mistakes. No silent history-based fallback.</td></tr>
-<tr><td>Native key creation/selection and expiry can serve the maintenance flow without a patch</td><td>Installed Better Auth 1.7.11 exports <code>createJwk</code>/<code>resolveSigningKey</code>; native JWKS filters expiry plus grace. Actual key creation/expiry/cold restart is still unexecuted.</td><td>V10 fails at the real native path. Return the incompatibility; do not adopt a custom key store or library patch.</td></tr>
-<tr><td>A maintenance operator can stop admission and drain every old signer</td><td>Production deployment control is not supplied by this source design. It is an owner operation. Local fixtures must prove actual blocked admission and zero active signers.</td><td>Option A cannot run safely there. Keep the old key; owner supplies the control or chooses/designs B. A caller's boolean alone proves nothing.</td></tr>
-<tr><td>One trusted runner owns the maintenance window exclusively</td><td>Choice A is an operational procedure: it excludes concurrent private key changes as well as public issuance. No new distributed epoch/lease mechanism is inferred.</td><td>Refuse or abort before withdrawal; do not claim live multi-writer safety. If the deployment cannot provide exclusivity, the owner must choose the wider design.</td></tr>
-<tr><td>The old-key credential lifetime inventory is complete</td><td>Current access-token configuration caps person/m2m tokens at 300 seconds. Other consumers, ID tokens, per-client key pins and later machine profiles need explicit inventory before production.</td><td>Withdrawal waits or is refused. Do not infer all credentials expire in five minutes from the access-token setting.</td></tr>
-<tr><td>Both real Central hosts reopen the same data on cold start</td><td>Lead A confirmed the host behavior on 15 Nov. B2's test fixture must stop the actual process and retain the same persistence root.</td><td>Preserving-state tests fail. An exact missing Central test hook goes to Lead A in the same directory-read slice; an empty new store earns no proof.</td></tr>
-<tr><td>The later native key is selected after creation</td><td>Native adapter sorts by creation time. A same-time tie is possible under a controlled clock.</td><td>The operation resolves current key and reports unfinished on mismatch. Tests advance the controlled native clock explicitly; no wall-clock wait or optimistic success.</td></tr>
-<tr><td>Published source pins identify the artifacts the joint fixture executes</td><td>The current harness validates source, lockfile and artifact hashes. New builds remain to be produced after Central's slice lands.</td><td>Refuse the run; retain the artifact/source mismatch. Never relax the pin to get a green journey.</td></tr>
-<tr><td>Deployment tooling can retain a target-specific issuance pause across runner exit</td><td>The Lead explicitly requires this for the policy rollout, preserving r3 normal issuance before ACK. Both local host fixtures need an independent actual admission controller; production controls are not supplied here.</td><td>Do not stop/resume production policy without that control. Keep the target paused until the correct resumed ACK; return missing host control rather than adding a global issuance rule.</td></tr>
-</tbody></table></div>
+<h2 id="before">What was there before</h2>
+<ul>
+<li>A workspace list guessed from the first 100 records; replaced by Central's directory.</li>
+<li>A browser-made operation ID; replaced by a server-made UUIDv7.</li>
+<li>A hand-written page and custom dialog; replaced by the shared shell and the shipped confirmation.</li>
+<li>A draft rollout with two revisions and a pause; replaced by one revision.</li>
+</ul>
 
-<h2 id="before">What was there before, and what replaces it</h2>
-<div class="ex-table-scroll" data-width="canvas"><table><thead><tr><th>Before, Switchboard <code>f3b2b88b</code></th><th>B2 target</th></tr></thead><tbody>
-<tr><td>First 100 records used to discover workspaces</td><td>Authoritative directory and independent complete history paging.</td></tr>
-<tr><td>Three record kinds, two origins; current Central has seven/three</td><td>Every known variant, exact fixtures; unknown still visibly refused.</td></tr>
-<tr><td>Browser formats replacement UUIDs from time/randomness</td><td>Injected server source supplies every operation ID; unknown retains its ID.</td></tr>
-<tr><td>Old standalone HTML string and inline controller</td><td>Existing sign-in shell/CSP/island and upstream factor component.</td></tr>
-<tr><td>Retained stamp failures hidden from owner</td><td>Authorized sanitized status; no new retries or notifications.</td></tr>
-<tr><td>Re-sign helper tested with a controlled old-key peer</td><td>Trusted native-key operation, real published-key withdrawal, preserving-state cold restart on both pairings.</td></tr>
-<tr><td>Joint Central pinned at <code>ea030e513</code></td><td>Checked current producer with the directory slice; new exact artifact pins and observations.</td></tr>
-<tr><td>Original same-store old-data promise</td><td>Superseded by the owner's backup-only answer; selected data work waits on its own owner action.</td></tr>
-</tbody></table></div>
-
-<h2 id="open">Open for you</h2>
-<h3 id="retry-choice">1 · What does a late retry promise?</h3>
-<p>Approved B2 says a repeated operation gets its original answer. Today's Central keeps that answer for 24 hours; a later page retry may recover the existing effect with one lookup. These are different promises. The Lead searched the nominated owner messages and found no first-hand 24-hour decision; “how many ties we retry?” (Fleet transcript line 112302) is a question.</p>
-<ex-mermaid id="retry-now" label="Current late-retry behavior"><script type="text/plain">
+<h2 id="open">Open: your three choices</h2>
+<ex-mermaid id="current-model" label="Where the choices land" data-width="canvas"><script type="text/plain">
 flowchart TB
-  lost["Workspace committed<br/>reply lost"] --> soon["Retry before one day<br/>original answer replayed"]
-  lost --> late["Retry at or after one day<br/>answer no longer retained"]
-  late --> refusal["Name already exists"]
-  refusal --> lookup["One lookup at the original operation's workspace ID"]
-  lookup --> known["Own matching workspace found<br/>report created"]
-  lookup --> unknown["Missing, different or unavailable<br/>show the corresponding non-success"]
-  class lost,lookup slot1
-  class soon,known slot6
-  class late,refusal,unknown slot2
+  page["Admin page"] --> create["Create workspace: choice 1, lost replies"]
+  ops["Production maintenance"] --> retire["Key retirement: choice 2, pause or not"]
+  engine["Central engine"] --> console["Repair console: choice 3, here or later"]
+  class page,ops,engine slot1
+  class create,retire,console slot2
 </script></ex-mermaid>
-<p>Green is a recovered success; amber is the boundary where historical answer recovery ends. The code is <a href="https://github.com/agent-collaboration/agent-collaboration/blob/e7b709f6/crates/collaboration-central-core/src/organization_workspace_plans.rs#L103">Central:103–135</a> and <a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b/packages/sign-in-core/src/better-auth/organization-admin-page.ts#L71">page:71–77</a>; the other reference is <a href="../2026-11-02-fleet-access/deliverables/b2-central-organizations.source.html#b2-flows">approved B2 repeats</a>.</p>
-<ex-compare label="Late-retry promises" data-width="canvas">
-<section id="retry-a" label="A · Preserve the approved first answer" icon="database">
-<section data-compare-row="sees"><p><strong>What you get</strong></p><p>The same operation always recovers the original answer, even after one day or a restart. A changed request conflicts.</p></section>
-<section data-compare-row="gain"><p><strong>Gain</strong></p><p>The promise already approved in B2, independent of later workspace changes.</p></section>
-<section data-compare-row="cost"><p><strong>Cost and who pays</strong></p><p>Central must retain answer/identity for that lifetime. Storage and retained-history management grow with operations; Lead A must implement and prove it. A historic success is a snapshot, not a current workspace lookup.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="retry-a-picture" label="Indefinite first-answer recovery"><script type="text/plain">
+
+<h3 id="retry">1 · How long is a lost create reply recoverable?</h3>
+<ex-compare label="Lost create replies" data-width="canvas">
+<section id="retry-24h" label="A · 24 hours, then reconcile (today)" icon="clock">
+<section data-compare-row="sees"><p><strong>What you see</strong></p><p>A retry within a day gets the exact original answer. Later, a retry that hits “name in use” checks whether it was your own workspace and says so.</p></section>
+<section data-compare-row="changes"><p><strong>What changes</strong></p><p>Nothing on Central; one lookup on the page.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>After a day, the exact original answer is gone; the lookup covers the common case.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="retry-24h-pic" label="Option A"><script type="text/plain">
 flowchart TB
-  a["Any later retry"] --> b["Retained original operation answer"]
-  b --> c["No duplicate or reconstructed success"]
+  r["Retry"] --> d{"Within 24 h?"}
+  d -->|"yes"| o["Original answer"]
+  d -->|"no"| l["Lookup own workspace"]
 </script></ex-mermaid></section>
 </section>
-<section id="retry-b" label="B · One day, then reconcile the effect" icon="clock">
-<section data-compare-row="sees"><p><strong>What you get</strong></p><p>Before one day, the first answer. Later, a name refusal plus one own-ID lookup may recover the workspace; otherwise a truthful refusal or unavailable result.</p></section>
-<section data-compare-row="gain"><p><strong>Gain</strong></p><p>Bounded answer storage; keeps today's Central ledger and #17's recovery path.</p></section>
-<section data-compare-row="cost"><p><strong>Cost and who pays</strong></p><p>The caller loses the original-answer guarantee at one day, including historical conflict recovery. The owner accepts a narrower promise; callers carry reconciliation and may be unable to recover the first result.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="retry-b-picture" label="Bounded replay and lookup"><script type="text/plain">
+<section id="retry-forever" label="B · Original answer forever" icon="package">
+<section data-compare-row="sees"><p><strong>What you see</strong></p><p>A retry at any time gets the exact original answer.</p></section>
+<section data-compare-row="changes"><p><strong>What changes</strong></p><p>Lead A keeps Central's request ledger indefinitely.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Unbounded ledger growth on Central; Lead A's work before B2 can build.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="retry-forever-pic" label="Option B"><script type="text/plain">
 flowchart TB
-  a["Retry after one day"] --> b["Name refusal"]
-  b --> c["Own-ID lookup<br/>effect found or honest non-success"]
+  r["Retry any time"] --> o["Original answer from the ledger"]
 </script></ex-mermaid></section>
 </section>
 </ex-compare>
-<ex-card title="A · Preserve the approved first-answer promise" tone="planned" icon="database" tag="Recommended; not selected"><p>More durable history and producer work; preserves the existing approved outcome.</p></ex-card>
-<ex-card title="B · Accept bounded replay and effect reconciliation" tone="planned" icon="clock" tag="Not selected"><p>Less retained history; explicitly accepts a narrower late-retry promise.</p></ex-card>
-<ex-callout title="Recommendation: A" tone="decision" icon="database"><p>Preserve your approved first-answer promise unless you prefer the bounded storage tradeoff. Current code and green tests are insufficient authority to narrow it.</p></ex-callout>
-<ex-callout title="If you defer" tone="question" icon="clock"><p>The retention-dependent specification, Central agreement and selected-branch acceptance stay open. Independent list/status and consumer-contract work can be designed; complete B2 acceptance waits.</p></ex-callout>
-<ex-choice id="choose-retry" title="What should a late workspace retry promise?">
-<ex-option id="choose-retry-a" title="A · Always recover the first answer"><template slot="summary">Preserve approved B2. Central retains the answer and operation identity for that promise; storage/history grow.</template></ex-option>
-<ex-option id="choose-retry-b" title="B · Replay for 24 hours, then reconcile"><template slot="summary">Accept today's narrower boundary. Later recovery uses one own-workspace lookup and may remain unavailable or refused.</template></ex-option>
+<ex-grid cols="2" data-width="canvas">
+<ex-card title="A · 24 hours, then reconcile" tone="planned" icon="clock" tag="Recommended"><p><strong>Cost:</strong> exact answer gone after a day.</p></ex-card>
+<ex-card title="B · Forever" tone="planned" icon="package" tag="Central work"><p><strong>Cost:</strong> unbounded ledger.</p></ex-card>
+</ex-grid>
+<ex-callout title="Recommendation: A" tone="decision" icon="clock"><p>It's how Central works today and covers lost replies in practice. The approved text said “original answer” without a time limit, so this narrows it; that's why it's yours.</p></ex-callout>
+<ex-callout title="If you defer" tone="risk" icon="clock"><p>Create works as today; the after-24-hours behaviour isn't marked delivered.</p></ex-callout>
+<ex-choice id="choice-retry" title="How long is a lost create reply recoverable?">
+<ex-option id="retry-a" title="A · 24 hours, then reconcile (recommended)"><template slot="summary">Today's Central behaviour plus one lookup.</template></ex-option>
+<ex-option id="retry-b" title="B · Original answer forever"><template slot="summary">Lead A keeps the ledger indefinitely.</template></ex-option>
 </ex-choice>
 
-<h3 id="key-choice">2 · May key retirement pause sign-in?</h3>
-<p>An old request can already have selected the old key when the operator starts a handover. Re-signing every stored organization does not stop that paused signer from later presenting another old-key replacement. The old public key also verifies already-issued credentials. Safe withdrawal needs either a drained maintenance interval or an explicit live fence across those writers.</p>
-<ex-mermaid id="key-now" label="The old signer that a safe handover must account for"><script type="text/plain">
-sequenceDiagram
-  participant R as Old request
-  participant O as Operator
-  participant C as Central
-  R->>R: select old signing key, then pause
-  O->>C: re-sign stored organizations under new key
-  R->>C: resume an old-key proposal
-  Note over O,C: Stored agreement alone does not fence a paused signer
-</script></ex-mermaid>
-<p>The current native key selection is in Better Auth 1.7.11 <code>dist/plugins/jwt/adapter.mjs</code>; the existing B2 re-sign helper has no issuer epoch (<a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b/packages/sign-in-core/src/organizations/organization-key-change.ts#L25">organization-key-change.ts:25–68</a>). This is a source-derived race to prove locally, not a claimed observed production incident.</p>
-<ex-compare label="Retirement without an unsafe old writer" data-width="canvas">
-<section id="key-a" label="A · Maintenance window" icon="clock">
-<section data-compare-row="sees"><p><strong>What people see</strong></p><p>Sign-in and affected administration pause while issuance drains, old credentials reach their safe expiry, the key is withdrawn and Central is cold-rechecked.</p></section>
-<section data-compare-row="gain"><p><strong>Gain</strong></p><p>A bounded operational procedure around the current native key/stamp contracts. No persisted live epoch or new admission format.</p></section>
-<section data-compare-row="cost"><p><strong>Cost and who pays</strong></p><p>The owner schedules and runs the window; users wait. Budget roughly 5–10 minutes for a small healthy deployment, unmeasured, subject to the credential inventory and rechecks described below. Failure can extend the pause or abort before withdrawal.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="key-a-picture" label="Maintenance handover"><script type="text/plain">
+<h3 id="retire">2 · May key retirement pause sign-in?</h3>
+<ex-compare label="Key retirement" data-width="canvas">
+<section id="retire-window" label="A · Short maintenance window" icon="clock">
+<section data-compare-row="sees"><p><strong>What you see</strong></p><p>During the window, new sign-ins wait; existing work drains; then re-sign, withdraw, restart, reopen.</p></section>
+<section data-compare-row="changes"><p><strong>What changes</strong></p><p>The maintenance entry and its steps; nothing new stored.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Minutes of no new sign-ins, plus waiting out outstanding token lifetimes before withdrawal.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="retire-window-pic" label="Option A"><script type="text/plain">
 flowchart TB
-  a["Pause and drain"] --> b["Re-sign and verify every organization"]
-  b --> c["Credential safety, withdraw old key"]
-  c --> d["Cold restart and recheck, then reopen"]
+  stop["Pause issuance"] --> re["Re-sign all"] --> w["Withdraw"] --> rs["Restart, check"] --> open["Reopen"]
 </script></ex-mermaid></section>
 </section>
-<section id="key-b" label="B · Live key-epoch fence" icon="gear">
-<section data-compare-row="sees"><p><strong>What people see</strong></p><p>No planned sign-in pause. A stale request is refused/retried under the new epoch rather than allowed to publish old authority.</p></section>
-<section data-compare-row="gain"><p><strong>Gain</strong></p><p>Live handover while preventing late old-key writers.</p></section>
-<section data-compare-row="cost"><p><strong>Cost and who pays</strong></p><p>Persist an issuer epoch; fence every relevant sign/release and stamp writer; carry/verify compatible epoch authority at Central; migrate closed contracts and prove concurrency across both hosts and every credential family. Engineers and future maintainers carry a new authority mechanism. It is outside approved B2 and needs its own completed design/approval.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="key-b-picture" label="Live epoch handover"><script type="text/plain">
+<section id="retire-live" label="B · No pause: a live key epoch" icon="key">
+<section data-compare-row="sees"><p><strong>What you see</strong></p><p>Nothing; sign-in keeps working throughout.</p></section>
+<section data-compare-row="changes"><p><strong>What changes</strong></p><p>A stored key epoch; every signer fenced on it; a matching Central contract.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>New machinery beyond approved B2, in both sign-in and Central, designed before build.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="retire-live-pic" label="Option B"><script type="text/plain">
 flowchart TB
-  a["Advance persisted issuer epoch"] --> b["Every signer and release checks that epoch"]
-  b --> c["Central rejects late old-epoch authority"]
-  c --> d["Retire only after all dependencies settle"]
+  e["Epoch N+1 stored"] --> f["Old signers fenced"] --> w["Withdraw while live"]
 </script></ex-mermaid></section>
 </section>
 </ex-compare>
-<p><strong>How long A costs:</strong> drain time + the longest still-valid old-key credential window + all-organization confirmation/cold-restart rechecks. Today's configured access-token families are capped/defaulted at 300 seconds (<a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b/packages/sign-in-core/src/contracts/deployment-configuration.ts#L76">configuration:76</a>; <a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b/packages/sign-in-core/src/better-auth/provider-configuration.ts#L366">provider:366–377</a>). This supports the five-minute component of the estimate, not a universal five-minute credential promise. Other families/pins must be inventoried before production. Slow/unavailable Central or a hung signer can prevent completion; the estimate is not an SLA.</p>
-<p><strong>How often:</strong> there is no scheduled retirement today: <a href="https://github.com/agent-collaboration/switchboard/blob/f3b2b88b/packages/sign-in-core/src/better-auth/native-jwt-options.ts#L6">native-jwt-options.ts:6–10</a> configures only EdDSA, with no rotation interval. Retirement occurs when the owner initiates a key change; no annual/monthly cadence is invented. A stamp's 120-day lifetime is a different clock. The local rehearsal records observed durations so a production window can be sized from evidence.</p>
-<ex-card title="A · Accept a maintenance window" tone="planned" icon="clock" tag="Recommended; not selected"><p>Operational interruption borne by users/owner; keeps current stamp and credential formats.</p></ex-card>
-<ex-card title="B · Commission a live key-epoch fence" tone="planned" icon="gear" tag="Not selected"><p>Preserves availability through a new persisted authority mechanism and wider design/proof work.</p></ex-card>
-<ex-callout title="Recommendation: A" tone="decision" icon="clock"><p>Use an owner-run maintenance window for deliberate key retirement. It meets the approved safety outcome without adding a live authority mechanism. Revisit B if measured operational frequency or the owner's availability requirement makes the pause unacceptable.</p></ex-callout>
-<ex-callout title="If you defer" tone="question" icon="key"><p>Keep the old key. Key withdrawal and whole B2 acceptance wait. Native signing, re-sign/status and local failure proofs can be completed independently. Choosing B returns its new epoch/storage/contract design before implementation; it does not authorize an improvised fence.</p></ex-callout>
-<ex-choice id="choose-key-retirement" title="How should signing-key retirement handle live sign-in?">
-<ex-option id="choose-key-window" title="A · Maintenance window"><template slot="summary">Accept the explicit pause and owner-run drain/rechecks, roughly 5–10 minutes for a small healthy deployment, unmeasured and conditional on credential inventory.</template></ex-option>
-<ex-option id="choose-key-epoch" title="B · Live key-epoch fence"><template slot="summary">Require uninterrupted operation and commission the new persisted epoch, writer/release fencing, Central contract and concurrency proof before implementation.</template></ex-option>
+<ex-grid cols="2" data-width="canvas">
+<ex-card title="A · Maintenance window" tone="planned" icon="clock" tag="Recommended"><p><strong>Cost:</strong> minutes without new sign-ins.</p></ex-card>
+<ex-card title="B · Live epoch" tone="planned" icon="key" tag="New machinery"><p><strong>Cost:</strong> epoch storage, fences, Central contract.</p></ex-card>
+</ex-grid>
+<ex-callout title="Recommendation: A" tone="decision" icon="clock"><p>Key changes are rare and run by you; a short window is far less machinery.</p></ex-callout>
+<ex-callout title="If you defer" tone="risk" icon="clock"><p>Everything but the retirement procedure builds; rule 6 stays unproven.</p></ex-callout>
+<ex-choice id="choice-retire" title="May key retirement pause sign-in?">
+<ex-option id="retire-a" title="A · Short maintenance window (recommended)"><template slot="summary">No new storage.</template></ex-option>
+<ex-option id="retire-b" title="B · No pause, live key epoch"><template slot="summary">New machinery, designed first.</template></ex-option>
 </ex-choice>
-<h3 id="engine-choice">3 · When should the whole engine-operations console arrive?</h3>
-<p>Lead A's engine adds four protected operations: health and retired-work reads, plus retry and discard changes. Current sign-in has no engine console. Its native owner policy also lacks the new repairWork permission, so Central changes refuse NotPermitted until mapping lands. Permission/refusal compatibility and safe digest rollout are needed either way; a repair button alone would not be a whole feature.</p>
-<ex-mermaid id="engine-now" label="The producer has a four-operation contract; sign-in has no consumer surface"><script type="text/plain">
+
+<h3 id="console">3 · Where does the engine-operations console land?</h3>
+<ex-compare label="Engine console" data-width="canvas">
+<section id="console-later" label="A · Permission now, console as its own feature" icon="path">
+<section data-compare-row="sees"><p><strong>What you see</strong></p><p>Nothing new on the page yet; the owner can be granted repair rights.</p></section>
+<section data-compare-row="changes"><p><strong>What changes</strong></p><p>The permission and its rollout only.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Repairing retired work waits for the later feature “Engine operations: inspect and repair retired work”.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="console-later-pic" label="Option A"><script type="text/plain">
 flowchart TB
-  central["Lead A engine P8<br/>health, retired list, retry, discard"] --> auth["Native owner repairWork map<br/>new policy digest and safe rollout"]
-  auth --> gap["No sign-in engine page or CLI today"]
-  class central,auth slot1
-  class gap slot2
-</script></ex-mermaid>
-<p><strong>Reference:</strong> <a href="file:///Users/shravansunder/code/projects/codex-router.feat-sqlx-do-clean/docs/specs/2026-11-15-central-f1-engine/program-design.html#p8-summary">Lead A engine Program Design P8</a>; B2's exact permission/digest/floor consequences are in <a href="program-design.html#engine-policy">P9</a>. This is a dependency on engine deliverable 1, not on the later directory-read slice.</p>
-<ex-compare label="Compatibility now or the whole console now" data-width="canvas">
-<section id="engine-a" label="A · Compatibility here, whole console later" icon="plug">
-<section data-compare-row="sees"><p><strong>What people get</strong></p><p>B2 administration as specified, owner-only repair permission and closed replies, with safe policy rollout. No engine forwarding, page or CLI is exposed here.</p></section>
-<section data-compare-row="gain"><p><strong>Gain</strong></p><p>Keeps B2's current whole-organization feature bounded. A named later feature owns the entire engine experience: <strong>Engine operations: inspect and repair retired work</strong>.</p></section>
-<section data-compare-row="cost"><p><strong>Cost and who pays</strong></p><p>Owners wait for that feature before using these operations through sign-in/CLI. Engineers still deliver native compatibility and policy rollout now, then design all four consumer paths together later.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="engine-a-picture" label="A separates compatibility from the named whole console"><script type="text/plain">
-flowchart TB
-  a["B2: native mapping, refusals, rollout"] --> b["Later whole feature<br/>inspect and repair retired work"]
-  b --> c["All four routes, page, CLI and proof"]
+  p["repairWork in owner role"] --> later["Console feature later"]
 </script></ex-mermaid></section>
 </section>
-<section id="engine-b" label="B · Whole console inside B2" icon="gear">
-<section data-compare-row="sees"><p><strong>What people get</strong></p><p>Owner health/retired-work views and complete retry/discard actions through sign-in and CLI, alongside B2 administration.</p></section>
-<section data-compare-row="gain"><p><strong>Gain</strong></p><p>A single delivery includes engine diagnosis and guarded repair after compatibility/rollout.</p></section>
-<section data-compare-row="cost"><p><strong>Cost and who pays</strong></p><p>All four forwarding/result contracts, retired paging, permissions, recent-factor UI/one retry, CLI and real producer/browser/proof cases must be designed and approved before implementation. B2 delivery and its reviewers carry the larger surface; this set does not yet define that whole console.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="engine-b-picture" label="B completes console design before larger implementation"><script type="text/plain">
+<section id="console-now" label="B · Whole console in B2" icon="gear">
+<section data-compare-row="sees"><p><strong>What you see</strong></p><p>An engine section: health, retired work, retry and discard, plus CLI commands.</p></section>
+<section data-compare-row="changes"><p><strong>What changes</strong></p><p>Four forwarded routes, typed results, paging, a guarded UI, CLI.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>B2 grows by a feature that must be designed and reviewed before build.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="console-now-pic" label="Option B"><script type="text/plain">
 flowchart TB
-  a["B2 compatibility and policy rollout"] --> b["Complete additional consumer/UI/proof design"]
-  b --> c["One B2 delivery<br/>all four routes, page and CLI"]
+  page["Admin page"] --> eng["Engine section"]
+  cli["CLI"] --> eng
 </script></ex-mermaid></section>
 </section>
 </ex-compare>
-<ex-card title="A · Compatibility here; whole console as a named later feature" tone="planned" icon="plug" tag="Recommended; not selected"><p>Current B2 stays bounded; owners wait for the complete engine console.</p></ex-card>
-<ex-card title="B · Whole console in B2" tone="planned" icon="gear" tag="Not selected"><p>One larger delivery; requires the complete extra design and proof before implementation.</p></ex-card>
-<ex-callout title="Recommendation: A" tone="decision" icon="plug"><p>Deliver the required native compatibility and safe policy rollout here. Give the whole engine-operations experience its named feature so diagnosis and repair arrive together.</p></ex-callout>
-<ex-callout title="If you defer" tone="question" icon="clock"><p>No engine routes are exposed through sign-in. The required mapping/refusal/policy design remains explicit, but final B2 scope/implementation acceptance waits for your choice. Deferral does not authorize a partial console.</p></ex-callout>
-<ex-choice id="choose-engine-scope" title="Where should the whole engine-operations console be delivered?">
-<ex-option id="choose-engine-later" title="A · Compatibility here, console later"><template slot="summary">Map owner-only repairWork and refusals with safe policy rollout in B2. Deliver all four operations, page and CLI in Engine operations: inspect and repair retired work.</template></ex-option>
-<ex-option id="choose-engine-now" title="B · Whole console in B2"><template slot="summary">Complete and approve the additional four-route consumer/UI/CLI/proof design first, then deliver the whole console with B2.</template></ex-option>
+<ex-grid cols="2" data-width="canvas">
+<ex-card title="A · Console later" tone="planned" icon="path" tag="Recommended"><p><strong>Cost:</strong> repairs wait.</p></ex-card>
+<ex-card title="B · Console now" tone="planned" icon="gear" tag="Larger"><p><strong>Cost:</strong> another feature inside B2.</p></ex-card>
+</ex-grid>
+<ex-callout title="Recommendation: A" tone="decision" icon="path"><p>Keeps B2 whole and finishable; the console is a feature of its own.</p></ex-callout>
+<ex-callout title="If you defer" tone="risk" icon="clock"><p>The permission rollout still lands; no console.</p></ex-callout>
+<ex-choice id="choice-console" title="Where does the engine console land?">
+<ex-option id="console-a" title="A · Permission now, console later (recommended)"><template slot="summary">Smallest B2.</template></ex-option>
+<ex-option id="console-b" title="B · Whole console in B2"><template slot="summary">Designed and reviewed first.</template></ex-option>
 </ex-choice>
-<p>Selections and comments are local reader state until handed back through the page's Comments controls. No choice here executes a production operation or starts implementation.</p>
-</ex-document></body></html>
+</ex-document>
+</body>
+</html>
