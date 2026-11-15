@@ -1242,3 +1242,6 @@ The workspace id equals the operation id.
   4. **Ruling 4:** #14's `verify-auth` indexes this journey.
 - **Going ahead in parallel** (unchanged): the contract copies from `956fb4cbc`, the `TokenLifetimeSeconds` absence check, the repeated-`superseded` storage case, and the re-pin build.
 - **If `observe` lacks machine rows** (enrollment state, client, generation), ask Lead A for a launcher `observe` extension before asserting. Don't infer from sign-in's side.
+- **Machine fields in `observe` (2026-11-15T05:56Z, Lead A push 01a1ddc7).** Lead A adds them in a small follow-up on top of #281 once it merges (#281 isn't reopened). `observe` is launcher test support, not a production route, so no owner decision is needed.
+  - **Implementer:** send Lead A the exact field list as soon as the journey design names it: enrollment state and end reason, the machine client id, the installation generation and `base_generation`, `code_expires_at`, `last_grant_at`, and allowed workspaces.
+  - Build the client and the host wiring now. Assert the real-central machine journey once the follow-up is pinned.
