@@ -150,7 +150,11 @@ flowchart TB
     </ul></li>
   <li><strong>Accepted:</strong> <code>platform.crypto.getRandomValues(…)</code>; a parameter named <code>crypto</code>; the same calls as literal text inside a browser-script template; <code>new Date(now)</code>; a <code>*.unit.test.ts</code> file.</li>
   </ul></li>
-<li><strong>The base tree:</strong> the PR's checker, run over the base commit's <code>packages/sign-in-core/src/</code>, reports exactly the six sites. Run over the PR's tree, it reports none. (Today's checker on <code>main</code> doesn't have the rule, so it reports nothing either way.)</li>
+<li><strong>The base tree:</strong> the PR's checker, run over the base commit's <code>packages/sign-in-core/src/</code>, reports exactly the six sites. Run over the PR's tree, it reports none. (Today's checker on <code>main</code> doesn't have the rule, so it reports nothing either way.)
+  <ul>
+  <li><strong>How to run it on the base:</strong> the script scans the tree it sits in (<code>audit-portal-architecture.ts:1298–1309, 1332–1340</code> fix the root from the script's own location), and it has no root argument. So the Verifier makes a scratch worktree at the base commit (<code>git worktree add &lt;scratch&gt; f3b2b88b</code>), copies the PR's <code>scripts/audit-portal-architecture.ts</code> into it, and runs <code>pnpm test:portal-architecture</code> there.</li>
+  <li><strong>Clean-up:</strong> the scratch worktree is removed afterwards. Nothing in the PR changes for this.</li>
+  </ul></li>
 <li><strong>Capability required (S3):</strong> two deliberate mutations, run by the Verifier and then reverted:
   <ul>
   <li>removing <code>crypto</code> from <code>createWebSignInCapabilities</code>' return must make <code>pnpm typecheck</code> fail in the hosts;</li>
@@ -194,7 +198,7 @@ flowchart TB
   <li><strong>Rejected:</strong> <code>setTimeout</code> in a file under <code>packages/sign-in-test-support/src/</code>; <code>Date.now()</code> in a <code>*.host.e2e.test.ts</code>; <code>new Date()</code> in <code>scripts/verify-auth/</code>; <code>performance.now()</code>; <code>setInterval</code>; <code>typeof setTimeout</code> in a type.</li>
   <li><strong>Accepted:</strong> <code>vi.useFakeTimers()</code>, <code>vi.setSystemTime(…)</code>, <code>vi.spyOn(globalThis, 'setInterval')</code>, <code>toFake: ['setTimeout']</code>, <code>new Date(controlledSignInClock.now())</code>.</li>
   </ul></li>
-<li><strong>The real tree:</strong> the PR's checker, run over the base commit's sign-in tests, reports the five <code>native-browser-protocol.ts</code> bounds (lines 84, 115, 148, 218, 274) and the <code>authorization-fence.host.e2e.test.ts</code> rows (lines 538, 548, 549, 560, 567, 678). Run over the PR's tree, it reports nothing.</li>
+<li><strong>The real tree:</strong> the PR's checker, run over the base commit's sign-in tests, reports the five <code>native-browser-protocol.ts</code> bounds (lines 84, 115, 148, 218, 274) and the <code>authorization-fence.host.e2e.test.ts</code> rows (lines 538, 548, 549, 560, 567, 678). Run over the PR's tree, it reports nothing. It's run on the base the same way as <a href="#V4">V4</a>: the PR's script copied into a scratch worktree at <code>f3b2b88b</code>.</li>
 <li><strong>Behaviour:</strong> <code>sign-in-native-browser.host.e2e.test.ts</code> passes on both storage hosts with the event-only protocol helper.</li>
 <li><strong>The fixture's validity:</strong> <code>authorization-fence.host.e2e.test.ts</code> passes with its invitation's expiry taken from the controlled clock.</li>
 <li><strong>Fails on:</strong> a test helper that keeps a <code>setTimeout</code> bound, or a fixture built with <code>Date.now()</code>.</li>
