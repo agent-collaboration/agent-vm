@@ -34,7 +34,7 @@
 <p><strong>The new rule in the architecture check</strong> (<a href="#scan">below</a>) rejects the runtime's crypto, clock and timers anywhere in the core, including code inside <code>${…}</code> in a template.</p>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p><strong>None for people.</strong> One decision for code outside this repository: eight functions and two types that the published <code>@agent-collaboration/sign-in-core</code> package exports gain a required <code>crypto</code>. That's <a href="brief.html#d1">decision D1 on the Plan</a>.</p>
+<p><strong>None for people.</strong> One decision for code outside this repository: the public exports of the two published packages (<code>sign-in-core</code> and <code>sign-in-owner-cli</code>) gain a required <code>crypto</code>. That's <a href="brief.html#d1">decision D1 on the Plan</a>.</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
 <p>It's the same pattern your approved design already uses for the clock, IDs and deadlines: an interface in the core, with each runtime injecting its own. Your words (<a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/requirements.source.html">approved Requirements</a>, line 174, U23): <em>"you inject stukff not pkul out engines"</em>. The <a href="#trace">trace table</a> maps every rule to its owner and proof.</p>
@@ -171,7 +171,12 @@ sequenceDiagram
   F->>C: subtle.digest(SHA-256, access token), subtle.sign(ECDSA SHA-256)
   H->>X: requests with DPoP proofs, format unchanged (S5)
 </script></ex-mermaid>
-<p><code>obtainPersonFleetCredential</code> widens its <code>platform</code> pick from <code>'clock' | 'ids'</code> to <code>'clock' | 'ids' | 'crypto'</code>. Line 156, <code>globalThis.crypto.getRandomValues(verifierBytes)</code>, becomes <code>props.platform.crypto.getRandomValues(verifierBytes)</code>.</p>
+<p>Both platform picks in <code>fleet-admin-forwarding.ts</code> add <code>'crypto'</code>:</p>
+<ul>
+<li><code>forwardFleetAdminRequest</code> (lines 54–58), from <code>'centralClient' | 'clock' | 'ids'</code>. It creates the key and signs central's proof itself (lines 82–106).</li>
+<li><code>obtainPersonFleetCredential</code> (lines 146–150), from <code>'clock' | 'ids'</code>.</li>
+</ul>
+<p>Line 156, <code>globalThis.crypto.getRandomValues(verifierBytes)</code>, becomes <code>props.platform.crypto.getRandomValues(verifierBytes)</code>. The verifier goes in the token request (<code>code_verifier</code>) and its S256 challenge in the authorization request (<code>code_challenge</code>), both sent through the self-call <code>signIn</code>.</p>
 
 <h3 id="path-stamp">Reading a signed organization statement (S2)</h3>
 <ul>
@@ -198,22 +203,23 @@ sequenceDiagram
 <tr><td><code>better-auth/minimal-owner-pages.ts:40</code></td><td><code>minimalOwnerPage(props: OwnerPageProps)</code></td><td><code>minimalOwnerPage(props: OwnerPageProps &amp; { readonly crypto: SignInCrypto })</code>; mints, then calls <code>renderOwnerPage({ ...props, nonce })</code>. <code>OwnerPageProps</code> itself (<code>pages/owner-page.tsx:28</code>) is unchanged, so no UI prop changes.</td><td>no</td></tr>
 <tr><td><code>better-auth/factor-enrollment-page.ts:14</code></td><td>no crypto</td><td>props gain <code>crypto</code>; mints only on the render branch</td><td>no</td></tr>
 <tr><td><code>better-auth/sign-in-http-handler.ts:272, 346, 391</code></td><td>—</td><td>passes <code>crypto: configuration.platform.crypto</code></td><td>no</td></tr>
-<tr><td><code>better-auth/fleet-admin-forwarding.ts:149, 156</code></td><td>pick <code>'clock' | 'ids'</code>; global random</td><td>pick adds <code>'crypto'</code>; <code>props.platform.crypto.getRandomValues</code>; passes crypto to proof and digest calls</td><td>no</td></tr>
+<tr><td><code>better-auth/fleet-admin-forwarding.ts:54–58, 82–106, 146–150, 156</code></td><td>two picks without crypto; global random</td><td>both picks add <code>'crypto'</code>; <code>props.platform.crypto.getRandomValues</code>; crypto passed to every proof and digest call</td><td>no</td></tr>
 <tr><td><code>organizations/fleet-admin-operation.ts:128, 133</code></td><td><code>fleetAdminIntentDigest(op)</code>, <code>base64UrlSha256(text)</code></td><td><code>(crypto, op)</code>, <code>(crypto, text)</code></td><td><strong>yes</strong></td></tr>
 <tr><td><code>contracts/canonical-json.ts:35</code></td><td><code>canonicalJsonSha256Hex(value)</code></td><td><code>(crypto, value)</code></td><td>no (not re-exported by the index; tests are its only callers)</td></tr>
 <tr><td><code>organizations/organization-stamp-renewal.ts:162–175, 306, 346, 420</code></td><td>props hold <code>clock</code>; <code>readOrganizationStatementFacts(statement)</code></td><td>props gain <code>crypto</code>; <code>(crypto, statement)</code></td><td><strong>yes</strong> (the reader and the props type)</td></tr>
 <tr><td><code>better-auth/organization-statement-plugin.ts:73–86</code></td><td>builds renewal props without crypto</td><td>adds <code>crypto: props.platform.crypto</code></td><td>no</td></tr>
 <tr><td><code>central-link/fleet-admin-proof.ts:50–126</code></td><td><code>createFleetAdminProofKey</code>, <code>exportFleetAdminPrivateJwk</code>, <code>importFleetAdminProofKey</code>, <code>fleetAdminProofKeyThumbprint</code>, <code>signFleetAdminProof</code></td><td>each takes <code>crypto</code> first</td><td><strong>yes</strong> (all five)</td></tr>
 <tr><td><code>sign-in-platform-web/src/index.ts</code></td><td>returns clock, ids, deadlines</td><td><code>createWebSignInCapabilities(clock?, deadlines?, crypto?)</code> also returns <code>crypto</code>, defaulting to <code>globalThis.crypto</code>; README line updated</td><td>yes (its own package)</td></tr>
-<tr><td><code>sign-in-owner-cli/src/fleet/fleet-credential.ts:14–20</code>, <code>fleet-cli-commands.ts:56–75</code>, <code>fleet-admin-command.ts</code>, <code>proof-key-store.ts:30, 92, 155</code></td><td>no crypto in its IO or key stores</td><td><code>FleetCliIo.crypto</code>; key stores take <code>crypto</code>; calls pass it</td><td>CLI package</td></tr>
+<tr><td><code>sign-in-owner-cli/src/fleet/fleet-credential.ts:14–20</code>, <code>fleet-cli-commands.ts:56–75</code>, <code>fleet-admin-command.ts</code>, <code>proof-key-store.ts:30, 92, 155</code></td><td>no crypto in its IO or key stores</td><td><code>FleetCliIo.crypto</code>; key stores take <code>crypto</code>; calls pass it</td><td><strong>yes</strong>: <code>@agent-collaboration/sign-in-owner-cli</code> 0.0.153 is also published, and its index re-exports <code>FleetCliIo</code> and the three key-store constructors</td></tr>
 <tr><td><code>scripts/audit-portal-architecture.ts</code> (<code>collectFilesUnderDirectory</code> at 1272–1288; <code>collectAuthCoreViolations</code> at 1250–1270)</td><td><code>.ts</code> only; no shared-global rule</td><td><code>.tsx</code> under the core; the runtime-global rule (<a href="#scan">below</a>)</td><td>—</td></tr>
 </tbody>
 </table></div>
-<p><strong>What the published package changes</strong> (re-exported by <code>packages/sign-in-core/src/index.ts</code> lines 26 and 52–55):</p>
+<p><strong>What the published packages change.</strong> <code>@agent-collaboration/sign-in-core</code>, re-exported by <code>packages/sign-in-core/src/index.ts</code> lines 26 and 52–55:</p>
 <ul>
 <li><strong>Eight functions:</strong> <code>fleetAdminIntentDigest</code>, <code>base64UrlSha256</code>, <code>readOrganizationStatementFacts</code>, and the five proof functions.</li>
 <li><strong>Two types:</strong> <code>SignInPlatform</code> and <code>OrganizationStampRenewalProps</code>, each with a new required <code>crypto</code>.</li>
 </ul>
+<p><code>@agent-collaboration/sign-in-owner-cli</code>, re-exported by <code>packages/sign-in-owner-cli/src/index.ts</code> lines 4–7: <code>FleetCliIo</code> gains a required <code>crypto</code>, and <code>createMemoryProofKeyStore</code>, <code>createMacosKeychainProofKeyStore</code> and <code>selectProofKeyStore</code> take <code>crypto</code>.</p>
 
 <h2 id="hosts">What each host does</h2>
 <ul>
@@ -248,8 +254,9 @@ sequenceDiagram
 <li><strong>No new state, store or background work.</strong> Each capability call is request-scoped, the same as the global it replaces.</li>
 <li><strong>A throw while rendering a page</strong> (owner page or factor page) is caught by the handler's existing <code>try</code>/<code>catch</code> (<code>sign-in-http-handler.ts:168–404</code>). That catch:
   <ul>
-  <li>deletes the sessions issued in this request;</li>
-  <li>cleans up people created without a linked account;</li>
+  <li>attempts to delete the sessions issued in this request;</li>
+  <li>attempts to clean up people created without a linked account;</li>
+  <li>does both with <code>Promise.allSettled</code>, so a failed cleanup is ignored, as it is today;</li>
   <li>replies <code>503 {"error":"sign-in-unavailable"}</code>.</li>
   </ul>
   Anything Better Auth already wrote earlier in the same request stands, as it would for any other error at that point today. For example, a factor that was just enabled, or a recorded sign-in.</li>
@@ -266,7 +273,7 @@ sequenceDiagram
 <tr><td><code>better-auth/factor-enrollment-page.unit.test.ts</code>, <code>owner-page-organization-slug.unit.test.ts</code>, <code>served-page-appearance.unit.test.ts</code>, <code>turnstile-widget.unit.test.ts</code></td><td>Pass a fixed-bytes crypto. Assertions are unchanged.</td></tr>
 <tr><td>Test-support fixtures and storage cases that build a platform or renewal props, or call the changed functions</td><td>Add <code>crypto</code>. Behavior is unchanged.</td></tr>
 <tr><td><code>fleet-admin-relay.host.e2e.test.ts</code>, <code>fleet-cli.host.e2e.test.ts</code></td><td>Pass crypto where they call the changed functions directly.</td></tr>
-<tr><td>Owner CLI tests (<code>fleet-admin-command.unit.test.ts</code>, <code>fleet-command-no-credential-files.integration.test.ts</code>, <code>macos-keychain-proof-key-store.host.e2e.test.ts</code>)</td><td>Build their IO and key stores with a crypto.</td></tr>
+<tr><td>Owner CLI tests (<code>fleet-admin-command.unit.test.ts</code>, <code>fleet-command-no-credential-files.integration.test.ts</code>, <code>macos-keychain-proof-key-store.host.e2e.test.ts</code>, <code>proof-key-store.unit.test.ts</code>) and <code>sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts</code></td><td>Build their IO and key stores with a crypto.</td></tr>
 <tr><td>New: <code>contracts/page-nonce.unit.test.ts</code>; <code>sign-in-test-support/src/host-crypto-recording.integration.test.ts</code>; new cases in <code>scripts/audit-portal-architecture.unit.test.ts</code></td><td>See the <a href="verification-design.html">Verification Design</a>.</td></tr>
 </tbody>
 </table>

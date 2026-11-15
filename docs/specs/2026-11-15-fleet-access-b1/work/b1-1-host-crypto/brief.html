@@ -86,13 +86,15 @@ flowchart TB
   <li>in the CLI: <code>fleet-admin-command.unit.test.ts</code>, <code>fleet-command-no-credential-files.integration.test.ts</code>, <code>macos-keychain-proof-key-store.host.e2e.test.ts</code>.</li>
   </ul></li>
 <li><strong>New core test:</strong> <code>packages/sign-in-core/src/contracts/page-nonce.unit.test.ts</code>.</li>
+<li><strong>Also named:</strong> <code>packages/sign-in-owner-cli/src/fleet/proof-key-store.unit.test.ts</code> and <code>packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts</code>, which call the key-store constructors.</li>
+<li><strong>Any other in-repo caller</strong> that <code>pnpm typecheck</code> flags because of the new <code>crypto</code> parameter or field may be updated, argument or field only, with assertions unchanged. The handback lists each one.</li>
 <li><strong>The check:</strong> <code>scripts/audit-portal-architecture.ts</code> and <code>scripts/audit-portal-architecture.unit.test.ts</code>, for the rule and the <code>.tsx</code> collection under <code>packages/sign-in-core/src/</code> only.</li>
 </ul>
 <p><strong>Must not change:</strong> any other check script or CI workflow, storage, or any token, proof or digest format. The published package's function parameters change only as <a href="#d1">D1</a> decides. <strong>Stop and come back</strong> if a fix needs anything outside this list.</p>
 
 <h2 id="gate">The gate: all must pass before B1-2 starts</h2>
 <ol>
-<li>V1–V5 pass, each observed by the Verifier, each failing on its wrong build, including V4's type mutations and the source read of the host diffs.</li>
+<li>V1–V4 pass, each observed by the Verifier and each failing on its wrong build, including V4's type mutations. V5, a regression check, passes on the hosts it covers. The source read of the host diffs finds no crypto code of their own.</li>
 <li><code>pnpm check</code>, <code>pnpm test:unit</code>, <code>pnpm test:integration</code> and <code>pnpm test:e2e:host</code> are green.</li>
 <li>CI is green on the PR.</li>
 <li>My check (<code>lead-check.html</code>) is written.</li>
@@ -117,11 +119,16 @@ flowchart TB
 </ul>
 
 <h2 id="decisions">Decisions</h2>
-<h3 id="d1">D1 · Open: release a breaking change to the published package?</h3>
-<p><code>@agent-collaboration/sign-in-core</code> is published to npm (version 0.0.153, <code>publishConfig</code> public). Your rule R30 can only be met by handing <code>crypto</code> in, so eight of its exported functions gain a <code>crypto</code> parameter, and two exported types (<code>SignInPlatform</code>, <code>OrganizationStampRenewalProps</code>) gain a required <code>crypto</code>. Inside this repository, every caller is updated in the same PR. Outside it, I found no consumer: codex-router and agent-vm don't depend on the package.</p>
+<h3 id="d1">D1 · Open: release a breaking change to the two published packages?</h3>
+<p>Two of the packages are set up for public npm publishing (<code>publishConfig</code> public, version 0.0.153 in the repository; I haven't checked the registry). Your rule R30 can only be met by handing <code>crypto</code> in, so their public exports change:</p>
+<ul>
+<li><strong><code>@agent-collaboration/sign-in-core</code>:</strong> eight exported functions gain a <code>crypto</code> parameter, and two exported types (<code>SignInPlatform</code>, <code>OrganizationStampRenewalProps</code>) gain a required <code>crypto</code>.</li>
+<li><strong><code>@agent-collaboration/sign-in-owner-cli</code>:</strong> <code>FleetCliIo</code> gains a required <code>crypto</code>, and its three key-store constructors take <code>crypto</code>.</li>
+</ul>
+<p>Inside this repository, every caller is updated in the same PR. Outside it, I found no consumer: codex-router and agent-vm don't depend on either package.</p>
 <ex-mermaid id="d1-pic" label="Who is affected by the parameter change" data-width="canvas"><script type="text/plain">
 flowchart TB
-  pkg["sign-in-core 0.0.153 on npm"] --> inrepo["Callers in switchboard<br/>all updated in the same PR"]
+  pkg["sign-in-core and sign-in-owner-cli 0.0.153"] --> inrepo["Callers in switchboard<br/>all updated in the same PR"]
   pkg --> out["Callers outside switchboard<br/>none found"]
   class pkg slot2
   class inrepo slot6
@@ -135,7 +142,7 @@ flowchart TB
 <tr><td>B. Keep the old signatures as wrappers that read the runtime's crypto</td><td>Outside code keeps compiling.</td><td>The wrappers break R30 inside the core and add a second path, which is the kind of compatibility shim you don't allow. The new check would also have to exempt them.</td></tr>
 </tbody>
 </table>
-<ex-choice id="d1-choice" title="Release the published package's breaking change?">
+<ex-choice id="d1-choice" title="Release the breaking change to the two published packages?">
   <ex-option id="d1-a" title="**A.** Breaking change in the next 0.0.x (recommended)"><template slot="summary">One way to call each function; R30 holds everywhere.</template></ex-option>
   <ex-option id="d1-b" title="**B.** Keep wrappers for the old signatures"><template slot="summary">Outside code keeps compiling; R30 is broken in the wrappers.</template></ex-option>
 </ex-choice>

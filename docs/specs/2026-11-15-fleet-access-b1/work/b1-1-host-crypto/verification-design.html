@@ -84,7 +84,7 @@ flowchart TB
 <thead><tr><th>Site</th><th>How it's driven</th><th>Expected in the record (operation and input)</th></tr></thead>
 <tbody>
 <tr><td>Page nonce</td><td>An owner page request through the sign-in handler</td><td><code>getRandomValues(16)</code>; the returned bytes equal the page's nonce (as V1)</td></tr>
-<tr><td>Admin verifier</td><td>An admin operation forwarded against the controlled central admin fixture (<code>test-fixtures/controlled-central-admin.ts</code>), with fixed 32 bytes</td><td><code>getRandomValues(32)</code>; and the <code>code_challenge</code> the token endpoint receives equals base64url(SHA-256(base64url(those 32 bytes))). A build that discards the bytes fails this.</td></tr>
+<tr><td>Admin verifier</td><td>An admin operation forwarded against the controlled central admin fixture (<code>test-fixtures/controlled-central-admin.ts</code>), with fixed 32 bytes</td><td><code>getRandomValues(32)</code>. The <code>code_verifier</code> in the token request equals base64url(those 32 bytes). The <code>code_challenge</code> in the authorization request equals base64url(SHA-256(that verifier)). The test observes both through the forwarding's self-call (<code>signIn</code>). A build that discards the bytes fails the verifier match.</td></tr>
 <tr><td>Proof key and signature</td><td>The same forwarding</td><td><code>generateKey(ECDSA P-256)</code>; <code>exportKey(jwk)</code> of the public key; <code>digest</code> of the canonical JWK (thumbprint); <code>digest</code> of the access token (<code>ath</code>); <code>sign(ECDSA SHA-256)</code> of the exact signing input</td></tr>
 <tr><td>Intent digest</td><td>The same forwarding</td><td><code>digest</code> of the canonical intent text</td></tr>
 <tr><td>Statement digest</td><td>Stamp renewal reading a signed statement</td><td><code>digest</code> of the statement text</td></tr>
@@ -96,7 +96,7 @@ flowchart TB
 <li><strong>Also recorded (U23):</strong> every clock read, ID mint and central call made along these paths goes through its capability, and none is missing from the record.</li>
 <li><strong>Failure cases:</strong>
   <ul>
-  <li>a crypto that throws on the owner page path gives <code>503 {"error":"sign-in-unavailable"}</code>, with no session left from that request;</li>
+  <li>a crypto that throws on the owner page path gives <code>503 {"error":"sign-in-unavailable"}</code>, and the handler attempts its cleanup;</li>
   <li>on the forwarding path, the steps after the throw don't happen.</li>
   </ul></li>
 <li><strong>Fails on, one per site:</strong> leaving any one site on the runtime global removes that site's specific operation-and-input entry from the record. Each site has its own assertion, so the failure names it.</li>
