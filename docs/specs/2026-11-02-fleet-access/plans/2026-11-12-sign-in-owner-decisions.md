@@ -1399,3 +1399,14 @@ The workspace id equals the operation id.
 
     This supersedes the earlier "audit as section 4".
   - **Relayed to every Lead:** Lead A `13635880`, `2352c15e` and `d171455e`, plus the Leads thread post.
+- **OWNER (~10:15 ET 15 Nov, relayed by Lead A via the CLI+MCP Lead, quoted):** "every delvierable is gonna have seprate 4 design docuemtn tell all 4 leads this". Combined with the audit-first rule above, each Fleet access deliverable (**B1, B2, B2-additions, BG, B3**) becomes **its own design set of five pages**:
+  1. **Audit**: what exists and what needs fixing;
+  2. **Requirements**;
+  3. **Specification**;
+  4. **Program Design**;
+  5. **Verification Design**.
+
+  The current shared set `docs/specs/2026-11-02-fleet-access/` (one Requirements/Specification/Program Design/VD for all deliverables) is split per deliverable. The owner's approved content and decisions are carried into each, with supersessions marked, and no obligations dropped.
+  - **Order:** B1 → B2 → B2-additions → BG → B3, one at a time with the owner.
+  - **Design and review only** (owner stop in force).
+  - **Authority:** this relay has the owner's quoted words but no first-hand record of mine yet. The audit-first instruction is first-hand in my session.
