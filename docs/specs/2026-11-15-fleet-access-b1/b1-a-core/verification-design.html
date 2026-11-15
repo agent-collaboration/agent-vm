@@ -98,6 +98,13 @@ flowchart TB
     <li>The test starts that harness with a new test-only option. The option wraps the in-process Node platform's <code>crypto</code>, <code>clock</code>, <code>ids</code> and <code>centralClient</code> with the recording fixture. It's added in <code>test-fixtures/local-auth-harness.ts</code> and <code>test-fixtures/node-auth-proof-host.ts</code>, where the Node handler already runs in the test process (<code>node-auth-proof-host.ts:168–191</code>).</li>
     <li>The option is refused on the Cloudflare host.</li>
     <li>It drives the real self-call, Better Auth's PKCE and the controlled central admin.</li>
+    <li><strong>The clock check in this file:</strong> a bounded offset rather than a far one. On the Node harness the process clock is pinned to the injected host time on purpose, because Better Auth reads the process clock and stays as shipped (<code>node-auth-proof-host.ts:114, 120</code>). A far process clock can't run real forwarding: the release fences compare Better Auth's token times with the core clock, and central accepts a proof <code>iat</code> only within (now − 65 s, now + 5 s] (<code>controlled-central-admin.ts:179–181</code>).
+      <ul>
+      <li>The option's <code>clockOffsetMilliseconds</code> runs the recorded core clock 30 s behind the process clock.</li>
+      <li>The test asserts that central's proof <code>iat</code> equals <code>floor((controlled time − 30 s) / 1000)</code>, not the process clock's second.</li>
+      <li>A <code>Date.now()</code> bypass is 30 s off and fails.</li>
+      </ul>
+      The integration file keeps the far pinned clock as designed. This is the Lead's ruling on 15 Nov, from the Verifier's finding.</li>
     </ul></li>
   </ul>
   No new public export is added for a test: the Lead's call on 15 Nov, from the Implementer's three options.</li>
