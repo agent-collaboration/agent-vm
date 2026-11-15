@@ -34,7 +34,7 @@
 <ex-callout title="1 · What you should check" tone="note" icon="shield-check">
 <ul>
 <li><strong>S1–S6:</strong> every random value and every crypto operation the sign-in rules use comes from the host, and the architecture check fails if anyone puts the runtime's crypto, clock or timers back.</li>
-<li><strong>S7–S8:</strong> no sign-in test reads the real clock or waits on real time, a scan enforces it, and the three Hegel families your rule names (outside machine login) exist.</li>
+<li><strong>S7–S8:</strong> no sign-in test reads the real clock or waits on real time, and a scan enforces it. Two of the three Hegel families your rule names exist: token-kind dispatch (new) and the claims round trip. The third, device-code single use, is built with machine login (B3), because the device-code grant isn't on <code>main</code>.</li>
 <li><strong>S9:</strong> "limited" is proven on Miniflare's real counter.</li>
 <li><strong>S10:</strong> every stored ID is a UUIDv7.</li>
 <li><strong>S11:</strong> agents unchanged; people get no tool credential.</li>
@@ -46,6 +46,7 @@
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
 <p>Your rule R30, word for word: <em>"The core MUST reach storage, time, identifiers, cryptography and outbound requests only through capabilities its host supplies, and each capability is required. The Cloudflare host and the Node host MUST each supply them and add no sign-in rule."</em></p>
 <p>Your rule R33: <em>"No sign-in test, test helper or test harness MAY read the real clock or wait on real time."</em></p>
+<p>They come from your words in the <a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/requirements.source.html">approved Requirements</a>: <em>"you inject stukff not pkul out engines"</em> (line 174) and <em>"i dont allow wall clock time ever in tests"</em> (line 176).</p>
 <p>Both come from your <a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/specification.source.html">approved Specification</a> (lines 277 and 280). They trace to your words on the <a href="requirements.html#three">Requirements</a> page.</p>
 </ex-callout>
 
@@ -143,7 +144,12 @@ flowchart TB
 <p><strong>Wrong if:</strong> a planted <code>crypto.randomUUID()</code> in a <code>.tsx</code> page passes the check, or the check flags the admin page's browser script.</p>
 
 <h3 id="S7">S7 · No sign-in test reads the real clock or waits on real time</h3>
-<p>From R33. This covers every test, test helper and harness of the sign-in packages: <code>packages/sign-in-*/src/**/*.test.ts</code>, all of <code>packages/sign-in-test-support/src/</code>, and <code>scripts/verify-auth/</code>.</p>
+<p>From R33. This covers every test, test helper and harness of the sign-in packages:</p>
+<ul>
+<li>every file Vitest runs as a test under <code>packages/sign-in-*/src/</code> (<code>*.test.ts</code>, <code>*.test.tsx</code> and <code>*.unit.spec.ts</code>);</li>
+<li>all of <code>packages/sign-in-test-support/src/</code>;</li>
+<li><code>scripts/verify-auth/</code>.</li>
+</ul>
 <ul>
 <li><strong>Waits are on events only.</strong> A DevTools reply arrives, a socket opens, errors or closes, a process exits, a readiness line arrives, a promise settles.</li>
 <li><strong>Time comes from a controlled clock.</strong> Every timer runs on a controlled clock or on Vitest's fake timers. Any fixture value that depends on time, such as an invitation's expiry, is computed from the controlled clock, never from <code>Date.now()</code> or <code>new Date()</code>.</li>
@@ -166,7 +172,12 @@ flowchart TB
 <p>From R52 and your journey SO2: <em>"Miniflare's binding keeps its own clock: locally it proves 'limited', the window reset is proven through the core's limiter on a controlled clock, and the binding's reset is checked once on the private stack."</em></p>
 <ul>
 <li><strong>On local workerd:</strong> the over-limit cases run against Miniflare's real rate-limit binding, not a stand-in. From one address, past the limit, the next request gets 429 with <code>Retry-After</code>, and every sign-in row reads back unchanged. Another address still passes. A forged <code>x-forwarded-for</code> is ignored.</li>
-<li><strong>The window reset</strong> is proven through the core's own limiter on the controlled clock, on both hosts.</li>
+<li><strong>The window reset</strong> is proven on the layers that run on a controlled clock. The core itself has no counter: it hands each request to the host's limiter (<code>request-limits/sign-in-request-admission.ts:23–34</code>). So the layers are:
+  <ul>
+  <li><strong>Better Auth's own provider-layer limit</strong>, inside the service: after the limit, moving the harness's controlled clock past the window lets the next request through (the existing recovery-code case, <code>people-request-limits.host.e2e.test.ts:173–232</code>);</li>
+  <li><strong>the Node host's fixed-window counter</strong>, which reopens exactly at expiry on the injected clock (<code>fixed-window-request-limiter.unit.test.ts</code>).</li>
+  </ul>
+  That's how SO2's "the core's limiter on a controlled clock" maps onto the real code (<a href="decisions.html#mine">Decisions</a>).</li>
 <li><strong>The binding's reset</strong> and counting across Cloudflare locations are checked on the private stack, not here.</li>
 <li><strong>The real counter's own clock:</strong> it counts in windows aligned to its real clock, which the test never reads or waits on. A burst sent across a window boundary would let one extra request through. That's the residual risk recorded on the <a href="decisions.html#flood-clock">Decisions</a> page.</li>
 </ul>
@@ -175,13 +186,18 @@ flowchart TB
 <h3 id="S10">S10 · Every stored ID is a UUIDv7</h3>
 <p>From R32: <em>"No UUID other than version 7 MAY be minted or stored by the sign-in service."</em></p>
 <ul>
-<li><strong>Generated identifiers are version 7.</strong> After a full people journey on each database (D1 and better-sqlite3), every value in an identifier column (<code>id</code>, and every column ending in <code>Id</code> or <code>_id</code>) of the tables that journey fills must be a version-7 UUID. Those tables are <code>user</code>, <code>session</code>, <code>account</code>, <code>organization</code>, <code>member</code>, <code>invitation</code>, <code>twoFactor</code>, <code>signInAudit</code>, <code>jwks</code> and <code>oauthClient</code>.</li>
-<li><strong>Each of those tables must hold at least one row,</strong> so an empty table can't pass by having nothing to check.</li>
+<li><strong>Every UUID the service stores is version 7, wherever it sits.</strong> That means any column, including UUIDs inside JSON or URLs, not just columns named as IDs. It holds after the people journey on each database (D1 and better-sqlite3), checked twice:
+  <ul>
+  <li><strong>before the member's removal,</strong> so rows that the removal deletes are seen;</li>
+  <li><strong>at the end.</strong></li>
+  </ul>
+  It already holds for the owner-and-agent journey, which the existing inventory covers.</li>
+<li><strong>Coverage:</strong> before the first check, <code>user</code>, <code>session</code>, <code>account</code>, <code>organization</code>, <code>member</code>, <code>invitation</code>, <code>twoFactor</code> and <code>signInAudit</code> must each hold at least one row, so an empty table can't pass by having nothing to check.</li>
 <li><strong>Derived keys stay derived.</strong> The client-assertion record's key (<code>oauthClientAssertion.id</code>) is a digest of the assertion's <code>jti</code>, which is what makes its replay refusable. It must stay that digest, not become a UUID, and a replay must be refused. The existing case in <code>storage-cases/provider-identifier-cases.ts</code> (lines 56–130) already proves this, and it stays.</li>
 <li><strong>Secrets and codes are never UUIDs:</strong> session tokens, client secrets, PKCE verifiers, signing keys, backup codes, device codes and user codes.</li>
 <li><strong>Not reached by this journey:</strong> <code>passkey</code> (B1-B), <code>deviceCode</code> (machine login, B3), and the agent-path tables <code>oauthResource</code> and <code>oauthClientResource</code>. They're listed as uncovered, not claimed.</li>
 </ul>
-<p><strong>Wrong if:</strong> a version-4 UUID in any of those columns passes; an expected table is empty and the test still passes; a secret is UUID-shaped; or the client-assertion key stops being the <code>jti</code> digest.</p>
+<p><strong>Wrong if:</strong> a version-4 UUID anywhere in a stored row passes, including in JSON or in a row later deleted; an expected table is empty and the check still passes; a secret is UUID-shaped; or the client-assertion key stops being the <code>jti</code> digest.</p>
 
 <h3 id="S11">S11 · People get no tool credential, and today's agents still work</h3>
 <p>From R38. On the final build of this feature:</p>

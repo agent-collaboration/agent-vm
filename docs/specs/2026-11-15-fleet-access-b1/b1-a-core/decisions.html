@@ -34,7 +34,7 @@
 <p><strong>None open.</strong> Nothing in B1-A changes what a person sees or can do.</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
-<p>Every decision of yours below is quoted with where you said it. Lines marked <strong>unconfirmed</strong> are ones I couldn't find in a transcript, and each has another line of yours that backs it up.</p>
+<p>Every decision of yours below is quoted with where you said it. The design rests on your approval of 4 Nov: <em>"yes you need anytnhign?"</em>, answering my request to approve the overall design, B1 and B2 (<a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl">Fleet transcript</a> lines 71226 and 71230). Lines marked <strong>unconfirmed</strong> are ones I couldn't find in a transcript, and each has another line of yours that backs it up.</p>
 </ex-callout>
 
 <ex-mermaid id="decisions-pic" label="Where B1-A's decisions come from" data-width="canvas"><script type="text/plain">
@@ -54,21 +54,41 @@ flowchart TB
 
 <h2 id="owner">Your decisions</h2>
 <p>Transcripts: <strong>F</strong> is the <a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl">Fleet access session</a>; <strong>P</strong> is the <a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portable-tool-portal-hosts/2febb449-db01-4859-8fdb-fdc41a74abfc.jsonl">earlier portal session</a>. The approved Requirements are <a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/requirements.source.html"><code>requirements.source.html</code></a>.</p>
-<div class="ex-table-scroll" data-width="canvas"><table>
-<thead><tr><th>Decision</th><th>Your words</th><th>Where</th><th>What it decides here</th></tr></thead>
-<tbody>
-<tr><td>The design and B1 are approved</td><td>"yes you need anytnhign?", answering "Still waiting on you: approve the overall design, B1 and B2"</td><td>F lines 71226 and 71230, 4 Nov 16:50Z</td><td>The approved rows are the yardstick</td></tr>
-<tr><td>One runtime-free core, runtimes injected (U23, rule R30)</td><td>"you inject stukff not pkul out engines"; "it shoudl be runtime seperated like fuckign codex router"</td><td>Requirements line 174</td><td>Crypto must come from the host</td></tr>
-<tr><td>One design on any host (U16)</td><td>"maqke sure clodufalre is one runtiem and we decokuple yes? same design"</td><td>Requirements line 172</td><td>Both hosts and the CLI use one shared builder</td></tr>
-<tr><td>No wall clock in tests (U25, rule R33)</td><td>"i dont allow wall clock time ever in tests"; "use hegal"; also "i dont allow wall clock time ever"</td><td>Requirements line 176; P line 143821, 24 Oct</td><td>Event waits only; controlled-clock fixtures; the dispatch Hegel family</td></tr>
-<tr><td>No hang guard, waits on events only</td><td>"no real clock and only events, mock timers in tests" (<strong>unconfirmed</strong>; backed by the line above)</td><td>31 Oct, in my memory record; line not found</td><td>The five real-time bounds go, with no replacement watchdog</td></tr>
-<tr><td>Only UUIDv7 (U24, rule R32)</td><td>"we ony use uuidv7"</td><td>Requirements line 175</td><td>The full ID readback</td></tr>
-<tr><td>How flood limits are proven (journey SO2)</td><td>Approved row: "Miniflare's binding keeps its own clock: locally it proves 'limited', the window reset is proven through the core's limiter on a controlled clock, and the binding's reset is checked once on the private stack"</td><td><code>verification-design.source.html</code>, journey SO2</td><td>"Limited" on Miniflare's real binding; the stand-in removed</td></tr>
-<tr><td>Better Auth is the library the service is built on (R29: "Better Auth MUST reach it through its Drizzle adapter")</td><td>Approved rule R29, from your words in U22: "we kuse drizzle and sqlite"</td><td><code>specification.source.html</code> line 276</td><td>Better Auth runs inside the service as a library. Whether its own internal crypto is inside R30 is my reading, not your decision (<a href="#mine">below</a>).</td></tr>
-<tr><td>A deliverable is a whole feature</td><td>"when I see deliverable it means a feature done properly"; "the work cannot be some bite size nonsense" (relayed by Lead A, 15 Nov)</td><td>Lead A's relays, 15 Nov</td><td>B1-A groups the core, time, Hegel, flood, ID and agent work into one feature, with old code removed</td></tr>
-<tr><td>Heavy test runs go to Sunclaw</td><td>"yes run thsi stuff"</td><td>F line 122302, 13 Nov</td><td>The Verifier's heavy runs</td></tr>
-</tbody>
-</table></div>
+<ex-grid cols="2" data-width="canvas">
+<ex-card title="The design and B1 are approved" tone="done" icon="book-open" tag="F 71226, 71230 · 4 Nov" pick>
+<p><em>"yes you need anytnhign?"</em>, answering <em>"Still waiting on you: approve the overall design, B1 and B2"</em>.</p>
+<p><strong>Decides here:</strong> the approved rows are the yardstick.</p>
+</ex-card>
+<ex-card title="One runtime-free core, runtimes injected (U23, R30)" tone="done" icon="stack" tag="Requirements line 174" pick>
+<p><em>"you inject stukff not pkul out engines"</em>; <em>"it shoudl be runtime seperated like fuckign codex router"</em>.</p>
+<p><strong>Decides here:</strong> crypto comes from the host.</p>
+</ex-card>
+<ex-card title="One design on any host (U16)" tone="done" icon="cloud" tag="Requirements line 172" pick>
+<p><em>"maqke sure clodufalre is one runtiem and we decokuple yes? same design"</em>.</p>
+<p><strong>Decides here:</strong> both hosts and the CLI use one shared builder.</p>
+</ex-card>
+<ex-card title="No wall clock in tests (U25, R33)" tone="done" icon="clock" tag="Requirements 176 · P 143821" pick>
+<p><em>"i dont allow wall clock time ever in tests"</em>; <em>"use hegal"</em>.</p>
+<p><strong>Decides here:</strong> event waits only, controlled-clock fixtures, the dispatch Hegel family.</p>
+</ex-card>
+<ex-card title="Only UUIDv7 (U24, R32)" tone="done" icon="key" tag="Requirements line 175" pick>
+<p><em>"we ony use uuidv7"</em>.</p>
+<p><strong>Decides here:</strong> the people-journey UUID inventory.</p>
+</ex-card>
+<ex-card title="How flood limits are proven (journey SO2)" tone="done" icon="shield-check" tag="Approved Verification Design" pick>
+<p><em>"Miniflare's binding keeps its own clock: locally it proves 'limited', the window reset is proven through the core's limiter on a controlled clock, and the binding's reset is checked once on the private stack."</em></p>
+<p><strong>Decides here:</strong> "limited" on Miniflare's real binding; the stand-in removed.</p>
+</ex-card>
+<ex-card title="A deliverable is a whole feature" tone="done" icon="package" tag="Relayed by Lead A · 15 Nov" pick>
+<p><em>"when I see deliverable it means a feature done properly"</em>; <em>"the work cannot be some bite size nonsense"</em>.</p>
+<p><strong>Decides here:</strong> one feature, with its old code removed.</p>
+</ex-card>
+<ex-card title="Heavy test runs go to Sunclaw" tone="done" icon="hard-drives" tag="F 122302 · 13 Nov" pick>
+<p><em>"yes run thsi stuff"</em>.</p>
+<p><strong>Decides here:</strong> where the Verifier's heavy runs go.</p>
+</ex-card>
+</ex-grid>
+<p><strong>Backed but not found in a transcript:</strong> the 31 Oct "no real clock and only events, mock timers in tests" (<strong>unconfirmed</strong>; in my memory record only). R33 itself already requires event waits, so nothing depends on that line.</p>
 
 <h2 id="mine">My calls, and whether they should have been yours</h2>
 <div class="ex-table-scroll" data-width="canvas"><table>
@@ -77,6 +97,8 @@ flowchart TB
 <tr><td>Pass <code>crypto</code> explicitly, not through a helper object</td><td>It's how the core already passes the clock; no new abstraction (<a href="program-design.html#choice">Program Design</a>)</td><td>No. It's reversible, inside R30.</td></tr>
 <tr><td>The new core check also covers <code>better-auth/</code></td><td>R30 governs our code there. U23's exemption is for importing Better Auth.</td><td>No. It's stricter than U23's wording, but within R30.</td></tr>
 <tr><td>The nonce helper lives in <code>contracts/</code></td><td>The package's import map sends <code>pages/*</code> to <code>.tsx</code></td><td>No.</td></tr>
+<tr><td>The time scan is a syntax check, so tests read time only through the controlled clock by name, even where <code>Date</code> is already mocked</td><td>A scan can't tell a mocked <code>Date.now()</code> from a real one. Requiring the named controlled clock is the only way a scan can enforce U25's "no real-clock read". The cost is a few explicit reads, for example in <code>authorization-fence.host.e2e.test.ts</code>.</td><td>No. It's within U25, which asks for a scan. If you'd rather allow mocked <code>Date</code> calls, the scan becomes a weaker check.</td></tr>
+<tr><td>SO2's "the core's limiter" means Better Auth's own provider-layer limit plus the Node host's counter</td><td>The core has no counter; it hands each request to the host's limiter (<code>sign-in-request-admission.ts:23–34</code>). The layers that reset on a controlled clock are Better Auth's limit and Node's counter.</td><td>No. It maps your approved wording onto the real code without changing what's proven.</td></tr>
 <tr><td>Delete the flood stand-in</td><td>No test needs it after the change; your feature rule says old code goes</td><td>No: it follows your rule.</td></tr>
 <tr><td>The test-time scan covers <code>sign-in-test-support</code>, the sign-in <code>*.test.ts</code> files, and <code>scripts/verify-auth/</code></td><td>Proof row U25 names "the sign-in tests, helpers or harness"</td><td>No. It's what U25 asks.</td></tr>
 <tr><td>Treat U25's "<code>auth-proof-process.ts</code> kill deadlines" as already done</td><td>The file already waits on an <code>AbortController</code> and the controlled clock</td><td>No. It's a fact from the code.</td></tr>
@@ -112,7 +134,13 @@ flowchart TB
 
 <h2 id="flood-clock">Recorded risk: Miniflare's counter keeps its own real-clock window</h2>
 <p>Your journey SO2 accepted that "Miniflare's binding keeps its own clock". I read its source (miniflare 5.20260815.0-alpha, <code>ratelimit-object.worker.js</code>): it counts in windows of <code>Math.floor(Date.now() / (period * 1000))</code>, 10 or 60 seconds, aligned to the real clock. The test never reads that clock or waits on it.</p>
-<p><strong>The risk:</strong> if the burst of requests in the "limited" case happens to cross a window boundary, the count resets and one request too many gets through. The case would then fail, a false alarm, not a false pass. A burst takes milliseconds against a 60-second window, so this is rare.</p>
+<p><strong>The risk:</strong> if the requests in a "limited" case happen to cross a window boundary, the count resets and the case can't reach its 429 when expected. It would then fail: a false alarm, never a false pass.</p>
+<p><strong>How likely:</strong> roughly the case's duration divided by 60 seconds.</p>
+<ul>
+<li>The social-sign-in case sends about 13 requests (outer limit 10 per 60 s), taking milliseconds, so it's very rare.</li>
+<li>The page case sends up to about 301 requests (outer limit 300 per 60 s), one after another. If it takes a second or two, that's about one run in 30 to 60.</li>
+</ul>
+<p>The Verifier records how long each case takes, so the real figure is known after the first run.</p>
 <p><strong>If it ever happens:</strong> the failure says the request wasn't limited. A rerun decides it. Nothing is waited on, and nothing passes wrongly.</p>
 
 <h2 id="was-there">What was there before, and what each change replaces or keeps</h2>

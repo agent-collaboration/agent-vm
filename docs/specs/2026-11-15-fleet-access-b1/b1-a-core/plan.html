@@ -85,9 +85,16 @@ flowchart TB
   </ul>
   Add their cases to <code>scripts/audit-portal-architecture.unit.test.ts</code>.</li>
 <li><strong>No wall clock in tests.</strong> Turn the five bounds in <code>native-browser-protocol.ts</code> into event waits, as <a href="program-design.html#time-protocol">the table</a> says. Build the <code>authorization-fence.host.e2e.test.ts</code> rows from <code>controlledSignInClock</code>.</li>
-<li><strong>Hegel.</strong> Add <code>packages/sign-in-core/src/response-release/sign-in-response-release.unit.test.ts</code> with the dispatch family and its model (<a href="program-design.html#hegel">Program Design</a>).</li>
-<li><strong>Flood.</strong> Switch the cases at lines 96 and 149 of <code>people-request-limits.host.e2e.test.ts</code> to the real binding. Delete the <code>controlled-stand-in</code> option from <code>local-auth-harness.ts</code> (145, 610, 754) and the switch in <code>auth-proof-rate-limit-bindings.ts</code> (42–46).</li>
-<li><strong>IDs.</strong> Add <code>packages/sign-in-test-support/src/stored-identifier-readback.host.e2e.test.ts</code> (<a href="program-design.html#ids">Program Design</a>).</li>
+<li><strong>Hegel.</strong> Add <code>packages/sign-in-test-support/src/core-tests/sign-in-response-release.hegel.unit.test.ts</code> with the dispatch family and its 20-step model (<a href="program-design.html#hegel">Program Design</a>). It needs no new dependency, because test support already has Hegel 0.4.10.</li>
+<li><strong>Flood.</strong> In <code>people-request-limits.host.e2e.test.ts</code>, switch the cases at lines 96–133 and 149–170 to the real binding, and add to each a second-address request, <code>harness.authAsBrowser('second-address', …)</code>, that must not be limited. Then delete the stand-in everywhere (<a href="program-design.html#flood">Program Design</a>):
+  <ul>
+  <li>the option in <code>local-auth-harness.ts</code> (145, 610, 754);</li>
+  <li>the switch in <code>auth-proof-rate-limit-bindings.ts</code> (7, 42–46);</li>
+  <li><code>controlled-rate-limit-binding.ts</code> and its unit test;</li>
+  <li>the admitted stand-in count in <code>auth-verification-journeys.ts:41</code>, and its check in <code>auth-verification-cli.ts:132–151</code>.</li>
+  </ul>
+  Rewrite the stand-in passages in <code>.agents/skills/verify-auth/SKILL.md:36</code> and <code>packages/sign-in-test-support/README.md:21–23</code>.</li>
+<li><strong>IDs.</strong> Add <code>packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts</code>. It runs the people journey and calls the existing <code>readStoredUuidInventory</code> before the member's removal and at the end (<a href="program-design.html#ids">Program Design</a>).</li>
 <li><strong>Gates.</strong> Run <code>pnpm check</code>, <code>pnpm test:unit</code>, <code>pnpm test:integration</code> and <code>pnpm test:e2e:host</code>. Open the PR as a draft.</li>
 </ol>
 <h3 id="may-change">You may change</h3>
@@ -120,8 +127,8 @@ flowchart TB
 <tr><td><a href="verification-design.html#V5">V5</a> hosts (regression)</td><td><code>pnpm test:e2e:host</code>; <code>verify-auth.ts organization</code> with a <code>local-workerd</code> and then a <code>local-node</code> target</td><td>Every case passes on the hosts each covers. The host diffs add no crypto code (read them).</td><td>None (regression).</td></tr>
 <tr><td><a href="verification-design.html#V6">V6</a> no wall clock</td><td><code>pnpm test:unit</code> (audit cases); the PR's checker over the base commit's tests; <code>pnpm test:e2e:host</code></td><td>The planted timers are rejected. The base tree reports the five bounds and the fence rows, and the PR tree none. The browser journey passes on both hosts.</td><td>Put back one <code>setTimeout</code> bound: the scan must fail.</td></tr>
 <tr><td><a href="verification-design.html#V7">V7</a> Hegel</td><td><code>pnpm test:unit</code></td><td>The dispatch family matches its model.</td><td>Remove the owner-fleet-CLI refresh check: the family must find a failing case.</td></tr>
-<tr><td><a href="verification-design.html#V8">V8</a> flood</td><td><code>pnpm test:e2e:host</code> (<code>people-request-limits</code>)</td><td>429 with <code>Retry-After</code> and nothing changed, on the real binding. Another address passes.</td><td>Build the Worker's limiter without the binding: the "limited" case must fail.</td></tr>
-<tr><td><a href="verification-design.html#V9">V9</a> IDs</td><td><code>pnpm test:e2e:host</code> (<code>stored-identifier-readback</code>), D1 and better-sqlite3</td><td>Only v7 IDs, and no UUID-shaped secrets.</td><td>Insert one v4 ID through the normal store: the test must name its table and column.</td></tr>
+<tr><td><a href="verification-design.html#V8">V8</a> flood</td><td><code>pnpm test:e2e:host</code> (<code>people-request-limits</code>); <code>verify-auth.ts people</code> with a <code>local-workerd</code> and then a <code>local-node</code> target</td><td>429 with <code>Retry-After</code> and nothing changed, on the real binding. A second address passes. The <code>people</code> journey is admitted with zero stand-in receipts.</td><td>Build the Worker's limiter without the binding: the "limited" case must fail.</td></tr>
+<tr><td><a href="verification-design.html#V9">V9</a> IDs</td><td><code>pnpm test:e2e:host</code> (<code>people-identifier-inventory</code>, plus the existing <code>sign-in-identifiers</code>), D1 and better-sqlite3; <code>provider-identifier-cases</code> in the storage cases</td><td>The eight tables hold rows; both inventories show only v7; secrets stay opaque; the derived key and replay case passes.</td><td>Write a v4 UUID into a people-journey row's JSON: the inventory must name its table and column.</td></tr>
 <tr><td><a href="verification-design.html#V10">V10</a> agents (regression)</td><td><code>verify-auth.ts agent</code>, <code>local-workerd</code> target</td><td>The agent gets its token and makes one allowed call. A person is refused.</td><td>None (regression).</td></tr>
 </tbody>
 </table></div>

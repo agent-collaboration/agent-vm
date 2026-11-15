@@ -211,13 +211,22 @@ sequenceDiagram
 </tbody>
 </table>
 <p>The pending-call record drops its <code>timeout</code> field (line 29). If Chrome hangs without closing its socket or exiting, the test waits. The run is ended by the test runner's own limit, which is configuration, not test code. That's your rule: no hang guard in tests.</p>
-<h3 id="time-fixture">One host test builds rows from the controlled clock</h3>
-<p><code>packages/sign-in-test-support/src/authorization-fence.host.e2e.test.ts</code> inserts rows with <code>createdAt: new Date()</code> (lines 538, 549, 560, 567, 678) and an invitation with <code>expiresAt: new Date(Date.now() + 86_400_000)</code> (line 548). Each becomes <code>new Date(controlledSignInClock.now())</code>, or <code>now + 86_400_000</code>, from the harness's controlled clock, the same clock Better Auth reads in that harness. The invitation's validity then no longer depends on the real date.</p>
+<h3 id="time-fixture">One host test reads the clock explicitly</h3>
+<p><code>packages/sign-in-test-support/src/authorization-fence.host.e2e.test.ts</code> inserts rows with <code>createdAt: new Date()</code> (lines 538, 549, 560, 567, 678) and an invitation with <code>expiresAt: new Date(Date.now() + 86_400_000)</code> (line 548).</p>
+<ul>
+<li><strong>At run time these already read the controlled clock.</strong> The file calls <code>useControlledSignInClock()</code> (line 24), which mocks <code>Date</code> and fixes the system time (<code>test-fixtures/controlled-node-test-clock.ts:4–7</code>). So this is not a real-clock read today.</li>
+<li><strong>The change:</strong> a syntax scan can't tell a mocked <code>Date.now()</code> from a real one. So each call becomes an explicit read of the controlled clock (<code>new Date(controlledSignInClock.now())</code>, or <code>now + 86_400_000</code>), which the scan allows.</li>
+<li><strong>Why:</strong> this is a clarity change that makes the rule enforceable, not a behaviour fix. The cost is that every test reads time through the controlled clock by name. That's <a href="decisions.html#mine">my call</a>.</li>
+</ul>
 <h3 id="time-already">Already satisfied</h3>
 <p>Your proof row U25 names "today's <code>setTimeout</code> kill deadlines in <code>auth-proof-process.ts</code>". On <code>main</code>, <code>auth-proof-process.host.e2e.test.ts</code> already uses an <code>AbortController</code> deadline fired by the test, plus the controlled clock, and has no <code>setTimeout</code>. That row is out of date, and nothing changes there.</p>
 
 <h2 id="hegel">The token-kind dispatch Hegel family (S8)</h2>
-<p>A new property test, <code>packages/sign-in-core/src/response-release/sign-in-response-release.unit.test.ts</code>, uses <code>@hegeldev/hegel</code> (already a test-support dependency, 0.4.10).</p>
+<p>A new property test, <code>packages/sign-in-test-support/src/core-tests/sign-in-response-release.hegel.unit.test.ts</code>, sits beside the existing focused tests for the same function (<code>core-tests/sign-in-response-release.unit.test.ts</code>, which stay).</p>
+<ul>
+<li><strong>Why that package:</strong> it already depends on <code>@hegeldev/hegel</code> 0.4.10 (<code>packages/sign-in-test-support/package.json:47–50</code>) and already imports <code>releaseSignInResponse</code> from the core's public exports. So no manifest or lockfile changes.</li>
+<li><strong>Where it runs:</strong> its <code>.unit.test.ts</code> suffix puts it in Vitest's unit lane (<code>vitest.config.ts:149–152</code>).</li>
+</ul>
 <ul>
 <li><strong>What it generates:</strong> a grant (<code>client_credentials</code>, <code>person</code>, <code>introspection</code>, <code>none</code>); an audience (a registered workspace resource with a policy, central's admin audience, the management audience, an unknown one); a client (a registered agent, the owner fleet CLI client, another person client); whether the response carries a refresh credential; and whether the issued sessions are still active.</li>
 <li><strong>What it runs:</strong> <code>releaseSignInResponse</code> (<code>response-release/sign-in-response-release.ts:53</code>), with in-memory ports built from those choices.</li>
@@ -263,7 +272,7 @@ sequenceDiagram
   <li><strong>Assertions that stay:</strong> 429 with <code>Retry-After</code>; every sign-in row fingerprint unchanged; the counts of <code>request-limited</code> observations at the <code>outer</code> and <code>provider</code> layers.</li>
   <li><strong>New in each case:</strong> after the limit is reached, a request from a second browser, <code>harness.authAsBrowser('second-address', …)</code>, must not be limited. The harness gives each browser key its own stable address (<code>test-fixtures/proof-browser-addresses.ts</code>). Today neither case uses a second address, so "another address passes" isn't proven.</li>
   </ul></li>
-<li><strong>The reset cases</strong> stay on the core's limiter with the controlled clock, as journey SO2 says.</li>
+<li><strong>The reset proofs</strong> stay as they are, on the layers that run on a controlled clock: Better Auth's provider-layer limit (the recovery-code case at lines 173–232 moves the harness clock with <code>/__auth-proof/set-clock</code> and the next request succeeds), and the Node host's fixed-window counter (<code>packages/sign-in-host-node/src/fixed-window-request-limiter.unit.test.ts</code>, reopening at expiry on the injected clock). The core has no counter of its own (<code>sign-in-request-admission.ts:23–34</code> delegates to the host).</li>
 <li><strong>The stand-in is removed.</strong> After this change no test uses <code>'controlled-stand-in'</code>. The one failure case, "an unavailable outer backing call returns 503" (line 42), already runs on the real binding and arms the failure with <code>harness.makeLimiterUnavailable()</code>. So the stand-in is deleted with the feature, as the old code it replaces:
   <ul>
   <li>the option's branch in <code>test-fixtures/local-auth-harness.ts</code> (lines 145, 610 and 754);</li>
@@ -277,14 +286,23 @@ sequenceDiagram
 </ul>
 
 <h2 id="ids">Every stored ID read back (S10)</h2>
-<p>A new host test, <code>packages/sign-in-test-support/src/stored-identifier-readback.host.e2e.test.ts</code>, runs on both databases:</p>
+<p><strong>What already exists, and is reused:</strong> <code>readStoredUuidInventory</code> (<code>sign-in-test-support/src/test-fixtures/stored-uuid-inventory.ts</code>) walks every table in <code>signInSchema</code> and every text cell. That includes UUIDs embedded in JSON and URLs, without assuming which columns hold IDs, and it reports every non-v7 UUID by table and column. It's already used in two places:</p>
 <ul>
-<li><strong>The run:</strong> it starts the local harness, then runs the people journey: owner sign-in and organization, an invitation, accept, remove, a second factor, and an admin forwarding.</li>
-<li><strong>The scan:</strong> it reads, through Drizzle, the ten tables the journey fills, from the sign-in schema (<code>signInSchema</code>, <code>storage/sign-in-schema.ts:589</code>): <code>user</code>, <code>session</code>, <code>account</code>, <code>organization</code>, <code>member</code>, <code>invitation</code>, <code>twoFactor</code>, <code>signInAudit</code>, <code>jwks</code> and <code>oauthClient</code>. Each must have at least one row. Every value in a column named <code>id</code>, or ending in <code>Id</code> or <code>_id</code>, must parse as <code>z.uuidv7()</code>.</li>
-<li><strong>Checking the table list:</strong> the Implementer confirms it against the first run. Any further table the journey fills joins the list; a table it can't fill is named as uncovered.</li>
-<li><strong>The derived key</strong> (<code>oauthClientAssertion.id</code>, a digest of the assertion's <code>jti</code>) and its replay refusal are already proven by <code>storage-cases/provider-identifier-cases.ts:56–130</code>. That case stays, and V9 names it.</li>
-<li><strong>Secrets and codes</strong> (<code>token</code>, <code>secret</code>, <code>backupCodes</code>, device and user codes) must not match the UUID shape.</li>
-<li><strong>No raw SQL:</strong> rows are read with Drizzle's query builder, as R29 requires.</li>
+<li>the owner-and-agent journey in <code>sign-in-identifiers.host.e2e.test.ts:17–50</code>;</li>
+<li>a storage case that plants a version-4 UUID in <code>oauthClient.metadata</code> and requires that exact location to be reported (<code>storage-cases/storage-case-registry.ts:118–140</code>).</li>
+</ul>
+<p>The client-assertion key, a digest of the assertion's <code>jti</code>, and its replay refusal are proven by <code>storage-cases/provider-identifier-cases.ts:56–130</code>. All of this stays.</p>
+<p><strong>What's added:</strong> the people journey's paths aren't inventoried today. A new host test, <code>packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts</code>, runs on both databases:</p>
+<ul>
+<li><strong>The journey:</strong> owner sign-in and organization, an authenticator app with recovery codes, an invitation, accept, an admin forwarding, then removing the member.</li>
+<li><strong>The checks:</strong> it calls <code>readStoredUuidInventory</code> twice and expects no non-v7 UUID either time:
+  <ul>
+  <li><strong>once before the removal,</strong> so the member, invitation and change-record IDs are read while their rows still exist;</li>
+  <li><strong>once at the end,</strong> so IDs written by the removal itself are read.</li>
+  </ul></li>
+<li><strong>Coverage:</strong> before the first check, it asserts that <code>user</code>, <code>session</code>, <code>account</code>, <code>organization</code>, <code>member</code>, <code>invitation</code>, <code>twoFactor</code> and <code>signInAudit</code> each hold at least one row, so it can't pass by inspecting empty tables.</li>
+<li><strong>Not reached by this journey, and named as uncovered:</strong> <code>passkey</code> (B1-B), <code>deviceCode</code> (B3), and the agent-path tables (the existing owner-and-agent inventory covers those).</li>
+<li><strong>Secrets and codes</strong> (session tokens, client secrets, backup codes) stay opaque, as the existing journey asserts for tokens and secrets.</li>
 </ul>
 
 <h2 id="agents">Today's agents still work (S11)</h2>
@@ -344,8 +362,13 @@ sequenceDiagram
   <li><code>new Date()</code> with no argument;</li>
   <li><code>globalThis[...]</code> with a computed key.</li>
   </ul>
-  <strong>Templates:</strong> literal text of strings and templates is not code, so browser scripts written as text aren't flagged. The expressions inside a template's <code>${…}</code> are code the service runs, so they are walked. <code>`${crypto.randomUUID()}`</code> is rejected. Test files (<code>*.test.ts</code>, <code>*.test.tsx</code>) are skipped by this core rule; the next rule covers them.</li>
-<li><strong>Reject real time in the sign-in tests:</strong> a new function, beside the core rule, walks every file under <code>packages/sign-in-test-support/src/</code>, every <code>*.test.ts</code> under <code>packages/sign-in-*/src/</code>, and <code>scripts/verify-auth/</code>. It reports <code>setTimeout</code>, <code>setInterval</code>, <code>Date.now()</code>, <code>performance.now()</code>, a zero-argument <code>new Date()</code>, and <code>typeof setTimeout</code> in a type.
+  <strong>Templates:</strong> literal text of strings and templates is not code, so browser scripts written as text aren't flagged. The expressions inside a template's <code>${…}</code> are code the service runs, so they are walked. <code>`${crypto.randomUUID()}`</code> is rejected. Test files are skipped by this core rule; the next rule covers them. A test file is any file Vitest runs as a test: <code>*.test.ts</code>, <code>*.test.tsx</code> and <code>*.unit.spec.ts</code> (<code>vitest.config.ts:149–152</code>).</li>
+<li><strong>Reject real time in the sign-in tests:</strong> a new function, beside the core rule, walks:
+  <ul>
+  <li>every file under <code>packages/sign-in-test-support/src/</code>;</li>
+  <li>every test file (<code>*.test.ts</code>, <code>*.test.tsx</code>, <code>*.unit.spec.ts</code>) under <code>packages/sign-in-*/src/</code>;</li>
+  <li><code>scripts/verify-auth/</code>.</li>
+  </ul> It reports <code>setTimeout</code>, <code>setInterval</code>, <code>Date.now()</code>, <code>performance.now()</code>, a zero-argument <code>new Date()</code>, and <code>typeof setTimeout</code> in a type.
   <ul>
   <li><strong>Allowed:</strong> calls on Vitest's <code>vi</code> object (<code>vi.useFakeTimers</code>, <code>vi.setSystemTime</code>, <code>vi.advanceTimersByTime</code>), and timer names written as strings (<code>vi.spyOn(globalThis, 'setInterval')</code>, <code>toFake: ['setTimeout']</code>), because strings aren't calls.</li>
   <li><strong>On <code>main</code> today</strong> it reports the five protocol-helper bounds and the <code>authorization-fence</code> rows. After <a href="#time">the time changes</a>, it reports nothing.</li>
@@ -381,7 +404,7 @@ sequenceDiagram
 <tr><td><code>sign-in-test-support/src/test-fixtures/native-browser-protocol.ts</code></td><td>Five real-time bounds become event waits (<a href="#time-protocol">above</a>).</td></tr>
 <tr><td><code>sign-in-test-support/src/authorization-fence.host.e2e.test.ts</code></td><td>Rows built from the controlled clock (<a href="#time-fixture">above</a>).</td></tr>
 <tr><td><code>sign-in-test-support/src/people-request-limits.host.e2e.test.ts</code>; <code>test-fixtures/local-auth-harness.ts</code>; <code>test-fixtures/auth-proof-rate-limit-bindings.ts</code>; <code>test-fixtures/auth-verification-journeys.ts</code>; <code>test-fixtures/auth-verification-cli.ts</code>; deleted: <code>test-fixtures/controlled-rate-limit-binding.ts</code> and its unit test; docs: <code>.agents/skills/verify-auth/SKILL.md</code>, <code>packages/sign-in-test-support/README.md</code></td><td>Over-limit cases on the real binding, plus a second-address check. The stand-in, its switch, its admitted count in the journey driver, and its documentation are removed (<a href="#flood">above</a>).</td></tr>
-<tr><td>New: <code>contracts/page-nonce.unit.test.ts</code>; <code>response-release/sign-in-response-release.unit.test.ts</code> (Hegel dispatch); <code>sign-in-test-support/src/host-crypto-recording.integration.test.ts</code>; <code>sign-in-test-support/src/stored-identifier-readback.host.e2e.test.ts</code>; new cases in <code>scripts/audit-portal-architecture.unit.test.ts</code></td><td>See the <a href="verification-design.html">Verification Design</a>.</td></tr>
+<tr><td>New: <code>sign-in-core/src/contracts/page-nonce.unit.test.ts</code>; <code>sign-in-test-support/src/core-tests/sign-in-response-release.hegel.unit.test.ts</code> (Hegel dispatch); <code>sign-in-test-support/src/host-crypto-recording.integration.test.ts</code>; <code>sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts</code> (reusing <code>readStoredUuidInventory</code>); new cases in <code>scripts/audit-portal-architecture.unit.test.ts</code></td><td>See the <a href="verification-design.html">Verification Design</a>.</td></tr>
 </tbody>
 </table>
 
@@ -398,7 +421,7 @@ sequenceDiagram
 <tr><td>U25</td><td><a href="specification.html#S7">S7</a> no wall clock in tests</td><td>sign-in test support; the check</td><td>event waits in <code>native-browser-protocol.ts</code>; controlled-clock rows; the test-time rule</td><td>violation strings as today's</td><td>none</td><td>a hang is ended by the runner's limit, outside test code</td><td><a href="verification-design.html#V6">V6</a></td></tr>
 <tr><td>U25</td><td><a href="specification.html#S8">S8</a> Hegel families</td><td>sign-in-core tests</td><td><code>releaseSignInResponse</code> against a model</td><td>generated grant, audience, client, refresh, session</td><td>none</td><td>a mismatch fails the family</td><td><a href="verification-design.html#V7">V7</a></td></tr>
 <tr><td>U42</td><td><a href="specification.html#S9">S9</a> "limited" on the real counter</td><td>sign-in test support; Cloudflare host's binding limiter</td><td><code>startLocalAuthHarness({ cloudflareOuterLimit })</code>; <code>createBindingRequestLimiter</code></td><td>429 with <code>Retry-After</code>; row fingerprints</td><td>Miniflare's own count</td><td>an unavailable binding fails closed (503)</td><td><a href="verification-design.html#V8">V8</a></td></tr>
-<tr><td>U24</td><td><a href="specification.html#S10">S10</a> every stored ID is v7</td><td>sign-in test support</td><td>a Drizzle read of every <code>signInSchema</code> table</td><td><code>z.uuidv7()</code> per ID column</td><td>the run's stored rows</td><td>a non-v7 ID fails the test with table and column</td><td><a href="verification-design.html#V9">V9</a></td></tr>
+<tr><td>U24</td><td><a href="specification.html#S10">S10</a> every stored ID is v7</td><td>sign-in test support</td><td>the existing <code>readStoredUuidInventory</code> (every table, every text cell), run over the people journey before and after the removal</td><td>its non-v7 locations list, which must be empty</td><td>the run's stored rows</td><td>a non-v7 UUID fails the test with table and column</td><td><a href="verification-design.html#V9">V9</a></td></tr>
 <tr><td>R38</td><td><a href="specification.html#S11">S11</a> agents unchanged, people refused</td><td>the existing agent path</td><td><code>verify-auth</code> <code>agent</code> journey</td><td>as today</td><td>as today</td><td>as today</td><td><a href="verification-design.html#V10">V10</a></td></tr>
 </tbody>
 </table></div>

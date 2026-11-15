@@ -39,7 +39,12 @@
 <p><strong>None.</strong> Everything here is how the existing behaviour is built and proven.</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
-<p>The yardstick is your approved design (rules R30, R32, R33, R38 and R52, and needs U16, U23, U24, U25 and U42), with your words on the <a href="requirements.html#three">Requirements</a> page.</p>
+<p>The yardstick is your approved design (rules R30, R32, R33, R38 and R52, and needs U16, U23, U24, U25 and U42). Your own words in the <a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/requirements.source.html">approved Requirements</a>:</p>
+<ul>
+<li><em>"you inject stukff not pkul out engines"</em> (U23, line 174);</li>
+<li><em>"i dont allow wall clock time ever in tests"</em> (U25, line 176);</li>
+<li><em>"we ony use uuidv7"</em> (U24, line 175).</li>
+</ul>
 <p>The findings come from two places:</p>
 <ul>
 <li>the independent B1 review (<a href="../audit.html">B1 audit</a>, findings R1-X5, R1-X6 and R1-X7);</li>
@@ -81,12 +86,14 @@ flowchart TB
 <tr><td><strong>No wall clock in tests</strong> (R33)</td><td>Broken:
 <ul>
 <li>five real-time bounds in <code>native-browser-protocol.ts</code> (84, 115, 148, 218, 274);</li>
-<li>rows built with <code>new Date()</code> and <code>Date.now()</code> in <code>authorization-fence.host.e2e.test.ts</code> (538–678);</li>
-<li>no scan outside unit tests.</li>
+<li>no scan outside unit tests, so nothing stops a new real timer.</li>
+</ul>
+<p>Also, <code>authorization-fence.host.e2e.test.ts</code> (538–678) calls <code>new Date()</code> and <code>Date.now()</code>. They already run under the mocked clock (<code>useControlledSignInClock()</code>, line 24), so they aren't real-clock reads. A syntax scan can't tell, though, so they move to explicit controlled-clock reads.</p>
+<ul>
 </ul></td><td>Every wait is on an event, every time value comes from the controlled clock, and a scan fails on a planted real timer.</td></tr>
 <tr><td><strong>Hegel families</strong> (R33)</td><td>Partly there. The claims round trip (<code>person-identity-contracts.unit.test.ts:118</code>) and record histories exist. The token-kind dispatch family doesn't.</td><td>A dispatch family matches a model of today's rules on every generated case, and catches a planted mistake.</td></tr>
 <tr><td><strong>"Limited" on the real counter</strong> (R52)</td><td>Broken. On Cloudflare, the over-limit cases use a stand-in (<code>people-request-limits.host.e2e.test.ts:99, 152</code>), not Miniflare's binding, as journey SO2 says.</td><td>"Limited" is proven on Miniflare's real binding and fails without it. The stand-in is deleted.</td></tr>
-<tr><td><strong>Every stored ID is v7</strong> (R32)</td><td>Partly there. Individual IDs are checked in several host tests, with no full readback.</td><td>After a full journey, every ID column of every sign-in table holds only v7 UUIDs, on both databases.</td></tr>
+<tr><td><strong>Every stored ID is v7</strong> (R32)</td><td>Partly there. A full inventory exists: <code>readStoredUuidInventory</code> checks every text cell of every table. It runs after the owner-and-agent journey (<code>sign-in-identifiers.host.e2e.test.ts</code>), and a storage case plants a v4 UUID to prove it catches one. The client-assertion derived key and replay are proven too. The <strong>people journey</strong> (invitations, membership, removal, second factors, admin forwarding) isn't inventoried.</td><td>The same inventory runs over the people journey, before and after a removal, on both databases, and finds only v7.</td></tr>
 <tr><td><strong>Agent path</strong> (R38)</td><td>Partly there. The <code>agent</code> journey passed on earlier builds.</td><td>It passes on the final build of this feature.</td></tr>
 </tbody>
 </table></div>
