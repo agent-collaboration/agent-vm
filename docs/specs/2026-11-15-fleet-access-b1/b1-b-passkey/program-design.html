@@ -359,16 +359,29 @@ export function turnstileQueueTransition(
   <li>turns the window events, widget callbacks and <code>attachPasskeySignInTurnstile</code> calls into <code>QueueEvent</code>s;</li>
   <li>performs each <code>QueueEffect</code>: render, <code>reset</code> then <code>execute</code>, or settle the pending promise for that id.</li>
   </ul></li>
-<li><strong>Invariants after every step:</strong>
+<li><strong>The protocol, defined for every state and event.</strong> The starting state is <code>{ script: 'loading', executing: null, waiting: [] }</code>.
+  <ul>
+  <li><code>scriptReady</code> while <code>loading</code> becomes <code>ready</code>, and starts the head of <code>waiting</code> if there is one. In any other state it's a no-op with no effects.</li>
+  <li><code>scriptFailed</code> while <code>loading</code> or <code>ready</code> becomes <code>failed</code>. It rejects the executing request, then every waiting one in order, with no <code>resetAndExecute</code>. Once <code>failed</code>, it's a no-op. <code>failed</code> is terminal.</li>
+  <li><code>tokenRequested(id)</code>:
+    <ul>
+    <li>while <code>failed</code>, it rejects at once;</li>
+    <li>while <code>ready</code> with nothing executing, it executes (<code>renderWidgetOnce</code> on the first execution, then <code>resetAndExecute</code>);</li>
+    <li>otherwise, while <code>loading</code> or busy, it joins the back of <code>waiting</code>.</li>
+    </ul></li>
+  <li><code>widgetToken</code> and <code>widgetFailed</code> while a request is executing settle it first (<code>resolve</code> or <code>reject</code>). Then, in the same effect batch, they start the head of <code>waiting</code> with <code>resetAndExecute</code>, if any. With nothing executing, they're no-ops: a stray callback changes nothing.</li>
+  </ul></li>
+<li><strong>Safety, after every step:</strong>
   <ul>
   <li>at most one request is executing;</li>
   <li>a request is never both executing and waiting;</li>
-  <li>every request settles exactly once;</li>
-  <li>no token goes to two requests;</li>
-  <li>requests are served in arrival order;</li>
-  <li>once the script has failed, no <code>resetAndExecute</code> is emitted;</li>
-  <li><code>resetAndExecute</code> is emitted only when nothing was executing before.</li>
+  <li>each request is settled <em>at most</em> once;</li>
+  <li>no token resolves two requests;</li>
+  <li>settlements happen in arrival order;</li>
+  <li>no <code>resetAndExecute</code> once the script has failed;</li>
+  <li>within one effect batch, a <code>resetAndExecute</code> comes only after the previous execution was settled, earlier in that batch or before it. A new execution never starts while another is still live.</li>
   </ul></li>
+<li><strong>Completion, at a drained end:</strong> after a final <code>scriptFailed</code>, or after <code>scriptReady</code> plus one widget outcome per started execution, every request is settled <em>exactly</em> once and <code>waiting</code> is empty. Unsettled requests in the middle of a run are normal, not a violation.</li>
 </ul>
 
 <p><strong>Why two widgets:</strong> Turnstile fixes a widget's action when it's rendered, and the service checks the action (<code>expectedAction: 'passkey_sign_in'</code>, <code>turnstile-captcha.ts:136–137</code>). The Google and GitHub widget's tokens carry <code>sign_in_social</code> and would be refused.</p>

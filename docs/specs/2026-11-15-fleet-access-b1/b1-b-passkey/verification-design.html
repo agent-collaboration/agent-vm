@@ -190,23 +190,26 @@ flowchart TB
 <li><strong>Hegel family for the token queue</strong> (owner rule, 15 Nov):
   <ul>
   <li><strong>The test:</strong> <code>packages/sign-in-core/src/pages/islands/passkey-sign-in-turnstile-queue.hegel.unit.test.ts</code>, in the unit lane. <code>@hegeldev/hegel</code> 0.4.10, the version <code>sign-in-test-support</code> already pins, is added as a dev dependency of <code>sign-in-core</code>, because the island module isn't exported and there are no test-only exports. Settings: <code>derandomize: true</code>, <code>hegel.Database.disabled</code>.</li>
-  <li><strong>Generators:</strong> sequences of 1 to 40 <code>QueueEvent</code>s. Request ids are fresh and increasing. <code>scriptReady</code> and <code>scriptFailed</code> appear at most once, in any position. Tokens are distinct generated strings.</li>
-  <li><strong>The model:</strong> a plain list-and-flag model written in the test, independently of the code. After each event, the transition's next state and effects equal the model's.</li>
-  <li><strong>Invariants after every step:</strong> the seven on the <a href="program-design.html#turnstile-machine">Program Design</a>:
+  <li><strong>Starting state and protocol:</strong> exactly as the <a href="program-design.html#turnstile-machine">Program Design</a> defines them. Every run starts at <code>{ script: 'loading', executing: null, waiting: [] }</code>. Every event is valid in every state, with the defined no-op where it applies, so nothing is filtered out.</li>
+  <li><strong>Generators:</strong> sequences of 0 to 40 events drawn from all five kinds, in any order and any state. Request ids are fresh and increasing. Tokens are distinct strings. <code>scriptReady</code> and <code>scriptFailed</code> may appear any number of times, including after each other, to exercise the no-ops and terminal failure. Stray widget events with nothing executing are generated too.</li>
+  <li><strong>Drain:</strong> after the generated prefix, the test appends a deterministic tail that brings the run to a drained end. That's <code>scriptReady</code> if still loading, then one <code>widgetToken</code> per remaining started or waiting request. In a second variant, the tail is a single <code>scriptFailed</code>. Completion is asserted only after the drain, so a run that never ends can't count as proof.</li>
+  <li><strong>The model:</strong> written in the test from the protocol, independently of the code, as three plain values: a script flag, an executing id or null, and a waiting array. After each event, the transition's next state and effect list equal the model's.</li>
+  <li><strong>Checks:</strong> the safety invariants after every step, and the completion property at the drained end (both listed on the Program Design).</li>
+  <li><strong>Every branch is reached.</strong> The family records which protocol branch each step took, and fails if any of these was never hit:
     <ul>
-    <li>at most one executing;</li>
-    <li>never both executing and waiting;</li>
-    <li>each id settles exactly once by the end, given a final script outcome and enough widget outcomes;</li>
-    <li>no token resolves two ids;</li>
-    <li>first in, first out;</li>
-    <li>no <code>resetAndExecute</code> after <code>scriptFailed</code>;</li>
-    <li><code>resetAndExecute</code> only from idle.</li>
+    <li>a request while loading;</li>
+    <li><code>scriptReady</code> with and without waiting work;</li>
+    <li>a request while ready and idle, and while ready and busy;</li>
+    <li>a token or failure with and without a waiting head;</li>
+    <li><code>scriptFailed</code> while loading, while idle, and while executing with waiters;</li>
+    <li>a request after failure;</li>
+    <li>each no-op.</li>
     </ul></li>
-  <li><strong>Wrong builds Hegel must find,</strong> each run by the Verifier on its own, then reverted:
+  <li><strong>Wrong builds the family must catch,</strong> each run by the Verifier on its own, then reverted. Each one is defined by what it changes. The pass condition is that Hegel reports a counterexample of that class; the actual shrunk trace and the first state or effect that differs from the model are recorded in the evidence, with no particular exact shrink required.
     <ul>
-    <li>start the next request without waiting for the current one to settle. Expected shrunk case: two <code>tokenRequested</code> events, then one <code>widgetToken</code>, which resolves both;</li>
-    <li>forget to reject waiting requests on <code>scriptFailed</code>. Expected shrunk case: <code>tokenRequested</code>, <code>tokenRequested</code>, <code>scriptFailed</code>, which leaves an id unsettled;</li>
-    <li>serve the queue last in, first out. Expected shrunk case: three requests, then two tokens, out of order.</li>
+    <li><strong>Premature start:</strong> <code>tokenRequested</code> while busy executes at once instead of queueing. The class is ready, then a request, then a second request: the second request's effects differ from the model at once, and the safety rule "a new execution never starts while another is live" fails.</li>
+    <li><strong>Lost rejection:</strong> <code>scriptFailed</code> rejects the executing request but not the waiting ones. The class is two or more requests, then <code>scriptFailed</code>: the effect list differs, and completion fails after the drain.</li>
+    <li><strong>LIFO:</strong> the next execution starts from the back of <code>waiting</code>. The class is ready, then three requests, then a token: the handoff starts the wrong id, and arrival order fails.</li>
     </ul></li>
   </ul></li>
 <li><strong>Click only, your 15 Nov choice:</strong> V8 counts the browser's network events while the sign-in page loads, on Chrome, which supports autofill. With <code>passkeyPlugin({ autoFill: false })</code>, loading sends no challenge request. This runs through the real island and Better Auth UI's own hook, not a fake.
