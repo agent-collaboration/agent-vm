@@ -1153,3 +1153,6 @@ The workspace id equals the operation id.
 **Verifier:** check the changed anchors (contracts, bridge, description bound), audit the build and signing, then run B2e independently at the frozen head.
 
 **Then:** Lead acceptance → R-code → CI → merge #17.
+- **WS14 description bound, made exact (2026-11-15T01:07Z; the Verifier's anchor check at `ea030e513`).** `fleet-admin-operation.ts` already caps the create description at 2048 UTF-8 bytes, but `fleet-admin-client.ts:23` still accepts **result** descriptions up to 16 384. Central's `WorkspaceView` now decodes with `x-maxUtf8Bytes` 2048.
+  - **Implementer:** set the response parser's bound to 2048 UTF-8 bytes. Copying central's new result negatives (2049-byte ASCII, é and emoji; 513 emoji) into the existing result tests must turn the old 16 384 bound red.
+  - Also confirmed by the Verifier: unknown retained fields are already refused by our strict objects; the bridge's time and observe protocol is unchanged; `Cargo.lock` changed (rustix), so all five artifacts come from `ea030e513`.
