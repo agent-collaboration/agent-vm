@@ -81,6 +81,19 @@ flowchart TB
 <ex-callout title="Taken: A" tone="decision" icon="clock"><p>On 16 Nov you asked <em>“are you being pendantic? is this a areal issue?”</em>. It isn't a real issue: both options give the right outcome and never a duplicate. So this is A, today's Central behaviour plus the lookup. You also asked why there's a ledger at all. Central's <code>request_log</code> (<code>workspace_request_log</code>) is request safety, not workspace data: for 24 hours it replays the same request's answer and refuses a reused ID with different content. After that, the workspace itself, created under the operation ID, is the durable fact the lookup reads.</p></ex-callout>
 
 <h3 id="retire">2 · Changing sign-in's signing key: may sign-in pause for a few minutes?</h3>
+<ex-callout title="In short: when, and what you'd see" tone="note" icon="clock">
+<p><strong>When:</strong> only when you decide to. Today the key never changes. You'd rotate it if it might have leaked (say, a laptop or backup holding sign-in's database was lost), or on a schedule if you want one, such as yearly. Otherwise this never runs.</p>
+<p><strong>What you'd see under A</strong>, if you start it Tuesday at 09:00:</p>
+<ul>
+<li><strong>09:00</strong> You open the hidden maintenance page and press Start. Sign-in, organization creation and admin pages say “Maintenance, back in a few minutes”. Command lines and machines already signed in keep working for up to 5 minutes on their current tokens, then wait too.</li>
+<li><strong>09:01</strong> Sign-in re-signs every organization with the new key and tells Central.</li>
+<li><strong>09:05</strong> The old key is withdrawn.</li>
+<li><strong>09:10</strong> After 5 minutes, so Central has forgotten the old key, Central is restarted.</li>
+<li><strong>09:14</strong> A check confirms every organization still works on the new key.</li>
+<li><strong>09:15</strong> You press Finish. Everything works again, and nobody has to sign in again.</li>
+</ul>
+<p><strong>Why the pause:</strong> without it, someone mid-action at 09:02 could save their organization's ID with the old key. From 09:05 Central would reject that organization until it was fixed by hand.</p>
+</ex-callout>
 <p><strong>The key.</strong> Sign-in has one signing key pair, kept in Better Auth's <code>jwks</code> table. The private half signs. The public half is published at sign-in's key URL; Central fetches it from there and keeps a copy for up to 5 minutes.</p>
 <p><strong>What it signs.</strong> Each organization's <em>statement</em> (“organization X exists, set up by this owner”), which Central stores and checks before doing any work for that organization. It also signs people's tokens, which live at most 5 minutes and simply expire.</p>
 <p><strong>Who starts a rotation, and when.</strong> You do, rarely: on a schedule, or if the key might have leaked. You start it from the hidden owner-only maintenance page on sign-in (decision 4).</p>
