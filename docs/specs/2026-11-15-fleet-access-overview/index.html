@@ -12,14 +12,41 @@
   <a href="index.html">Fleet access overview</a>
   <a href="../2026-11-15-fleet-access-b1/b1-a-core/audit.html">B1-A One sign-in core</a>
   <a href="../2026-11-15-fleet-access-b1/b1-b-passkey/audit.html">B1-B Passkey sign-in</a>
+  <a href="../2026-11-15-fleet-access-b1/b1-c-organizations/audit.html">B1-C Organizations finished</a>
+  <a href="../2026-11-15-fleet-access-b2-central/audit.html">B2 Central organizations</a>
+  <a href="../2026-11-15-fleet-access-b2x/audit.html">B2 additions</a>
+  <a href="../2026-11-15-fleet-access-bg/audit.html">BG Getting in</a>
+  <a href="../2026-11-15-fleet-access-b3/audit.html">B3 Machine login</a>
 </nav></ex-nav>
 <ex-document id="home">
 <h1>Fleet access: overview</h1>
 
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · Five designs are ready for your picks" tone="decision" icon="users">
+<p>I wrote B1-C, B2, B2 additions, BG and B3 myself. Each one passed an independent Sol xhigh review, and I fixed every finding. Each Decisions page shows every choice with a picture, the options, my recommendation and what waits if you defer. Pick on the page.</p>
+</ex-callout>
+<ex-callout title="2 · Three of them change stored data and need your SQL approval" tone="risk" icon="database">
+<p>B2's maintenance pause table (only if you pick S12 A). B3's enrollment storage and the machines former-ID column. B2's S5 B would change how long Central keeps stored answers, and Lead A would design that change with you.</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>These are reviewed designs. Nothing in them is built. B1-A is being built and checked. B1-B starts after B1-A merges.</p>
+</ex-callout>
+
+<h2 id="picks">Your picks, by design</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Design</th><th>Review</th><th>Your choices</th></tr></thead>
+<tbody>
+<tr><td><strong>B1-C</strong> Organizations finished</td><td>READY at <code>ca8b1f21</code></td><td><a href="../2026-11-15-fleet-access-b1/b1-c-organizations/decisions.html">Decisions</a>: where the member lookup lives; how the owner names the person; which chooser component.</td></tr>
+<tr><td><strong>B2</strong> Central organizations</td><td>READY at <code>3d0e16e8</code>. Lead A read its side; one Central correction at <code>9c812f6a</code> is in recheck</td><td><a href="../2026-11-15-fleet-access-b2-central/decisions.html">Decisions</a>: how long a lost create reply is recoverable; whether key retirement may pause sign-in; where the engine console lands; how you run production maintenance.</td></tr>
+<tr><td><strong>B2 additions</strong> Person tokens, revocation</td><td>READY at <code>ca8b1f21</code></td><td><a href="../2026-11-15-fleet-access-b2x/decisions.html">Decisions</a>: how <code>--device</code> keeps a session.</td></tr>
+<tr><td><strong>BG</strong> Getting in, staging proof</td><td>READY at <code>cac4ec63</code></td><td><a href="../2026-11-15-fleet-access-bg/decisions.html">Decisions</a>: the three 30 Oct assumption groups (pages P01–P19, staging S01–S17, release record S15).</td></tr>
+<tr><td><strong>B3</strong> Machine login, locked link</td><td>READY at <code>502b1d05</code>, including Lead A's three corrections</td><td><a href="../2026-11-15-fleet-access-b3/decisions.html">Decisions</a>: what happens to #11; enrollment storage A; where allowed workspaces live.</td></tr>
+</tbody></table></div>
+
 <h2 id="order">The order I'll work in, and what blocks what</h2>
 <ex-mermaid id="order-pic" label="Fleet access features in order, with blockers" data-width="canvas"><script type="text/plain">
 flowchart TB
-  you1["Your approval of B1-A"] --> A["1 · B1-A One sign-in core,<br/>injected and honestly tested"]
+  A["1 · B1-A One sign-in core,<br/>injected and honestly tested"]
   A --> B["2 · B1-B Passkey sign-in"]
   A --> C["3 · B1-C Organizations finished"]
   A --> B2["4 · B2 Central organizations"]
@@ -30,23 +57,23 @@ flowchart TB
   LA4 --> LA5["Lead A · 5 Agent session tokens at central"]
   LA5 --> B45
   B3 --> B45["8 · B4 and B5"]
-  class you1 slot4
   class A,B slot2
-  class C,B2,B2X,BG,B3,B45 slot1
+  class C,B2,B2X,BG,B3 slot4
+  class B45 slot1
   class LA4,LA5 slot3
 </script></ex-mermaid>
-<p><strong>Key:</strong> violet waits on you, amber has its design written, blue comes later, teal is another Lead's deliverable.</p>
+<p><strong>Key:</strong> amber is approved and being built or next, violet waits on your picks, blue comes later, teal is another Lead's deliverable.</p>
 <ol>
-<li><strong>B1-A</strong> One sign-in core, injected and honestly tested. Designed and reviewed. Your 15 Nov decisions are in (Better Auth's own crypto stays as shipped; capabilities stay injected, no DI library; UUIDv7 only, tests included), with a stronger allowed-globals check. Sol's review passed after four rounds. <strong>Go-ahead given 15 Nov; being built now.</strong></li>
-<li><strong>B1-B</strong> Passkey sign-in. Designed; its own Sol review passed after two rounds of fixes. You chose click only for the passkey button on 15 Nov. <strong>Go-ahead given 15 Nov;</strong> it's built once B1-A is merged.</li>
-<li><strong>B1-C</strong> Organizations finished: choose your organization, look up members. <strong>Redesigned by the Lead (15 Nov); in independent Sol review.</strong> Three choices of yours are open. An earlier Sol draft, made without your authorization, is evidence only.</li>
-<li><strong>B2</strong> Central organizations. <strong>Redesigned by the Lead; in independent Sol review.</strong> Four choices of yours are open.</li>
-<li><strong>B2 additions</strong> Person tokens, revocation. <strong>Designed by the Lead; in independent Sol review.</strong> Your <code>--device</code> choice is open.</li>
-<li><strong>BG</strong> Getting in: setup pages, staging proof. <strong>Designed by the Lead; in independent Sol review.</strong> The three 30 Oct assumption groups await your answers.</li>
-<li><strong>B3</strong> Machine login, locked link. <strong>Designed by the Lead; in independent Sol review.</strong> Three choices of yours are open (#11's fate, storage A, allowances). Depends on Lead A's 4a.</li>
+<li><strong>B1-A</strong> One sign-in core, injected and honestly tested. Your 15 Nov decisions are in (Better Auth's own crypto stays as shipped; capabilities stay injected, no DI library; UUIDv7 only, tests included), with a stronger allowed-globals check. <strong>Go-ahead given 15 Nov; being built and checked now.</strong></li>
+<li><strong>B1-B</strong> Passkey sign-in. You chose click only for the passkey button on 15 Nov. <strong>Go-ahead given 15 Nov;</strong> built once B1-A is merged.</li>
+<li><strong>B1-C</strong> Organizations finished: choose your organization, look up members. <strong>Written by the Lead; review READY.</strong> Three choices open. An earlier Sol draft, made without your authorization, is evidence only.</li>
+<li><strong>B2</strong> Central organizations. <strong>Written by the Lead; review READY.</strong> Four choices open.</li>
+<li><strong>B2 additions</strong> Person tokens, revocation. <strong>Written by the Lead; review READY.</strong> Your <code>--device</code> choice is open.</li>
+<li><strong>BG</strong> Getting in: setup pages, staging proof. <strong>Written by the Lead; review READY.</strong> The three 30 Oct assumption groups need your answers. Clearing Central's side of staging waits on Lead A's staging-only store removal.</li>
+<li><strong>B3</strong> Machine login, locked link. <strong>Written by the Lead; review READY.</strong> Three choices open. Depends on Lead A's 4a, which owns the token, door, admission and renewal refusals.</li>
 <li><strong>B4, B5</strong> Sessions through their machine; authenticated CLI. B6 to B9 follow later.</li>
 </ol>
-<p>Every design here is written by the Lead; other agents only review them (your rule, 15 Nov). Each goes to you once its independent review is READY.</p>
+<p>Every design here is written by the Lead; other agents only review them (your rule, 15 Nov).</p>
 
 <h2 id="table">Blockers, parallel work, what each unblocks, approval</h2>
 <div class="ex-table-scroll" data-width="canvas"><table>
@@ -54,11 +81,11 @@ flowchart TB
 <tbody>
 <tr><td><strong>B1-A</strong> One sign-in core (<a href="../2026-11-15-fleet-access-b1/b1-a-core/audit.html">design</a>)</td><td>Nothing: being built</td><td>None: it goes first</td><td>B1-B, B1-C and B2 (they build on its core contract and test changes)</td><td><strong>Yes, 15 Nov</strong> ("yes to b1a and b1b")</td></tr>
 <tr><td><strong>B1-B</strong> Passkey sign-in (<a href="../2026-11-15-fleet-access-b1/b1-b-passkey/audit.html">design</a>)</td><td>B1-A merged. Staging covers journey 5 from adding the passkey onward, in BG's run.</td><td>B1-C, B2</td><td>Nothing else in this lane</td><td><strong>Yes, 15 Nov</strong> ("yes to b1a and b1b")</td></tr>
-<tr><td><strong>B1-C</strong> Organizations finished</td><td>B1-A merged; your approval of its design</td><td>B1-B, B2</td><td>Nothing else in this lane</td><td>No: not designed</td></tr>
-<tr><td><strong>B2</strong> Central organizations</td><td>B1-A merged; your approval of its design</td><td>B1-B, B1-C</td><td>B2 additions, BG</td><td>No: not designed</td></tr>
-<tr><td><strong>B2 additions</strong> Person tokens, revocation</td><td>B2 merged; your answer on CLI <code>--device</code> login (on its Decisions page); your approval</td><td>BG</td><td>B3</td><td>No: not designed</td></tr>
-<tr><td><strong>BG</strong> Getting in, staging proof</td><td>B2 merged; your answers to the 30 Oct BG choices; your approval</td><td>B2 additions</td><td>B1-B's release sign-in; your switch to the new login</td><td>No: not designed</td></tr>
-<tr><td><strong>B3</strong> Machine login, locked link</td><td>B2 additions merged; <strong>Lead A's deliverable 4, "Router to central link"</strong>; your decision on machine-login storage and the frozen #11 and #14; your approval</td><td>None</td><td>B4 and B5</td><td>No: not designed</td></tr>
+<tr><td><strong>B1-C</strong> Organizations finished (<a href="../2026-11-15-fleet-access-b1/b1-c-organizations/audit.html">design</a>)</td><td>B1-A merged; your picks and approval</td><td>B1-B, B2</td><td>Nothing else in this lane</td><td>No: designed and reviewed, awaiting you</td></tr>
+<tr><td><strong>B2</strong> Central organizations (<a href="../2026-11-15-fleet-access-b2-central/audit.html">design</a>)</td><td>B1-A merged; Lead A's directory-read slice and engine deliverable 1; your picks and approval</td><td>B1-B, B1-C</td><td>B2 additions, BG</td><td>No: designed and reviewed, awaiting you</td></tr>
+<tr><td><strong>B2 additions</strong> Person tokens, revocation (<a href="../2026-11-15-fleet-access-b2x/audit.html">design</a>)</td><td>B2 merged; your <code>--device</code> answer; your approval</td><td>BG</td><td>B3</td><td>No: designed and reviewed, awaiting you</td></tr>
+<tr><td><strong>BG</strong> Getting in, staging proof (<a href="../2026-11-15-fleet-access-bg/audit.html">design</a>)</td><td>B1-C and B2 merged; your answers to the 30 Oct groups; your approval</td><td>B2 additions</td><td>B1-B's release sign-in; your switch to the new login</td><td>No: designed and reviewed, awaiting you</td></tr>
+<tr><td><strong>B3</strong> Machine login, locked link (<a href="../2026-11-15-fleet-access-b3/audit.html">design</a>)</td><td>B2 additions merged; <strong>Lead A's 4a</strong>; your picks, storage SQL approval and approval</td><td>None</td><td>B4 and B5</td><td>No: designed and reviewed, awaiting you</td></tr>
 <tr><td><strong>B4, B5</strong></td><td>B3 merged; their designs. B4, creating a session from one computer to another, also needs <strong>Lead A's 4 "Router to central link"</strong> and <strong>Lead A's 5 "Agent session tokens at central"</strong>: central mints the per-session token, as you said on 15 Nov ("central must mint the agent sesion tokens"). Checking that token at every door is the CLI+MCP Lead's "Delegates".</td><td>Each other</td><td>Your switch to the new login; then B6 to B9</td><td>No: not designed</td></tr>
 </tbody>
 </table></div>
