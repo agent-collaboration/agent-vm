@@ -91,7 +91,14 @@ sequenceDiagram
 <li>From O1, submit a foreign organization: 403; stored value null; self-context shows no current choice; memberships and roles unchanged.</li>
 <li>Advance the clock past the confirmation window, inside session expiry: switching works and confirmation fields are unchanged; a protected invite is still refused.</li>
 </ol>
-<p><strong>Wrong builds:</strong> today's hide-after-choice condition (step 1 fails); keep <code>organizationChoices.length</code> driving Continue (step 3 fails: button disabled); restore the earlier choice after a 403 (step 4); stamp a confirmation on switch (step 5). <strong>Lasting</strong>, both hosts.</p>
+<p><strong>Wrong builds:</strong></p>
+<ul>
+<li>Today's hide-after-choice condition: step 2 fails, because the switcher is no longer offered after the first choice.</li>
+<li>Keep <code>organizationChoices.length</code> driving Continue: step 4 fails, because the button is disabled.</li>
+<li>Restore the earlier choice after a 403: step 5 fails.</li>
+<li>Stamp a confirmation on switch: step 6 fails.</li>
+</ul>
+<p><strong>Lasting</strong>, both hosts.</p>
 
 <h2 id="V3">V3 · The lookup's answers (S6, S7, S8)</h2>
 <p><strong>Proven by:</strong> creating real member and invitation states, calling the lookup as O1's current owner, and checking exact bodies and unchanged rows.</p>
@@ -196,7 +203,7 @@ pnpm exec tsx scripts/verify-auth/verify-auth.ts agent --target-file "$AUTH_VERI
 <div class="ex-table-scroll" data-width="canvas"><table>
 <thead><tr><th>Need</th><th>Rules</th><th>Deciding proof</th><th>Unproven after this</th></tr></thead>
 <tbody>
-<tr><td>U51, U27</td><td>S1–S3</td><td>V1, V2, V6</td><td>Deployed hosts; BG's account page</td></tr>
+<tr><td>U51, U27</td><td>S1–S3</td><td>V1, V2, V6</td><td>Deployed hosts; BG's account page; a sole member whose choice was cleared (BG's <code>select-first</code>)</td></tr>
 <tr><td>U9</td><td>S6–S8</td><td>V3, V6</td><td>The list option, until designed if chosen</td></tr>
 <tr><td>U21/U46</td><td>S5</td><td>V4</td><td>A removal after the second check</td></tr>
 <tr><td>U43</td><td>S4</td><td>V1, V2, V4</td><td>BG's returning-person page</td></tr>
