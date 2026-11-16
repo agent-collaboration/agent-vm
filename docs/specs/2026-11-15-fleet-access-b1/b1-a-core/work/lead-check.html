@@ -10,7 +10,14 @@
 <body>
 <ex-document id="doc">
 <h1>B1-A · Lead acceptance before independent review</h1>
-<ex-callout title="Reopened after independent review (16 Nov)" tone="risk" icon="shield-check"><p>The review (<code>reviewer-report.html</code>) found three scanner gaps that my acceptance closed too broadly. S6: extracting <code>Math.random</code> by destructuring passes. S7: <code>globalThis.Date.now()</code> in tests passes, and <code>.tsx</code> helpers outside the core aren't scanned. S12: same file-discovery gap. Those rows are reopened and sent to the Implementer; runtime evidence is unaffected. The rest stands.</p></ex-callout>
+<ex-callout title="Reopened after independent review (16 Nov)" tone="risk" icon="shield-check"><p>The review (<code>reviewer-report.html</code>) found three scanner gaps that my acceptance closed too broadly. S6: extracting <code>Math.random</code> by destructuring passes. S7: <code>globalThis.Date.now()</code> in tests passes, and <code>.tsx</code> helpers outside the core aren't scanned. S12: same file-discovery gap. Those rows were reopened and sent to the Implementer; runtime evidence is unaffected.</p>
+<p><strong>Closed again at <code>a3c02416</code>.</strong> I read the two-file diff (<code>e2a91f55..a3c02416</code>, scanner and its test only):</p>
+<ul>
+<li><code>destructuredMemberNames</code> rejects <code>{ random } = Math</code>, the renamed form, <code>{ now } = Date</code> and <code>{ randomUUID } = crypto</code>;</li>
+<li>the global-receiver handling covers <code>Date</code> and <code>process</code> through <code>globalThis</code>, <code>self</code> and <code>window</code> in the test-time rule;</li>
+<li><code>isSignInTsxScope</code> collects every <code>.tsx</code> under <code>packages/sign-in-*/src/</code> and <code>scripts/verify-auth/</code>.</li>
+</ul>
+<p>The Verifier ran the old scanner (9 intended failures) and the new one (91/91), with the base scan unchanged at 26 findings. The same reviewer confirms next.</p></ex-callout>
 <p><strong>Accepted for independent review:</strong> draft PR <a href="https://github.com/agent-collaboration/switchboard/pull/18">switchboard#18</a>, head <code>e2a91f55</code>, base <code>f3b2b88b</code>. All five conditions hold within the stated limits. This is not merge authority: the fresh Reviewer (Packet 3) comes next, then the merge decision. Written 2026-11-16 by the Fleet access Lead from sources I opened myself.</p>
 <ex-callout title="Limits that stay visible" tone="risk" icon="shield-check">
 <ul>
