@@ -76,7 +76,7 @@ flowchart TB
 </script></ex-mermaid>
 <p><strong>What it means in practice.</strong></p>
 <ul>
-<li><strong>A lost or stolen terminal:</strong> sign out its session S. Its refresh fails, and after Central's acknowledgement its token is refused. Ending a session raises your person revision, as r3 §3 requires (<code>storage/authorization-fence-mutations.ts:233–244</code>). So your other sessions stay signed in, but each of their current tokens is refused once and refreshes; the CLI does that by itself.</li>
+<li><strong>A lost or stolen terminal:</strong> sign out its session S. Its refresh fails, and after Central's acknowledgement its token is refused. Ending a session raises your person revision, as r3 §3 requires (<code>storage/authorization-fence-mutations.ts:233–244</code>). So your other sessions stay signed in, but their current tokens are no longer accepted. The CLI refreshes at the start of each command (<code>fleet-credential.ts:154–160</code>), so the next command just works. A command already in flight when the change landed can be refused with <code>refreshRequired</code>, and you rerun it; the CLI doesn't retry that by itself (<code>fleet-admin-command.ts:129–140</code>).</li>
 <li><strong>A protected command</strong> asks for a recent second factor: the CLI asks for your app or recovery code and confirms S, because confirmations belong to a session.</li>
 <li><strong>Central</strong> needs no change: the token has the same shape as a browser-login token.</li>
 <li><strong>On the terminal:</strong> the key, the refresh credential and S's secret. All three go in Keychain on macOS, otherwise memory only, never a file.</li>
