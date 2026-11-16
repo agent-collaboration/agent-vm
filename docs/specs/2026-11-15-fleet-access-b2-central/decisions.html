@@ -20,11 +20,11 @@
 </nav></ex-nav>
 <ex-document id="doc">
 <h1>B2 · Central organizations: Decisions</h1>
-<p>B2 makes organizations on Central real: the owner creates workspaces, sees the full list and history, and the organization keeps working when sign-in's signing key changes. <strong>One choice is yours: 2, the key-rotation pause.</strong> Choice 1 is taken as A after your question about it. The other two were sequencing and operations, which you handed to me, so they're decided below with the reason. Each section explains the background, gives a concrete example, and shows what each option means in practice.</p>
+<p>B2 makes organizations on Central real: the owner creates workspaces, sees the full list and history, and the organization keeps working when sign-in's signing key changes. <strong>Yours: 2, the key-rotation pause, and a “yes” to A on 1</strong> (lost reply; I recommend it after your question, but it needs your word). The other two were sequencing and operations, which you handed to me, so they're decided below with the reason. Each section explains the background, gives a concrete example, and shows what each option means in practice.</p>
 
 <h2 id="three">The three things for you</h2>
 <ex-callout title="1 · What to check" tone="note" icon="shield-check">
-<p>Yours: <a href="#retire">2 · Changing the signing key</a> (a few minutes of downtime and a new one-row table). <a href="#retry">1 · A lost reply</a> is taken as A.</p>
+<p>Yours: <a href="#retire">2 · Changing the signing key</a> (a few minutes of downtime and a new one-row table). And a “yes” to <a href="#retry">A on 1 · the lost reply</a>.</p>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
 <p>Settled: <a href="#console">3 · console later</a> (my sequencing call) and <a href="#maintenance">4 · a hidden owner-only maintenance page</a> (your pick).</p>
@@ -78,7 +78,7 @@ flowchart TB
 </script></ex-mermaid></section>
 </section>
 </ex-compare>
-<ex-callout title="Taken: A" tone="decision" icon="clock"><p>On 16 Nov you asked <em>“are you being pendantic? is this a areal issue?”</em>. It isn't a real issue: both options give the right outcome and never a duplicate. So this is A, today's Central behaviour plus the lookup. You also asked why there's a ledger at all. Central's <code>request_log</code> (<code>workspace_request_log</code>) is request safety, not workspace data: for 24 hours it replays the same request's answer and refuses a reused ID with different content. After that, the workspace itself, created under the operation ID, is the durable fact the lookup reads.</p></ex-callout>
+<ex-callout title="Proposed: A, needs your “yes”" tone="decision" icon="clock"><p>On 16 Nov you asked <em>“are you being pendantic? is this a areal issue?”</em>. That was a question, not a pick, and A narrows the approved “original answer”, so it needs your word. It isn't a real issue: both options give the right outcome and never a duplicate. So this is A, today's Central behaviour plus the lookup. You also asked why there's a ledger at all. Central's <code>request_log</code> (<code>workspace_request_log</code>) is request safety, not workspace data: for 24 hours it replays the same request's answer and refuses a reused ID with different content. After that, the workspace itself, created under the operation ID, is the durable fact the lookup reads.</p></ex-callout>
 
 <h3 id="retire">2 · Changing sign-in's signing key: may sign-in pause for a few minutes?</h3>
 <ex-callout title="In short: when, and what you'd see" tone="note" icon="clock">
