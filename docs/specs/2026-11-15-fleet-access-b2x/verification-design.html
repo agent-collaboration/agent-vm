@@ -78,7 +78,7 @@
 <tr><td><code>person-fleet-issuance.hegel.unit.test.ts</code></td><td>No token when any refusal condition holds; bounds are the minimum; snapshot never redated</td><td>Skip policy-mismatch; use native expiry only</td></tr>
 <tr><td><code>revision-delivery-transitions.hegel.unit.test.ts</code> (M1)</td><td>An ACK at most the current source revision is recorded (higher than pushed is fine); acknowledged only when it equals the current revision; above the source is a discrepancy; person rows never pushed before their fence row is acknowledged; nothing ever lowers</td><td>Treat ACK above source as acknowledged; reject a valid higher-than-pushed ACK; push person before fence</td></tr>
 <tr><td><code>access-sync-view.hegel.unit.test.ts</code> (M2)</td><td>Only the current generation settles</td><td>No generation check</td></tr>
-<tr><td><code>device-login-transitions.hegel.unit.test.ts</code> (M3)</td><td>Signed in only after exchange; failure always clears custody; slow-down lengthens the wait</td><td>Store custody before exchange; poll without waiting</td></tr>
+<tr><td><code>device-login-transitions.hegel.unit.test.ts</code> (M3)</td><td>Signed in only after exchange; failure always clears custody; each slow-down adds 5 s to the interval, and every later poll waits at least that long</td><td>Store custody before exchange; poll without waiting; lengthen only the next wait and then fall back to the original interval</td></tr>
 </tbody></table></div>
 <p>Exhaustiveness: one added literal per union fails <code>pnpm typecheck</code> at its <code>satisfies never</code>. Runner: a lost conditional write executes no push. Diff read: the “not available” exit removed under B; stale comment fixed. Gates on <a href="plan.html#gates">Plan</a>.</p>
 

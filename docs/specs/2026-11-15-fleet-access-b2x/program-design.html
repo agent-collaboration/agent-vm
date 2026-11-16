@@ -97,7 +97,7 @@ sequenceDiagram
 <tr><td>start</td><td><code>begin</code></td><td>requesting; [request-code]</td></tr>
 <tr><td>requesting</td><td><code>code(userCode, uri, deviceCode, interval, expiresAt)</code></td><td>waiting; [print-code, wait(interval)]</td></tr>
 <tr><td>waiting</td><td><code>waited</code></td><td>polling; [poll(deviceCode)]</td></tr>
-<tr><td>polling</td><td><code>pending</code> / <code>slow-down</code></td><td>waiting; [wait(interval)] / [wait(interval + 5 s)]</td></tr>
+<tr><td>polling(interval)</td><td><code>pending</code> / <code>slow-down</code></td><td>waiting(interval); [wait(interval)] / waiting(interval + 5 s); [wait(interval + 5 s)]. The longer interval is kept for every later poll (RFC 8628 §3.5: increase "for this and all subsequent requests").</td></tr>
 <tr><td>polling</td><td><code>session(token)</code></td><td>choosing-organization; [list-memberships]</td></tr>
 <tr><td>polling</td><td><code>denied</code> / <code>expired</code></td><td>failed(reason); none</td></tr>
 <tr><td>choosing-organization</td><td><code>one</code> / <code>chose(id)</code></td><td>authorizing; [authorize-pkce] / [set-active(id), authorize-pkce]</td></tr>
