@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B1-A · Independent delivery review · NOT READY</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="review"></ex-nav>
+<ex-document id="review">
+<h1>B1-A · Independent delivery review</h1>
+
+<ex-callout title="What this change drops" tone="risk" icon="shield-check">
+<ul>
+<li><strong>Missing from the promised guard:</strong> rejection of ordinary qualified clock reads, extraction of the runtime's random function, and scanning of helper files with the JSX extension outside the core. These are the three findings below.</li>
+<li><strong>Removed as designed:</strong> five browser watchdogs, replaced by event waits; the handmade Cloudflare counter and its unit test, replaced by real-binding proof; two UUIDv4 mints, replaced by random nonce bytes and a UUIDv7 test name.</li>
+<li><strong>Preserved:</strong> the old behavioral assertions, known-answer vectors, reset proofs, derived assertion key and replay refusal. The changed callers receive crypto explicitly.</li>
+<li><strong>Explicit scope boundaries:</strong> Better Auth's internal crypto stays as shipped; device-code proof belongs to B3. Both boundaries appear in the approved sources; neither is a new implementation deferral.</li>
+</ul>
+<p><strong>Partly delivered. NOT READY.</strong> The runtime refactor and local behavior evidence stand, but the new enforcement does not yet meet its declared scope. Three P2 fixes are needed; no product failure or token-format regression was found.</p>
+</ex-callout>
+
+<h2 id="repair-list">What needs fixing</h2>
+<ul>
+<li><a href="#B1A-X1">Clock guard:</a> fully fixed means the same real clock is rejected whether accessed directly or through the global object.</li>
+<li><a href="#B1A-X2">Randomness guard:</a> fully fixed means extracting the runtime's random function cannot bypass the core rule.</li>
+<li><a href="#B1A-X3">File discovery:</a> fully fixed means every source file in the declared helper and identifier scopes reaches the relevant check.</li>
+</ul>
+
+<h2 id="working-picture">How the feature works</h2>
+<ex-mermaid id="working-diagram" label="Delivered behavior and incomplete enforcement" data-width="canvas"><script type="text/plain">
+flowchart TB
+  hosts["Hosts supply runtime effects"]:::delivered
+  core["Core receives required capabilities"]:::delivered
+  pages["Pages and proofs preserve their contracts"]:::delivered
+  counter["Real counter refuses excess requests"]:::delivered
+  inventory["Both databases expose stored identifiers"]:::delivered
+  model["Dispatch agrees with independent model"]:::delivered
+  guard["Source guard misses three cases"]:::defect
+  hosts --> core
+  core --> pages
+  core --> counter
+  core --> inventory
+  core --> model
+  guard -. "checks boundaries" .-> core
+  classDef delivered fill:#d9f2d9,stroke:#2e7d32,color:#0b2e13
+  classDef partial fill:#fff3cd,stroke:#b8860b,color:#3d2b00
+  classDef missing fill:#f8d7da,stroke:#b02a37,color:#3d0a0f
+  classDef defect fill:#f8d7da,stroke:#b02a37,color:#3d0a0f,stroke-dasharray:4 3
+</script></ex-mermaid>
+<p>Green steps have applicable source and retained local proof. The dashed red step is the scanner delivered by this PR: current production calls are injected, but some forbidden future calls would pass its check.</p>
+
+<h2 id="proof-picture">Required proof versus observed proof</h2>
+<ex-mermaid id="proof-diagram" label="Proof boundaries and the remaining scanner gaps" data-width="canvas"><script type="text/plain">
+flowchart TB
+  injected["Host effects must be observable"]:::delivered
+  recorded["Recorded paths and bypass mutants"]:::delivered
+  unchanged["Behavior must survive both hosts"]:::delivered
+  local["Local hosts and browser journeys pass"]:::delivered
+  enforcement["Forbidden sources must be rejected"]:::partial
+  cases["Seventy-nine scanner cases pass"]:::delivered
+  holes["Reviewer probes expose admitted sources"]:::defect
+  injected --> recorded
+  unchanged --> local
+  enforcement --> cases
+  enforcement --> holes
+  classDef delivered fill:#d9f2d9,stroke:#2e7d32,color:#0b2e13
+  classDef partial fill:#fff3cd,stroke:#b8860b,color:#3d2b00
+  classDef missing fill:#f8d7da,stroke:#b02a37,color:#3d0a0f
+  classDef defect fill:#f8d7da,stroke:#b02a37,color:#3d0a0f,stroke-dasharray:4 3
+</script></ex-mermaid>
+<p>The passing suite and deliberate breaks establish useful sensitivity. They do not establish the omitted receiver, destructuring and file-discovery cases. Hosted providers, staging, production and release remain outside this local proof.</p>
+
+<h2 id="acceptance-picture">Acceptance and what it missed</h2>
+<ex-mermaid id="acceptance-diagram" label="Acceptance against the approved design and affected closure" data-width="canvas"><script type="text/plain">
+flowchart TB
+  approved["Owner's words and approved design"]:::delivered
+  candidate["Draft pull request eighteen"]:::delivered
+  lead["Lead accepted twelve rules for review"]:::partial
+  runtime["Runtime evidence carries to reviewed head"]:::delivered
+  missed["Three scanner obligations remain incomplete"]:::defect
+  repairs["Repair guard and affected proof"]:::partial
+  approved -->|"yardstick"| lead
+  candidate -->|"candidate"| lead
+  lead --> runtime
+  lead --> missed
+  missed --> repairs
+  classDef delivered fill:#d9f2d9,stroke:#2e7d32,color:#0b2e13
+  classDef partial fill:#fff3cd,stroke:#b8860b,color:#3d2b00
+  classDef missing fill:#f8d7da,stroke:#b02a37,color:#3d0a0f
+  classDef defect fill:#f8d7da,stroke:#b02a37,color:#3d0a0f,stroke-dasharray:4 3
+</script></ex-mermaid>
+<p>The Lead used the approved design, rather than a replacement goal. Its closure of S6, S7 and S12 is too broad. Reopen those rows and their scanner proof; the unrelated runtime observations need no duplicate heavy run.</p>
+
+<h2 id="header">0. Header</h2>
+<details><summary>Reviewer, source pins, procedure and record boundary</summary>
+<p><strong>Area:</strong> B1-A, one sign-in core. <strong>🔎 Reviewer Sidekick:</strong> session <code>01a1e453-2017-7c52-bfaa-0a93d1a7eaf0</code>. Commission label: <code>Sol xhigh</code>; actual model/effort metadata was not exposed by this harness. No authoring history with this work.</p>
+<p><strong>Procedure:</strong> Packet 3 in <a href="../plan.html#reviewer">the Plan</a>, as selected by <code>tmp/2026-11-16-b1-a-review/brief.md</code>. The Plan supplies logistics; owner words and the approved design supply the standard. The completed five-condition <a href="lead-check.html">Lead acceptance</a> admitted review as a claim to challenge. This is one independent delivery review, not a new design cycle, product repair, acceptance or merge authority.</p>
+<p><strong>Skills loaded:</strong> <code>role-checker</code>, its review/startup references, <code>design-review</code> as requested by the packet, <code>practices-collaboration</code>, <code>agent-collaboration</code>, <code>practices-show-me-your-work</code>, <code>practices-research</code>, <code>domain-typescript</code>, <code>domain-code-standards</code>, <code>principle-read-ground-truth-first</code>, <code>principle-verify-before-accepting</code>, <code>principle-prove-it-works</code>, <code>principle-write-tests-that-can-fail</code>, <code>principle-experiment-before-proposing</code>, <code>principle-write-for-the-reader</code>, <code>presentation-html</code> and its current bound guide. Repository-specific test taxonomy and commands govern this review.</p>
+<p><strong>Design pin:</strong> agent-vm <code>95749ce798d1a1102514a8a91c236346316adaff</code>, clean at entry. Read the six B1-A yardstick pages, relevant approved B1 deliverable and prior assumption/audit passages, and original R30/R32/R33/R38/R52 and U23/U24/U25 proof rows. First-hand Fleet transcript lines <code>71226</code> and <code>71230</code> contain the overall-design/B1/B2 approval exchange; <code>131608</code> requires acceptance against the approved design.</p>
+<p><strong>Candidate:</strong> <a href="https://github.com/agent-collaboration/switchboard/pull/18">switchboard#18</a>, frozen head <code>e2a91f5502944e456c3920ce3ab951b29d8742a9</code>, base <code>f3b2b88b74225359970b0580a290cd34fe1e557b</code>. Source reads used <code>git show</code>/<code>git diff</code> at these revisions, not the mutable checkout. Runtime proof is actually at <code>27d393240b5c31bd1cf7da522de300c0522dd222</code>. The complete later diff changes only the scanner, scanner tests and one verification-recipe paragraph.</p>
+<p><strong>Evidence inspected:</strong> <a href="verifier-observation.md">Verifier observation</a>, <a href="implementer-handback.md">Implementer handback</a>, <a href="implementer-log.md">implementation decisions</a>, <code>work/evidence/</code> local control logs and remote literal-report extracts, and the retained Verifier scratch under <code>tmp/2026-11-15-b1-a-verifier/</code>. Counts below are attributed to their actual runners.</p>
+<p><strong>Record gap:</strong> Router discovery found the Agent VM workspace, Distributed Gateway project and a Fleet sign-in coordination thread, but no supplied B1-A execution root/work-trail tag or reviewer posting grant. No board or external log was changed. Under the brief's report-only write grant, this report is the material review handback and checkpoint.</p>
+<p><strong>Opening:</strong> ordinary local HTML with inline content; the hosted Demistify assets require a network. Source lint is reported at the end. No browser or layout observation is claimed.</p>
+</details>
+
+<h2 id="plain">1. In plain words</h2>
+<p>The core now receives the crypto it needs, and the local behavior proof is substantial. Existing sign-in behavior and meaningful old assertions are preserved. The source guard still admits forbidden code in three ordinary cases, so the feature is <strong>partly delivered</strong>.</p>
+
+<h2 id="diagrams">2. Diagram: how it works, and what state each step is in</h2>
+<p>The <a href="#working-picture">working picture</a>, <a href="#proof-picture">proof picture</a> and <a href="#acceptance-picture">acceptance picture</a> above separate runtime behavior, evidence and the incomplete guard.</p>
+
+<h2 id="outcomes">3. Outcomes: what was approved, and what exists</h2>
+<details><summary>All twelve obligations and their deciding source anchors</summary>
+<p>These are the completion criteria derived from the governing rules, not from the handback. Each code anchor is in Switchboard at the frozen head.</p>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>ID</th><th>Obligation (plain)</th><th>Design anchor (file § / line)</th><th>State: delivered / partial / missing / contradicted</th><th>Code anchor (repo@commit:path:line)</th><th>PR(s)</th><th>Fully fixed means (plain)</th></tr></thead>
+<tbody>
+<tr><td>B1A-O1</td><td>Rendered pages and the authorization verifier use the host's random bytes; other replies draw none.</td><td><a href="../specification.html#S1">S1</a>; R30</td><td>delivered</td><td><a href="https://github.com/agent-collaboration/switchboard/blob/e2a91f5502944e456c3920ce3ab951b29d8742a9/packages/sign-in-core/src/contracts/page-nonce.ts#L16">page-nonce.ts:16</a>; <code>factor-enrollment-page.ts:69</code>; <code>fleet-admin-forwarding.ts:156</code></td><td>#18</td><td>Already observed within local scope.</td></tr>
+<tr><td>B1A-O2</td><td>Our hashing, keys and signatures use the handed-in capability.</td><td><a href="../specification.html#S2">S2</a>; R30</td><td>delivered</td><td><a href="https://github.com/agent-collaboration/switchboard/blob/e2a91f5502944e456c3920ce3ab951b29d8742a9/packages/sign-in-core/src/central-link/fleet-admin-proof.ts#L42">fleet-admin-proof.ts:42</a>; <code>canonical-json.ts:37</code>; <code>fleet-admin-operation.ts:128</code>; <code>organization-stamp-renewal.ts:424</code></td><td>#18</td><td>Already observed within local scope.</td></tr>
+<tr><td>B1A-O3</td><td>A host cannot omit crypto and still compile.</td><td><a href="../specification.html#S3">S3</a></td><td>delivered</td><td><a href="https://github.com/agent-collaboration/switchboard/blob/e2a91f5502944e456c3920ce3ab951b29d8742a9/packages/sign-in-core/src/contracts/sign-in-platform.ts#L104">sign-in-platform.ts:104</a></td><td>#18</td><td>Already shown by required-type mutations.</td></tr>
+<tr><td>B1A-O4</td><td>Each host supplies its standard crypto and adds no sign-in rule.</td><td><a href="../specification.html#S4">S4</a></td><td>delivered</td><td><a href="https://github.com/agent-collaboration/switchboard/blob/e2a91f5502944e456c3920ce3ab951b29d8742a9/packages/sign-in-platform-web/src/index.ts#L28">web builder:28</a>; <code>fleet-cli-commands.ts:71</code>; no changes to the two production host packages</td><td>#18</td><td>Already source-checked.</td></tr>
+<tr><td>B1A-O5</td><td>Token, proof, digest and page-policy outputs retain their contracts.</td><td><a href="../specification.html#S5">S5</a></td><td>delivered</td><td><a href="https://github.com/agent-collaboration/switchboard/blob/e2a91f5502944e456c3920ce3ab951b29d8742a9/packages/sign-in-core/src/better-auth/served-page-appearance.unit.test.ts#L318">policy reference:318</a>; preserved proof/digest known-answer tests</td><td>#18</td><td>Already supported; nonce value change is explicitly allowed.</td></tr>
+<tr><td>B1A-O6</td><td>The guard rejects runtime effects outside the allowed core primitives.</td><td><a href="../specification.html#S6">S6</a>; R30</td><td>partial</td><td><a href="https://github.com/agent-collaboration/switchboard/blob/e2a91f5502944e456c3920ce3ab951b29d8742a9/scripts/audit-portal-architecture.ts#L1509">scanner:1509</a>; <a href="#B1A-X2">B1A-X2</a></td><td>#18</td><td>Extracting the runtime's random function is rejected too.</td></tr>
+<tr><td>B1A-O7</td><td>Tests use controlled time and the guard catches a real-clock slip throughout its promised scope.</td><td><a href="../specification.html#S7">S7</a>; R33</td><td>partial</td><td><a href="https://github.com/agent-collaboration/switchboard/blob/e2a91f5502944e456c3920ce3ab951b29d8742a9/scripts/audit-portal-architecture.ts#L1598">scanner:1598</a>, <a href="https://github.com/agent-collaboration/switchboard/blob/e2a91f5502944e456c3920ce3ab951b29d8742a9/scripts/audit-portal-architecture.ts#L1730">1730</a>; <a href="#B1A-X1">X1</a>, <a href="#B1A-X3">X3</a></td><td>#18</td><td>Qualified real clocks and every scoped helper file are checked.</td></tr>
+<tr><td>B1A-O8</td><td>Generated dispatch decisions agree with the independent model; existing claims proof stays.</td><td><a href="../specification.html#S8">S8</a></td><td>delivered</td><td><a href="https://github.com/agent-collaboration/switchboard/blob/e2a91f5502944e456c3920ce3ab951b29d8742a9/packages/sign-in-test-support/src/core-tests/sign-in-response-release.hegel.unit.test.ts#L800">Hegel family:800</a>; unchanged <code>releaseSignInResponse</code></td><td>#18</td><td>Already shown for the adopted B1-A family.</td></tr>
+<tr><td>B1A-O9</td><td>Excess requests are refused by the real local counter without writes, while another address passes.</td><td><a href="../specification.html#S9">S9</a>; R52; SO2</td><td>delivered</td><td><a href="https://github.com/agent-collaboration/switchboard/blob/e2a91f5502944e456c3920ce3ab951b29d8742a9/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts#L112">limiter cases:112</a>, <code>:164</code>; stand-in implementation deleted</td><td>#18</td><td>Already shown locally; hosted reset remains outside this feature.</td></tr>
+<tr><td>B1A-O10</td><td>Both databases expose only version-seven UUIDs before and after removal; reached secrets are not UUIDs.</td><td><a href="../specification.html#S10">S10</a>; R32</td><td>delivered</td><td><a href="https://github.com/agent-collaboration/switchboard/blob/e2a91f5502944e456c3920ce3ab951b29d8742a9/packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts#L101">inventory:101</a>; existing owner/agent inventory and derived-key replay case</td><td>#18</td><td>Already shown for the journey's explicitly reached tables and values.</td></tr>
+<tr><td>B1A-O11</td><td>An agent gets its token and allowed tool effect; a person gets no tool credential.</td><td><a href="../specification.html#S11">S11</a>; R38</td><td>delivered</td><td>Unchanged agent path; <a href="evidence/remote-f5-inspection.json">agent selected-set and child receipt</a></td><td>#18</td><td>Already supported on the required local Worker target.</td></tr>
+<tr><td>B1A-O12</td><td>Only version-seven UUIDs are minted, and the guard covers all declared sign-in source files.</td><td><a href="../specification.html#S12">S12</a>; U24</td><td>partial</td><td><a href="https://github.com/agent-collaboration/switchboard/blob/e2a91f5502944e456c3920ce3ab951b29d8742a9/scripts/audit-portal-architecture.ts#L1730">file collector:1730</a>; <a href="#B1A-X3">B1A-X3</a></td><td>#18</td><td>The identifier guard receives JSX-extension source files throughout its stated scope.</td></tr>
+</tbody></table></div>
+</details>
+
+<h2 id="verification">4. Verification: required proof versus what was actually run</h2>
+<details><summary>Proof for each outcome, runner attribution and exact limits</summary>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>ID (matches §3)</th><th>Required proof (plain)</th><th>VD / proof-table anchor</th><th>Actually run (plain)</th><th>Run by</th><th>Version (PR head + central commit)</th><th>Evidence path</th><th>Gap (plain)</th></tr></thead>
+<tbody>
+<tr><td>B1A-O1</td><td>Fixed bytes match page nonces, and replies without pages draw none; bypasses fail.</td><td><a href="../verification-design.html#V1">V1</a>, <a href="../verification-design.html#V2">V2</a></td><td>The nonce and eager-mint controls fail at their intended assertions and restore green.</td><td>independent Verifier; reports inspected here</td><td><code>574c1d98</code>; affected inputs unchanged at head</td><td><a href="evidence/local-574c1d98/v1-eager-handler-red.log">eager red</a>, <a href="evidence/local-574c1d98/v1-eager-handler-green.log">green</a>; <a href="evidence/local-574c1d98/v2-global-page-red.log">page bypass</a></td><td>None within the local outcome.</td></tr>
+<tr><td>B1A-O2</td><td>Each crypto site records its own operation and input, with a failing bypass control.</td><td><a href="../verification-design.html#V2">V2</a></td><td>Five integration cases, direct canonical recording and real Node forwarding passed; local and remote bypass controls failed and restored.</td><td>independent Verifier and its commissioned Operator</td><td><code>574c1d98</code>/<code>27d39324</code>; unchanged runtime inputs</td><td><a href="evidence/remote-sensitivity-final.json">literal controls A/B/C/H</a>; local proof/statement/canonical logs</td><td>The provider and central peers are controlled; their hosted operation is not shown.</td></tr>
+<tr><td>B1A-O3</td><td>Omitting the capability or making it optional fails type checking.</td><td><a href="../verification-design.html#V4">V4</a></td><td>Both mutations produced relevant missing/possibly-undefined diagnostics, then restored successfully.</td><td>independent Verifier</td><td><code>574c1d98</code>; required contracts unchanged</td><td><a href="evidence/local-574c1d98/v4-builder-no-crypto-red.log">builder</a>; <a href="evidence/local-574c1d98/v4-optional-crypto-red.log">optional field</a></td><td>None for the required production contract.</td></tr>
+<tr><td>B1A-O4</td><td>Source adds no host-owned crypto rule, and local hosts still run.</td><td><a href="../verification-design.html#V5">V5</a></td><td>The two production host packages are unchanged; the common builder supplies crypto. Both local host suites and browser journeys passed.</td><td>reviewer source inspection; Verifier's Operator runtime</td><td><code>e2a91f55</code> source; <code>27d39324</code> runtime</td><td><a href="evidence/remote-browser-identifier.json">browser and host extraction</a></td><td>Hosted deployment is not observed.</td></tr>
+<tr><td>B1A-O5</td><td>Independent known answers and the page-policy reference stay equal.</td><td><a href="../verification-design.html#V3">V3</a></td><td>Known-answer tests pass; the uppercase-digest control fails two assertions and restores five passes.</td><td>independent Verifier</td><td><code>574c1d98</code>; unchanged affected inputs</td><td><a href="evidence/local-574c1d98/v3-uppercase-digest-red.log">red</a>, <a href="evidence/local-574c1d98/v3-uppercase-digest-green.log">green</a></td><td>Central itself is not running in this check.</td></tr>
+<tr><td>B1A-O6</td><td>Forbidden runtime access fails and allowed local values pass.</td><td><a href="../verification-design.html#V4">V4</a></td><td>The final case suite and base comparison pass their adopted expectations. The reviewer's direct extraction probe produces no finding.</td><td>independent Verifier; reviewer probe</td><td><code>e2a91f55</code></td><td><a href="evidence/local-e2a91f55/candidate-e2a91f55-audit-tests.log">79-case log</a>; <a href="#probe">reviewer probe</a></td><td>A statically named extraction of runtime randomness escapes.</td></tr>
+<tr><td>B1A-O7</td><td>Real clocks/timers fail across every scoped test helper, and event-only browser waits work.</td><td><a href="../verification-design.html#V6">V6</a></td><td>The restored timer control fails then clears; both browsers pass. Qualified clocks produce no finding in the reviewer's probe.</td><td>independent Verifier and its Operator; reviewer probe</td><td><code>e2a91f55</code> scanner; <code>27d39324</code> browsers</td><td><a href="evidence/local-e2a91f55/v6-restored-timer-red.log">timer control</a>; <a href="#probe">probe</a>; collector source</td><td>Qualified clocks and some helper files escape the guard.</td></tr>
+<tr><td>B1A-O8</td><td>The model observes response or rejection and cleanup; three prescribed wrong builds fail.</td><td><a href="../verification-design.html#V7">V7</a></td><td>Ten thousand deterministic generated cases and all-step coverage pass. Each of the three dispatch mutants fails, then restores.</td><td>independent Verifier</td><td><code>27d39324</code>; unchanged at head</td><td><a href="evidence/local-27d39324/v7-other-refresh-client-red.log">refresh</a>, <a href="evidence/local-27d39324/v7-skipped-introspection-check-red.log">introspection</a>, <a href="evidence/local-27d39324/v7-skipped-refusal-cleanup-red.log">cleanup</a>; adjacent green logs</td><td>Device-code concurrency remains B3's explicitly separate outcome.</td></tr>
+<tr><td>B1A-O9</td><td>The real local binding limits one address, preserves rows and allows another; binding/key faults fail.</td><td><a href="../verification-design.html#V8">V8</a></td><td>Six limiter cases pass on each host. Binding bypass gives three failures; removing the address gives two. Each restores six passes.</td><td>Verifier's commissioned Operator; literal reports inspected</td><td><code>27d39324</code>; unchanged runtime inputs</td><td><a href="evidence/remote-sensitivity-final.json">controls D/E</a>; <a href="evidence/remote-f5-inspection.json">people journeys</a></td><td>Local binding proof does not establish hosted reset or cross-location counts.</td></tr>
+<tr><td>B1A-O10</td><td>Two inventories, nonempty required tables, non-UUID secrets and replay refusal pass on both databases; planted wrong values fail.</td><td><a href="../verification-design.html#V9">V9</a></td><td>Both database selections pass. A planted old-version UUID and UUID-shaped recovery codes each fail on both, then restore.</td><td>Verifier's commissioned Operator; literal reports inspected</td><td><code>27d39324</code>; unchanged at head</td><td><a href="evidence/remote-browser-identifier.json">identifier rows</a>; <a href="evidence/remote-sensitivity-final.json">controls F/G</a></td><td>Only the journey's reached flows and stored representations are credited.</td></tr>
+<tr><td>B1A-O11</td><td>The selected agent journey observes token issuance, one allowed effect and refusal of a person.</td><td><a href="../verification-design.html#V10">V10</a></td><td>The required local Worker journey has forty-five matched passes and successful runtime-child exit.</td><td>Verifier's commissioned Operator; retained journey report inspected</td><td><code>27d39324</code>; unchanged at head; controlled central</td><td><a href="evidence/remote-f5-inspection.json">agent receipt</a></td><td>The outer command needed termination; no successful outer exit is claimed.</td></tr>
+<tr><td>B1A-O12</td><td>Non-version-seven mints fail the guard throughout the declared source scope; the Keychain case still works.</td><td><a href="../verification-design.html#V11">V11</a></td><td>The named UUID cases and restored-mint control fail as expected; the authorized Mac Keychain test passes once with cleanup.</td><td>independent Verifier</td><td><code>e2a91f55</code> scanner; <code>574c1d98</code> unchanged Keychain inputs</td><td><a href="evidence/local-e2a91f55/v11-restored-random-uuid-red.log">UUID control</a>; Verifier scratch <code>keychain-authorized-host.json</code></td><td>The file collector excludes some files the UUID rule promises to inspect.</td></tr>
+</tbody></table></div>
+
+<h3 id="gates">Retained gate commands and counts</h3>
+<p>These were run by the named Verifier/Operator, not rerun by this reviewer. Commands used pinned Node <code>24.7.0</code> and pnpm <code>10.33.0</code>. CI was not independently checked.</p>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Command</th><th>Actual revision and runner</th><th>Pass / fail / skip</th><th>Exit</th></tr></thead>
+<tbody>
+<tr><td><code>pnpm check</code></td><td><code>27d39324</code>, Operator</td><td>12 groups / 0 / none reported</td><td>0</td></tr>
+<tr><td><code>pnpm test:unit</code></td><td><code>27d39324</code>, Operator</td><td>2630 / 0 / 0; 240 files</td><td>0</td></tr>
+<tr><td><code>pnpm test:integration</code></td><td><code>27d39324</code>, Operator</td><td>314 / 0 / 0; 62 files</td><td>0</td></tr>
+<tr><td><code>pnpm test:e2e:host --exclude '**/macos-keychain-proof-key-store.host.e2e.test.ts'</code></td><td><code>27d39324</code>, Operator; default Worker/D1 selection</td><td>476 / 0 / 19; Keychain excluded separately</td><td>0</td></tr>
+<tr><td><code>SIGN_IN_TEST_HOST=node pnpm test:e2e:host --exclude '**/macos-keychain-proof-key-store.host.e2e.test.ts'</code></td><td><code>27d39324</code>, Operator</td><td>475 / 0 / 20; Keychain excluded separately</td><td>0</td></tr>
+<tr><td><code>pnpm test:e2e:host packages/sign-in-owner-cli/src/fleet/macos-keychain-proof-key-store.host.e2e.test.ts</code></td><td><code>574c1d98</code>, authorized Verifier Mac run; reporters in receipt</td><td>1 / 0 / 0; earlier sandbox attempt failed and is retained</td><td>0</td></tr>
+<tr><td><code>pnpm exec vitest run --project unit scripts/audit-portal-architecture.unit.test.ts</code></td><td><code>e2a91f55</code>, Verifier</td><td>79 / 0 / 0</td><td>0</td></tr>
+<tr><td><code>pnpm test:portal-architecture</code></td><td><code>e2a91f55</code>, Verifier</td><td>0 findings; exact copied scanner reports 26 intended findings on base</td><td>0 candidate; 1 base</td></tr>
+</tbody></table></div>
+<p>Final-head broad check/unit results are author results: <code>12/12</code> groups and <code>2642</code> tests, exit <code>0</code>, as attributed in the handback. They are not relabelled independent proof. Host skips are separately gated B2e work and host-inapplicable cases, not selected-case successes.</p>
+
+<h3 id="f5">The F5 ruling is supported only at its stated boundary</h3>
+<p>The actual journey reports include successful final summaries and matched selected/passed sets: organization Worker <code>98</code>, organization Node <code>97</code>, people <code>104</code> per host, agent Worker <code>45</code>. Runtime-child exits are <code>0</code>. Target and module comparisons are retained. This supports the selected local behavior claims without treating the outer command as successful.</p>
+<p>The outer commands did not produce clean zero exits; the fresh idle groups received an authorized termination signal, and one earlier outer-exit receipt is unknown. The brief supplies the pre-existing classification, and the implementation log records its base reproduction. I did not independently reproduce the base non-exit. The unchanged import chain and retained child/final-summary evidence give no basis to call it a new regression. Keep the separate driver repair open; do not report these as clean CLI runs.</p>
+</details>
+
+<h2 id="acceptance">5. Acceptance: how each PR was accepted, and how it should have been</h2>
+<details><summary>Disposition of the Lead's pre-review acceptance</summary>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>PR</th><th>Accepted by, and when</th><th>Accepted against: approved design / Lead's WS goal / nothing recorded</th><th>What that acceptance skipped (plain)</th><th>Should have been checked against (design + VD anchors)</th><th>Verdict now: stands / partial / should not have been accepted</th></tr></thead>
+<tbody><tr><td><a href="https://github.com/agent-collaboration/switchboard/pull/18">#18</a> at <code>e2a91f55</code></td><td>Fleet access Lead, 2026-11-16; <a href="lead-check.html">lead-check.html</a></td><td>approved design</td><td>It treated passing scanner cases as complete enforcement and missed a qualified clock, direct extraction of random behavior and excluded helper files.</td><td><a href="../specification.html#S6">S6</a>, <a href="../specification.html#S7">S7</a>, <a href="../specification.html#S12">S12</a>; <a href="../verification-design.html#V4">V4</a>, <a href="../verification-design.html#V6">V6</a>, <a href="../verification-design.html#V11">V11</a></td><td>partial; reopen these rows and affected scanner proof</td></tr></tbody>
+</table></div>
+<p>The owner required acceptance against the approved design in Fleet transcript line <code>131608</code>. The acceptance record correctly names that yardstick. Its S1–S5, S8–S11 source/behavior support is retained; its claim that nothing scoped remains incomplete does not stand.</p>
+</details>
+
+<h2 id="decisions">6. Decisions: who decided, and whether it was theirs to decide</h2>
+<details><summary>Authority of scope boundaries and implementation choices</summary>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>ID</th><th>Decision (plain)</th><th>Whose: owner, first-hand / Lead's call / relayed and unconfirmed</th><th>Within that party's authority?</th><th>Effect on an approved outcome (plain)</th><th>Verdict: ok / should have been the owner's / wrong / superseded</th></tr></thead>
+<tbody>
+<tr><td>B1A-D1</td><td>The approved overall design and B1/B2 are the yardstick.</td><td>owner, first-hand: Fleet transcript <code>71226</code>/<code>71230</code>, 2026-11-04 <code>16:44:45Z</code>/<code>16:50:36Z</code></td><td>yes</td><td>Preserves the original obligations.</td><td>ok</td></tr>
+<tr><td>B1A-D2</td><td>The shared authentication library retains its own internal crypto; our functions receive capabilities explicitly.</td><td>owner quotes on <a href="../decisions.html#owner">Decisions</a>, 15 Nov: “yes do a.”, “no tsyringe o rlibrary please”, “inejcted is fine”; original November 15 turns not independently re-extracted here</td><td>yes, as the commissioned approved sources state</td><td>The library's internal calls are explicitly outside the recording claim.</td><td>ok</td></tr>
+<tr><td>B1A-D3</td><td>Machine-login and device-code proof remain in the later deliverable.</td><td>owner's 4 Nov approval of <a href="../../../2026-11-02-fleet-access/deliverables/b1-people-roles-sign-in.source.html">B1 scope</a>, line 70</td><td>yes</td><td>No new omission is introduced by this candidate.</td><td>ok</td></tr>
+<tr><td>B1A-D4</td><td>Use each journey's complete results and child exit while tracking the pre-existing command non-exit separately.</td><td>Lead's call; <a href="implementer-log.md">implementation log</a>:109; brief explicitly asks review of this ruling</td><td>yes for this evidentiary boundary; no successful outer exit is inferred</td><td>The selected behavior remains observable; command termination remains unproven.</td><td>ok within the recorded limit</td></tr>
+<tr><td>B1A-D5</td><td>Use a small clock offset for forwarding, and keep the large offset in the lower-level recording check.</td><td>Lead's call, documented in <a href="../verification-design.html#V2">V2</a></td><td>yes</td><td>The wrong process clock still gives a distinct, tested result.</td><td>ok</td></tr>
+<tr><td>B1A-D6</td><td>Keep helper source files with the JSX extension outside file discovery.</td><td>Program Design implementation prescription, <a href="../program-design.html#scan">scan §1</a>; no owner scope waiver shown</td><td>no, where it narrows the declared helper and identifier scopes</td><td>Some forbidden source never reaches the promised check.</td><td>wrong; bounded correction in B1A-X3</td></tr>
+</tbody></table></div>
+</details>
+
+<h2 id="defects">7. Defects</h2>
+<p><strong>Three P2 findings. No P0 or P1 finding.</strong> These are incomplete behavior of the new guard, rather than alleged pre-existing user-facing regressions. Each correction stays within the existing scanner and its tests.</p>
+<details open><summary>Ranked findings, failing inputs and the exact fixes</summary>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>ID</th><th>Severity P0–P3</th><th>What goes wrong (plain)</th><th>Failure scenario (inputs → wrong result)</th><th>Anchor</th><th>Yardstick broken</th><th>Fix</th><th>Fully fixed means (plain)</th></tr></thead>
+<tbody>
+<tr id="B1A-X1"><td>B1A-X1</td><td>P2</td><td>A test can read the real clock through the global object and the new time guard accepts it.</td><td>Feed <code>export const read = () =&gt; globalThis.Date.now();</code> or <code>new globalThis.Date()</code> as an in-scope helper → <code>[]</code>. The corresponding unqualified <code>Date.now()</code> produces one violation.</td><td><a href="https://github.com/agent-collaboration/switchboard/blob/e2a91f5502944e456c3920ce3ab951b29d8742a9/scripts/audit-portal-architecture.ts#L1598">scanner:1598–1607</a>, <a href="https://github.com/agent-collaboration/switchboard/blob/e2a91f5502944e456c3920ce3ab951b29d8742a9/scripts/audit-portal-architecture.ts#L1623">1623–1631</a>; observed in <a href="#probe">reviewer probe</a></td><td><a href="../specification.html#S7">S7</a>; <a href="../../../2026-11-02-fleet-access/specification.source.html">R33:280</a>; owner U25: “i dont allow wall clock time ever in tests”. <a href="../verification-design.html#V6">V6</a> requires rejection of real-clock slips.</td><td>Extend the existing global-object receiver handling to qualified <code>Date</code> and <code>process</code> clock members and qualified zero-argument date construction, including literal keys. Add reject cases beside the direct forms and retain local-object accepts.</td><td>Equivalent direct and qualified real clocks fail; controlled time and local look-alikes pass.</td></tr>
+<tr id="B1A-X2"><td>B1A-X2</td><td>P2</td><td>The core can extract the runtime's random function and use it without the guard noticing.</td><td><code>const { random } = Math; export const draw = () =&gt; random();</code> → <code>[]</code>. Direct <code>Math.random()</code> → one violation. The declared local function is exempt, while the original Math reference is allowed unless its parent is a dotted/element access.</td><td><a href="https://github.com/agent-collaboration/switchboard/blob/e2a91f5502944e456c3920ce3ab951b29d8742a9/scripts/audit-portal-architecture.ts#L1493">scanner:1493</a>, <a href="https://github.com/agent-collaboration/switchboard/blob/e2a91f5502944e456c3920ce3ab951b29d8742a9/scripts/audit-portal-architecture.ts#L1509">1509–1515</a>; observed in <a href="#probe">reviewer probe</a></td><td><a href="../specification.html#S6">S6</a> permits arithmetic Math uses but excludes runtime randomness; <a href="../../../2026-11-02-fleet-access/specification.source.html">R30:277</a>; U23: “you inject stukff not pkul out engines”.</td><td>Recognize statically named extraction of <code>random</code> from the runtime Math object, including a renamed destructuring binding. Keep allowed arithmetic and locally supplied objects accepted. Add permanent regression cases.</td><td>The normal destructuring spelling cannot bypass the same randomness restriction as a direct call.</td></tr>
+<tr id="B1A-X3"><td>B1A-X3</td><td>P2</td><td>Some helper and host source files are omitted before the time and identifier checks run.</td><td>An in-scope <code>packages/sign-in-test-support/src/test-fixtures/clock-helper.tsx</code> imported by a regular test contains <code>setTimeout</code> or <code>crypto.randomUUID()</code> → file discovery returns no entry for it. Only core <code>.tsx</code> files are collected. This is source-established, not a claimed disk-mutant run.</td><td><a href="https://github.com/agent-collaboration/switchboard/blob/e2a91f5502944e456c3920ce3ab951b29d8742a9/scripts/audit-portal-architecture.ts#L1726">scanner:1726–1734</a>, especially <code>:1730–1731</code></td><td><a href="../specification.html#S7">S7</a> covers all test support and its helpers; <a href="../specification.html#S12">S12</a> covers every sign-in source file, tests included. The narrower collection instruction in <a href="../program-design.html#scan">Program Design §scan</a> does not override them.</td><td>Collect <code>.tsx</code> in the declared sign-in test-support, sign-in package and verification-driver scopes before dispatching to the existing collectors. Add a file-discovery regression rather than only feeding strings directly to a collector.</td><td>Every source file in the promised scope is actually inspected, regardless of the TypeScript extension.</td></tr>
+</tbody></table></div>
+<p><strong>Route:</strong> B1A-X1 and B1A-X2 → Implementer for the existing scanner/tests, then Verifier for affected V4/V6 controls. B1A-X3 → Lead corrects the contradictory collection prescription in Program Design while preserving S7/S12; Implementer repairs file discovery; Verifier checks V6/V11 through collection. Reopen only affected acceptance rows and return corrected anchors for review.</p>
+<p>The random-function example has a statically known property and needs no computed-key analysis. It is narrower than the Verification Design's stated limitation for exotic runtime aliasing. No new general-purpose alias-analysis system is requested.</p>
+</details>
+
+<h3 id="probe">Reviewer observation: seven in-memory scanner inputs</h3>
+<p>Executed against the clean retained candidate at the frozen head with cache disabled. Its scanner bytes match <code>git show e2a91f55:scripts/audit-portal-architecture.ts</code>, SHA-256 <code>5d5626f9ba585a8ea0af95a98f5c350fc3a5dcf0c0e2672fa987582bca80be7a</code>. No product file or test fixture was written. The probe command exited <code>0</code>; that is successful observation of the gaps, not a passing enforcement result.</p>
+<div class="ex-table-scroll"><table>
+<thead><tr><th>In-memory source</th><th>Collector</th><th>Observed findings</th></tr></thead>
+<tbody>
+<tr><td><code>Date.now()</code></td><td>test time</td><td>1, real-clock violation</td></tr>
+<tr><td><code>globalThis.Date.now()</code></td><td>test time</td><td>0</td></tr>
+<tr><td><code>new globalThis.Date()</code></td><td>test time</td><td>0</td></tr>
+<tr><td><code>globalThis.Date["now"]()</code></td><td>test time</td><td>0</td></tr>
+<tr><td><code>globalThis.performance.now()</code></td><td>test time</td><td>1, performance violation</td></tr>
+<tr><td><code>Math.random()</code></td><td>core globals</td><td>1, randomness violation</td></tr>
+<tr><td><code>const { random } = Math; … random()</code></td><td>core globals</td><td>0</td></tr>
+</tbody></table></div>
+<details><summary>Exact probe command and source-path attribution</summary>
+<p>Run from the retained candidate root <code>tmp/2026-11-15-b1-a-verifier/candidate-e2a91f55</code>, using Node <code>24.7.0</code>. The path names supplied to the collectors are in-memory labels, not files created by this review.</p>
+<ex-code id="probe-command" title="Read-only scanner probe" lang="sh"><script type="text/plain">
+TSX_DISABLE_CACHE=1 node --import tsx --input-type=module -e 'import { collectSignInTestTimeViolations, collectSignInCoreRuntimeGlobalViolations } from "./scripts/audit-portal-architecture.ts"; const filePath = "packages/sign-in-test-support/src/test-fixtures/review-clock-probe.ts"; for (const sourceText of ["export const read = () => Date.now();", "export const read = () => globalThis.Date.now();", "export const read = () => new globalThis.Date();", "export const read = () => globalThis.Date[\"now\"]();", "export const read = () => globalThis.performance.now();"]) console.log(JSON.stringify({sourceText, violations: collectSignInTestTimeViolations({filePath, sourceText})})); for(const sourceText of ["export const draw = () => Math.random();", "const { random } = Math; export const draw = () => random();"]) console.log(JSON.stringify({sourceText, violations: collectSignInCoreRuntimeGlobalViolations([{filePath:"packages/sign-in-core/src/contracts/review-random-probe.ts",sourceText}])}));'
+</script></ex-code>
+</details>
+
+<h2 id="owner">8. Open for the owner</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Question (plain)</th><th>Options, each with its gain and cost</th><th>Why only the owner can decide</th><th>What waits if deferred</th></tr></thead>
+<tbody><tr><td>none</td><td>none</td><td>These are bounded repairs to already approved enforcement obligations.</td><td>Readiness waits on the three fixes and affected proof, not a new owner decision.</td></tr></tbody>
+</table></div>
+
+<h2 id="limits">9. Could not check</h2>
+<ul>
+<li>Heavy suites, browsers and Keychain were not rerun by this reviewer, as the brief requires. I inspected local logs and transferred literal remote reports; I did not read every original private Sunclaw log byte or observe those remote processes firsthand.</li>
+<li>The complete host commands include declared skips and a separate Keychain exclusion. They are not no-skip whole-system proof. The final-head broad check/unit reruns remain author-attributed; the unchanged runtime diff permits the earlier applicable observations to carry.</li>
+<li>I did not independently reproduce F5 at base, validate a clean outer CLI exit, inspect current GitHub CI/mergeability, or verify hosted identity providers, staging, production, publication or installation.</li>
+<li>Source inspection supports the file-discovery finding. No on-disk source mutant was added for it under the report-only write grant.</li>
+<li>Prior assumption pages were inspected for the scoped core/time/UUID/flood boundaries, not as a renewed audit of every earlier Fleet deliverable. There is no claim that all of B1 or SO2 is complete.</li>
+<li>This report uses inline content and three small top-down diagrams. Static markup checking does not prove rendered layout, dark-mode appearance, comprehension or interaction behavior.</li>
+</ul>
+<p id="presentation-check"><strong>Report validation:</strong> pending the published static checker and presentation nudges. Product state was unchanged before writing this report; only this report is authorized to change.</p>
+<p><strong>Checkpoint:</strong> B1A-X1, B1A-X2 and B1A-X3 remain open. The Lead owns disposition and routing. This review does not repair product code, accept delivery or authorize merging.</p>
+<p id="verdict"><strong>NOT READY</strong></p>
+</ex-document>
+</body>
+</html>

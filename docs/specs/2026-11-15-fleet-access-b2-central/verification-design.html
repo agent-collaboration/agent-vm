@@ -126,7 +126,24 @@ Separately, cold-start each Central over preserved data (Tokio: a process restar
 <li>Three real keys: old A, requested new B, and a different default C. Every replacement statement's header names B.</li>
 <li>Equal keys, an unknown key and an expired new key are refused before any work.</li>
 <li>Interrupt and invoke the same phase again: before the sent-slot claim, after Central committed, after source confirmation, after withdraw's first write and before its second, after the second write and before its report, after withdrawal and before the check, partway through the check's reads. Each re-invocation reaches the same end. A repeated <code>withdraw</code> after the second write is refused <code>already-withdrawn</code> and leaves <code>withdrawnAt</code> unchanged. One after only the first write completes it with a reading taken after the commit. <code>check-after-withdrawal</code> completes only after <code>withdrawnAt + 310 s</code> and every organization's read has been served.</li>
-<li>Through the hidden owner-only endpoint on both pairings: the owner with a fresh factor runs each phase and sees the report. A member, another organization's owner, the owner with a stale factor, and a signed-out caller each get a 404 byte-identical to an unknown path. No page, menu or error message links to it, and the gateway's management binding can't reach it. Wrong builds: a 403 instead of 404 for non-owners (existence revealed); a link on the admin page.</li>
+<li><strong>Hidden endpoint, through the real HTTP handler on both pairings.</strong>
+<ul>
+<li><strong>Concealment:</strong> signed-out, member, other-owner, stale-factor and revoked-session callers send to the page and each operation path:
+<ul>
+<li>a valid request;</li>
+<li>malformed JSON;</li>
+<li>a wrong content type;</li>
+<li>missing or invalid fields;</li>
+<li>a query parameter;</li>
+<li>a wrong method;</li>
+<li>a cross-origin request.</li>
+</ul>
+Every one is compared with the same request to an unknown path: identical status, body bytes and material headers, and zero audit rows and zero effects. A session-store failure at the gate also gives the unknown-path response.</li>
+<li><strong>Owner path:</strong> the owner with a fresh factor runs each phase and sees the report. The owner's malformed body gets the endpoint's 400.</li>
+<li><strong>No link:</strong> no page, menu or error body contains the path, and the gateway's management binding can't reach it.</li>
+<li><strong>Records:</strong> each owner run reads back an intent row and an outcome row with the same run ID, phase and actor. With the intent write failing at the audit store seam, nothing runs and the report says unavailable. With the outcome write failing after effects, the report says applied but not recorded, and a re-invocation records a new run.</li>
+</ul>
+Wrong builds: the concealment check inside the endpoint callback (malformed JSON gets 400, unlike an unknown path); a 403 for non-owners; a link on the admin page; effects run when the intent write fails.</li>
 <li>Key facts: after withdrawal (old row expired, still retained), <code>check-after-withdrawal</code> in a fresh process accepts the state; <code>prepare</code> refuses it; a key with no retained row is refused in both phases.</li>
 <li><strong>Current-key condition, both pairings.</strong> Hold a real ordinary renewal after it signed with A and before its sent-slot claim (barrier in the stamp store seam). Create B and run <code>prepare</code>, then release the held writer. Its claim matches no row, nothing is sent, and its next use signs with B. Repeat with a held seed, a held after-create <code>markFleetReady</code>, and an organization creation held just before its batch. That creation's batch inserts nothing, makes no setup send, and the person's retry creates it with B. Wrong builds: no condition on the claim (an A statement is claimed and sent after B, and withdrawal is blocked or the organization breaks); conditions on the stamp writes but not on the create batch (a new A-signed organization appears).</li>
 <li><strong>No pause, live traffic.</strong> While <code>prepare</code> runs, an owner browser session creates an organization, retries setup and makes a Fleet admin call, and a deferred write runs. All succeed, none is refused with a maintenance error, and every resulting statement names B. After withdrawal, the 310 second window and the check, every organization reads. Wrong build: <code>newKeyId</code> not Better Auth's newest live key (ordinary signers keep using another key; <code>prepare</code> must refuse <code>new-key-not-current</code>).</li>
