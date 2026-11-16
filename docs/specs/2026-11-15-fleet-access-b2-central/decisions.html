@@ -20,11 +20,11 @@
 </nav></ex-nav>
 <ex-document id="doc">
 <h1>B2 · Central organizations: Decisions</h1>
-<p>B2 makes organizations on Central real: the owner creates workspaces, sees the full list and history, and the organization keeps working when sign-in's signing key changes. <strong>Yours: 2, the key-rotation pause, and a “yes” to A on 1</strong> (lost reply; I recommend it after your question, but it needs your word). The other two were sequencing and operations, which you handed to me, so they're decided below with the reason. Each section explains the background, gives a concrete example, and shows what each option means in practice.</p>
+<p>B2 makes organizations on Central real: the owner creates workspaces, sees the full list and history, and the organization keeps working when sign-in's signing key changes. <strong>Yours: a “yes” to A on 1</strong> (lost reply; it needs your word) <strong>and 2b</strong> (keep or drop Central's restart). Key rotation itself is decided: no pause, your pick. The other two were sequencing and operations, which you handed to me, so they're decided below with the reason. Each section explains the background, gives a concrete example, and shows what each option means in practice.</p>
 
 <h2 id="three">The three things for you</h2>
 <ex-callout title="1 · What to check" tone="note" icon="shield-check">
-<p>Yours: <a href="#retire">2 · Changing the signing key</a> (a few minutes of downtime and a new one-row table). And a “yes” to <a href="#retry">A on 1 · the lost reply</a>.</p>
+<p>Yours: a “yes” to <a href="#retry">A on 1 · the lost reply</a>, and <a href="#restart">2b · keep or drop Central's restart</a>. <a href="#retire">2 · Key rotation</a> is decided: no pause.</p>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
 <p>Settled: <a href="#console">3 · console later</a> (my sequencing call) and <a href="#maintenance">4 · a hidden owner-only maintenance page</a> (your pick).</p>
@@ -80,88 +80,51 @@ flowchart TB
 </ex-compare>
 <ex-callout title="Proposed: A, needs your “yes”" tone="decision" icon="clock"><p>On 16 Nov you asked <em>“are you being pendantic? is this a areal issue?”</em>. That was a question, not a pick, and A narrows the approved “original answer”, so it needs your word. It isn't a real issue: both options give the right outcome and never a duplicate. So this is A, today's Central behaviour plus the lookup. You also asked why there's a ledger at all. Central's <code>request_log</code> (<code>workspace_request_log</code>) is request safety, not workspace data: for 24 hours it replays the same request's answer and refuses a reused ID with different content. After that, the workspace itself, created under the operation ID, is the durable fact the lookup reads.</p></ex-callout>
 
-<h3 id="retire">2 · Changing sign-in's signing key: may sign-in pause for a few minutes?</h3>
+<h3 id="retire">2 · Changing sign-in's signing key: rotation with no pause (decided)</h3>
+<ex-card title="Rotation with no pause" tone="done" icon="key" tag="16 Nov · your pick" pick>
+<p><em>“B is the best way”</em>. I had first presented this option as heavy and biased the page toward a maintenance window. That was wrong: B needs no table, no Central change and no downtime, as below.</p>
+</ex-card>
 <ex-callout title="In short: when, and what you'd see" tone="note" icon="clock">
 <p><strong>When:</strong> only when you decide to. Today the key never changes. You'd rotate it if it might have leaked (say, a laptop or backup holding sign-in's database was lost), or on a schedule if you want one, such as yearly. Otherwise this never runs.</p>
-<p><strong>What you'd see under A</strong>, if you start it Tuesday at 09:00:</p>
+<p><strong>What you'd see</strong>, if you start it Tuesday at 09:00: nothing. People keep signing in and working throughout.</p>
 <ul>
-<li><strong>09:00</strong> You open the hidden maintenance page and press Start. Sign-in, organization creation and admin pages say “Maintenance, back in a few minutes”. Command lines and machines already signed in keep working for up to 5 minutes on their current tokens, then wait too.</li>
-<li><strong>09:01</strong> Sign-in re-signs every organization with the new key and tells Central.</li>
-<li><strong>09:05</strong> The old key is withdrawn.</li>
-<li><strong>09:10</strong> After 5 minutes, so Central has forgotten the old key, Central is restarted.</li>
-<li><strong>09:14</strong> A check confirms every organization still works on the new key.</li>
-<li><strong>09:15</strong> You press Finish. Everything works again, and nobody has to sign in again.</li>
+<li><strong>09:00</strong> You open the hidden maintenance page and press Start. The new key B is created; from now on every signature uses B, and the old key A is still accepted.</li>
+<li><strong>09:01</strong> Every organization is re-signed with B. Anything that signed with A a moment earlier fails to save and simply signs again with B.</li>
+<li><strong>09:02</strong> A check confirms every organization holds a B statement; A is withdrawn.</li>
+<li><strong>09:07</strong> After 5 minutes Central has forgotten A, and a final check confirms every organization works. Done.</li>
 </ul>
-<p><strong>Why the pause:</strong> without it, someone mid-action at 09:02 could save their organization's ID with the old key. From 09:05 Central would reject that organization until it was fixed by hand.</p>
 </ex-callout>
 <p><strong>The key.</strong> Sign-in has one signing key pair, kept in Better Auth's <code>jwks</code> table. The private half signs. The public half is published at sign-in's key URL; Central fetches it from there and keeps a copy for up to 5 minutes.</p>
 <p><strong>What it signs.</strong> Each organization's <em>statement</em> (“organization X exists, set up by this owner”), which Central stores and checks before doing any work for that organization. It also signs people's tokens, which live at most 5 minutes and simply expire.</p>
 <p><strong>Who starts a rotation, and when.</strong> You do, rarely: on a schedule, or if the key might have leaked. You start it from the hidden owner-only maintenance page on sign-in (decision 4).</p>
-<p><strong>What happens, step by step</strong> (about 15 minutes):</p>
-<ex-mermaid id="rotation-steps" label="A key rotation, step by step" data-width="canvas"><script type="text/plain">
+<p><strong>What happens, step by step</strong> (about 7 minutes, with no pause):</p>
+<ex-mermaid id="rotation-steps" label="A key rotation with no pause" data-width="canvas"><script type="text/plain">
 sequenceDiagram
   participant Y as You
   participant S as Sign-in
+  participant W as Everyone else using sign-in
   participant C as Central
-  Y->>S: 0. create the new key B (old key A still published)
-  Y->>S: 1. maintenance on: new sign-ins and admin actions wait; pause row written
+  Y->>S: 1. create the new key B (A still published)
+  Note over S,W: from now on every signature uses B
   Y->>S: 2. prepare
   loop every organization, idle ones too
     S->>C: new statement signed with B
     C-->>S: stored
   end
-  Y->>S: 3. withdraw: stop publishing A (its row is kept, marked expired)
-  Note over C: 4. wait 5 min 10 s: any copy of the key list still holding A expires
-  Y->>C: 5. restart each Central (approved rule 6)
-  Y->>S: 6. check
-  S->>C: every organization reads on B
-  C-->>S: all OK
-  Y->>S: 7. maintenance off: sign-ins resume; new tokens signed with B
+  W->>S: a save signed with A just before step 1
+  S-->>W: refused (not the current key); signs again with B
+  Y->>S: 3. withdraw A (after a check: all on B, nothing waiting)
+  Note over C: 4. wait 5 min 10 s: Central forgets A
+  Y->>S: 5. check every organization reads on B
 </script></ex-mermaid>
-<p><strong>The danger.</strong> A request already in progress can sign with the <em>old</em> key just after step 1 finished, and land after step 2. That organization is left with a statement Central can't verify, and its Fleet calls fail until someone notices and repairs it.</p>
-<ex-mermaid id="retire-danger" label="Why in-flight work matters" data-width="canvas"><script type="text/plain">
-sequenceDiagram
-  participant R as Key rotation
-  participant W as A sign-in request already running
-  participant S as Stored statement for org X
-  R->>S: re-sign X with the NEW key
-  W->>W: signed X's renewal with the OLD key (started earlier)
-  R->>R: withdraw the old key
-  W->>S: writes the OLD-key statement over the new one
-  Note over S: Central can't verify X any more
-</script></ex-mermaid>
-<p><strong>Example.</strong> You rotate the key on a Sunday morning. An owner in another organization is creating a workspace at that moment, and their request renews their organization's statement.</p>
-<ex-compare label="Key rotation" data-width="canvas">
-<section id="retire-window" label="A · A short maintenance window" icon="clock">
-<section data-compare-row="sees"><p><strong>What people see</strong></p><p>For roughly 10 to 15 minutes, new sign-ins, organization creation and admin actions answer “Maintenance, try again shortly”. Command lines already signed in keep working until their tokens expire (at most 5 minutes). That owner's workspace creation waits; they retry after the window.</p></section>
-<section data-compare-row="changes"><p><strong>What changes</strong></p><ul>
-<li>A deployment setting that turns maintenance on.</li>
-<li>A one-row <code>maintenance_pause</code> table. Every write of an organization statement checks it, so a request that started before the pause can't save its old-key statement afterwards.</li>
-<li>The steps: pause, drain, re-sign all, withdraw, wait 5 min 10 s, restart Central, check, reopen.</li>
-</ul></section>
-<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Minutes without new sign-ins once in a long while, and one new table (choosing A approves it).</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="retire-window-pic" label="Option A"><script type="text/plain">
-flowchart TB
-  stop["Maintenance on; pause row written"] --> drain["In-flight writes can't commit"]
-  drain --> re["Re-sign every organization"] --> w["Withdraw old key"]
-  w --> wait["Wait 5 min 10 s"] --> rs["Restart Central, check all"] --> open["Maintenance off"]
-</script></ex-mermaid></section>
-</section>
-<section id="retire-live" label="B · No pause: a live key version" icon="key">
-<section data-compare-row="sees"><p><strong>What people see</strong></p><p>Nothing. Sign-in keeps working throughout.</p></section>
-<section data-compare-row="changes"><p><strong>What changes</strong></p><p>A stored “key version” number. Every place that signs is fenced on it, so a signer still holding the old version can't save. Central also needs a matching rule. This is new machinery in both sign-in and Central, not in the approved B2, and would be designed before build.</p></section>
-<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>A second design across two systems, for an operation you run rarely.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="retire-live-pic" label="Option B"><script type="text/plain">
-flowchart TB
-  e["Key version N+1 stored"] --> f["Signers on version N refused"] --> w["Withdraw while live"]
-</script></ex-mermaid></section>
-</section>
-</ex-compare>
-<ex-callout title="Recommendation: A" tone="decision" icon="clock"><p>Rotation is rare and you run it yourself, so a planned 10 to 15 minute window is far less machinery than a live version scheme across two systems.</p></ex-callout>
-<ex-callout title="If you defer" tone="risk" icon="clock"><p>Everything except the rotation procedure is built; approved rule 6 (“organizations survive a key change”) stays unproven.</p></ex-callout>
-<ex-choice id="choice-retire" title="May key retirement pause sign-in?">
-<ex-option id="retire-a" title="A · Short maintenance window (recommended)"><template slot="summary">A pause setting and a one-row pause table.</template></ex-option>
-<ex-option id="retire-b" title="B · No pause, live key version"><template slot="summary">New machinery in sign-in and Central, designed first.</template></ex-option>
+<p><strong>The one thing that could go wrong, and what stops it.</strong> A request that signed an organization's statement with A just before B existed could still try to save it afterwards. Every save of a statement only goes through if it was signed with the current key, so that late save fails, saves nothing, and the request signs again with B. A stays accepted until everything is on B, so nothing breaks in between. Central needs no change.</p>
+
+<h3 id="restart">2b · Keep Central's restart in rule 6? (your word)</h3>
+<p>Your approved rule 6 says each Central “passes a cold restart” after a key change. The 5-minute wait already guarantees Central has forgotten the old key, so the restart adds a check but nothing to correctness. On Tuesday it would mean one more step at 09:07: restart Central (on Cloudflare, a deploy) and check again.</p>
+<ex-callout title="Recommendation: drop it" tone="decision" icon="key"><p>It's an extra deploy every rotation for no correctness gain. The tests still prove a cold start works (V7). If you say nothing, it stays as approved.</p></ex-callout>
+<ex-choice id="choice-restart" title="Keep the Central restart in rule 6?">
+<ex-option id="restart-drop" title="Drop the restart (recommended)"><template slot="summary">The 5-minute wait is the guarantee; tests still cover a cold start.</template></ex-option>
+<ex-option id="restart-keep" title="Keep it"><template slot="summary">One more restart or deploy each rotation.</template></ex-option>
 </ex-choice>
 
 <h3 id="console">3 · The engine repair console: in B2, or its own feature later?</h3>

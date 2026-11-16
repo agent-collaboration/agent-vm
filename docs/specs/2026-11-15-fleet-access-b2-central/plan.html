@@ -20,7 +20,7 @@
 </nav></ex-nav>
 <ex-document id="doc">
 <h1>B2 · Central organizations: Plan</h1>
-<p>Four packets. <strong>Starts only when B1-A is merged, Lead A's directory-read slice, engine deliverable 1 and the central slice after it (including the bounded Cloudflare key fetch, 10 s) are merged with their artifacts, you have answered the key-rotation pause and confirmed the lost-reply window, I have removed the unchosen branches and had the pages rechecked, and you give the go-ahead.</strong></p>
+<p>Four packets. <strong>Starts only when B1-A is merged, Lead A's directory-read slice, engine deliverable 1 and the central slice after it (including the bounded Cloudflare key fetch, 10 s) are merged with their artifacts, you have confirmed the lost-reply window and answered whether rule 6's Central restart stays, I have removed the unchosen branches and had the pages rechecked, and you give the go-ahead.</strong></p>
 
 <h2 id="three">The three things for you</h2>
 <ex-callout title="1 · What to check" tone="note" icon="shield-check">
@@ -39,7 +39,7 @@ flowchart TB
   b1a["B1-A merged"] --> go["Your go-ahead"]
   dir["Lead A: workspace directory read merged, artifacts exported"] --> go
   eng["Lead A: engine deliverable 1 merged"] --> go
-  answers["Your key-rotation answer"] --> go
+  answers["Your lost-reply yes and rule 6 answer"] --> go
   go --> build["Implementer"]
   build --> verify["Verifier, both pairings, Sunclaw"]
   verify --> review["Reviewer"]
@@ -58,13 +58,13 @@ flowchart TB
 <li><strong>Forwarding.</strong> Add <code>ListWorkspaces</code>; attach <code>nextOperationId</code> from <code>platform.ids.nextId()</code> on definite <code>nameInUse</code>/<code>conflict</code>.</li>
 <li><strong>Status.</strong> <code>better-auth/organization-status.ts</code> with the strict reply; permission <code>organization:view</code>.</li>
 <li><strong>Page.</strong> Replace <code>organization-admin-page.ts</code> with <code>pages/organization-admin-page.tsx</code> and <code>pages/islands/organization-admin.tsx</code>; shipped <code>ConfirmSecondFactorStep</code>; delete the inline script and <code>freshOperationId</code>.</li>
-<li><strong>Machines.</strong> <code>organization-setup-transitions.ts</code> (M1), <code>organization-stamp-transitions.ts</code> (M2: move <code>decideOrganizationStampStep</code>, add <code>settleStampAnswer</code>), <code>key-retirement-transitions.ts</code> (M3), M4 in the island module. Turn the existing provisioning, renewal and key-change code into their runners, keeping every existing conditional-write guard; the only addition, and only if you chose S12 A, is the pause predicate in step 7.</li>
+<li><strong>Machines.</strong> <code>organization-setup-transitions.ts</code> (M1), <code>organization-stamp-transitions.ts</code> (M2: move <code>decideOrganizationStampStep</code>, add <code>settleStampAnswer</code>), <code>key-retirement-transitions.ts</code> (M3), M4 in the island module. Turn the existing provisioning, renewal and key-change code into their runners, keeping every existing conditional-write guard; the only addition is the current-key condition below.</li>
 <li><strong>Engine permission.</strong> Add <code>organization:repairWork</code> to the owner; new refusals; digest test; <code>organizations/policy-digest-roll.ts</code> (M5) with its conditional fence write and report.</li>
-<li><strong>Maintenance entry (hidden owner-only page, your pick):</strong> <code>better-auth/maintenance-plugin.ts</code> and <code>pages/maintenance-page.tsx</code>, linked from nowhere, 404 to all but the owner with a fresh factor; <code>better-auth/sign-in-maintenance.ts</code>; the explicit <code>signingKeyId</code> override through <code>organization-statement-signing.ts</code>; retained-versus-published key checks; the <code>SIGN_IN_MAINTENANCE_PAUSE</code> setting in <code>contracts/deployment-configuration.ts</code> honoured by issuance, organization creation, setup retry, Fleet admin calls and deferred work. A test-only <code>holdNextReply</code> in <code>b2e/link-fault-proxy.ts</code> and separable joint clocks for V6.</li>
+<li><strong>Maintenance entry (hidden owner-only page, your pick):</strong> <code>better-auth/maintenance-plugin.ts</code> and <code>pages/maintenance-page.tsx</code>, linked from nowhere, 404 to all but the owner with a fresh factor; <code>better-auth/sign-in-maintenance.ts</code>; the explicit <code>signingKeyId</code> override through <code>organization-statement-signing.ts</code>; retained-versus-published key checks; the current-key condition (Rotation with no pause, below). A test-only <code>holdNextReply</code> in <code>b2e/link-fault-proxy.ts</code> and separable joint clocks for V6.</li>
 <li><strong>Tests.</strong> Every file in V1–V10; move joint pins to Lead A's final artifacts; run each wrong build to red and back.</li>
 <li><strong>Gates and PR</strong> (below), on Sunclaw. One draft PR.</li>
 </ol>
-<p><strong>S12 A only (your choice approves it):</strong> add the one-row <code>maintenance_pause</code> table with its Drizzle schema in <code>storage/sign-in-schema.ts</code> and one generated migration, after you have seen and approved that SQL; append the “no pause row” predicate to the listed stamp writes, <code>markFleetReady</code> and the organization-create batch in <code>authorization-fence-mutations.ts</code>. Under S12 B, none of this is built. <strong>May not change:</strong> any other migration or schema, Better Auth, Central's code, token formats, CI or check scripts. <strong>Stop</strong> if a Central artifact differs from the agreed contract, or proof would weaken. <strong>Return</strong> <code>work/implementer-handback.md</code> with heads, files, commands, counts, exits, red and green receipts, and anything unobserved.</p>
+<p><strong>Rotation with no pause (S12, your pick):</strong> add the current-key condition (statement key ID equals Better Auth's newest live <code>jwks</code> key) to the listed stamp writes, <code>markFleetReady</code> and the organization-create batch in <code>authorization-fence-mutations.ts</code>, and <code>prepare</code>'s <code>new-key-not-current</code> refusal. No new table, setting or migration. <strong>May not change:</strong> any migration or schema, Better Auth, Central's code, token formats, CI or check scripts. <strong>Stop</strong> if a Central artifact differs from the agreed contract, or proof would weaken. <strong>Return</strong> <code>work/implementer-handback.md</code> with heads, files, commands, counts, exits, red and green receipts, and anything unobserved.</p>
 
 <h2 id="verifier">Packet 2 · Verifier</h2>
 <p>Read all seven design pages first. Observe V1–V10 on the frozen head, on both pairings and in real Chrome. Expected results come from the Specification, the Verification Design and the approved rows, never from the Implementer's summary. Never repair product code. <strong>Return</strong> <code>work/verifier-observation.md</code> and <code>work/evidence/</code>. Unverified always includes hosted bindings, staging and production.</p>
@@ -82,7 +82,7 @@ flowchart TB
 <tr><td>S6, S7</td><td>V4 130 workspaces, 230 records, all kinds</td><td>Not started</td></tr>
 <tr><td>S8, S9</td><td>V5 browser and status</td><td>Not started</td></tr>
 <tr><td>S10</td><td>V6 late answers</td><td>Not started</td></tr>
-<tr><td>S11, S12</td><td>V7 real keys and restarts; your answer</td><td>Awaiting your answer</td></tr>
+<tr><td>S11, S12</td><td>V7 real keys, no pause, late old-key writes refused; restart pending your word on rule 6</td><td>Not started</td></tr>
 <tr><td>S15</td><td>V8</td><td>Not started</td></tr>
 <tr><td>S13, S14, S16</td><td>V9, V10, gates, CI</td><td>Not started</td></tr>
 </tbody></table></div>
