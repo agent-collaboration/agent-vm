@@ -1,0 +1,11 @@
+--- packages/sign-in-core/src/contracts/canonical-json.ts
++++ packages/sign-in-core/src/contracts/canonical-json.ts
+@@ -38,7 +38,7 @@
+ 	crypto: SignInCrypto,
+ 	value: CanonicalJsonValue,
+ ): Promise<string> {
+-	const digest = await crypto.subtle.digest(
++	const digest = await globalThis.crypto.subtle.digest(
+ 		'SHA-256',
+ 		new TextEncoder().encode(canonicalJson(value)),
+ 	);

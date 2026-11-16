@@ -48,6 +48,7 @@ flowchart TB
 <p><strong>Code:</strong> a new Agent Studio worktree of Switchboard from <code>main</code> after B2. <strong>Hand-back:</strong> <code>docs/specs/2026-11-15-fleet-access-b2x/work/</code>.</p>
 
 <h2 id="implementer">Packet 1 · Implementer</h2>
+<p><strong>Read the whole design first.</strong> All seven pages: Audit, Requirements, Specification, Program Design, Verification Design, this Plan and Decisions. Also the approved additions, the r3 design and Switchboard's <code>AGENTS.md</code>. The design pages are the authority. The steps below are a checklist pointing into them. Where a step and the design differ, the design wins: stop and ask me.</p>
 <ol>
 <li><strong>Device (real session).</strong> <code>deviceAuthorization({ validateClient })</code> in <code>provider-configuration.ts</code> (no <code>bearer()</code>); <code>response-release/terminal-session.ts</code>: browser-or-terminal classification, device routes terminal-only, terminal bearer session converted with <code>better-call</code>'s <code>serializeSignedCookie</code> on the six paths, <code>organization/list</code> admitted only there; <code>pages/device-approval-page.tsx</code> and island.</li>
 <li><strong>CLI.</strong> <code>fleet/device-login-transitions.ts</code> (M3) and <code>fleet/device-login.ts</code> with an injected <code>wait</code>; session secret in <code>ProofKeyStore</code>; remove the “not available” exit and its test; organization selection and second-factor prompts.</li>
@@ -59,10 +60,10 @@ flowchart TB
 <p><strong>May not change:</strong> Better Auth or its plugins' code, token profile fields, Central, migrations, CI. <strong>Stop</strong> if a Better Auth part behaves differently from the Program Design. <strong>Return</strong> <code>work/implementer-handback.md</code>.</p>
 
 <h2 id="verifier">Packet 2 · Verifier</h2>
-<p>Observe V1–V5 and the r3 table on the frozen head, both joint pairings. For Lead A's rows, observe what Central delivers and mark anything undelivered as open. <strong>Return</strong> <code>work/verifier-observation.md</code>.</p>
+<p>Read all seven design pages first. Observe V1–V5 and the r3 table on the frozen head, on both joint pairings. Expected results come from the Specification and Verification Design, never from the Implementer's summary. For Lead A's rows, observe what Central delivers and mark anything undelivered as open. <strong>Return</strong> <code>work/verifier-observation.md</code>.</p>
 
 <h2 id="reviewer">Packet 3 · Reviewer</h2>
-<p>Fresh; inputs: <code>requirements.html</code>, <code>decisions.html</code>, the approved additions, the r3 design, the PR and evidence. First question: what does this drop? Then: does any path put a session token where page script can read it; does the device token really carry a session; is “reached Central” ever shown before the ACK. <strong>Return</strong> <code>work/reviewer-report.html</code>.</p>
+<p>Fresh. Inputs are the whole design except this Plan: <code>audit.html</code>, <code>requirements.html</code>, <code>specification.html</code>, <code>program-design.html</code>, <code>verification-design.html</code> and <code>decisions.html</code>. Also the approved additions, the r3 design, the PR and evidence. First question: what does this drop? Then: does any path put a session token where page script can read it; does the device token really carry a session; is “reached Central” ever shown before the ACK. <strong>Return</strong> <code>work/reviewer-report.html</code>.</p>
 
 <h2 id="acceptance">Packet 4 · Lead acceptance</h2>
 <div class="ex-table-scroll" data-width="canvas"><table>

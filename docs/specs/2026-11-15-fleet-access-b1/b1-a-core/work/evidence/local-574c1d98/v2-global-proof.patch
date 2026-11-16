@@ -1,0 +1,46 @@
+--- packages/sign-in-core/src/central-link/fleet-admin-proof.ts
++++ packages/sign-in-core/src/central-link/fleet-admin-proof.ts
+@@ -43,14 +43,14 @@
+ 	crypto: SignInCrypto,
+ 	options: { readonly extractable?: boolean } = {},
+ ): Promise<FleetAdminProofKey> {
+-	const pair = await crypto.subtle.generateKey(
++	const pair = await globalThis.crypto.subtle.generateKey(
+ 		{ name: 'ECDSA', namedCurve: 'P-256' },
+ 		options.extractable === true,
+ 		['sign', 'verify'],
+ 	);
+ 	return {
+ 		privateKey: pair.privateKey,
+-		publicJwk: publicJwk(await crypto.subtle.exportKey('jwk', pair.publicKey)),
++		publicJwk: publicJwk(await globalThis.crypto.subtle.exportKey('jwk', pair.publicKey)),
+ 	};
+ }
+ 
+@@ -59,7 +59,7 @@
+ 	crypto: SignInCrypto,
+ 	key: FleetAdminProofKey,
+ ): Promise<FleetAdminPrivateJwk> {
+-	const exported = await crypto.subtle.exportKey('jwk', key.privateKey);
++	const exported = await globalThis.crypto.subtle.exportKey('jwk', key.privateKey);
+ 	if (exported.d === undefined) throw new Error('Proof key has no private part');
+ 	return { ...publicJwk(exported), d: exported.d };
+ }
+@@ -73,7 +73,7 @@
+ 	privateJwk: FleetAdminPrivateJwk,
+ 	options: { readonly extractable?: boolean } = {},
+ ): Promise<FleetAdminProofKey> {
+-	const privateKey = await crypto.subtle.importKey(
++	const privateKey = await globalThis.crypto.subtle.importKey(
+ 		'jwk',
+ 		{ ...privateJwk },
+ 		{ name: 'ECDSA', namedCurve: 'P-256' },
+@@ -122,7 +122,7 @@
+ 	};
+ 	const signingInput = `${base64UrlJson(header)}.${base64UrlJson(claims)}`;
+ 	// WebCrypto ECDSA returns IEEE P1363 r||s, which is exactly the JWS ES256 encoding.
+-	const signature = await crypto.subtle.sign(
++	const signature = await globalThis.crypto.subtle.sign(
+ 		{ name: 'ECDSA', hash: 'SHA-256' },
+ 		props.key.privateKey,
+ 		new TextEncoder().encode(signingInput),

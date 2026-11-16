@@ -1,0 +1,11 @@
+--- packages/sign-in-core/src/contracts/sign-in-platform.ts
++++ packages/sign-in-core/src/contracts/sign-in-platform.ts
+@@ -101,7 +101,7 @@
+ 	readonly requestLimiter: SignInRequestLimiter;
+ 	readonly centralClient: CentralLinkClient;
+ 	readonly clock: SignInClock;
+-	readonly crypto: SignInCrypto;
++	readonly crypto?: SignInCrypto;
+ 	readonly deadlines: SignInDeadlines;
+ 	readonly ids: SignInIdSource;
+ 	readonly runAtomically: AtomicRunner;

@@ -49,6 +49,7 @@ flowchart TB
 <p><strong>Code:</strong> a new Agent Studio worktree of Switchboard from <code>main</code>. <strong>Hand-back:</strong> <code>docs/specs/2026-11-15-fleet-access-bg/work/</code>.</p>
 
 <h2 id="implementer">Packet 1 · Implementer</h2>
+<p><strong>Read the whole design first.</strong> All seven pages: Audit, Requirements, Specification, Program Design, Verification Design, this Plan and Decisions. Also the approved BG deliverable, B1-C's merged context contract and Switchboard's <code>AGENTS.md</code>. The design pages are the authority. The steps below are a checklist pointing into them. Where a step and the design differ, the design wins: stop and ask me.</p>
 <ol>
 <li><strong>Prototype</strong> on both hosts: skip-consent continuation for a clean owner, an incomplete bootstrap, a member who skips bootstrap, a bootstrap held across the deadline; guarded Decline against native Accept (expired, wrong recipient, competing). Keep it only if it becomes the real code.</li>
 <li><strong>Decision and router.</strong> <code>setup-flow/</code> files (facts with pending invitations and the closed invitation view); the four routes plus <code>/account/confirm</code> in the handler; allowlist changes; move the confirmation callers (<code>fleet-cli-commands.ts:154–155</code>, <code>factor-page.tsx:27–28</code>, <code>factor-enrollment-page.ts:57</code>) to <code>/account/confirm</code> and the admin page's no-membership redirect (<code>sign-in-http-handler.ts:152–156</code>) to <code>/setup</code>; remove <code>/owner-ready</code>, <code>owner-page.tsx</code> and <code>owner-page-script.ts</code>.</li>
@@ -62,10 +63,10 @@ flowchart TB
 <p><strong>May not change:</strong> second-factor rules, Better Auth, migrations, CI. <strong>Stop</strong> if the prototype shows skip-consent or Decline can't work as designed. <strong>Return</strong> <code>work/implementer-handback.md</code>.</p>
 
 <h2 id="verifier">Packet 2 · Verifier</h2>
-<p>Observe V1–V3 locally on both hosts; V4 on staging after the deploy you approve. <strong>Return</strong> <code>work/verifier-observation.md</code>.</p>
+<p>Read all seven design pages first. Observe V1–V3 locally on both hosts, and V4 on staging after the deploy you approve. Expected results come from the Specification and Verification Design, never from the Implementer's summary. <strong>Return</strong> <code>work/verifier-observation.md</code>.</p>
 
 <h2 id="reviewer">Packet 3 · Reviewer</h2>
-<p>Fresh; inputs: requirements, decisions, approved BG, R57–R67, the PR and evidence. First question: what does this drop? Then: can a stale command line continue; can Decline overwrite Accept; can anything from staging enter production. <strong>Return</strong> <code>work/reviewer-report.html</code>.</p>
+<p>Fresh. Inputs are the whole design except this Plan: <code>audit.html</code>, <code>requirements.html</code>, <code>specification.html</code>, <code>program-design.html</code>, <code>verification-design.html</code> and <code>decisions.html</code>. Also approved BG, R57–R67, the PR and evidence. First question: what does this drop? Then: can a stale command line continue; can Decline overwrite Accept; can anything from staging enter production. <strong>Return</strong> <code>work/reviewer-report.html</code>.</p>
 
 <h2 id="acceptance">Packet 4 · Lead acceptance</h2>
 <div class="ex-table-scroll" data-width="canvas"><table>

@@ -76,3 +76,39 @@ Not covered: Cloudflare for the forwarding rows (Node only by design); the token
 **Proof (local, Implementer).** V8/V9 new cases pass locally.
 Check: `pnpm test:e2e:host people-identifier-inventory` on D1 and with `SIGN_IN_TEST_HOST=node` → 1/1 each; `people-request-limits` on D1 → 6/6 (20 s).
 Not covered: Node run of people-request-limits; the deliberate breaks (Verifier's).
+
+**Decision (Lead, push 01a1e145-ca12; design agent-vm f66f5e2b).** V6's base list includes `native-browser-protocol.ts:29`. V2's canonical-JSON row in `canonical-json.unit.test.ts` is accepted. The old import rule stays `.ts`-only. The receipt schema value stays.
+
+**Owner ask carried (owner, 15 Nov, relayed by the Lead in push 01a1e145-ca12; plan.html#exhaustive).** Every switch over a closed union in code added or changed ends in `x satisfies never`, and the Hegel model decides through exhaustive switches.
+Done: the Hegel model is rewritten on switches over Grant, TokenGrant, Refusal, ThrowingPort, IntrospectionBody, TokenBody, ClaimsTiming, AgentState, ResourceState, PersonFleetDecision and Audience, each ending in `satisfies never`. The unreachable() helper is removed. The two switches in product functions I changed are converted: `fleet-admin-forwarding.ts` forwardFleetAdminRequest (its `unreachableAnswer` helper removed) and `organization-stamp-renewal.ts` sendAndSettle. Switches in functions I didn't change keep their helpers.
+Proof: Hegel 10,000 cases and coverage green; V7's three mutations re-run against the new model, each red; restored green.
+
+**Decision (Lead, push 01a1e14c-302d).** The Node forwarding file uses a bounded core-clock offset, not a far one.
+Choice: `NodeCapabilityRecordingOption.clockOffsetMilliseconds = −30 000`. The test asserts the central proof's `iat === floor((controlled − 30 s)/1000)` and that it differs from the process clock's second.
+Why: the Verifier's finding (push 01a1e149) held. The harness pins process `Date` to the injected time (node-auth-proof-host.ts:114,120) because Better Auth reads it, and central's proof window is (now − 65 s, now + 5 s].
+Proof: a `Date.now()` bypass at the central proof's `issuedAtSeconds` in fleet-admin-forwarding.ts → red; restored green.
+
+**Decision (Verifier finding, push 01a1e14e; U23).** Core `.tsx` files now fail on Node, Worker, storage-driver and host imports.
+Choice: `isForbiddenSignInCoreRuntimeImport` is split out of `isForbiddenAuthCoreImport` (same `.ts` semantics). `.tsx` files get only that runtime/host predicate, so pages and islands keep their Better Auth and intra-core imports.
+Authority: proof row U23, "a Node or Worker import placed in a sign-in-core source file makes the audit fail". This refines my earlier `.ts`-only decision without changing the old rule's `.ts` behaviour.
+Proof: PR tree audit passes; new cases (a `node:fs/promises` import in a page, a `cloudflare:workers` import in an island, Better Auth plus intra-core imports in an island accepted) 67/67; with the `.tsx` branch disabled, the two reject cases fail.
+
+**Missed.** I ran targeted host-e2e files on the owner's Mac.
+Missed: the owner's standing rule that heavy runs never go on the owner's Mac. I read "targeted unit and integration tests run locally" too widely and ran host-e2e files locally: people-identifier-inventory on D1 and Node, people-request-limits on D1, host-crypto-recording.host.e2e on Node, organization-admin on Node. No Keychain test was run.
+Found by: the Lead's ruling (push 01a1e150-dbe4), "heavy runs never go on the owner's Mac".
+Affects: those local results are Implementer evidence only, not the step-12 gate. From now on, every host e2e run goes to Sunclaw.
+
+**Blocker resolved (Lead, push 01a1e150-dbe4; commission 17828136).** Sunclaw's install failed on better-sqlite3's `node-gyp`. The fix is a node-gyp shim in the packet's own root pointing at npm's bundled node-gyp, and the Keychain test is excluded on Sunclaw.
+
+**Assumption (open, next: lead).** The verify-auth CLI's non-exit (Verifier finding F5) is a pre-existing apparatus defect, and this PR leaves it to a separate change.
+Assumed: React's browser server build creates a ref'd `MessageChannel` at module load (react-dom-server.browser.development.js:9471). The CLI loads it through organization-storage-proof → the storage test hosts → sign-in-host-node → better-auth → the pages. So the CLI never exits on its own.
+Evidence: reproduced on a scratch base worktree at f3b2b88b (`--help` still alive at 45 s, exit 142) and at 7a313fc4. The only live handle is that MessagePort. The import chain was traced with a resolve hook. Re-pointing the CLI's harness import is not a fix (tried and reverted; no diff). The scratch worktree is removed; the logs are in /tmp/b1a-scratch.
+What depends on it: a clean outer exit 0 for the Verifier's verify-auth journeys (V5, V8 driver, V10). Each journey's own pass/fail and runtime-child exit are still observable.
+Options sent to the Lead (push 01a1e18e-2c34): an accounted CLI exit, moving the storage proofs out of process, or recording it as a named pre-existing finding (recommended for this PR).
+
+**Decision (Lead, push 01a1e18e-86a8).** This resolves the open F5 assumption above: option C for this PR. The CLI's non-exit is a named pre-existing apparatus defect. The Verifier decides V5, V8 and V10 from each journey's matched counts and its runtime child's exit. There are no driver changes in B1-A. The accounted-exit fix (option A) is a separate change after B1-A.
+
+**Decision (Verifier finding F6, push 01a1e199-bdee).** Known-member checks also read string-literal element access.
+Choice: `knownMemberName` returns the member for `a.b`, `a['b']` or ``a[`b`]``. It now drives the core's `Math.random` narrowing, S7's `Date.now`/`process.hrtime`/`process.uptime`, literal-keyed timers (`globalThis['setTimeout']`, `['setInterval']`, `['performance']`) and S12's `randomUUID`. A computed key (`record[key]`) stays outside this static check, as the design's "exotic aliasing" note says.
+Authority: S6 ("Math but not Math.random"), S7 and S12, the same static known-member contract. Ground truth: the Verifier drove the collector with `Math["random"]()` and `globalThis.crypto["randomUUID"]()`, and both returned [].
+Proof: 75/75 cases. On the previous collector the 5 new reject cases fail (Math['random'], Date['now'], process['hrtime'], globalThis['setTimeout'], crypto['randomUUID'] in an owner-CLI host test), and the accepts stay green (a local `record['random']`, `Math['floor']`, a computed key, literal text in a template). The PR tree audit passes. The base measurement is unchanged (same 26 lines).

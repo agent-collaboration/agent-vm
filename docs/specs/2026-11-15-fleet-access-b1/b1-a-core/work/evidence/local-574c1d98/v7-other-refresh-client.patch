@@ -1,0 +1,11 @@
+--- packages/sign-in-core/src/response-release/sign-in-response-release.ts
++++ packages/sign-in-core/src/response-release/sign-in-response-release.ts
+@@ -121,7 +121,7 @@
+ 			body.data.refresh_token !== undefined &&
+ 			(props.tokenGrant !== 'person' ||
+ 				claims.aud !== props.ports.centralAdminAudience ||
+-				claims.client_id !== props.ports.ownerFleetCliClientId)
++				false)
+ 		)
+ 			return refuse('invalid_grant');
+ 		const invalid = props.tokenGrant === 'client_credentials' ? 'invalid_client' : 'invalid_grant';

@@ -1,0 +1,18 @@
+--- packages/sign-in-core/src/better-auth/sign-in-http-handler.ts
++++ packages/sign-in-core/src/better-auth/sign-in-http-handler.ts
+@@ -39,6 +39,7 @@
+ 	workspaceResourcePorts,
+ 	requireStoredValue,
+ } from '#sign-in-core/better-auth/store-result-adapters';
++import { mintPageNonce } from '#sign-in-core/contracts/page-nonce';
+ import { uuid7Schema } from '#sign-in-core/contracts/sign-in-platform';
+ import { runAuthorizationRevisionDrain } from '#sign-in-core/organizations/authorization-revision-drainer';
+ import type { OrganizationFleetState } from '#sign-in-core/organizations/organization-provisioning';
+@@ -166,6 +167,7 @@
+ 	): Promise<Response> {
+ 		const persons = personSessionPorts(configuration.store.persons);
+ 		try {
++			mintPageNonce(configuration.platform.crypto);
+ 			const admission = await admitSignInRequest({
+ 				request: incomingRequest,
+ 				platform: configuration.platform,

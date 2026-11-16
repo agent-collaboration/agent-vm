@@ -1,0 +1,11 @@
+--- packages/sign-in-core/src/contracts/canonical-json.ts
++++ packages/sign-in-core/src/contracts/canonical-json.ts
+@@ -42,7 +42,7 @@
+ 		'SHA-256',
+ 		new TextEncoder().encode(canonicalJson(value)),
+ 	);
+-	return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
++	return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('').toUpperCase();
+ }
+ 
+ function isCanonicalArray(
