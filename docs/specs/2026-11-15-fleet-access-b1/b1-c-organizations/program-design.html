@@ -36,7 +36,7 @@
 <p><a href="#session">Session reads</a> call Better Auth's own <code>getSession</code> endpoint, so a database failure stays a failure. <a href="#page">The page model</a> gains <code>selectionRequired</code>, so showing your memberships no longer disables Continue. <a href="#people-list">The people list</a> is owner-only, checked twice, and carries no IDs.</p>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p>This follows your 15 Nov picks: today's card, its own page in shadcn like Better Auth UI, and a list with email fallback. After a refused switch it follows Better Auth (your open choice on Decisions); <a href="#foreign-switch-branch">the other option</a> is one wrapper.</p>
+<p>This follows your 15 Nov picks: today's card, its own page in shadcn like Better Auth UI, and a list with email fallback. After a refused switch it follows Better Auth, and the card's re-render is the redirect you asked for (your pick on Decisions).</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
 <p>Built on <a href="specification.html">S1–S13</a>. Source read at Switchboard <code>f3b2b88b</code>, Better Auth <code>1.7.11</code> (installed copy under <code>switchboard.item2-b2-central-organizations/node_modules/.pnpm/</code>) and Better Auth UI <code>2b028ec5</code>. Design only; nothing built.</p>
@@ -309,8 +309,12 @@ sequenceDiagram
 </tbody></table></div>
 <p>Public routing: add exactly these method/path pairs inside the organization-prefix branch of <code>isPublicSignInRoute</code> in <code>sign-in-request-handler.ts</code>, before its POST-only return. Update <code>organization-public-routes.unit.test.ts</code> and keep the census loop in <code>organization-route-inventory.unit.test.ts:5–42</code>, admitting only the three new GETs and one POST. Native <code>organization/list</code>, <code>get-full-organization</code>, <code>list-members</code> and <code>list-invitations</code> stay out of the public table. <code>response-release/organization-request-errors.ts</code> replaces a non-JSON content type, or Better Auth's own JSON-decode 400 on the lookup POST, with the generic <code>{ error: 'invalid-request' }</code>. The existing <code>other</code> rate class covers the new reads; no counter changes.</p>
 
-<h2 id="foreign-switch-branch">If you choose to keep the earlier organization after a refused switch</h2>
-<p>Add one before-hook branch for <code>POST /organization/set-active</code>. It does a fresh membership read for the requested organization through <code>membershipsForPerson</code>; a non-member gets 403 before Better Auth runs, so Better Auth's clearing write never happens. A removal between this check and Better Auth's still clears it (named limit). V2 step 5 then expects the earlier choice kept. Nothing else changes.</p>
+<h2 id="foreign-switch-branch">After a refused switch (your pick: Better Auth's behaviour, then redirect)</h2>
+<p>Better Auth clears the current choice and answers 403 (<code>crud-org.mjs:419–425</code>). The card shows “That organization isn't available” and calls <code>location.replace(location.href)</code>, as in every ending. The server then renders the page from the stored session:</p>
+<ul>
+<li><strong>Two or more memberships:</strong> it leads with “Choose your organization” and the card, so you pick again, with no wrapper of ours.</li>
+<li><strong>Exactly one membership left:</strong> the case S2 names. In B1-C the card offers nothing to switch to. BG's page decision closes it: a waiting CLI selects that organization first (<code>select-first</code>), and otherwise it's the account page.</li>
+</ul>
 
 <h2 id="bindings">Where each entity lives</h2>
 <div class="ex-table-scroll" data-width="canvas"><table>

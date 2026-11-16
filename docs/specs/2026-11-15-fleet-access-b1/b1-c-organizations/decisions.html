@@ -24,10 +24,10 @@
 
 <h2 id="three">The three things for you</h2>
 <ex-callout title="1 · What to check" tone="note" icon="shield-check">
-<p>Your three 15 Nov picks are recorded below, and the design now follows them. One <a href="#calls">call</a> is my reading of your “shadcn like better auth ui” note; check that I read it right.</p>
+<p>Your four 15 Nov picks are recorded below, and the design follows them. The People page is built from shadcn and Better Auth UI's parts and layout, properly, as you asked (first <a href="#calls">call</a>).</p>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p>One open: <a href="#foreign-switch">what happens to your current organization after a refused switch</a>. You asked for its tradeoffs; they're laid out there with a picture.</p>
+<p>None open. After a refused switch: Better Auth's behaviour, then the page re-renders so you pick again (<a href="#foreign-switch">below</a>).</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
 <p>Every decided card quotes you. The list read you picked is newly designed, so it goes back through independent review before it comes to you for approval. Nothing on this page has been built.</p>
@@ -48,6 +48,9 @@
 </ex-card>
 <ex-card title="Overall design and B1 approved" tone="done" icon="book-open" tag="4 Nov" pick>
 <p><em>“yes you need anytnhign?”</em>, answering the request to approve the overall design, B1 and B2 (Fleet transcript 71226, 71230).</p>
+</ex-card>
+<ex-card title="Use shadcn and Better Auth UI properly, never slapped together" tone="done" icon="code" tag="15 Nov" pick>
+<p>Asked whether the 4 Nov “yes” approved the overall design, B1 and B2: <em>“designs are easy to irmpve asl ong as you acutally use shadcn proerly or beter auth ui proeprly. nto slop thign sto geter”</em>. Every screen here uses <code>tool-access-ui</code>'s shadcn parts and Better Auth UI's patterns as they're meant to be used: no hand-rolled controls and no one-off styling.</p>
 </ex-card>
 <ex-card title="The lookup has its own page, built in shadcn like Better Auth UI" tone="done" icon="path" tag="15 Nov · review 02e54dfb" pick>
 <p>You picked A, its own page linked from admin: <em>“shokuld be shadcn, thyis is 2 way door bu yes good deisgn and shadcn like auth better ui”</em>.</p>
@@ -82,8 +85,11 @@
 <li>Native member and invitation listing stay closed to the browser, as before.</li>
 </ul>
 
-<h2 id="open">Open: your one choice</h2>
-<h3 id="foreign-switch">After a refused switch, what is your current organization?</h3>
+<h2 id="open">Decided last: after a refused switch</h2>
+<ex-card title="Keep Better Auth's behaviour; redirect so you pick again" tone="done" icon="package" tag="15 Nov · review 64a95514" pick>
+<p>You picked A: <em>“or redirect if thats easy”</em>. It is: the card calls <code>location.replace</code> after every switch ending, so a refusal re-renders the page from the stored session. With two or more memberships it leads with “Choose your organization”. With one left, BG's page decision selects it for a waiting CLI. No wrapper of ours.</p>
+</ex-card>
+<h3 id="foreign-switch">What happens, for the record</h3>
 <p><strong>When it happens.</strong> A switch names an organization you aren't a member of. The card lists only your memberships, so a normal click can't send that. It happens from a stale page (you were removed from O2 after the page loaded, then clicked O2), or from a hand-made request.</p>
 <p><strong>What Better Auth does</strong> (<code>dist/plugins/organization/routes/crud-org.mjs:419–425</code>, version 1.7.11): <code>checkMembership</code> fails, so it writes <code>activeOrganizationId = null</code> to the session, then answers 403. Your memberships and roles don't change.</p>
 <ex-mermaid id="foreign-now" label="Today: Better Auth clears the current choice" data-width="canvas"><script type="text/plain">
@@ -96,47 +102,10 @@ sequenceDiagram
   BA->>BA: checkMembership(O2) = false
   BA->>S: current := none
   BA-->>P: 403
-  P->>P: re-read: memberships [O1], current none
-  Note over P: you click O1 again; CLI Continue waits until you do
+  P->>P: card calls location.replace; server re-renders
+  Note over P: memberships [O1], current none; you pick O1 again
 </script></ex-mermaid>
-<ex-compare label="After a refused switch" data-width="canvas">
-<section id="foreign-keep-native" label="A · Keep Better Auth's behaviour" icon="package">
-<section data-compare-row="sees"><p><strong>What you see</strong></p><p>“That organization isn't available.” Your list now shows no current organization; one click on O1 puts it back.</p></section>
-<section data-compare-row="changes"><p><strong>What changes in code</strong></p><p>Nothing of ours. Better Auth's route, as shipped. The page re-reads after any ending.</p></section>
-<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>One extra click after a stale page. Nothing is granted or lost.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="foreign-keep-native-pic" label="Option A"><script type="text/plain">
-flowchart TB
-  click["Stale click on O2"] --> ba["Better Auth: 403, current cleared"]
-  ba --> reread["Page re-reads: no current"]
-  reread --> pick["You pick O1 again"]
-</script></ex-mermaid></section>
-</section>
-<section id="foreign-keep-o1" label="B · Keep O1 current" icon="lock">
-<section data-compare-row="sees"><p><strong>What you see</strong></p><p>“That organization isn't available.” O1 stays current.</p></section>
-<section data-compare-row="changes"><p><strong>What changes in code</strong></p><p>Our wrapper in front of Better Auth's set-active checks membership first and answers 403 itself, so Better Auth's clearing write never runs.</p></section>
-<section data-compare-row="costs"><p><strong>What it costs</strong></p><ul>
-<li>A wrapper around Better Auth's write, against your follow-the-grain rule.</li>
-<li>A second membership check to keep in step with theirs, with its own tests.</li>
-<li>It doesn't fully remove the case: a removal landing between our check and Better Auth's still clears the choice.</li>
-</ul></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="foreign-keep-o1-pic" label="Option B"><script type="text/plain">
-flowchart TB
-  click["Stale click on O2"] --> ours["Our check: not a member, 403"]
-  ours --> stay["O1 stays current"]
-  click2["Removal between checks"] --> ba["Better Auth still clears"]
-</script></ex-mermaid></section>
-</section>
-</ex-compare>
-<ex-grid cols="2" data-width="canvas">
-<ex-card title="A · Keep Better Auth's behaviour" tone="planned" icon="package" tag="Recommended"><p><strong>Cost:</strong> one click after a stale page.</p></ex-card>
-<ex-card title="B · Keep O1 current" tone="planned" icon="lock" tag="More code"><p><strong>Cost:</strong> a wrapper on Better Auth's write that still can't cover every case.</p></ex-card>
-</ex-grid>
-<ex-callout title="Recommendation: A" tone="decision" icon="package"><p>Both are safe; neither grants anything. A costs one click in a rare case. B adds code against your follow-the-grain rule and still leaves the race. To undo A later, add B's wrapper; to undo B, delete it.</p></ex-callout>
-<ex-callout title="If you defer" tone="risk" icon="clock"><p>The design builds A, which is Better Auth's own behaviour, and nothing else waits on this.</p></ex-callout>
-<ex-choice id="choice-foreign-switch" title="After a refused switch, what is your current organization?">
-<ex-option id="foreign-pick-native" title="A · Keep Better Auth's behaviour: none until you pick again (recommended)"><template slot="summary">No code of ours; one click after a stale page.</template></ex-option>
-<ex-option id="foreign-pick-o1" title="B · Keep O1 current"><template slot="summary">Our wrapper before Better Auth's write.</template></ex-option>
-</ex-choice>
+<p>The option you didn't pick, keeping O1 current, would have needed our own wrapper around Better Auth's write, and a removal between the two checks would still have cleared it.</p>
 </ex-document>
 </body>
 </html>
