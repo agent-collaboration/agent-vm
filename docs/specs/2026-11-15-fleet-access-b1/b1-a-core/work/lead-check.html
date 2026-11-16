@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B1-A · Lead acceptance</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-document id="doc">
+<h1>B1-A · Lead acceptance before independent review</h1>
+<p><strong>Accepted for independent review:</strong> draft PR <a href="https://github.com/agent-collaboration/switchboard/pull/18">switchboard#18</a>, head <code>e2a91f55</code>, base <code>f3b2b88b</code>. All five conditions hold within the stated limits. This is not merge authority: the fresh Reviewer (Packet 3) comes next, then the merge decision. Written 2026-11-16 by the Fleet access Lead from sources I opened myself.</p>
+<ex-callout title="Limits that stay visible" tone="risk" icon="shield-check">
+<ul>
+<li>Runtime evidence is at <code>27d39324</code>. I diffed it against the head: only <code>scripts/audit-portal-architecture.ts</code>, its unit test and one <code>verify-auth</code> doc line changed after it, so the runtime evidence carries.</li>
+<li>F5, the verify-auth outer CLI that doesn't exit, is pre-existing at <code>f3b2b88b</code> and deferred by my ruling. V5, V8 and V10 are judged by each journey's matched counts and its runtime child's exit code, not the outer CLI.</li>
+<li>Final check and unit counts at the head are the Implementer's (check 12/12; unit 240 files, 2642 tests). The Verifier independently ran the scanner proof at the head.</li>
+<li>Not covered: hosted Cloudflare, staging and production; real identity providers.</li>
+</ul>
+</ex-callout>
+
+<h2 id="conditions">The five conditions</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Condition</th><th>What I inspected</th><th>Result</th></tr></thead>
+<tbody>
+<tr><td>1 · Outcomes match your intent</td><td>Your 15 Nov B1-A decisions (<code>../decisions.html</code>): Better Auth's own crypto stays as shipped; capabilities injected with no DI library; UUIDv7 only, tests included. Each maps to S1–S12 below; nothing outside them was added.</td><td>Holds</td></tr>
+<tr><td>2 · Ownership and contracts respected</td><td>The diff (69 files) stays in the sign-in packages and the architecture scanner. No migration, schema, <code>package.json</code>, lockfile, CI or check-script change (I grepped the file list). <code>SignInPlatform.crypto: SignInCrypto</code> is required in <code>contracts/sign-in-platform.ts:95–109</code>, and hosts get it from the one place that reads the runtime (<code>sign-in-platform-web/src/index.ts:28–41</code>).</td><td>Holds</td></tr>
+<tr><td>3 · Deciding evidence on the declared target</td><td>The Verifier's observation (<code>verifier-observation.md</code>, V1–V11 all supported; V5, V8, V10 under the F5 ruling). Read with my own source checks below.</td><td>Holds within the limits above</td></tr>
+<tr><td>4 · Parts work together</td><td>Both host selections passed the full host e2e at <code>27d39324</code> (workerd 476 and Node 475 passed, exit 0; Sunclaw Operator run). The organization, people and agent journeys match their selected sets (98, 97, 104 each, 45), with child exit 0.</td><td>Holds</td></tr>
+<tr><td>5 · No open prerequisite, proof gap or HOLD</td><td>F1–F4, F6 and F7 are closed. F5 is deferred by an explicit ruling with a follow-up (the accounted-exit fix after B1-A). The Keychain test ran once on your Mac with your yes and passed.</td><td>Holds</td></tr>
+</tbody></table></div>
+
+<h2 id="rules">Each rule: change, evidence, why it answers</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Rule</th><th>Change and evidence I opened</th><th>Why it answers the rule</th></tr></thead>
+<tbody>
+<tr><td>S1, S2 host randomness and crypto</td><td><code>mintPageNonce(crypto)</code> (<code>contracts/page-nonce.ts:16–21</code>), <code>canonicalJsonSha256Hex(crypto, …)</code> (<code>canonical-json.ts:37–46</code>), <code>createFleetAdminProofKey(crypto, …)</code> (<code>fleet-admin-proof.ts:42–50</code>). A grep of non-test core source finds every <code>crypto.</code> call on an injected parameter. The one exception is the old browser script string in <code>organization-admin-page.ts:41</code>, which runs in the browser and which B2 deletes. Verifier V1 (fixed-byte nonce, zero draws off-page) and V2 (recording rows; Node forwarding with an offset clock) passed, with mutants red then green.</td><td>Every value the server core draws or hashes goes through the host capability, and the tests catch a bypass.</td></tr>
+<tr><td>S3 required</td><td>The field is non-optional in <code>SignInPlatform</code>. Verifier V4 type mutations fail.</td><td>A host without crypto doesn't build.</td></tr>
+<tr><td>S4 hosts hand it in</td><td>Cloudflare <code>worker-configuration.ts:26</code>, Node <code>sign-in-node-host.ts:75</code> and CLI <code>fleet-cli-commands.ts:61–79</code> all use <code>createWebSignInCapabilities()</code>.</td><td>Each host passes its Web Crypto and adds no rule.</td></tr>
+<tr><td>S5 nothing outsiders see changes</td><td>Verifier V3: the existing digest, thumbprint and DPoP known answers and CSP checks pass; an altered digest fails.</td><td>Outputs are byte-for-byte the same; only the nonce value changes.</td></tr>
+<tr><td>S6, S7 architecture check and no wall clock</td><td>Scanner changes in <code>scripts/audit-portal-architecture.ts</code>, with 79 unit cases (V4, V6). My own grep finds no <code>Date.now()</code>, <code>new Date()</code>, <code>performance.now</code>, <code>setTimeout</code> or <code>setInterval</code> in any sign-in test file at the head.</td><td>An allowed list catches unknown globals; tests use controlled time only.</td></tr>
+<tr><td>S8 Hegel families</td><td>V7: an exhaustive model, 10,000 derandomized cases with a coverage assertion; the mutants fail.</td><td>The token-kind dispatch is checked against an independent model.</td></tr>
+<tr><td>S9 limiter on the real binding</td><td>V8: six limiter cases on both hosts; all 54 workerd receipts on the real binding, none on a stand-in.</td><td>“Limited” is proven on Miniflare's own counter.</td></tr>
+<tr><td>S10, S12 UUIDv7 only</td><td>The only UUID import in the sign-in packages is <code>uuid</code>'s <code>v7</code> (<code>sign-in-platform-web/src/index.ts:9</code>). V9: the stored-UUID inventory on both databases. V11: the scanner rejects non-v7, and a reintroduced <code>randomUUID</code> fails.</td><td>Nothing mints or stores another version.</td></tr>
+<tr><td>S11 agents still work</td><td>V10: the agent journey on local workerd (45 selected and passed; child exit 0).</td><td>Today's agent token and tool call still work.</td></tr>
+</tbody></table></div>
+
+<h2 id="next">Next</h2>
+<p>A fresh Sol reviewer with no history on this work, from Packet 3 of <code>../plan.html</code>: the whole design except the Plan, plus this record, the PR at <code>e2a91f55</code> and the Verifier's evidence. Merge only after READY, with every row above still standing.</p>
+</ex-document>
+</body>
+</html>

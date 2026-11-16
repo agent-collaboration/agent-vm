@@ -81,13 +81,30 @@ flowchart TB
 <ex-callout title="Taken: A" tone="decision" icon="clock"><p>On 16 Nov you asked <em>“are you being pendantic? is this a areal issue?”</em>. It isn't a real issue: both options give the right outcome and never a duplicate. So this is A, today's Central behaviour plus the lookup. You also asked why there's a ledger at all. Central's <code>request_log</code> (<code>workspace_request_log</code>) is request safety, not workspace data: for 24 hours it replays the same request's answer and refuses a reused ID with different content. After that, the workspace itself, created under the operation ID, is the durable fact the lookup reads.</p></ex-callout>
 
 <h3 id="retire">2 · Changing sign-in's signing key: may sign-in pause for a few minutes?</h3>
-<p><strong>Background.</strong> Each organization has a signed statement from sign-in (“organization X exists, set up by this owner”). Central checks it with sign-in's public key before doing any work for that organization. Rotating the key is rare: scheduled, or after a suspected leak. Rotating means:</p>
-<ol>
-<li>re-sign every organization's statement with the new key, including idle ones;</li>
-<li>stop publishing the old key;</li>
-<li>make sure every Central has forgotten it (310 seconds; see <a href="specification.html#S11">S11</a>);</li>
-<li>restart each Central, and check every organization still works.</li>
-</ol>
+<p><strong>The key.</strong> Sign-in has one signing key pair, kept in Better Auth's <code>jwks</code> table. The private half signs. The public half is published at sign-in's key URL; Central fetches it from there and keeps a copy for up to 5 minutes.</p>
+<p><strong>What it signs.</strong> Each organization's <em>statement</em> (“organization X exists, set up by this owner”), which Central stores and checks before doing any work for that organization. It also signs people's tokens, which live at most 5 minutes and simply expire.</p>
+<p><strong>Who starts a rotation, and when.</strong> You do, rarely: on a schedule, or if the key might have leaked. You start it through the private maintenance entry (on Node the <code>sign-in-maintenance</code> command, on Cloudflare a temporary Worker); I prepare the exact commands.</p>
+<p><strong>What happens, step by step</strong> (about 15 minutes):</p>
+<ex-mermaid id="rotation-steps" label="A key rotation, step by step" data-width="canvas"><script type="text/plain">
+sequenceDiagram
+  participant Y as You
+  participant S as Sign-in
+  participant C as Central
+  Y->>S: 0. create the new key B (old key A still published)
+  Y->>S: 1. maintenance on: new sign-ins and admin actions wait; pause row written
+  Y->>S: 2. prepare
+  loop every organization, idle ones too
+    S->>C: new statement signed with B
+    C-->>S: stored
+  end
+  Y->>S: 3. withdraw: stop publishing A (its row is kept, marked expired)
+  Note over C: 4. wait 5 min 10 s: any copy of the key list still holding A expires
+  Y->>C: 5. restart each Central (approved rule 6)
+  Y->>S: 6. check
+  S->>C: every organization reads on B
+  C-->>S: all OK
+  Y->>S: 7. maintenance off: sign-ins resume; new tokens signed with B
+</script></ex-mermaid>
 <p><strong>The danger.</strong> A request already in progress can sign with the <em>old</em> key just after step 1 finished, and land after step 2. That organization is left with a statement Central can't verify, and its Fleet calls fail until someone notices and repairs it.</p>
 <ex-mermaid id="retire-danger" label="Why in-flight work matters" data-width="canvas"><script type="text/plain">
 sequenceDiagram
