@@ -31,7 +31,7 @@
 </ul>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p>How <code>--device</code> keeps a session: <a href="decisions.html#device">Decisions</a>. It was promised to you on 8 Nov and never answered.</p>
+<p>How <code>--device</code> keeps a session: promised to you on 8 Nov and decided on 15 Nov. It uses a real session (<a href="decisions.html#device">Decisions</a>).</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
 <p>Quotes below are yours with transcript lines. The approved additions page records its own 8 Nov approval and the 6 Nov token model.</p>
@@ -55,7 +55,7 @@ flowchart TB
 <tr id="X1"><td><strong>X1 · Key-bound, role-limited token</strong></td><td>Approved additions: <em>“a reusable person token carrying role and permissions, bound to the caller's key”</em>; <em>“central verifying the key-bound proof itself”</em>.</td><td><code>person-fleet-token.host.e2e.test.ts:198–344</code></td><td>Observed against the final Central on every login path.</td></tr>
 <tr id="X2"><td><strong>X2 · Never outlives its snapshot or session</strong></td><td>r3 §4: the snapshot S and deadline S+L are fixed; equality is expired.</td><td>Host issuance test :232–265; release refuses at the minimum bound.</td><td>Session and snapshot expiry tested independently against Central.</td></tr>
 <tr id="X3"><td><strong>X3 · Refresh with the same key</strong></td><td>Your selection: <em>“Add a refresh credential, bound to the key”</em> (Fleet transcript 90948, 7 Nov).</td><td><code>fleet-cli.host.e2e.test.ts:173–243</code></td><td>Kept on every login path.</td></tr>
-<tr id="X4"><td><strong>X4 · <code>--device</code> login</strong></td><td>Your selection: <em>“Add device-code sign-in to the CLI, as --device”</em> (Fleet transcript 90948, 7 Nov); <em>“login i want login to work with device codes in codex”</em> (Fleet transcript 12490).</td><td>None; exits “not available”.</td><td>The whole login, by the option you choose.</td></tr>
+<tr id="X4"><td><strong>X4 · <code>--device</code> login</strong></td><td>Your selection: <em>“Add device-code sign-in to the CLI, as --device”</em> (Fleet transcript 90948, 7 Nov); <em>“login i want login to work with device codes in codex”</em> (Fleet transcript 12490).</td><td>None; exits “not available”.</td><td>The whole login, with a real session (your 15 Nov pick).</td></tr>
 <tr id="X5"><td><strong>X5 · No credential in the admin page</strong></td><td>Your 8 Nov decision: the sign-in server holds the page's credential and signs each request.</td><td><code>fleet-admin-forwarding.ts</code> and its tests.</td><td>Kept.</td></tr>
 </tbody></table></div>
 

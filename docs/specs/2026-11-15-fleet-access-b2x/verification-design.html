@@ -80,7 +80,7 @@
 <tr><td><code>access-sync-view.hegel.unit.test.ts</code> (M2)</td><td>Only the current generation settles</td><td>No generation check</td></tr>
 <tr><td><code>device-login-transitions.hegel.unit.test.ts</code> (M3)</td><td>Signed in only after exchange; failure always clears custody; each slow-down adds 5 s to the interval, and every later poll waits at least that long</td><td>Store custody before exchange; poll without waiting; lengthen only the next wait and then fall back to the original interval</td></tr>
 </tbody></table></div>
-<p>Exhaustiveness: one added literal per union fails <code>pnpm typecheck</code> at its <code>satisfies never</code>. Runner: a lost conditional write executes no push. Diff read: the “not available” exit removed under B; stale comment fixed. Gates on <a href="plan.html#gates">Plan</a>.</p>
+<p>Exhaustiveness: one added literal per union fails <code>pnpm typecheck</code> at its <code>satisfies never</code>. Runner: a lost conditional write executes no push. Diff read: the “not available” exit removed; stale comment fixed. Gates on <a href="plan.html#gates">Plan</a>.</p>
 
 <h2 id="r3">The r3 §9 counterexamples, each with an owner</h2>
 <div class="ex-table-scroll" data-width="canvas"><table>

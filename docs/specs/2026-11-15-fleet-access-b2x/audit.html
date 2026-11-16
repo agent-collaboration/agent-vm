@@ -32,7 +32,7 @@
 </ul>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p>One open: how <code>--device</code> login gets a real session. On <a href="decisions.html#device">Decisions</a>.</p>
+<p>Decided 15 Nov: <code>--device</code> uses Better Auth's device flow with a real session (<a href="decisions.html#device">Decisions</a>).</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
 <p>The <a href="../2026-11-02-fleet-access/deliverables/b2-additions.source.html">approved B2 additions</a> (approved by you on 8 Nov per that page, and with the overall design on 4 Nov), the r3 design it adopts (<code>tmp/2026-11-06-push-revision-replay/advisor-design-r3.md</code>), and your 7 Nov selections in review <code>43c26c14</code> (<a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl">Fleet transcript 90948</a>).</p>
@@ -89,7 +89,7 @@ flowchart TB
 <tr><td>Issuance decision</td><td><code>person-fleet-issuance.ts</code>, already pure</td><td>Kept; exhaustive refusal union checked; Hegel family over snapshots and time.</td></tr>
 <tr><td>A revision row's delivery: pending, pushed, acknowledged, deferred, discrepancy</td><td>Rows in the two revision tables; logic in the drainer</td><td>M1: pure transition with effects (push), runner keeps the conditional writes.</td></tr>
 <tr><td>Owner's sync view: loading, pending, synced, unavailable</td><td>New</td><td>M2 in the browser.</td></tr>
-<tr><td>Device login (if chosen): code pending, approved, denied, redeemed once, expired</td><td>Better Auth's device-code table</td><td>Better Auth owns the code; M3 models the CLI's side.</td></tr>
+<tr><td>Device login: code pending, approved, denied, redeemed once, expired</td><td>Better Auth's device-code table</td><td>Better Auth owns the code; M3 models the CLI's side.</td></tr>
 </tbody></table></div>
 
 <h2 id="tests">Existing proof</h2>
@@ -105,7 +105,7 @@ flowchart TB
 
 <h2 id="removes">Removed and kept</h2>
 <ul>
-<li><strong>Removed:</strong> the <code>--device</code> “not available” exit and its test, once the chosen device path is built (if you choose browser only, the message stays); the drainer's inline decision branches, replaced by M1; the stale periodic comment.</li>
+<li><strong>Removed:</strong> the <code>--device</code> “not available” exit and its test, once device login is built; the drainer's inline decision branches, replaced by M1; the stale periodic comment.</li>
 <li><strong>Kept:</strong> issuance, release, refresh, the fence, delivery rules, admin-page forwarding, every existing test.</li>
 <li><strong>Not B2X:</strong> agent session tokens (Lead A's deliverable 5); machine login (B3); Central's own DPoP, used-request table, watermark and backup recovery (Lead A), which B2X observes but doesn't build.</li>
 </ul>

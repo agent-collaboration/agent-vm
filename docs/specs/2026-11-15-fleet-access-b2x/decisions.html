@@ -66,64 +66,21 @@
 <tr><td>Delivery stays on use; no new timer</td><td>Your crons rule.</td><td>No.</td></tr>
 </tbody></table></div>
 
-<h2 id="history">How this choice got here</h2>
-<p>On 8 Nov the Implementer stopped: the OAuth device grant gives no session. I deferred <code>--device</code> and promised you an A/B page (push <code>01a1ba36-49af</code>). It wasn't brought to you; today's assumption audit flagged that (A1-04). This is that decision, with a third option found in the source since.</p>
-
-<h2 id="device">Decided: how <code>--device</code> keeps a session (for the record)</h2>
-<ex-mermaid id="device-now" label="Why the OAuth device grant fails today" data-width="canvas"><script type="text/plain">
+<h2 id="device">How <code>--device</code> keeps a session (decided)</h2>
+<p><strong>How it got here.</strong> On 8 Nov the Implementer stopped: Better Auth's OAuth device grant gives a token with no session, which our token contributor refuses. I deferred <code>--device</code> and promised you a decision page (push <code>01a1ba36-49af</code>). It reached you on 15 Nov, and you picked Better Auth's own device flow with a real session.</p>
+<ex-mermaid id="device-picked" label="Device login with a real session" data-width="canvas"><script type="text/plain">
 flowchart TB
-  browser["Browser login"] --> session["Real session"] --> token["Token with session ID"]
-  device["OAuth device grant"] --> nosess["No session ID"] --> refused["Our contributor refuses"]
-  class browser,session,token slot3
-  class device,nosess,refused slot5
+  code["Device code, approved in your signed-in browser"] --> sess["New native session S"]
+  sess --> pkce["Existing PKCE login with S"]
+  pkce --> tok["Person token carrying S"]
 </script></ex-mermaid>
-<h3 id="device-plain">A against B, by what you'd notice</h3>
-<p>Signing in is the same in both: run <code>--device</code>, approve the code in a signed-in browser, and the terminal is logged in. They differ here:</p>
-<div class="ex-table-scroll" data-width="canvas"><table>
-<thead><tr><th>Situation</th><th>B · real session (recommended)</th><th>A · sessionless token</th></tr></thead>
-<tbody>
-<tr><td><strong>Laptop lost or stolen.</strong> You want that one terminal cut off.</td><td>Sign out that one session. Its token stops working once Central catches up; your other logins keep working.</td><td>No single handle for that laptop. Its refresh token keeps working until you remove the person's role or membership, or end <em>all</em> their sessions, which logs out everything else too. Cutting off one device needs a new “your devices” list and remote revoke built on the OAuth refresh-token records. <code>/oauth2/revoke</code> only lets the holder revoke its own token.</td></tr>
-<tr><td><strong>A protected command</strong> (for example, create a workspace) asks for a recent second factor.</td><td>The CLI asks for your app code, confirms that session, and the command runs.</td><td>There is no session to attach the confirmation to, so the command can never pass. That needs a new way to bind a confirmation, which bends R53.</td></tr>
-<tr><td><strong>Central, Lead A's side</strong></td><td>Nothing changes. The token looks exactly like a browser-login token.</td><td>Lead A changes Central's admission and the r3 §4 time bounds to accept a token with no session, and designs a refresh lifetime for it.</td></tr>
-<tr><td><strong>What lives on the terminal</strong></td><td>Key, refresh credential, plus a session secret. All three in Keychain on macOS, otherwise memory only, never a file.</td><td>Key and refresh credential only.</td></tr>
-<tr><td><strong>Extra sign-in code</strong></td><td>A guard so no web page can call the device routes, plus converting the terminal's session to Better Auth's own cookie on six paths.</td><td>None. It's the OAuth device grant as shipped.</td></tr>
-</tbody></table></div>
-<p><strong>In one line each.</strong> A saves the containment code and one secret on the terminal, but costs per-device revocation, protected commands and a Central contract change. B costs that code and one more Keychain secret, and keeps revocation per device and step-up working with no change to Central.</p>
-<ex-compare label="Device login options" data-width="canvas">
-<section id="dev-c" label="C · Browser only" icon="path">
-<section data-compare-row="sees"><p><strong>What a person sees</strong></p><p><code>--device</code> says it's not available; headless machines can't sign in.</p></section>
-<section data-compare-row="changes"><p><strong>What changes</strong></p><p>Nothing.</p></section>
-<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Your 7 Nov choice isn't delivered.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="dev-c-pic" label="Option C"><script type="text/plain">
-flowchart TB
-  d["--device"] --> n["Not available"]
-</script></ex-mermaid></section>
-</section>
-<section id="dev-b" label="B · Better Auth's device flow with a real session" icon="key">
-<section data-compare-row="sees"><p><strong>What a person sees</strong></p><p>A code to approve in their browser; then, if needed, an organization pick and a second-factor prompt in the CLI.</p></section>
-<section data-compare-row="changes"><p><strong>What changes</strong></p><p>Better Auth's own <code>deviceAuthorization()</code>; browsers refused on the device routes; the terminal's session converted to Better Auth's own signed cookie on six paths before dispatch; the CLI completes the existing PKCE login with the new session and stores the session secret beside its key.</p></section>
-<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>A long-lived session secret on the machine (Keychain or memory). A small terminal adapter in the outer handler and its containment tests.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="dev-b-pic" label="Option B"><script type="text/plain">
-flowchart TB
-  code["Device code"] --> sess["Native session"] --> pkce["Existing PKCE login"] --> tok["Token with session ID"]
-</script></ex-mermaid></section>
-</section>
-<section id="dev-a" label="A · Sessionless tokens" icon="package">
-<section data-compare-row="sees"><p><strong>What a person sees</strong></p><p>A code to approve; signed in.</p></section>
-<section data-compare-row="changes"><p><strong>What changes</strong></p><p>The OAuth device grant as shipped; a new token profile without a session; the contributor and Central's admission change.</p></section>
-<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>There's no device session to end or expire, so ending “the device's login” has no handle; a device token still dies on any role or membership change, on any session end for that person (person-wide), and at expiry. Its refresh lifetime needs designing. A changed contract on both sides.</p><p><strong>Step-up breaks.</strong> Second-factor confirmations are stored per session, and issuance reads the token's own session (<code>person-fleet-authorization-store.ts:51–55,81</code>, <code>person-fleet-issuance.ts:67–69</code> at Switchboard <code>f3b2b88b</code>). A sessionless token has none, so every protected command would answer <code>secondFactorRequired</code> with nothing to confirm. Fixing that needs a new way to bind a confirmation, against R53.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="dev-a-pic" label="Option A"><script type="text/plain">
-flowchart TB
-  code["OAuth device grant"] --> tok["Token, no session"]
-</script></ex-mermaid></section>
-</section>
-</ex-compare>
-<ex-grid cols="3" data-width="canvas">
-<ex-card title="C · Browser only" tone="planned" icon="path" tag="No change"><p><strong>Cost:</strong> your choice undelivered.</p></ex-card>
-<ex-card title="B · Real session" tone="planned" icon="key" tag="Recommended"><p><strong>Cost:</strong> a session secret on the machine; containment rules.</p></ex-card>
-<ex-card title="A · Sessionless" tone="planned" icon="package" tag="Contract change"><p><strong>Cost:</strong> no device session to end; protected commands can't step up; refresh lifetime to design.</p></ex-card>
-</ex-grid>
-<ex-callout title="Your pick: B" tone="decision" icon="key"><p>A real session. It delivers <code>--device</code> and keeps “ending the session ends the token” and step-up working, using only Better Auth's own parts. The other options are gone from the design pages.</p></ex-callout>
+<p><strong>What it means in practice.</strong></p>
+<ul>
+<li><strong>A lost or stolen terminal:</strong> sign out its session S. Its refresh fails, and after Central's acknowledgement its token is refused. Ending a session raises your person revision, as r3 §3 requires (<code>storage/authorization-fence-mutations.ts:233–244</code>). So your other sessions stay signed in, but each of their current tokens is refused once and refreshes; the CLI does that by itself.</li>
+<li><strong>A protected command</strong> asks for a recent second factor: the CLI asks for your app or recovery code and confirms S, because confirmations belong to a session.</li>
+<li><strong>Central</strong> needs no change: the token has the same shape as a browser-login token.</li>
+<li><strong>On the terminal:</strong> the key, the refresh credential and S's secret. All three go in Keychain on macOS, otherwise memory only, never a file.</li>
+</ul>
 </ex-document>
 </body>
 </html>

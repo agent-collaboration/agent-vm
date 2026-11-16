@@ -200,7 +200,7 @@ type OrganizationStatus =
 <tbody>
 <tr><td>S5 B: original answer forever</td><td>Lead A extends Central's request-ledger retention first; M4's 24-hour reconciliation lookup is removed.</td></tr>
 <tr><td>S12 B: no pause</td><td>A persisted key epoch and fenced writers on sign-in and a Central contract; designed and reviewed before build.</td></tr>
-<tr><td>S15 B: whole console in B2</td><td>Forward EngineHealth, EngineListRetired, EngineRetry, EngineDiscard; typed results; a console section on the page; CLI commands; designed and reviewed before build.</td></tr>
+<tr><td>S15 B: whole console in B2</td><td>Forward EngineHealth, EngineListRetired, EngineRetry, EngineDiscard, with typed results, a console section on the page and CLI commands; designed and reviewed before build. Per Lead A's P8 table (push <code>01a1e2be-26af</code>), EngineRetry and EngineDiscard bodies are <code>{ organizationId, operationId, attemptId }</code>, with a server-made UUIDv7 <code>operationId</code> in the body and the signed intent, exactly like CreateWorkspace. Central keys the stored answer by it, so a replay returns the original. <code>kind</code> is the closed enum <code>wake_timer | automation_timer | legacy_notice_windows | legacy_workspace_drains | engine_source</code>.</td></tr>
 </tbody></table></div>
 
 <h2 id="trace">Rule homes and proof seams</h2>
