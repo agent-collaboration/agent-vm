@@ -121,8 +121,8 @@ flowchart TB
 <ex-compare label="Key retirement" data-width="canvas">
 <section id="retire-window" label="A · Short maintenance window" icon="clock">
 <section data-compare-row="sees"><p><strong>What you see</strong></p><p>During the window, new sign-ins wait; existing work drains; then re-sign, withdraw, restart, reopen.</p></section>
-<section data-compare-row="changes"><p><strong>What changes</strong></p><p>The maintenance entry and its steps; nothing new stored.</p></section>
-<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Minutes of no new sign-ins, plus waiting out outstanding token lifetimes before withdrawal.</p></section>
+<section data-compare-row="changes"><p><strong>What changes</strong></p><p>The maintenance entry and its steps; a pause setting; and one small stored fact, a single-row <code>maintenance_pause</code> table every ordinary stamp write checks, so work admitted before the pause can't commit after it.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Minutes of no new sign-ins, plus waiting out outstanding token lifetimes before withdrawal. One new table (choosing A approves it).</p></section>
 <section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="retire-window-pic" label="Option A"><script type="text/plain">
 flowchart TB
   stop["Pause issuance"] --> re["Re-sign all"] --> w["Withdraw"] --> rs["Restart, check"] --> open["Reopen"]
@@ -139,13 +139,13 @@ flowchart TB
 </section>
 </ex-compare>
 <ex-grid cols="2" data-width="canvas">
-<ex-card title="A · Maintenance window" tone="planned" icon="clock" tag="Recommended"><p><strong>Cost:</strong> minutes without new sign-ins.</p></ex-card>
+<ex-card title="A · Maintenance window" tone="planned" icon="clock" tag="Recommended"><p><strong>Cost:</strong> minutes without new sign-ins; one new one-row table.</p></ex-card>
 <ex-card title="B · Live epoch" tone="planned" icon="key" tag="New machinery"><p><strong>Cost:</strong> epoch storage, fences, Central contract.</p></ex-card>
 </ex-grid>
 <ex-callout title="Recommendation: A" tone="decision" icon="clock"><p>Key changes are rare and run by you; a short window is far less machinery.</p></ex-callout>
 <ex-callout title="If you defer" tone="risk" icon="clock"><p>Everything but the retirement procedure builds; rule 6 stays unproven.</p></ex-callout>
 <ex-choice id="choice-retire" title="May key retirement pause sign-in?">
-<ex-option id="retire-a" title="A · Short maintenance window (recommended)"><template slot="summary">No new storage.</template></ex-option>
+<ex-option id="retire-a" title="A · Short maintenance window (recommended)"><template slot="summary">A pause setting and a one-row pause table.</template></ex-option>
 <ex-option id="retire-b" title="B · No pause, live key epoch"><template slot="summary">New machinery, designed first.</template></ex-option>
 </ex-choice>
 
