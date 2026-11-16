@@ -74,6 +74,18 @@ flowchart TB
   class browser,session,token slot3
   class device,nosess,refused slot5
 </script></ex-mermaid>
+<h3 id="device-plain">A against B, by what you'd notice</h3>
+<p>Signing in is the same in both: run <code>--device</code>, approve the code in a signed-in browser, and the terminal is logged in. They differ here:</p>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Situation</th><th>B · real session (recommended)</th><th>A · sessionless token</th></tr></thead>
+<tbody>
+<tr><td><strong>Laptop lost or stolen.</strong> You want that one terminal cut off.</td><td>Sign out that one session. Its token stops working once Central catches up; your other logins keep working.</td><td>No single handle for that laptop. Its refresh token keeps working until you remove the person's role or membership, or end <em>all</em> their sessions, which logs out everything else too. Cutting off one device needs a new “your devices” list and remote revoke built on the OAuth refresh-token records. <code>/oauth2/revoke</code> only lets the holder revoke its own token.</td></tr>
+<tr><td><strong>A protected command</strong> (for example, create a workspace) asks for a recent second factor.</td><td>The CLI asks for your app code, confirms that session, and the command runs.</td><td>There is no session to attach the confirmation to, so the command can never pass. That needs a new way to bind a confirmation, which bends R53.</td></tr>
+<tr><td><strong>Central, Lead A's side</strong></td><td>Nothing changes. The token looks exactly like a browser-login token.</td><td>Lead A changes Central's admission and the r3 §4 time bounds to accept a token with no session, and designs a refresh lifetime for it.</td></tr>
+<tr><td><strong>What lives on the terminal</strong></td><td>Key, refresh credential, plus a session secret. All three in Keychain on macOS, otherwise memory only, never a file.</td><td>Key and refresh credential only.</td></tr>
+<tr><td><strong>Extra sign-in code</strong></td><td>A guard so no web page can call the device routes, plus converting the terminal's session to Better Auth's own cookie on six paths.</td><td>None. It's the OAuth device grant as shipped.</td></tr>
+</tbody></table></div>
+<p><strong>In one line each.</strong> A saves the containment code and one secret on the terminal, but costs per-device revocation, protected commands and a Central contract change. B costs that code and one more Keychain secret, and keeps revocation per device and step-up working with no change to Central.</p>
 <ex-compare label="Device login options" data-width="canvas">
 <section id="dev-c" label="C · Browser only" icon="path">
 <section data-compare-row="sees"><p><strong>What a person sees</strong></p><p><code>--device</code> says it's not available; headless machines can't sign in.</p></section>
