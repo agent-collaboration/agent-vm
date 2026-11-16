@@ -20,23 +20,132 @@
 </nav></ex-nav>
 <ex-document id="doc">
 <h1>B3 · Machine login: Decisions</h1>
+<p>B3 lets a machine (a Router on a laptop or server) log in to your organization with a device code you approve once. Its token then renews itself while it stays connected, and you can revoke it from the admin page. Two storage choices and one SQL approval are yours; the merge question is mine (decided below). Each is explained with background and an example.</p>
 
 <h2 id="three">The three things for you</h2>
 <ex-callout title="1 · What to check" tone="note" icon="shield-check">
-<p>The <a href="#calls">calls</a>: building on #11 and the split with Lead A.</p>
+<p>Yours: <a href="#storage">how Central stores each login</a>, <a href="#allow">where a machine's allowed workspaces live</a>, and the <a href="#rekey">re-key column's SQL</a>. All three are about stored data.</p>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p>Three open: <a href="#pr11">#11's fate</a>, <a href="#storage">enrollment storage A</a>, <a href="#allow">where allowances live</a>.</p>
+<p>Decided by me under your 16 Nov rule: <a href="#pr11">B3 is finished on #11 and merged whole</a>.</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
-<p>Decided cards quote you; the first two open items are carried from today's owner page (<code>~/dev/memory-logs/projects/2026/2026-11-codex-router/owner-pages/2026-11-15-fleet-access-audit.html</code>, Decisions 1 and 2).</p>
+<p>Decided cards quote you. Central facts are from codex-router <code>e7b709f6a</code> and Lead A's boundary (push <code>01a1e199-bf63</code>). Nothing new is built.</p>
 </ex-callout>
+
+<h2 id="how">How machine login works, in one picture</h2>
+<ex-mermaid id="flow" label="A machine logs in, connects, renews and can be revoked" data-width="canvas"><script type="text/plain">
+sequenceDiagram
+  participant R as Router (your laptop)
+  participant S as Sign-in
+  participant O as You (owner, browser)
+  participant C as Central
+  R->>S: codex-router fleet login: ask for a code
+  S-->>R: code ABCD-1234 and an address
+  O->>S: open it, see the machine's label, pick workspaces, approve (fresh second factor)
+  R->>S: poll; redeem the code once
+  S->>C: record the enrollment and allowed workspaces
+  S-->>R: machine token and refresh credential (kept in Keychain)
+  R->>C: connect through sign-in; renew on the open connection
+  O->>S: later: Revoke
+  S->>C: end enrollment; the connection closes; the next renewal is refused
+</script></ex-mermaid>
+
+<h2 id="open">Your choices</h2>
+
+<h3 id="pr11">1 · What happens to the existing login PR (#11)?</h3>
+<p><strong>Background.</strong> Draft PR #11 (with its verification PR #14) already has the device-code login and refresh, built before B3 was regrouped into one whole feature. It's frozen. It lacks revoke, the workspace picker, the connection through sign-in, and Deny's second-factor check: today Deny skips step-up and a stale confirmation can turn a Deny into an Approve.</p>
+<p><strong>Example.</strong> You want to log in your laptop's Router next week. Under A it can't log in until all of B3 is built. Under B it logs in sooner, but if you lose the laptop you can't revoke it from the page until the rest lands.</p>
+<ex-compare label="#11" data-width="canvas">
+<section id="pr-finish" label="A · Finish all of B3 on top of #11, then merge once" icon="path">
+<section data-compare-row="sees"><p><strong>What you get</strong></p><p>One merge delivering machine login whole: login, revoke, workspaces, the connection, and the Deny fix.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Nothing reaches main until all of B3 is done.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="pr-finish-pic" label="Option A"><script type="text/plain">
+flowchart TB
+  a["#11 login + refresh"] --> b["+ revoke, workspaces, connection, Deny fix"] --> m["Merge B3 whole"]
+</script></ex-mermaid></section>
+</section>
+<section id="pr-partial" label="B · Fix Deny, merge login-only first" icon="package">
+<section data-compare-row="sees"><p><strong>What you get</strong></p><p>Login and refresh on main sooner.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>For a while, machines can log in but not be revoked or limited to workspaces from the page. That breaks your rule that a deliverable is a whole feature.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="pr-partial-pic" label="Option B"><script type="text/plain">
+flowchart TB
+  a["#11 + Deny fix"] --> m1["Merge login only"] --> rest["Revoke and workspaces later"]
+</script></ex-mermaid></section>
+</section>
+</ex-compare>
+<ex-callout title="Decided by me: A" tone="decision" icon="path"><p>This is merging and sequencing, which you handed to me on 16 Nov: <em>“i dont care about of merging or operations you have to think and propelry seqeuknce things”</em>. B3 is finished on #11 and merged once, whole, per your whole-feature rule.</p></ex-callout>
+
+<h3 id="storage">2 · How Central stores each login (“enrollment storage”)</h3>
+<p><strong>Background.</strong> Each time you approve a machine's code, Central records an <em>enrollment</em>: who approved it, when, which machine, and later how it ended (revoked, replaced, or idle for 30 days). Central already stores enrollments as their own rows, one per login (A, merged in #281, <code>machine_enrollment.rs</code>). On the earlier audit page you picked A but wrote <em>“whats teh cons i don tkudnetand fully”</em>, and you never confirmed it after the explanation. So this asks again, with the costs spelled out.</p>
+<p><strong>Example.</strong> You log in your laptop in March, revoke it in June after losing it, then log in a new laptop under the same name.</p>
+<ex-compare label="Enrollment storage" data-width="canvas">
+<section id="st-a" label="A · One row per login (already built)" icon="package">
+<section data-compare-row="sees"><p><strong>What you get</strong></p><p>Both logins stay as rows: March to June, revoked by you; then the new one, active. You can always answer “who let this machine in, and when did that end”. Only one row per machine can be active at a time.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>About ten columns per row, and ended logins stay as small rows forever. No rework.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="st-a-pic" label="Option A"><script type="text/plain">
+flowchart TB
+  m["Machine"] --> e0["March–June: revoked"]
+  m --> e1["June–: active"]
+</script></ex-mermaid></section>
+</section>
+<section id="st-b" label="B · Only the current login, kept on the machine row" icon="code">
+<section data-compare-row="sees"><p><strong>What you get</strong></p><p>The machine row says only “current login: June, approved by you”. The March login is overwritten.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Login history is lost; login state is split across two tables during approval; Central's merged code is reworked.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="st-b-pic" label="Option B"><script type="text/plain">
+flowchart TB
+  m["Machine row: current login only"] --> h["Earlier logins overwritten"]
+</script></ex-mermaid></section>
+</section>
+</ex-compare>
+<ex-callout title="Recommendation: A" tone="decision" icon="package"><p>It keeps the history you'd want after a lost machine, and it's already built and tested.</p></ex-callout>
+<ex-choice id="choice-storage" title="Approve enrollment storage A?">
+<ex-option id="storage-a" title="A · One row per login (recommended)"><template slot="summary">Built; keeps history.</template></ex-option>
+<ex-option id="storage-b" title="B · Current login on the machine row"><template slot="summary">Rework; history lost.</template></ex-option>
+</ex-choice>
+
+<h3 id="allow">3 · Where a machine's allowed workspaces live</h3>
+<p><strong>Background.</strong> When you approve a machine you pick which workspaces it may use, and later you can allow or withdraw one at a time. Central already has a column for this, <code>machines.allowed_workspaces</code> (<code>0001_workspace_requests.sql:3</code>). Central's admission reads it live on every request (Lead A's 4a). The approved B3 sketched a separate table, to be reconciled with existing columns.</p>
+<p><strong>Example.</strong> You approve your laptop for “billing” and “docs”, then withdraw “docs” a month later.</p>
+<ex-compare label="Allowances" data-width="canvas">
+<section id="al-col" label="A · The existing column, history as change records" icon="code">
+<section data-compare-row="sees"><p><strong>What you get</strong></p><p>The column goes from [billing, docs] to [billing]. The history page shows “docs withdrawn by you” as an <code>allowanceChanged</code> record. Admission stops allowing “docs” on the next request.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Per-workspace history lives in the record list, not in its own table.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="al-col-pic" label="Option A"><script type="text/plain">
+flowchart TB
+  cmd["Allow / Withdraw"] --> col["machines.allowed_workspaces"]
+  cmd --> rec["allowanceChanged record"]
+  col --> adm["Admission reads it (already)"]
+</script></ex-mermaid></section>
+</section>
+<section id="al-table" label="B · A new machine_allowances table" icon="package">
+<section data-compare-row="sees"><p><strong>What you get</strong></p><p>One row per machine and workspace with its own state: billing active, docs withdrawn.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>A migration, the column retired, and Lead A's admission read moved to the table.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="al-table-pic" label="Option B"><script type="text/plain">
+flowchart TB
+  cmd["Allow / Withdraw"] --> t["machine_allowances rows"]
+  t --> adm["Admission moved to read the table"]
+</script></ex-mermaid></section>
+</section>
+</ex-compare>
+<ex-callout title="Recommendation: A" tone="decision" icon="code"><p>No new table and no second place holding the same truth; the history is still visible as records.</p></ex-callout>
+<ex-callout title="If you defer" tone="risk" icon="clock"><p>B3 can't start: the commands and admission depend on it.</p></ex-callout>
+<ex-choice id="choice-allow" title="Where do allowed workspaces live?">
+<ex-option id="allow-a" title="A · Existing column plus change records (recommended)"><template slot="summary">No migration.</template></ex-option>
+<ex-option id="allow-b" title="B · New machine_allowances table"><template slot="summary">Migration and admission change.</template></ex-option>
+</ex-choice>
+
+<h3 id="rekey">4 · The re-key column (SQL approval at build time)</h3>
+<p><strong>Background.</strong> Today a machine is known on Central by an older routing ID. At its first B3 login it takes its permanent ID: the Router's own UUIDv7. To keep its sessions, allowances and queued mail, Central renames the machine in one transaction and records the old ID, so that a retried login with the same mapping is accepted and a different mapping is refused. Recording it needs one new column on Central's <code>machines</code> table (<code>former_installation_id</code>).</p>
+<p><strong>Example.</strong> Your laptop's Router logs in, and the reply is lost. It retries with the same old-to-new mapping: accepted, with nothing duplicated. A different machine claiming the same old ID is refused.</p>
+<ex-callout title="What you approve" tone="decision" icon="database"><p>The exact SQL comes to you before it's built: one nullable column on <code>machines</code>, filled once at re-key. Nothing is written until you approve it.</p></ex-callout>
 
 <h2 id="decided">Already decided by you</h2>
 <ex-card title="Device-code login" tone="done" icon="key" tag="Fleet transcript 12490" pick><p><em>“login i want login to work with device codes in codex”</em>.</p></ex-card>
-<ex-card title="Secret stores: macOS Keychain only, injected" tone="done" icon="lock" tag="7 Nov" pick><p>Only the macOS Keychain through an injected trait; Linux stores out of scope; non-macOS Routers memory-only until a later OIDC design.</p></ex-card>
+<ex-card title="Secret stores: macOS Keychain only, injected" tone="done" icon="lock" tag="7 Nov" pick><p>Only the macOS Keychain, through an injected trait. Linux stores are out of scope, and non-macOS Routers keep their secret in memory only until a later OIDC design.</p></ex-card>
 <ex-card title="Renewal on the open connection" tone="done" icon="key" tag="Approved R40, 4 Nov" pick><p>“On the open connection, the Router sends the fresh token (RenewMachineToken)”. Lead A confirmed you never changed it; 4a builds it.</p></ex-card>
 <ex-card title="Owner only" tone="done" icon="users" tag="Requirements line 98" pick><p><em>“yes lets keep it all owner only”</em>.</p></ex-card>
+<ex-card title="Hegel for the Rust machines, no Python" tone="done" icon="code" tag="15 Nov" pick><p><em>“make srue we use hegel”</em>; <em>“y6ou can swithc to latest version. do nto use any python in tis repo only ts … or rust tests”</em>. <code>hegeltest =0.52.6</code>, its native engine, shared with Lead A.</p></ex-card>
 
 <h2 id="calls">My calls</h2>
 <div class="ex-table-scroll" data-width="canvas"><table>
@@ -45,98 +154,7 @@
 <tr><td>Deny needs a recent second factor, like Approve</td><td>R53: changes need step-up; the audit found it missing.</td><td>No.</td></tr>
 <tr><td>Machines are managed from a section on B2's admin page</td><td>Where the owner already administers the organization.</td><td>Possibly: placement.</td></tr>
 <tr><td>The Central decisions merged in #281 are checked and extended, not rewritten</td><td>Lead A's boundary (push 01a1e199-bf63).</td><td>No.</td></tr>
-<tr><td>The re-key records the former ID in a new column on Central's <code>machines</code> table</td><td>Needed to accept a repeat of the same mapping and refuse a different one.</td><td><strong>Yes, at build time:</strong> a schema change; the SQL comes to you for approval before it is built.</td></tr>
 </tbody></table></div>
-
-<h2 id="open">Open</h2>
-<ex-mermaid id="current-model" label="Where the choices land" data-width="canvas"><script type="text/plain">
-flowchart TB
-  pr["Frozen #11/#14: login and refresh"] --> c1["Choice 1: finish B3 on it, or merge login-only first"]
-  central["Central enrollment rows"] --> c2["Choice 2: storage A"]
-  allow["Allowed workspaces"] --> c3["Choice 3: existing column or new table"]
-  class pr,central,allow slot1
-  class c1,c2,c3 slot2
-</script></ex-mermaid>
-
-<h3 id="pr11">1 · What happens to #11?</h3>
-<ex-compare label="#11" data-width="canvas">
-<section id="pr-finish" label="A · Finish all of B3 on top of #11 before merging" icon="path">
-<section data-compare-row="sees"><p><strong>What you get</strong></p><p>One merge that delivers machine login whole: login, revoke, workspaces, connection.</p></section>
-<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Nothing reaches main until the whole of B3 is done.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="pr-finish-pic" label="Option A"><script type="text/plain">
-flowchart TB
-  a["#11"] --> b["+ revoke, workspaces, connection, Deny fix"] --> m["Merge B3"]
-</script></ex-mermaid></section>
-</section>
-<section id="pr-partial" label="B · Fix Deny, merge a login-only part" icon="package">
-<section data-compare-row="sees"><p><strong>What you get</strong></p><p>Login and refresh on main sooner; revoke and workspaces later.</p></section>
-<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>A machine you can log in but not revoke from the page, on main for a while; against your whole-feature rule.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="pr-partial-pic" label="Option B"><script type="text/plain">
-flowchart TB
-  a["#11 + Deny fix"] --> m1["Merge login only"] --> rest["Rest of B3 later"]
-</script></ex-mermaid></section>
-</section>
-</ex-compare>
-<ex-callout title="Recommendation: A" tone="decision" icon="path"><p>Your rule is a deliverable is a whole feature.</p></ex-callout>
-<ex-choice id="choice-pr11" title="What happens to #11?">
-<ex-option id="pr11-a" title="A · Finish B3 on #11, then merge (recommended)"><template slot="summary">One whole feature.</template></ex-option>
-<ex-option id="pr11-b" title="B · Fix Deny, merge login-only first"><template slot="summary">Partial on main for a while.</template></ex-option>
-</ex-choice>
-
-<h3 id="storage">2 · Enrollment storage A, now that the costs are explained?</h3>
-<p>On Lead A's page you picked A and wrote <em>“whats teh cons i don tkudnetand fully”</em>; no confirmation after the explanation was found. A is already built on Central (#281).</p>
-<ex-compare label="Enrollment storage" data-width="canvas">
-<section id="st-a" label="A · Each approval row is one login (built)" icon="package">
-<section data-compare-row="sees"><p><strong>What you get</strong></p><p>One table holds each login's whole history: who approved, when, how it ended.</p></section>
-<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>About ten columns; ended logins stay as small rows.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="st-a-pic" label="Option A"><script type="text/plain">
-flowchart TB
-  m["Machine (generation)"] --> e1["Enrollment row: active"]
-  m --> e0["Enrollment rows: ended"]
-</script></ex-mermaid></section>
-</section>
-<section id="st-b" label="B · Active login on the machine row" icon="code">
-<section data-compare-row="sees"><p><strong>What you get</strong></p><p>A one-row read for the active login.</p></section>
-<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Login state split across two tables; replaced login history lost; Central reworked.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="st-b-pic" label="Option B"><script type="text/plain">
-flowchart TB
-  m["Machine row holds the active login"] --> h["History overwritten"]
-</script></ex-mermaid></section>
-</section>
-</ex-compare>
-<ex-callout title="Recommendation: A" tone="decision" icon="package"><p>Keeps history, already built and tested.</p></ex-callout>
-<ex-choice id="choice-storage" title="Approve enrollment storage A?">
-<ex-option id="storage-a" title="A · Approval row is the login (recommended)"><template slot="summary">Built; keeps history.</template></ex-option>
-<ex-option id="storage-b" title="B · Active login on the machine row"><template slot="summary">Rework; history lost.</template></ex-option>
-</ex-choice>
-
-<h3 id="allow">3 · Where do allowed workspaces live?</h3>
-<ex-compare label="Allowances" data-width="canvas">
-<section id="al-col" label="A · Central's existing column, history in change records" icon="code">
-<section data-compare-row="sees"><p><strong>What you get</strong></p><p>Allow and withdraw edit <code>machines.allowed_workspaces</code>, which admission already reads; each change is a record.</p></section>
-<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Per-allowance history is in the record list, not its own table.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="al-col-pic" label="Option A"><script type="text/plain">
-flowchart TB
-  cmd["Allow / Withdraw"] --> col["machines.allowed_workspaces"]
-  cmd --> rec["allowanceChanged record"]
-</script></ex-mermaid></section>
-</section>
-<section id="al-table" label="B · A new machine_allowances table" icon="package">
-<section data-compare-row="sees"><p><strong>What you get</strong></p><p>One row per machine and workspace with its own state, as sketched in approved B3.</p></section>
-<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>A migration; the column retired; 4a's admission read moved to the table.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="al-table-pic" label="Option B"><script type="text/plain">
-flowchart TB
-  cmd["Allow / Withdraw"] --> t["machine_allowances rows"]
-  t --> adm["Admission reads the table"]
-</script></ex-mermaid></section>
-</section>
-</ex-compare>
-<ex-callout title="Recommendation: A" tone="decision" icon="code"><p>No new table and no second source of truth; approved B3 called its table a sketch to reconcile with existing columns.</p></ex-callout>
-<ex-callout title="If you defer" tone="risk" icon="clock"><p>B3 can't start: the commands and admission depend on it.</p></ex-callout>
-<ex-choice id="choice-allow" title="Where do allowed workspaces live?">
-<ex-option id="allow-a" title="A · Existing column plus change records (recommended)"><template slot="summary">No migration.</template></ex-option>
-<ex-option id="allow-b" title="B · New machine_allowances table"><template slot="summary">Migration and admission change.</template></ex-option>
-</ex-choice>
 </ex-document>
 </body>
 </html>

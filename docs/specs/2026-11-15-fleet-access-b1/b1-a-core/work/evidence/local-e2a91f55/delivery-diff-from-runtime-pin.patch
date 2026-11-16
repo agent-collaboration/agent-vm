@@ -1,0 +1,224 @@
+diff --git a/.agents/skills/verify-auth/references/agent-bootstrap.md b/.agents/skills/verify-auth/references/agent-bootstrap.md
+index b28f7ed7..63a5fc6c 100644
+--- a/.agents/skills/verify-auth/references/agent-bootstrap.md
++++ b/.agents/skills/verify-auth/references/agent-bootstrap.md
+@@ -47,7 +47,7 @@ mise exec node@24.7.0 -- pnpm exec tsx scripts/verify-auth/verify-auth.ts agent
+ mise exec node@24.7.0 -- pnpm exec tsx scripts/verify-auth/verify-auth.ts people --target-file "$AUTH_VERIFY_TARGET_FILE"
+ ```
+ 
+-Each journey selects the offered host cases whose names carry its `<journey>:` prefix, and requires every one of them to live in that journey's runner file list (`authJourneyFiles` in `auth-verification-journeys.ts`). An offered `people:` case in a file the list doesn't name makes every journey refuse before running. So a new people host file needs a driver update first, never a silent omission. `people` runs `organization-upgrade`, `people-factor-enrollment`, `people-passkey-confirmation`, `people-passkey-page`, `people-organizations`, `people-organization-provisioning`, `people-owner-page`, `people-record-faults`, `people-request-limits` and `sign-in-storage`. The storage file runs its d1-workerd and better-sqlite3 legs whichever sign-in host the target names. Each `harness-<receipt>.json` carries `ready` and `readinessEvent` (`proof-bundle-artifacts.ts` `authHarnessReadinessSchema`). The runner refuses any receipt that isn't `ready: true`, and any event the journey doesn't accept: `bootstrap` and `agent` accept `jwks` or `personToken`; `people` also accepts `signInSession`. Readiness only ever strengthens (`personToken` > `jwks` > `signInSession`), so a later callback never replaces an earlier, stronger witness. Each receipt also carries `requestLimits` (`authHarnessRequestLimitsSchema`): its outer counter and the request-limit observations the host drained. Node receipts must say `node-fixed-window`. Cloudflare receipts must say `cloudflare-real-binding`, except exactly two `cloudflare-controlled-binding-stand-in` receipts in `people` and none in `bootstrap` or `agent`. Any other mix refuses the run. `requestLimits.backingFailure` must be `none` everywhere, except exactly one `people` receipt per host: `node-counter-throws` on Node, `cloudflare-binding-rejects` on Cloudflare. The compared target and the printed summary report the counter mix, the 429s by layer (`outer`, `provider`), the unavailable count, the backing-failure kinds and `cloudflareVendorCredit: false`.
++Each journey selects the offered host cases whose names carry its `<journey>:` prefix, and requires every one of them to live in that journey's runner file list (`authJourneyFiles` in `auth-verification-journeys.ts`). An offered `people:` case in a file the list doesn't name makes every journey refuse before running. So a new people host file needs a driver update first, never a silent omission. `people` runs `organization-upgrade`, `people-factor-enrollment`, `people-passkey-confirmation`, `people-passkey-page`, `people-organizations`, `people-organization-provisioning`, `people-owner-page`, `people-record-faults`, `people-request-limits` and `sign-in-storage`. The storage file runs its d1-workerd and better-sqlite3 legs whichever sign-in host the target names. Each `harness-<receipt>.json` carries `ready` and `readinessEvent` (`proof-bundle-artifacts.ts` `authHarnessReadinessSchema`). The runner refuses any receipt that isn't `ready: true`, and any event the journey doesn't accept: `bootstrap` and `agent` accept `jwks` or `personToken`; `people` also accepts `signInSession`. Readiness only ever strengthens (`personToken` > `jwks` > `signInSession`), so a later callback never replaces an earlier, stronger witness. Each receipt also carries `requestLimits` (`authHarnessRequestLimitsSchema`): its outer counter and the request-limit observations the host drained. Node receipts must say `node-fixed-window`. Cloudflare receipts must say `cloudflare-real-binding`, in every journey: the over-limit cases count on Miniflare's real binding, and a `cloudflare-controlled-binding-stand-in` receipt refuses the run, as does any other counter. `requestLimits.backingFailure` must be `none` everywhere, except exactly one `people` receipt per host: `node-counter-throws` on Node, `cloudflare-binding-rejects` on Cloudflare. The compared target and the printed summary report the counter mix, the 429s by layer (`outer`, `provider`), the unavailable count, the backing-failure kinds and `cloudflareVendorCredit: false`.
+ 
+ Two `people` limits to report, not paper over:
+ - Cases that depend on expiries Better Auth computes on its own clock run under controlled time on Node only. Report them by name as unevaluated on `local-workerd`.
+diff --git a/scripts/audit-portal-architecture.ts b/scripts/audit-portal-architecture.ts
+index d6ea2ca3..f229ca15 100644
+--- a/scripts/audit-portal-architecture.ts
++++ b/scripts/audit-portal-architecture.ts
+@@ -1508,9 +1508,9 @@ export function collectSignInCoreRuntimeGlobalViolations(
+ 				report(node, 'runtime global Date is allowed only as new Date(value)');
+ 			if (
+ 				name === 'Math' &&
+-				ts.isPropertyAccessExpression(parent) &&
++				(ts.isPropertyAccessExpression(parent) || ts.isElementAccessExpression(parent)) &&
+ 				parent.expression === node &&
+-				parent.name.text === 'random'
++				knownMemberName(parent) === 'random'
+ 			)
+ 				report(node, 'runtime global Math.random');
+ 		};
+@@ -1535,6 +1535,23 @@ function isSignInTestTimeScope(filePath: string): boolean {
+ }
+ 
+ const realTimerNames = new Set(['setTimeout', 'setInterval']);
++/** Names that reach the runtime's global object, whose members are its real globals. */
++const globalObjectNames = new Set(['globalThis', 'self', 'window']);
++
++/**
++ * The member a dotted or literal element access names: `Math.random` and `Math['random']` alike.
++ * A computed key is not a known member, so it stays outside this static check.
++ */
++function knownMemberName(node: ts.Node): string | null {
++	if (ts.isPropertyAccessExpression(node)) return node.name.text;
++	if (
++		ts.isElementAccessExpression(node) &&
++		(ts.isStringLiteral(node.argumentExpression) ||
++			ts.isNoSubstitutionTemplateLiteral(node.argumentExpression))
++	)
++		return node.argumentExpression.text;
++	return null;
++}
+ 
+ function parseAuditedSource(filePath: string, sourceText: string): ts.SourceFile {
+ 	return ts.createSourceFile(
+@@ -1578,13 +1595,30 @@ export function collectSignInTestTimeViolations(
+ 			)
+ 				report(node, 'reads performance');
+ 		}
+-		if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression)) {
++		const member = knownMemberName(node);
++		if (
++			member !== null &&
++			(ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node)) &&
++			ts.isIdentifier(node.expression)
++		) {
+ 			const owner = node.expression.text;
+-			const member = node.name.text;
+ 			if (owner === 'Date' && member === 'now') report(node, 'reads the real clock with Date.now');
+ 			if (owner === 'process' && (member === 'hrtime' || member === 'uptime'))
+ 				report(node, `reads the real clock with process.${member}`);
+ 		}
++		// The global object's own `performance` and timers, dotted or by a literal key
++		// (`globalThis.performance`, `self['setTimeout']`), are the same real clock and timers. A
++		// dotted timer name is already reported as an identifier above.
++		if (
++			member !== null &&
++			(ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node)) &&
++			ts.isIdentifier(node.expression) &&
++			globalObjectNames.has(node.expression.text)
++		) {
++			if (member === 'performance') report(node, 'reads performance');
++			if (ts.isElementAccessExpression(node) && realTimerNames.has(member))
++				report(node, `real timer ${member}`);
++		}
+ 		if (
+ 			(ts.isNewExpression(node) || ts.isCallExpression(node)) &&
+ 			ts.isIdentifier(node.expression) &&
+@@ -1665,8 +1699,7 @@ export function collectSignInUuidViolations(file: PortalArchitectureSourceFile):
+ 			)
+ 				report(node, `dynamic load of ${argument.text}`);
+ 		}
+-		if (ts.isPropertyAccessExpression(node) && node.name.text === 'randomUUID')
+-			report(node, 'randomUUID');
++		if (knownMemberName(node) === 'randomUUID') report(node, 'randomUUID');
+ 		if (
+ 			ts.isCallExpression(node) &&
+ 			ts.isIdentifier(node.expression) &&
+diff --git a/scripts/audit-portal-architecture.unit.test.ts b/scripts/audit-portal-architecture.unit.test.ts
+index 52025e34..6cb5e7fb 100644
+--- a/scripts/audit-portal-architecture.unit.test.ts
++++ b/scripts/audit-portal-architecture.unit.test.ts
+@@ -583,6 +583,12 @@ describe('sign-in core runtime globals (S6, R30)', () => {
+ 			sourceText: 'export const pick = Math.random();\n',
+ 			expected: [`${plantedCorePath}:1: sign-in-core runtime global Math.random`],
+ 		},
++		{
++			name: "Math['random']() by a literal key",
++			filePath: plantedCorePath,
++			sourceText: "export const draw = () => Math['random']();\n",
++			expected: [`${plantedCorePath}:1: sign-in-core runtime global Math.random`],
++		},
+ 		{
+ 			name: "globalThis['crypto']",
+ 			filePath: plantedCorePath,
+@@ -724,6 +730,12 @@ describe('sign-in core runtime globals (S6, R30)', () => {
+ 			sourceText:
+ 				'export const script = `<script>fetch(location.href); setTimeout(() => crypto.randomUUID(), Date.now());</script>`;\n',
+ 		},
++		{
++			name: "a local object's ['random'] and Math['floor'] by a literal key",
++			filePath: plantedCorePath,
++			sourceText:
++				"export const picks = (record: { readonly random: number }) => [record['random'], Math['floor'](1.5)];\n",
++		},
+ 		{
+ 			name: 'new Date(now)',
+ 			filePath: plantedCorePath,
+@@ -818,6 +830,42 @@ describe('no wall clock in sign-in tests (S7, R33)', () => {
+ 			sourceText: 'export type PendingBound = ReturnType<typeof setTimeout>;\n',
+ 			finding: 'real timer setTimeout',
+ 		},
++		{
++			name: "Date['now']() by a literal key",
++			filePath: 'packages/sign-in-test-support/src/test-fixtures/planted-wait-helper.ts',
++			sourceText: "export const now = Date['now']();\n",
++			finding: 'reads the real clock with Date.now',
++		},
++		{
++			name: "process['hrtime']() by a literal key",
++			filePath: 'packages/sign-in-test-support/src/test-fixtures/planted-wait-helper.ts',
++			sourceText: "export const tick = process['hrtime']();\n",
++			finding: 'reads the real clock with process.hrtime',
++		},
++		{
++			name: "globalThis['setTimeout'] by a literal key",
++			filePath: 'packages/sign-in-test-support/src/test-fixtures/planted-wait-helper.ts',
++			sourceText: "export const wait = (run: () => void) => globalThis['setTimeout'](run, 1);\n",
++			finding: 'real timer setTimeout',
++		},
++		{
++			name: 'globalThis.performance.now() through the global object',
++			filePath: 'packages/sign-in-test-support/src/test-fixtures/planted-clock-helper.ts',
++			sourceText: 'export const now = globalThis.performance.now();\n',
++			finding: 'reads performance',
++		},
++		{
++			name: "self['performance'].timeOrigin by a literal key",
++			filePath: 'packages/sign-in-test-support/src/test-fixtures/planted-clock-helper.ts',
++			sourceText: "export const origin = self['performance'].timeOrigin;\n",
++			finding: 'reads performance',
++		},
++		{
++			name: "window['setInterval'] by a literal key",
++			filePath: 'packages/sign-in-test-support/src/test-fixtures/planted-clock-helper.ts',
++			sourceText: "export const poll = (run: () => void) => window['setInterval'](run, 1);\n",
++			finding: 'real timer setInterval',
++		},
+ 	])('rejects $name', ({ filePath, sourceText, finding }) => {
+ 		// Arrange / Act
+ 		const violations = auditOne(filePath, sourceText);
+@@ -825,6 +873,23 @@ describe('no wall clock in sign-in tests (S7, R33)', () => {
+ 		expect(violations).toEqual([`${filePath}:1: sign-in test ${finding}`]);
+ 	});
+ 
++	it("accepts a local object's performance and setTimeout members", () => {
++		// Arrange
++		const sourceText = [
++			'const metrics = { performance: 1 };',
++			'const scheduler: Readonly<Record<string, number>> = { setTimeout: 2 };',
++			"export const values = [metrics.performance, metrics['performance'], scheduler['setTimeout']];",
++			'',
++		].join('\n');
++		// Act
++		const violations = auditOne(
++			'packages/sign-in-test-support/src/test-fixtures/planted-clock-helper.ts',
++			sourceText,
++		);
++		// Assert
++		expect(violations).toEqual([]);
++	});
++
+ 	it('accepts Vitest fake timers, timer names as strings and a controlled-clock date', () => {
+ 		// Arrange
+ 		const sourceText = [
+@@ -873,6 +938,12 @@ describe('UUIDv7 only in the sign-in packages (S12, R32)', () => {
+ 			sourceText: "import { v1 as uuid } from 'uuid';\nexport const id = uuid();\n",
+ 			findings: ['import v1 from uuid'],
+ 		},
++		{
++			name: "globalThis.crypto['randomUUID']() in an owner CLI host test",
++			filePath: 'packages/sign-in-owner-cli/src/fleet/planted-identifier.host.e2e.test.ts',
++			sourceText: "export const draw = () => globalThis.crypto['randomUUID']();\n",
++			findings: ['randomUUID'],
++		},
+ 		{
+ 			name: 'another UUID package',
+ 			filePath: 'packages/sign-in-test-support/src/test-fixtures/planted-identifier-source.ts',
+@@ -902,6 +973,17 @@ describe('UUIDv7 only in the sign-in packages (S12, R32)', () => {
+ 			sourceText:
+ 				'export const id = (platform: { readonly ids: { readonly nextId: () => string } }) => platform.ids.nextId();\n',
+ 		},
++		{
++			name: 'a computed key, outside this static check',
++			filePath: 'packages/sign-in-test-support/src/test-fixtures/planted-identifier-source.ts',
++			sourceText:
++				'export const pick = (record: Readonly<Record<string, string>>, key: string) => record[key];\n',
++		},
++		{
++			name: 'a literal element access as text in a string',
++			filePath: 'packages/sign-in-test-support/src/test-fixtures/planted-identifier-source.ts',
++			sourceText: "export const words = `<script>crypto['randomUUID']()</script>`;\n",
++		},
+ 		{
+ 			name: 'randomUUID as text in a string',
+ 			filePath: 'packages/sign-in-test-support/src/test-fixtures/planted-identifier-source.ts',

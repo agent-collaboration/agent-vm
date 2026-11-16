@@ -20,14 +20,14 @@
 </nav></ex-nav>
 <ex-document id="doc">
 <h1>B2 · Central organizations: Decisions</h1>
-<p>B2 makes organizations on Central real: the owner creates workspaces, sees the full list and history, and the organization keeps working when sign-in's signing key changes. Four choices are yours. Each one below explains the background, gives a concrete example, and shows what each option means in practice.</p>
+<p>B2 makes organizations on Central real: the owner creates workspaces, sees the full list and history, and the organization keeps working when sign-in's signing key changes. <strong>Two choices are yours</strong> (1 and 2). The other two were sequencing and operations, which you handed to me, so they're decided below with the reason. Each section explains the background, gives a concrete example, and shows what each option means in practice.</p>
 
 <h2 id="three">The three things for you</h2>
 <ex-callout title="1 · What to check" tone="note" icon="shield-check">
-<p>The four choices below, in order. Each ends with my recommendation and what happens if you don't answer yet.</p>
+<p>Yours: <a href="#retry">1 · A lost “create workspace” reply</a> (product behaviour) and <a href="#retire">2 · Changing the signing key</a> (downtime and a new table).</p>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p><a href="#retry">1 · A lost “create workspace” reply</a> · <a href="#retire">2 · Changing the signing key</a> · <a href="#console">3 · The engine repair console</a> · <a href="#maintenance">4 · How you run maintenance</a>.</p>
+<p>Decided by me under your 16 Nov rule: <a href="#console">3 · console later</a> and <a href="#maintenance">4 · the private maintenance door</a>.</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
 <p>Decided cards quote you. Central facts are from codex-router <code>e7b709f6a</code>; sign-in facts from Switchboard <code>f3b2b88b</code>. Nothing here is built.</p>
@@ -171,12 +171,7 @@ flowchart TB
 </script></ex-mermaid></section>
 </section>
 </ex-compare>
-<ex-callout title="Recommendation: A" tone="decision" icon="path"><p>B2 stays one finishable feature, and the console gets its own design and review. Choose B if you want to repair retired work from Switchboard as soon as B2 ships.</p></ex-callout>
-<ex-callout title="If you defer" tone="risk" icon="clock"><p>The permission still lands; no console is built.</p></ex-callout>
-<ex-choice id="choice-console" title="Where does the engine console land?">
-<ex-option id="console-a" title="A · Permission now, console later (recommended)"><template slot="summary">Smallest B2.</template></ex-option>
-<ex-option id="console-b" title="B · Whole console in B2"><template slot="summary">Designed and reviewed first.</template></ex-option>
-</ex-choice>
+<ex-callout title="Decided by me: A, console later" tone="decision" icon="path"><p>This is sequencing, which you handed to me on 16 Nov: <em>“i dont care about of merging or operations you have to think and propelry seqeuknce things”</em>. B2 adds the permission, and the console comes next as its own feature, with its own design and review.</p></ex-callout>
 
 <h3 id="maintenance">4 · How do you start a maintenance operation in production?</h3>
 <p><strong>Background.</strong> Two operations need to run inside the sign-in service, because only it holds Better Auth's private keys and its database:</p>
@@ -207,12 +202,7 @@ flowchart TB
 </script></ex-mermaid></section>
 </section>
 </ex-compare>
-<ex-callout title="Recommendation: A" tone="decision" icon="lock"><p>One procedure on both hosts, behind the strongest identity you have: deployment owner plus a fresh second factor. Choose B if you want nothing deployment-wide reachable on the public site.</p></ex-callout>
-<ex-callout title="If you defer" tone="risk" icon="clock"><p>B, the private door, stays the design and nothing public is built. B2 can't start until you answer, because only one entry gets built.</p></ex-callout>
-<ex-choice id="choice-maintenance" title="How do you run production maintenance?">
-<ex-option id="maintenance-a" title="A · Owner-only page on sign-in (recommended)"><template slot="summary">Same on both hosts.</template></ex-option>
-<ex-option id="maintenance-b" title="B · Private door via a temporary Worker or a Node command"><template slot="summary">Off the public site; more steps.</template></ex-option>
-</ex-choice>
+<ex-callout title="Decided by me: B, the private door" tone="decision" icon="gear"><p>This is operations, which you handed to me on 16 Nov. I took the option that adds nothing to the public sign-in site, so the security boundary doesn't change. It costs a few more steps on each rare maintenance run; I prepare the exact commands for you then.</p></ex-callout>
 
 <h2 id="decided">Already decided by you</h2>
 <ex-card title="Old data: backup only" tone="done" icon="package" tag="13 Nov · Central transcript 97881" pick>

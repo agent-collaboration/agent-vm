@@ -1,0 +1,219 @@
+{
+  "source": "27d393240b5c31bd1cf7da522de300c0522dd222",
+  "controls": [
+    {
+      "id": "A",
+      "originalAndRestoredSourceMatchFrozenPin": true,
+      "literalPatchReconstructsMutantHash": true,
+      "restoredArtifactsIdentical": true,
+      "red": [
+        {
+          "step": "sA-red-node",
+          "exit": 1,
+          "passed": 0,
+          "failed": 1
+        }
+      ],
+      "restored": [
+        {
+          "step": "sA-restored-node",
+          "exit": 0,
+          "passed": 1,
+          "failed": 0
+        }
+      ],
+      "decidingObservation": "Missing recorded32byte random draw at testline104; digest/random-unavailable checks later are not reached after deciding assertion."
+    },
+    {
+      "id": "B",
+      "originalAndRestoredSourceMatchFrozenPin": true,
+      "literalPatchReconstructsMutantHash": true,
+      "restoredArtifactsIdentical": true,
+      "red": [
+        {
+          "step": "sB-red-node",
+          "exit": 1,
+          "passed": 0,
+          "failed": 1
+        }
+      ],
+      "restored": [
+        {
+          "step": "sB-restored-node",
+          "exit": 0,
+          "passed": 1,
+          "failed": 0
+        }
+      ],
+      "decidingObservation": "Missing recorded generate-key at testline110; later export/sign assertions not reached."
+    },
+    {
+      "id": "C",
+      "originalAndRestoredSourceMatchFrozenPin": true,
+      "literalPatchReconstructsMutantHash": true,
+      "restoredArtifactsIdentical": true,
+      "red": [
+        {
+          "step": "sC-red-node",
+          "exit": 1,
+          "passed": 0,
+          "failed": 1
+        }
+      ],
+      "restored": [
+        {
+          "step": "sC-restored-node",
+          "exit": 0,
+          "passed": 1,
+          "failed": 0
+        }
+      ],
+      "decidingObservation": "Missing intent input digest at testline123."
+    },
+    {
+      "id": "H",
+      "originalAndRestoredSourceMatchFrozenPin": true,
+      "literalPatchReconstructsMutantHash": true,
+      "restoredArtifactsIdentical": true,
+      "red": [
+        {
+          "step": "sH-red-node",
+          "exit": 1,
+          "passed": 0,
+          "failed": 1
+        }
+      ],
+      "restored": [
+        {
+          "step": "sH-restored-node",
+          "exit": 0,
+          "passed": 1,
+          "failed": 0
+        }
+      ],
+      "decidingObservation": "proofClaims.iat testline138: actual1893456000 expected1893455970; exactly30seconds."
+    },
+    {
+      "id": "D",
+      "originalAndRestoredSourceMatchFrozenPin": true,
+      "literalPatchReconstructsMutantHash": true,
+      "restoredArtifactsIdentical": true,
+      "red": [
+        {
+          "step": "sD-red-cloudflare",
+          "exit": 1,
+          "passed": 3,
+          "failed": 3
+        }
+      ],
+      "restored": [
+        {
+          "step": "sD-restored-cloudflare",
+          "exit": 0,
+          "passed": 6,
+          "failed": 0
+        }
+      ],
+      "decidingObservation": "Unavailable backing bypass gives200instead503; outer-layer observation missing even though provider limiting remains; service page never reaches outer limit at601requests."
+    },
+    {
+      "id": "E",
+      "originalAndRestoredSourceMatchFrozenPin": true,
+      "literalPatchReconstructsMutantHash": true,
+      "restoredArtifactsIdentical": true,
+      "red": [
+        {
+          "step": "sE-red-cloudflare",
+          "exit": 1,
+          "passed": 4,
+          "failed": 2
+        }
+      ],
+      "restored": [
+        {
+          "step": "sE-restored-cloudflare",
+          "exit": 0,
+          "passed": 6,
+          "failed": 0
+        }
+      ],
+      "decidingObservation": "Second address receives429instead200 in social/servicepage cases."
+    },
+    {
+      "id": "F",
+      "originalAndRestoredSourceMatchFrozenPin": true,
+      "literalPatchReconstructsMutantHash": true,
+      "restoredArtifactsIdentical": true,
+      "red": [
+        {
+          "step": "sF-red-cloudflare",
+          "exit": 1,
+          "passed": 0,
+          "failed": 1
+        },
+        {
+          "step": "sF-red-node",
+          "exit": 1,
+          "passed": 0,
+          "failed": 1
+        }
+      ],
+      "restored": [
+        {
+          "step": "sF-restored-cloudflare",
+          "exit": 0,
+          "passed": 1,
+          "failed": 0
+        },
+        {
+          "step": "sF-restored-node",
+          "exit": 0,
+          "passed": 1,
+          "failed": 0
+        }
+      ],
+      "decidingObservation": "Before-removal scanner names organization.metadata wrong-version4; later assertions not reached."
+    },
+    {
+      "id": "G",
+      "originalAndRestoredSourceMatchFrozenPin": true,
+      "literalPatchReconstructsMutantHash": true,
+      "restoredArtifactsIdentical": true,
+      "red": [
+        {
+          "step": "sG-red-cloudflare",
+          "exit": 1,
+          "passed": 0,
+          "failed": 1
+        },
+        {
+          "step": "sG-red-node",
+          "exit": 1,
+          "passed": 0,
+          "failed": 1
+        }
+      ],
+      "restored": [
+        {
+          "step": "sG-restored-cloudflare",
+          "exit": 0,
+          "passed": 1,
+          "failed": 0
+        },
+        {
+          "step": "sG-restored-node",
+          "exit": 0,
+          "passed": 1,
+          "failed": 0
+        }
+      ],
+      "decidingObservation": "Returned recovery-code UUID predicate trueinsteadfalse at line144 after pre/post removal inventory and secret-field assertions have passed; codevalues redacted/not transmitted."
+    }
+  ],
+  "limits": [
+    "One planted UUIDv4 is deliberate invalid test input, not generated domain identity.",
+    "Do not count later assertions past the deciding failure as executed.",
+    "Raw originals remain private; no codevalues, tokens, private keys or screenshots transmitted.",
+    "No production changes, product acceptance or remaining CLI-journey completion claimed."
+  ]
+}

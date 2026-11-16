@@ -1,14 +1,15 @@
 # B1-A Implementer handback (🐒 claude-local 13abb87b)
 
-**Delivered:** draft PR [agent-collaboration/switchboard#18](https://github.com/agent-collaboration/switchboard/pull/18), head `81e150f14b5b544538e0ec72da912d7759f30baa`, base `f3b2b88b`. The head is four commits:
+**Delivered:** draft PR [agent-collaboration/switchboard#18](https://github.com/agent-collaboration/switchboard/pull/18), head `e2a91f5502944e456c3920ce3ab951b29d8742a9`, base `f3b2b88b`. The head is five commits:
 - `574c1d98`, the feature;
 - `27d39324`, exhaustive switches, the forwarding clock oracle and the `.tsx` runtime-import guard;
 - `7a313fc4`, docs only: one stale stand-in line, from the Verifier's finding F4;
-- `81e150f1`, scanner and its tests only: literal element access read as a known member, from the Verifier's finding F6.
+- `81e150f1`, scanner and its tests only: literal element access read as a known member, from the Verifier's finding F6;
+- `e2a91f55`, scanner and its tests only: the global object's `performance` and timers, from the Verifier's finding F7.
 
-The first three commits are SSH-signed. `81e150f1` is unsigned: 1Password signing failed twice, so the owner's `--no-gpg-sign` fallback applied.
+All commits are SSH-signed except `81e150f1`, which is unsigned: 1Password signing failed twice, so the owner's `--no-gpg-sign` fallback applied.
 
-Product, fixture and driver code is identical at `27d39324` and the head. The e2e and integration rows below were run at `27d39324`. Check and unit were rerun at `81e150f1`: check passed 12/12, and unit passed 240 files and 2638 tests, both exit 0.
+Product, fixture and driver code is identical at `27d39324` and the head. The e2e and integration rows below were run at `27d39324`. Check and unit were rerun at `e2a91f55`: check passed 12/12, and unit passed 240 files and 2642 tests, both exit 0.
 
 ## Open items for the Lead
 

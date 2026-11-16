@@ -1,0 +1,15 @@
+import { collectPortalArchitectureViolations } from './candidate-81e150f1/scripts/audit-portal-architecture.ts';
+
+const cases = [
+	{ name: 'literal Math random', filePath: 'packages/sign-in-core/src/planted-source.ts', sourceText: "export const draw = () => Math['random']();" },
+	{ name: 'literal UUID', filePath: 'packages/sign-in-owner-cli/src/fleet/planted-identifier.host.e2e.test.ts', sourceText: "export const draw = () => globalThis.crypto['randomUUID']();" },
+	{ name: 'literal Date now', filePath: 'packages/sign-in-test-support/src/test-fixtures/planted-clock-helper.ts', sourceText: "export const now = Date['now']();" },
+	{ name: 'literal process hrtime', filePath: 'packages/sign-in-test-support/src/test-fixtures/planted-clock-helper.ts', sourceText: "export const now = process['hrtime']();" },
+	{ name: 'literal timer', filePath: 'packages/sign-in-test-support/src/test-fixtures/planted-clock-helper.ts', sourceText: "export const wait = globalThis['setTimeout'];" },
+	{ name: 'qualified performance', filePath: 'packages/sign-in-test-support/src/test-fixtures/planted-clock-helper.ts', sourceText: 'export const now = globalThis.performance.now();' },
+	{ name: 'literal performance', filePath: 'packages/sign-in-test-support/src/test-fixtures/planted-clock-helper.ts', sourceText: "export const now = globalThis['performance'].now();" },
+	{ name: 'allowed local random and Math floor', filePath: 'packages/sign-in-core/src/planted-source.ts', sourceText: "export const pick = (record: { readonly random: number }) => [record['random'], Math['floor'](1.5)];" },
+] as const;
+for (const probe of cases) {
+	console.log(JSON.stringify({ name: probe.name, violations: collectPortalArchitectureViolations({ files: [probe] }) }));
+}

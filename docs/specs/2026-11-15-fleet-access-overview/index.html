@@ -20,73 +20,106 @@
 </nav></ex-nav>
 <ex-document id="home">
 <h1>Fleet access: overview</h1>
+<p><strong>As of 16 Nov:</strong> B1-A is built (draft PR switchboard#18, head <code>e2a91f55</code>) and in final verification. Five more designs are written by the Lead and pass independent Sol review. Three are ready for your approval with nothing open (B1-C, B2 additions, BG). Two still need your picks (B2, B3). Nothing is blocked on you today.</p>
 
 <h2 id="three">The three things for you</h2>
-<ex-callout title="1 · Five designs are ready for your picks" tone="decision" icon="users">
-<p>I wrote B1-C, B2, B2 additions, BG and B3 myself. Each one passed an independent Sol xhigh review, and I fixed every finding. Each Decisions page shows every choice with a picture, the options, my recommendation and what waits if you defer. Pick on the page.</p>
+<ex-callout title="1 · What's yours, in order" tone="decision" icon="users">
+<p>First, approve <strong>B1-C</strong>: it's next after B1-A. Then approve <strong>B2 additions</strong> and <strong>BG</strong>, make <strong>B2</strong>'s two picks, and make <strong>B3</strong>'s two storage picks plus its SQL. Merging, operations and sequencing are mine (your 16 Nov rule), so those choices are decided on each page with the reason. “Take your recommendations” is a valid answer for B2 and B3. <a href="#check">What to check</a> lists the few things worth your eyes in each.</p>
 </ex-callout>
-<ex-callout title="2 · Three of them change stored data and need your SQL approval" tone="risk" icon="database">
-<p>B2's maintenance pause table (only if you pick S12 A). B3's enrollment storage and the machines former-ID column. B2's S5 B would change how long Central keeps stored answers, and Lead A would design that change with you.</p>
+<ex-callout title="2 · Stored-data changes that need your SQL approval" tone="risk" icon="database">
+<p>B2's one-row <code>maintenance_pause</code> table (only if you pick its option A for key rotation). B3's enrollment storage (option A) and the new former-ID column on Central's <code>machines</code> table.</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
-<p>These are reviewed designs. Nothing in them is built. B1-A is being built and checked. B1-B starts after B1-A merges.</p>
+<p>Only B1-A is built, and it isn't accepted yet. Every other line here is a reviewed design, not running software.</p>
 </ex-callout>
 
-<h2 id="picks">Your picks, by design</h2>
+<h2 id="picks">Each design: state and what's yours</h2>
 <div class="ex-table-scroll" data-width="canvas"><table>
-<thead><tr><th>Design</th><th>Review</th><th>Your choices</th></tr></thead>
+<thead><tr><th>Design</th><th>State</th><th>Yours</th></tr></thead>
 <tbody>
-<tr><td><strong>B1-C</strong> Organizations finished</td><td>All four of your 15 Nov picks applied at <code>9b607243</code>: today's card; its own shadcn People page; an owner-only list with email fallback; Better Auth's behaviour after a refused switch, with a redirect. READY at <code>e30c1278</code> after the revision review.</td><td>None left. <strong>Ready for your approval.</strong></td></tr>
-<tr><td><strong>B2</strong> Central organizations</td><td>READY at <code>73eb14c6</code>, after my own validation restored the cold restart that approved rule 6 requires. The key-retirement timing depends on Lead A's 10-second Cloudflare key-fetch bound, which B2 waits for.</td><td><a href="../2026-11-15-fleet-access-b2-central/decisions.html">Decisions</a>: how long a lost create reply is recoverable; whether key retirement may pause sign-in; where the engine console lands; how you run production maintenance.</td></tr>
-<tr><td><strong>B2 additions</strong> Person tokens, revocation</td><td>READY at <code>c84e3230</code>, after my own validation. Your pick, device login with a real session, is applied; READY at <code>e30c1278</code>.</td><td>None left. <strong>Ready for your approval.</strong></td></tr>
-<tr><td><strong>BG</strong> Getting in, staging proof</td><td>READY at <code>20c85d12</code>, after my own validation (the CLI's step-up now confirms through its login flow)</td><td>None left: you agreed with all three assumption groups (<code>b7a4f8ad</code>). Ready for your approval.</td></tr>
-<tr><td><strong>B3</strong> Machine login, locked link</td><td>READY at <code>73eb14c6</code>, including Lead A's three corrections and the Hegel families for the Rust machines that my own validation added.</td><td><a href="../2026-11-15-fleet-access-b3/decisions.html">Decisions</a>: what happens to #11; enrollment storage A; where allowed workspaces live.</td></tr>
+<tr><td><strong>B1-A</strong> One sign-in core</td><td>Built: draft PR switchboard#18, head <code>e2a91f55</code>. The Verifier is finishing its observation. The last scanner gap (F7) is fixed in that head.</td><td>Nothing now. It comes to you only when accepted and ready to merge.</td></tr>
+<tr><td><strong>B1-B</strong> Passkey sign-in</td><td>Designed, reviewed, approved 15 Nov.</td><td>Nothing. Built after B1-A merges.</td></tr>
+<tr><td><strong>B1-C</strong> Organizations finished</td><td>READY at <code>e30c1278</code>, with all four of your picks applied: today's card; its own shadcn People page; an owner-only list with email fallback; Better Auth's behaviour after a refused switch, with a redirect.</td><td><strong>Approve</strong> (<a href="../2026-11-15-fleet-access-b1/b1-c-organizations/decisions.html">Decisions</a>)</td></tr>
+<tr><td><strong>B2</strong> Central organizations</td><td>READY at <code>73eb14c6</code>; Lead A's engine contract details added since. Key-rotation timing depends on Lead A's 10-second Cloudflare key-fetch bound. I decided the console comes later and maintenance runs through the private door.</td><td><strong>Two picks</strong>, each explained with an example (<a href="../2026-11-15-fleet-access-b2-central/decisions.html">Decisions</a>)</td></tr>
+<tr><td><strong>B2 additions</strong> Person tokens, revocation</td><td>READY at <code>e30c1278</code>, with your pick applied: device login with a real session.</td><td><strong>Approve</strong> (<a href="../2026-11-15-fleet-access-b2x/decisions.html">Decisions</a>)</td></tr>
+<tr><td><strong>BG</strong> Getting in, staging proof</td><td>READY at <code>20c85d12</code>; you agreed all three assumption groups (<code>b7a4f8ad</code>).</td><td><strong>Approve</strong> (<a href="../2026-11-15-fleet-access-bg/decisions.html">Decisions</a>)</td></tr>
+<tr><td><strong>B3</strong> Machine login, locked link</td><td>READY at <code>73eb14c6</code>; Rust machines use Hegel (<code>hegeltest =0.52.6</code>), shared with Lead A. I decided B3 is finished on #11 and merged whole.</td><td><strong>Two storage picks and the SQL</strong>, explained with examples (<a href="../2026-11-15-fleet-access-b3/decisions.html">Decisions</a>)</td></tr>
 </tbody></table></div>
 
-<h2 id="order">The order I'll work in, and what blocks what</h2>
+<h2 id="check">What to check before you approve or pick</h2>
+<p>You don't need to read whole designs. These are the points that matter to you: who can see or do what, what data is stored, and what people experience. Everything else was reviewed independently.</p>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Design</th><th>Check these</th><th>Where on its pages</th></tr></thead>
+<tbody>
+<tr><td><strong>B1-C</strong></td><td>
+<ul>
+<li>Only the organization's current owner sees the People list (name, email, role), checked before and after the read. Members see nothing.</li>
+<li>Switching organization needs no fresh second factor; inviting and removing still do.</li>
+<li>No new tables or stored data.</li>
+</ul></td><td>Specification S5, S8; Decisions</td></tr>
+<tr><td><strong>B2 additions</strong></td><td>
+<ul>
+<li><code>--device</code> gives the terminal a real session: you sign that one session out to cut off a lost machine. Your other sessions refresh on their next command.</li>
+<li>“Reached Central” shows only after Central confirms, never before.</li>
+<li>No Central change and no new tables.</li>
+</ul></td><td>Decisions; Specification S3, S6</td></tr>
+<tr><td><strong>BG</strong></td><td>
+<ul>
+<li>A pending setup step (second factor, organization) always comes first.</li>
+<li>Decline can never overwrite an Accept.</li>
+<li>Staging's test login can't reach production.</li>
+<li>The CLI's “confirm again” goes through a fresh login, refusing if someone else is signed in.</li>
+</ul></td><td>Specification S1, S2a, S6, S8</td></tr>
+<tr><td><strong>B2</strong></td><td>Your two picks:
+<ul>
+<li>after 24 hours, is “check by ID” good enough for a lost create reply?</li>
+<li>is a 10 to 15 minute sign-in pause acceptable for a rare key rotation, plus a one-row table?</li>
+</ul></td><td>Decisions 1 and 2</td></tr>
+<tr><td><strong>B3</strong></td><td>Your stored-data picks:
+<ul>
+<li>keep every machine login as its own row (history kept);</li>
+<li>allowed workspaces in Central's existing column;</li>
+<li>one new nullable column for the re-key.</li>
+</ul></td><td>Decisions 2, 3 and 4</td></tr>
+</tbody></table></div>
+
+<h2 id="order">The order of work, and what blocks what</h2>
 <ex-mermaid id="order-pic" label="Fleet access features in order, with blockers" data-width="canvas"><script type="text/plain">
 flowchart TB
-  A["1 · B1-A One sign-in core,<br/>injected and honestly tested"]
-  A --> B["2 · B1-B Passkey sign-in"]
-  A --> C["3 · B1-C Organizations finished"]
-  A --> B2["4 · B2 Central organizations"]
-  B2 --> B2X["5 · B2 additions"]
-  B2 --> BG["6 · BG Getting in, staging proof"]
-  B2X --> B3["7 · B3 Machine login, locked link"]
-  LA4["Lead A · 4 Router to central link"] --> B3
+  A["1 · B1-A One sign-in core<br/>built, final verification"]
+  A --> B["2 · B1-B Passkey sign-in<br/>approved"]
+  A --> C["3 · B1-C Organizations<br/>ready for approval"]
+  A --> B2["4 · B2 Central organizations<br/>2 picks open"]
+  LA1["Lead A · directory read, engine 1,<br/>10 s key-fetch slice"] --> B2
+  B2 --> B2X["5 · B2 additions<br/>ready for approval"]
+  B2 --> BG["6 · BG Getting in<br/>ready for approval"]
+  C --> BG
+  B2X --> B3["7 · B3 Machine login<br/>2 picks + SQL open"]
+  LA4["Lead A · 4a machine token, door, renewal"] --> B3
   LA4 --> LA5["Lead A · 5 Agent session tokens at central"]
   LA5 --> B45
-  B3 --> B45["8 · B4 and B5"]
+  B3 --> B45["8 · B4 and B5<br/>not designed"]
   class A,B slot2
-  class C,B2,B2X,BG,B3 slot4
+  class C,B2X,BG slot6
+  class B2,B3 slot4
   class B45 slot1
-  class LA4,LA5 slot3
+  class LA1,LA4,LA5 slot3
 </script></ex-mermaid>
-<p><strong>Key:</strong> amber is approved and being built or next, violet waits on your picks, blue comes later, teal is another Lead's deliverable.</p>
-<ol>
-<li><strong>B1-A</strong> One sign-in core, injected and honestly tested. Your 15 Nov decisions are in (Better Auth's own crypto stays as shipped; capabilities stay injected, no DI library; UUIDv7 only, tests included), with a stronger allowed-globals check. <strong>Go-ahead given 15 Nov; being built and checked now.</strong></li>
-<li><strong>B1-B</strong> Passkey sign-in. You chose click only for the passkey button on 15 Nov. <strong>Go-ahead given 15 Nov;</strong> built once B1-A is merged.</li>
-<li><strong>B1-C</strong> Organizations finished: choose your organization, look up members. <strong>Written by the Lead; review READY.</strong> Three choices open. An earlier Sol draft, made without your authorization, is evidence only.</li>
-<li><strong>B2</strong> Central organizations. <strong>Written by the Lead; review READY.</strong> Four choices open.</li>
-<li><strong>B2 additions</strong> Person tokens, revocation. <strong>Written by the Lead; review READY.</strong> Your <code>--device</code> choice is open.</li>
-<li><strong>BG</strong> Getting in: setup pages, staging proof. <strong>Written by the Lead; review READY.</strong> The three 30 Oct assumption groups need your answers. Clearing Central's side of staging waits on Lead A's staging-only store removal.</li>
-<li><strong>B3</strong> Machine login, locked link. <strong>Written by the Lead; review READY.</strong> Three choices open. Depends on Lead A's 4a, which owns the token, door, admission and renewal refusals.</li>
-<li><strong>B4, B5</strong> Sessions through their machine; authenticated CLI. B6 to B9 follow later.</li>
-</ol>
-<p>Every design here is written by the Lead; other agents only review them (your rule, 15 Nov).</p>
+<p><strong>Key:</strong> amber is being built or approved to build next, green is ready for your approval, violet needs your picks, blue comes later, and teal is another Lead's deliverable.</p>
+<p>Every design here is written by the Lead; other agents only review them (your rule, 15 Nov). Every build packet tells its agents to read all seven design pages first (your 16 Nov correction).</p>
 
 <h2 id="table">Blockers, parallel work, what each unblocks, approval</h2>
 <div class="ex-table-scroll" data-width="canvas"><table>
 <thead><tr><th>Feature</th><th>Blocked by</th><th>Runs in parallel with</th><th>Unblocks</th><th>Approved with go-ahead?</th></tr></thead>
 <tbody>
-<tr><td><strong>B1-A</strong> One sign-in core (<a href="../2026-11-15-fleet-access-b1/b1-a-core/audit.html">design</a>)</td><td>Nothing: being built</td><td>None: it goes first</td><td>B1-B, B1-C and B2 (they build on its core contract and test changes)</td><td><strong>Yes, 15 Nov</strong> ("yes to b1a and b1b")</td></tr>
+<tr><td><strong>B1-A</strong> One sign-in core (<a href="../2026-11-15-fleet-access-b1/b1-a-core/audit.html">design</a>)</td><td>Nothing: final verification</td><td>None: it goes first</td><td>B1-B, B1-C and B2</td><td><strong>Yes, 15 Nov</strong> ("yes to b1a and b1b")</td></tr>
 <tr><td><strong>B1-B</strong> Passkey sign-in (<a href="../2026-11-15-fleet-access-b1/b1-b-passkey/audit.html">design</a>)</td><td>B1-A merged. Staging covers journey 5 from adding the passkey onward, in BG's run.</td><td>B1-C, B2</td><td>Nothing else in this lane</td><td><strong>Yes, 15 Nov</strong> ("yes to b1a and b1b")</td></tr>
-<tr><td><strong>B1-C</strong> Organizations finished (<a href="../2026-11-15-fleet-access-b1/b1-c-organizations/audit.html">design</a>)</td><td>B1-A merged; your picks and approval</td><td>B1-B, B2</td><td>Nothing else in this lane</td><td>No: designed and reviewed, awaiting you</td></tr>
-<tr><td><strong>B2</strong> Central organizations (<a href="../2026-11-15-fleet-access-b2-central/audit.html">design</a>)</td><td>B1-A merged; Lead A's directory-read slice and engine deliverable 1; your picks and approval</td><td>B1-B, B1-C</td><td>B2 additions, BG</td><td>No: designed and reviewed, awaiting you</td></tr>
-<tr><td><strong>B2 additions</strong> Person tokens, revocation (<a href="../2026-11-15-fleet-access-b2x/audit.html">design</a>)</td><td>B2 merged; your <code>--device</code> answer; your approval</td><td>BG</td><td>B3</td><td>No: designed and reviewed, awaiting you</td></tr>
-<tr><td><strong>BG</strong> Getting in, staging proof (<a href="../2026-11-15-fleet-access-bg/audit.html">design</a>)</td><td>B1-C and B2 merged; your answers to the 30 Oct groups; your approval</td><td>B2 additions</td><td>B1-B's release sign-in; your switch to the new login</td><td>No: designed and reviewed, awaiting you</td></tr>
-<tr><td><strong>B3</strong> Machine login, locked link (<a href="../2026-11-15-fleet-access-b3/audit.html">design</a>)</td><td>B2 additions merged; <strong>Lead A's 4a</strong>; your picks, storage SQL approval and approval</td><td>None</td><td>B4 and B5</td><td>No: designed and reviewed, awaiting you</td></tr>
-<tr><td><strong>B4, B5</strong></td><td>B3 merged; their designs. B4, creating a session from one computer to another, also needs <strong>Lead A's 4 "Router to central link"</strong> and <strong>Lead A's 5 "Agent session tokens at central"</strong>: central mints the per-session token, as you said on 15 Nov ("central must mint the agent sesion tokens"). Checking that token at every door is the CLI+MCP Lead's "Delegates".</td><td>Each other</td><td>Your switch to the new login; then B6 to B9</td><td>No: not designed</td></tr>
+<tr><td><strong>B1-C</strong> Organizations finished (<a href="../2026-11-15-fleet-access-b1/b1-c-organizations/audit.html">design</a>)</td><td>B1-A merged; your approval</td><td>B1-B, B2</td><td>BG</td><td>No: picks done, awaiting your approval</td></tr>
+<tr><td><strong>B2</strong> Central organizations (<a href="../2026-11-15-fleet-access-b2-central/audit.html">design</a>)</td><td>B1-A merged; Lead A's directory-read slice, engine deliverable 1 and the 10-second key-fetch slice; your picks and approval</td><td>B1-B, B1-C</td><td>B2 additions, BG</td><td>No: awaiting your picks</td></tr>
+<tr><td><strong>B2 additions</strong> Person tokens, revocation (<a href="../2026-11-15-fleet-access-b2x/audit.html">design</a>)</td><td>B2 merged; your approval</td><td>BG</td><td>B3</td><td>No: pick done, awaiting your approval</td></tr>
+<tr><td><strong>BG</strong> Getting in, staging proof (<a href="../2026-11-15-fleet-access-bg/audit.html">design</a>)</td><td>B1-C and B2 merged; your approval</td><td>B2 additions</td><td>B1-B's release sign-in; your switch to the new login</td><td>No: assumptions agreed, awaiting your approval</td></tr>
+<tr><td><strong>B3</strong> Machine login, locked link (<a href="../2026-11-15-fleet-access-b3/audit.html">design</a>)</td><td>B2 additions merged; <strong>Lead A's 4a</strong>; your picks, SQL approval and approval</td><td>None</td><td>B4 and B5</td><td>No: awaiting your picks</td></tr>
+<tr><td><strong>B4, B5</strong></td><td>B3 merged; their designs. B4 also needs <strong>Lead A's 4</strong> and <strong>5</strong>: Central mints the per-session token, as you said on 15 Nov ("central must mint the agent sesion tokens").</td><td>Each other</td><td>Your switch to the new login; then B6 to B9</td><td>No: not designed</td></tr>
 </tbody>
 </table></div>
 </ex-document>

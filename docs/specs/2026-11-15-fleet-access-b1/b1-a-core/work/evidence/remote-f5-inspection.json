@@ -1,0 +1,170 @@
+{
+  "sourceSha256": "78b9b5980dec1dedeaa686b8c8930222483f5cf997e83478edd7337c781de650",
+  "redactedSha256": "9ae4432479d0eb0ea96176560b049293a83f728ca8eaa3c4a14115d4ed091e21",
+  "redactedCredentialPaths": 172,
+  "reports": [
+    {
+      "step": "28-organization-node",
+      "summary": {
+        "journey": "organization",
+        "supportingUnitPassed": 0,
+        "layer": "host-e2e",
+        "passed": 97,
+        "failed": 0,
+        "offered": 393,
+        "selected": 97,
+        "unselected": 296,
+        "reporterSkippedWithinFiles": 94,
+        "targetComparison": "matched",
+        "requestLimits": {
+          "outerCounters": {
+            "node-fixed-window": 19
+          },
+          "limitedByLayer": {
+            "outer": 0,
+            "provider": 0
+          },
+          "unavailable": 0,
+          "backingFailures": {
+            "none": 19
+          },
+          "cloudflareVendorCredit": false
+        },
+        "evidence": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/2026-10-verify-auth-F0M6eY"
+      },
+      "selectedEqualsLiteralPassed": true,
+      "runtimeExit": 0,
+      "readyHarnesses": 19,
+      "actualModulesMatch": true,
+      "artifactRehashesMatch": 16,
+      "pairedNodeInvocations": 279,
+      "organizationExports": 19,
+      "outerExit": null,
+      "outerSignal": "SIGTERM",
+      "laterOwnedGroupAndSampledPidsAbsent": true
+    },
+    {
+      "step": "29-people-workerd",
+      "summary": {
+        "journey": "people",
+        "supportingUnitPassed": 0,
+        "layer": "host-e2e",
+        "passed": 104,
+        "failed": 0,
+        "offered": 394,
+        "selected": 104,
+        "unselected": 290,
+        "reporterSkippedWithinFiles": 103,
+        "targetComparison": "matched",
+        "requestLimits": {
+          "outerCounters": {
+            "cloudflare-real-binding": 54
+          },
+          "limitedByLayer": {
+            "outer": 7,
+            "provider": 9
+          },
+          "unavailable": 1,
+          "backingFailures": {
+            "none": 53,
+            "cloudflare-binding-rejects": 1
+          },
+          "cloudflareVendorCredit": false
+        },
+        "evidence": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/2026-10-verify-auth-bYyPKz"
+      },
+      "selectedEqualsLiteralPassed": true,
+      "runtimeExit": 0,
+      "readyHarnesses": 54,
+      "actualModulesMatch": true,
+      "artifactRehashesMatch": 7,
+      "pairedNodeInvocations": 0,
+      "organizationExports": 0,
+      "outerExit": null,
+      "outerSignal": "SIGTERM",
+      "laterOwnedGroupAndSampledPidsAbsent": true
+    },
+    {
+      "step": "30-people-node",
+      "summary": {
+        "journey": "people",
+        "supportingUnitPassed": 0,
+        "layer": "host-e2e",
+        "passed": 104,
+        "failed": 0,
+        "offered": 393,
+        "selected": 104,
+        "unselected": 289,
+        "reporterSkippedWithinFiles": 103,
+        "targetComparison": "matched",
+        "requestLimits": {
+          "outerCounters": {
+            "node-fixed-window": 54
+          },
+          "limitedByLayer": {
+            "outer": 7,
+            "provider": 9
+          },
+          "unavailable": 1,
+          "backingFailures": {
+            "none": 53,
+            "node-counter-throws": 1
+          },
+          "cloudflareVendorCredit": false
+        },
+        "evidence": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/2026-10-verify-auth-40p7sb"
+      },
+      "selectedEqualsLiteralPassed": true,
+      "runtimeExit": 0,
+      "readyHarnesses": 54,
+      "actualModulesMatch": true,
+      "artifactRehashesMatch": 16,
+      "pairedNodeInvocations": 928,
+      "organizationExports": 0,
+      "outerExit": null,
+      "outerSignal": "SIGTERM",
+      "laterOwnedGroupAndSampledPidsAbsent": true
+    },
+    {
+      "step": "31-agent-workerd",
+      "summary": {
+        "journey": "agent",
+        "supportingUnitPassed": 0,
+        "layer": "host-e2e",
+        "passed": 45,
+        "failed": 0,
+        "offered": 394,
+        "selected": 45,
+        "unselected": 349,
+        "reporterSkippedWithinFiles": 3,
+        "targetComparison": "matched",
+        "requestLimits": {
+          "outerCounters": {
+            "cloudflare-real-binding": 45
+          },
+          "limitedByLayer": {
+            "outer": 0,
+            "provider": 0
+          },
+          "unavailable": 0,
+          "backingFailures": {
+            "none": 45
+          },
+          "cloudflareVendorCredit": false
+        },
+        "evidence": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/2026-10-verify-auth-WS7KxK"
+      },
+      "selectedEqualsLiteralPassed": true,
+      "runtimeExit": 0,
+      "readyHarnesses": 45,
+      "actualModulesMatch": true,
+      "artifactRehashesMatch": 7,
+      "pairedNodeInvocations": 0,
+      "organizationExports": 0,
+      "outerExit": null,
+      "outerSignal": "SIGTERM",
+      "laterOwnedGroupAndSampledPidsAbsent": true
+    }
+  ],
+  "limits": "Operator-collected extraction inspected locally; original private raw logs and organization signed bodies were not transferred. No outer CLI success exit is inferred."
+}
