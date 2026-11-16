@@ -20,17 +20,17 @@
 </nav></ex-nav>
 <ex-document id="doc">
 <h1>B1-C · Organizations finished: Decisions</h1>
-<p>What you have already decided, the calls I made with whether they should have been yours, what was there before, and three choices that are yours to make.</p>
+<p>What you have decided, the calls I made with whether they should have been yours, what was there before, and the one choice still yours to make.</p>
 
 <h2 id="three">The three things for you</h2>
 <ex-callout title="1 · What to check" tone="note" icon="shield-check">
-<p>The <a href="#calls">calls table</a>: disagree with any row and I change it. Two calls deserve a look: dropping a state machine for the session's current organization, and dropping tests of Better Auth's own concurrent writes.</p>
+<p>Your three 15 Nov picks are recorded below, and the design now follows them. One <a href="#calls">call</a> is my reading of your “shadcn like better auth ui” note; check that I read it right.</p>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p>Three open: <a href="#placement">where the lookup lives</a>, <a href="#input">how the owner names a person</a>, <a href="#component">which chooser component</a>. Each shows what you'd see, what it costs, a picture, and my recommendation.</p>
+<p>One open: <a href="#foreign-switch">what happens to your current organization after a refused switch</a>. You asked for its tradeoffs; they're laid out there with a picture.</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
-<p>Every decided card quotes you and links the transcript line. Nothing on this page has been built.</p>
+<p>Every decided card quotes you. The list read you picked is newly designed, so it goes back through independent review before it comes to you for approval. Nothing on this page has been built.</p>
 </ex-callout>
 
 <h2 id="decided">Already decided by you</h2>
@@ -49,143 +49,93 @@
 <ex-card title="Overall design and B1 approved" tone="done" icon="book-open" tag="4 Nov" pick>
 <p><em>“yes you need anytnhign?”</em>, answering the request to approve the overall design, B1 and B2 (Fleet transcript 71226, 71230).</p>
 </ex-card>
+<ex-card title="The lookup has its own page, built in shadcn like Better Auth UI" tone="done" icon="path" tag="15 Nov · review 02e54dfb" pick>
+<p>You picked A, its own page linked from admin: <em>“shokuld be shadcn, thyis is 2 way door bu yes good deisgn and shadcn like auth better ui”</em>.</p>
+</ex-card>
+<ex-card title="Pick from this organization's list, with email as fallback" tone="done" icon="users" tag="15 Nov · review 02e54dfb" pick>
+<p>You picked B. The owner-only list read this needs is designed on <a href="specification.html#S8">Specification S8</a> and <a href="program-design.html#people-list">Program Design</a>.</p>
+</ex-card>
+<ex-card title="Today's Switchboard card as the chooser" tone="done" icon="code" tag="15 Nov · review 02e54dfb" pick>
+<p>You picked A. No Better Auth organization read is opened to the browser. The shipped switcher, its copied files, Pacer and the cut-down native reads are gone from this design.</p>
+</ex-card>
+<ex-card title="No state machine for the session's current organization" tone="done" icon="code" tag="15 Nov · review 02e54dfb" pick>
+<p><em>“yes this sis fine”</em>. One pure function checks it against fresh memberships.</p>
+</ex-card>
 
 <h2 id="calls">My calls, and should they have been yours?</h2>
 <div class="ex-table-scroll" data-width="canvas"><table>
 <thead><tr><th>Call</th><th>Why</th><th>Should it have been yours?</th></tr></thead>
 <tbody>
-<tr><td>No state machine for the session's current organization; one pure function checks it against fresh memberships</td><td>Only Better Auth moves that value. A machine would model transitions we don't own. Your rule targets states our code moves; this design has three: M1, M2, M3.</td><td>Possibly. If you want every stored state modelled whoever writes it, say so and I add it.</td></tr>
+<tr><td>“shadcn like Better Auth UI” read as: build our page from the same shadcn parts Better Auth UI's people tables use (Card, Table, Badge, InputGroup, Field, Button, Empty, Skeleton; all already in <code>tool-access-ui</code>) and follow their layout. Don't install Better Auth UI's own <code>OrganizationPeople</code> component.</td><td>That component reads Better Auth's <code>list-members</code> and <code>list-invitations</code> straight from the browser. Both let <em>any member</em> read the roster (<code>crud-members.mjs:437–478</code>, <code>crud-invites.mjs:525–542</code>), against “owner only”. It also carries invite, remove and change-role actions, which already exist with their step-up. Your card pick also keeps native organization reads closed.</td><td><strong>Yes.</strong> If you meant the component itself, say so. That needs both native reads opened behind an owner-only gate, and its actions reconciled with our people flows.</td></tr>
+<tr><td>The list is read from Better Auth's tables through our injected Drizzle store, after our owner check, and returns only name, email and role</td><td>That is how the codebase already reads Better Auth's tables (<code>membershipsForPerson</code>), with hold and fault seams on both hosts. Better Auth's own list is reachable only through its public route, which any member may call, or its internal adapter.</td><td>No: your Drizzle-injected storage rule and “owner only”.</td></tr>
 <tr><td>No tests of Better Auth's own races (two switches at once; accept against cancel)</td><td>Those test the library's writes, which we neither own nor wrap. We test our reads of their results.</td><td>Possibly, for the same reason.</td></tr>
-<tr><td>Keep Better Auth's behaviour where a foreign switch clears the current choice</td><td>Your rule is to follow Better Auth's grain. Memberships are unchanged; the page reads state back.</td><td>No, unless you want the earlier choice kept; that needs a wrapper you'd approve.</td></tr>
 <tr><td>Read the session through Better Auth's own <code>getSession</code> endpoint, not the helper that hides failures</td><td>The helper turns a database failure into “signed out” (<code>session.mjs:261</code>). The endpoint is Better Auth's own export.</td><td>No: a correctness fix inside the agreed scope.</td></tr>
-<tr><td>Lookup checks permission twice, before and after the read</td><td>A removal during the read can't leak an answer.</td><td>No: follows R13.</td></tr>
+<tr><td>Lookup and list check permission twice, before and after the read</td><td>A removal during the read can't leak an answer or a roster.</td><td>No: follows R13.</td></tr>
 <tr><td>The lookup says “invited” only when expiry is strictly after now; Better Auth's own accept refuses only when expiry is before now</td><td>The two disagree only at the exact millisecond. We don't change Better Auth.</td><td>No.</td></tr>
 <tr><td>Byte-identical answers for “elsewhere” and “nowhere”, but not equal timing</td><td>C4 asks for the same answer. Equal timing would need deliberate delays.</td><td>Possibly, if you want timing equality too.</td></tr>
 </tbody></table></div>
 
 <h2 id="before">What was there before</h2>
 <ul>
-<li>The chooser card appeared only while a choice was missing (<code>sign-in-http-handler.ts:239–248</code>); it is replaced by the always-available choice surface and the <code>selectionRequired</code> fact.</li>
+<li>The chooser card appeared only while a choice was missing (<code>sign-in-http-handler.ts:239–248</code>). It becomes an always-available choice surface, driven by the <code>selectionRequired</code> fact.</li>
 <li>Selection was posted by an inline script (<code>owner-page-script.ts:47–52</code>); it is replaced by the island.</li>
-<li>Native member listing stays closed, as before.</li>
+<li>Native member and invitation listing stay closed to the browser, as before.</li>
 </ul>
 
-<h2 id="open">Open: your three choices</h2>
-<p>The current model these choices sit in:</p>
-<ex-mermaid id="current-model" label="Where the choices land" data-width="canvas"><script type="text/plain">
-flowchart TB
-  person["Person"] --> account["Account surface: own factors and organizations"]
-  account --> chooser["Chooser component: choice 3"]
-  owner["Owner"] --> admin["Organization admin page: workspaces and records"]
-  admin --> lookup["Person lookup: choice 1 places it, choice 2 shapes its input"]
-  class person,owner slot1
-  class account,admin slot3
-  class chooser,lookup slot2
+<h2 id="open">Open: your one choice</h2>
+<h3 id="foreign-switch">After a refused switch, what is your current organization?</h3>
+<p><strong>When it happens.</strong> A switch names an organization you aren't a member of. The card lists only your memberships, so a normal click can't send that. It happens from a stale page (you were removed from O2 after the page loaded, then clicked O2), or from a hand-made request.</p>
+<p><strong>What Better Auth does</strong> (<code>dist/plugins/organization/routes/crud-org.mjs:419–425</code>, version 1.7.11): <code>checkMembership</code> fails, so it writes <code>activeOrganizationId = null</code> to the session, then answers 403. Your memberships and roles don't change.</p>
+<ex-mermaid id="foreign-now" label="Today: Better Auth clears the current choice" data-width="canvas"><script type="text/plain">
+sequenceDiagram
+  participant P as Your page (stale: lists O1, O2)
+  participant BA as Better Auth set-active
+  participant S as Your session
+  Note over S: current = O1
+  P->>BA: switch to O2 (you were removed from O2)
+  BA->>BA: checkMembership(O2) = false
+  BA->>S: current := none
+  BA-->>P: 403
+  P->>P: re-read: memberships [O1], current none
+  Note over P: you click O1 again; CLI Continue waits until you do
 </script></ex-mermaid>
-
-<h3 id="placement">1 · Where does the owner's lookup live?</h3>
-<p>The admin page today is a separate raw HTML page with workspaces and records (<code>organization-admin-page.ts:39–80</code>) that doesn't use the shared page shell.</p>
-<ex-compare label="Lookup placement" data-width="canvas">
-<section id="place-separate" label="A · Its own page, linked from admin" icon="path">
-<section data-compare-row="sees"><p><strong>What you see</strong></p><p>A “Look up a person” link on the admin page, opening a small page with one field and a result.</p></section>
-<section data-compare-row="changes"><p><strong>What changes in code</strong></p><p>One new guarded page on the shared shell, one link added to the admin page.</p></section>
-<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>One extra click. Nothing in B2's page changes.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="place-separate-pic" label="Option A"><script type="text/plain">
+<ex-compare label="After a refused switch" data-width="canvas">
+<section id="foreign-keep-native" label="A · Keep Better Auth's behaviour" icon="package">
+<section data-compare-row="sees"><p><strong>What you see</strong></p><p>“That organization isn't available.” Your list now shows no current organization; one click on O1 puts it back.</p></section>
+<section data-compare-row="changes"><p><strong>What changes in code</strong></p><p>Nothing of ours. Better Auth's route, as shipped. The page re-reads after any ending.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>One extra click after a stale page. Nothing is granted or lost.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="foreign-keep-native-pic" label="Option A"><script type="text/plain">
 flowchart TB
-  admin["Admin page"] --> link["Link"]
-  link --> page["Lookup page"]
+  click["Stale click on O2"] --> ba["Better Auth: 403, current cleared"]
+  ba --> reread["Page re-reads: no current"]
+  reread --> pick["You pick O1 again"]
 </script></ex-mermaid></section>
 </section>
-<section id="place-embedded" label="B · Inside the admin page" icon="users">
-<section data-compare-row="sees"><p><strong>What you see</strong></p><p>A lookup section beside workspaces and records.</p></section>
-<section data-compare-row="changes"><p><strong>What changes in code</strong></p><p>The admin page first moves onto the shared shell, keeping all B2 controls; then the lookup is added.</p></section>
-<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>A rework of B2's page that B2's own redesign also touches; must be designed with B2 before build.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="place-embedded-pic" label="Option B"><script type="text/plain">
+<section id="foreign-keep-o1" label="B · Keep O1 current" icon="lock">
+<section data-compare-row="sees"><p><strong>What you see</strong></p><p>“That organization isn't available.” O1 stays current.</p></section>
+<section data-compare-row="changes"><p><strong>What changes in code</strong></p><p>Our wrapper in front of Better Auth's set-active checks membership first and answers 403 itself, so Better Auth's clearing write never runs.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><ul>
+<li>A wrapper around Better Auth's write, against your follow-the-grain rule.</li>
+<li>A second membership check to keep in step with theirs, with its own tests.</li>
+<li>It doesn't fully remove the case: a removal landing between our check and Better Auth's still clears the choice.</li>
+</ul></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="foreign-keep-o1-pic" label="Option B"><script type="text/plain">
 flowchart TB
-  admin["Admin page on shared shell"] --> people["Lookup section"]
-  admin --> work["Workspaces and records"]
-</script></ex-mermaid></section>
-</section>
-</ex-compare>
-<ex-grid cols="2" data-width="canvas">
-<ex-card title="A · Its own page" tone="planned" icon="path" tag="Recommended"><p><strong>Cost:</strong> one extra click.</p></ex-card>
-<ex-card title="B · Inside admin" tone="planned" icon="users" tag="Larger"><p><strong>Cost:</strong> reworking B2's page.</p></ex-card>
-</ex-grid>
-<ex-callout title="Recommendation: A" tone="decision" icon="path"><p>Smallest change, and it doesn't collide with B2's redesign of the admin page.</p></ex-callout>
-<ex-callout title="If you defer" tone="risk" icon="clock"><p>The lookup page isn't built; everything else in B1-C can be built and proven.</p></ex-callout>
-<ex-choice id="choice-placement" title="Where should the lookup live?">
-<ex-option id="placement-separate" title="A · Its own page, linked from admin (recommended)"><template slot="summary">One small guarded page and one link.</template></ex-option>
-<ex-option id="placement-embedded" title="B · Inside the admin page"><template slot="summary">Admin page moves to the shared shell first.</template></ex-option>
-</ex-choice>
-
-<h3 id="input">2 · How does the owner name the person?</h3>
-<ex-compare label="Lookup input" data-width="canvas">
-<section id="input-email" label="A · Type an exact email" icon="envelope">
-<section data-compare-row="sees"><p><strong>What you see</strong></p><p>One email field. Answers: member and role, invited, or not a member.</p></section>
-<section data-compare-row="changes"><p><strong>What changes in code</strong></p><p>One POST endpoint and one scoped read. No list.</p></section>
-<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>You need to know the email. You can't browse.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="input-email-pic" label="Option A"><script type="text/plain">
-flowchart TB
-  email["Email"] --> answer["One answer"]
-</script></ex-mermaid></section>
-</section>
-<section id="input-list" label="B · Pick from this organization's list, email as fallback" icon="users">
-<section data-compare-row="sees"><p><strong>What you see</strong></p><p>Your organization's members and invitations to pick from, plus the email field for someone not listed.</p></section>
-<section data-compare-row="changes"><p><strong>What changes in code</strong></p><p>A new owner-only list read with paging and its own privacy rules and proof, plus everything in A.</p></section>
-<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>A roster read to design, review and prove before build.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="input-list-pic" label="Option B"><script type="text/plain">
-flowchart TB
-  list["Member and invitation list"] --> pick["Pick one"]
-  email["Or email"] --> answer["One answer"]
-  pick --> answer
+  click["Stale click on O2"] --> ours["Our check: not a member, 403"]
+  ours --> stay["O1 stays current"]
+  click2["Removal between checks"] --> ba["Better Auth still clears"]
 </script></ex-mermaid></section>
 </section>
 </ex-compare>
 <ex-grid cols="2" data-width="canvas">
-<ex-card title="A · Exact email" tone="planned" icon="envelope" tag="Recommended"><p><strong>Cost:</strong> no browsing.</p></ex-card>
-<ex-card title="B · List with fallback" tone="planned" icon="users" tag="Larger"><p><strong>Cost:</strong> a roster read to design and prove.</p></ex-card>
+<ex-card title="A · Keep Better Auth's behaviour" tone="planned" icon="package" tag="Recommended"><p><strong>Cost:</strong> one click after a stale page.</p></ex-card>
+<ex-card title="B · Keep O1 current" tone="planned" icon="lock" tag="More code"><p><strong>Cost:</strong> a wrapper on Better Auth's write that still can't cover every case.</p></ex-card>
 </ex-grid>
-<ex-callout title="Recommendation: A" tone="decision" icon="envelope"><p>It answers U9 as written (“a person's role in your organization”) and reaches invitations before an account exists. A list can come later.</p></ex-callout>
-<ex-callout title="If you defer" tone="risk" icon="clock"><p>The lookup isn't built until you answer.</p></ex-callout>
-<ex-choice id="choice-input" title="How should the owner name the person?">
-<ex-option id="input-exact-email" title="A · Exact email (recommended)"><template slot="summary">One field; no roster.</template></ex-option>
-<ex-option id="input-list-fallback" title="B · Pick from a list, email fallback"><template slot="summary">Adds an owner-only roster read.</template></ex-option>
-</ex-choice>
-
-<h3 id="component">3 · Which chooser component?</h3>
-<p>Your rule is to use Better Auth UI as shipped and bring any divergence to you. The shipped switcher needs two Better Auth reads opened, and those reads would return members and invitations unless cut down. Today's Switchboard card needs nothing opened.</p>
-<ex-compare label="Chooser component" data-width="canvas">
-<section id="comp-card" label="A · Today's Switchboard card, kept available" icon="code">
-<section data-compare-row="sees"><p><strong>What you see</strong></p><p>The existing list of your organizations with a choose button on each, now always available.</p></section>
-<section data-compare-row="changes"><p><strong>What changes in code</strong></p><p>Extract the existing card; it uses our self read and Better Auth's set-active. No native read opened.</p></section>
-<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Not Better Auth UI's component: a named divergence from your rule.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="comp-card-pic" label="Option A"><script type="text/plain">
-flowchart TB
-  card["Switchboard card"] --> self["Our self read"]
-  card --> set["Native set-active"]
-</script></ex-mermaid></section>
-</section>
-<section id="comp-shipped" label="B · Better Auth UI's shipped switcher" icon="package">
-<section data-compare-row="sees"><p><strong>What you see</strong></p><p>Better Auth UI's dropdown switcher, with creation, personal account and settings hidden, plus a summary of your roles.</p></section>
-<section data-compare-row="changes"><p><strong>What changes in code</strong></p><p>Copy 10 upstream files unchanged and add one dependency (Pacer). Open Better Auth's organization list and full-organization reads, with a whitelist that cuts their replies to ID, name, slug, logo and created time, and reject any query parameter.</p></section>
-<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>The projection layer, its route-test changes and its proof (V5). If the projection were ever bypassed, members and invitations would reach the browser.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="comp-shipped-pic" label="Option B"><script type="text/plain">
-flowchart TB
-  sw["Shipped switcher"] --> lists["Native list and full reads"]
-  lists --> cut["Whitelist projection"]
-  sw --> set["Native set-active"]
-</script></ex-mermaid></section>
-</section>
-</ex-compare>
-<ex-grid cols="2" data-width="canvas">
-<ex-card title="A · Today's card" tone="planned" icon="code" tag="Least machinery"><p><strong>Cost:</strong> a divergence from “as shipped”.</p></ex-card>
-<ex-card title="B · Shipped switcher" tone="planned" icon="package" tag="Recommended, per your rule"><p><strong>Cost:</strong> the projection layer and its proof.</p></ex-card>
-</ex-grid>
-<ex-callout title="Recommendation: B" tone="decision" icon="package"><p>Your standing rule is Better Auth UI as shipped. The extra machinery is bounded and proven by V5. Choose A if you'd rather avoid opening native reads.</p></ex-callout>
-<ex-callout title="If you defer" tone="risk" icon="clock"><p>The choice surface isn't built; the self read, lookup and page split can still be built.</p></ex-callout>
-<ex-choice id="choice-component" title="Which chooser component?">
-<ex-option id="component-card" title="A · Today's Switchboard card"><template slot="summary">No native read opened; divergence from as-shipped.</template></ex-option>
-<ex-option id="component-shipped" title="B · Better Auth UI's shipped switcher (recommended)"><template slot="summary">Two native reads opened behind a whitelist.</template></ex-option>
+<ex-callout title="Recommendation: A" tone="decision" icon="package"><p>Both are safe; neither grants anything. A costs one click in a rare case. B adds code against your follow-the-grain rule and still leaves the race. To undo A later, add B's wrapper; to undo B, delete it.</p></ex-callout>
+<ex-callout title="If you defer" tone="risk" icon="clock"><p>The design builds A, which is Better Auth's own behaviour, and nothing else waits on this.</p></ex-callout>
+<ex-choice id="choice-foreign-switch" title="After a refused switch, what is your current organization?">
+<ex-option id="foreign-pick-native" title="A · Keep Better Auth's behaviour: none until you pick again (recommended)"><template slot="summary">No code of ours; one click after a stale page.</template></ex-option>
+<ex-option id="foreign-pick-o1" title="B · Keep O1 current"><template slot="summary">Our wrapper before Better Auth's write.</template></ex-option>
 </ex-choice>
 </ex-document>
 </body>
