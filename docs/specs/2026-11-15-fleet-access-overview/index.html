@@ -24,7 +24,7 @@
 
 <h2 id="three">The three things for you</h2>
 <ex-callout title="1 · What's yours, in order" tone="decision" icon="users">
-<p>First, approve <strong>B1-C</strong>: it's next after B1-A. Then approve <strong>B2 additions</strong> and <strong>BG</strong>, make <strong>B2</strong>'s two picks, and make <strong>B3</strong>'s two storage picks plus its SQL. Merging, operations and sequencing are mine (your 16 Nov rule), so those choices are decided on each page with the reason. “Take your recommendations” is a valid answer for B2 and B3. <a href="#check">What to check</a> lists the few things worth your eyes in each.</p>
+<p>First, approve <strong>B1-C</strong>: it's next after B1-A. Then approve <strong>B2 additions</strong> and <strong>BG</strong>, make <strong>B2</strong>'s one pick (the key-rotation pause), and make <strong>B3</strong>'s two storage picks plus its SQL. Merging, operations and sequencing are mine (your 16 Nov rule), so those choices are decided on each page with the reason. “Take your recommendations” is a valid answer for B2 and B3. <a href="#check">What to check</a> lists the few things worth your eyes in each.</p>
 </ex-callout>
 <ex-callout title="2 · Stored-data changes that need your SQL approval" tone="risk" icon="database">
 <p>B2's one-row <code>maintenance_pause</code> table (only if you pick its option A for key rotation). B3's enrollment storage (option A) and the new former-ID column on Central's <code>machines</code> table.</p>
@@ -40,7 +40,7 @@
 <tr><td><strong>B1-A</strong> One sign-in core</td><td>Built: draft PR switchboard#18, head <code>e2a91f55</code>. The Verifier is finishing its observation. The last scanner gap (F7) is fixed in that head.</td><td>Nothing now. It comes to you only when accepted and ready to merge.</td></tr>
 <tr><td><strong>B1-B</strong> Passkey sign-in</td><td>Designed, reviewed, approved 15 Nov.</td><td>Nothing. Built after B1-A merges.</td></tr>
 <tr><td><strong>B1-C</strong> Organizations finished</td><td>READY at <code>e30c1278</code>, with all four of your picks applied: today's card; its own shadcn People page; an owner-only list with email fallback; Better Auth's behaviour after a refused switch, with a redirect.</td><td><strong>Approve</strong> (<a href="../2026-11-15-fleet-access-b1/b1-c-organizations/decisions.html">Decisions</a>)</td></tr>
-<tr><td><strong>B2</strong> Central organizations</td><td>READY at <code>73eb14c6</code>; Lead A's engine contract details added since. Key-rotation timing depends on Lead A's 10-second Cloudflare key-fetch bound. I decided the console comes later and maintenance runs through the private door.</td><td><strong>Two picks</strong>, each explained with an example (<a href="../2026-11-15-fleet-access-b2-central/decisions.html">Decisions</a>)</td></tr>
+<tr><td><strong>B2</strong> Central organizations</td><td>READY at <code>73eb14c6</code>; Lead A's engine contract details added since. Key-rotation timing depends on Lead A's 10-second Cloudflare key-fetch bound. I decided the console comes later and maintenance runs through the private door; the lost-reply window is taken as A after your question.</td><td><strong>One pick</strong>: the key-rotation pause, explained with an example (<a href="../2026-11-15-fleet-access-b2-central/decisions.html">Decisions</a>)</td></tr>
 <tr><td><strong>B2 additions</strong> Person tokens, revocation</td><td>READY at <code>e30c1278</code>, with your pick applied: device login with a real session.</td><td><strong>Approve</strong> (<a href="../2026-11-15-fleet-access-b2x/decisions.html">Decisions</a>)</td></tr>
 <tr><td><strong>BG</strong> Getting in, staging proof</td><td>READY at <code>20c85d12</code>; you agreed all three assumption groups (<code>b7a4f8ad</code>).</td><td><strong>Approve</strong> (<a href="../2026-11-15-fleet-access-bg/decisions.html">Decisions</a>)</td></tr>
 <tr><td><strong>B3</strong> Machine login, locked link</td><td>READY at <code>73eb14c6</code>; Rust machines use Hegel (<code>hegeltest =0.52.6</code>), shared with Lead A. I decided B3 is finished on #11 and merged whole.</td><td><strong>Two storage picks and the SQL</strong>, explained with examples (<a href="../2026-11-15-fleet-access-b3/decisions.html">Decisions</a>)</td></tr>
@@ -70,11 +70,7 @@
 <li>Staging's test login can't reach production.</li>
 <li>The CLI's “confirm again” goes through a fresh login, refusing if someone else is signed in.</li>
 </ul></td><td>Specification S1, S2a, S6, S8</td></tr>
-<tr><td><strong>B2</strong></td><td>Your two picks:
-<ul>
-<li>after 24 hours, is “check by ID” good enough for a lost create reply?</li>
-<li>is a 10 to 15 minute sign-in pause acceptable for a rare key rotation, plus a one-row table?</li>
-</ul></td><td>Decisions 1 and 2</td></tr>
+<tr><td><strong>B2</strong></td><td>Your one pick: is a 10 to 15 minute sign-in pause acceptable for a rare key rotation, plus a one-row table?</td><td>Decisions 2</td></tr>
 <tr><td><strong>B3</strong></td><td>Your stored-data picks:
 <ul>
 <li>keep every machine login as its own row (history kept);</li>
@@ -89,7 +85,7 @@ flowchart TB
   A["1 · B1-A One sign-in core<br/>built, final verification"]
   A --> B["2 · B1-B Passkey sign-in<br/>approved"]
   A --> C["3 · B1-C Organizations<br/>ready for approval"]
-  A --> B2["4 · B2 Central organizations<br/>2 picks open"]
+  A --> B2["4 · B2 Central organizations<br/>1 pick open"]
   LA1["Lead A · directory read, engine 1,<br/>10 s key-fetch slice"] --> B2
   B2 --> B2X["5 · B2 additions<br/>ready for approval"]
   B2 --> BG["6 · BG Getting in<br/>ready for approval"]

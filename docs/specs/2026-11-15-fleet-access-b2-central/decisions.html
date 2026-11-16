@@ -20,11 +20,11 @@
 </nav></ex-nav>
 <ex-document id="doc">
 <h1>B2 · Central organizations: Decisions</h1>
-<p>B2 makes organizations on Central real: the owner creates workspaces, sees the full list and history, and the organization keeps working when sign-in's signing key changes. <strong>Two choices are yours</strong> (1 and 2). The other two were sequencing and operations, which you handed to me, so they're decided below with the reason. Each section explains the background, gives a concrete example, and shows what each option means in practice.</p>
+<p>B2 makes organizations on Central real: the owner creates workspaces, sees the full list and history, and the organization keeps working when sign-in's signing key changes. <strong>One choice is yours: 2, the key-rotation pause.</strong> Choice 1 is taken as A after your question about it. The other two were sequencing and operations, which you handed to me, so they're decided below with the reason. Each section explains the background, gives a concrete example, and shows what each option means in practice.</p>
 
 <h2 id="three">The three things for you</h2>
 <ex-callout title="1 · What to check" tone="note" icon="shield-check">
-<p>Yours: <a href="#retry">1 · A lost “create workspace” reply</a> (product behaviour) and <a href="#retire">2 · Changing the signing key</a> (downtime and a new table).</p>
+<p>Yours: <a href="#retire">2 · Changing the signing key</a> (a few minutes of downtime and a new one-row table). <a href="#retry">1 · A lost reply</a> is taken as A.</p>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
 <p>Decided by me under your 16 Nov rule: <a href="#console">3 · console later</a> and <a href="#maintenance">4 · the private maintenance door</a>.</p>
@@ -78,12 +78,7 @@ flowchart TB
 </script></ex-mermaid></section>
 </section>
 </ex-compare>
-<ex-callout title="Recommendation: A" tone="decision" icon="clock"><p>You get the right outcome in both cases, and nothing changes on Central. It's yours because the approved text said “the original answer” with no time limit, and A narrows that to 24 hours plus the lookup.</p></ex-callout>
-<ex-callout title="If you defer" tone="risk" icon="clock"><p>Create still works and retries within a day still work. Only the after-24-hours case isn't counted as delivered.</p></ex-callout>
-<ex-choice id="choice-retry" title="How long is a lost create reply recoverable?">
-<ex-option id="retry-a" title="A · 24 hours, then check by ID (recommended)"><template slot="summary">Today's Central plus one lookup.</template></ex-option>
-<ex-option id="retry-b" title="B · Original answer forever"><template slot="summary">Lead A changes Central's ledger first.</template></ex-option>
-</ex-choice>
+<ex-callout title="Taken: A" tone="decision" icon="clock"><p>On 16 Nov you asked <em>“are you being pendantic? is this a areal issue?”</em>. It isn't a real issue: both options give the right outcome and never a duplicate. So this is A, today's Central behaviour plus the lookup. You also asked why there's a ledger at all. Central's <code>request_log</code> (<code>workspace_request_log</code>) is request safety, not workspace data: for 24 hours it replays the same request's answer and refuses a reused ID with different content. After that, the workspace itself, created under the operation ID, is the durable fact the lookup reads.</p></ex-callout>
 
 <h3 id="retire">2 · Changing sign-in's signing key: may sign-in pause for a few minutes?</h3>
 <p><strong>Background.</strong> Each organization has a signed statement from sign-in (“organization X exists, set up by this owner”). Central checks it with sign-in's public key before doing any work for that organization. Rotating the key is rare: scheduled, or after a suspected leak. Rotating means:</p>

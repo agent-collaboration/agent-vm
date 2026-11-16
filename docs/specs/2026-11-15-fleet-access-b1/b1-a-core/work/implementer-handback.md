@@ -11,6 +11,8 @@ All commits are SSH-signed except `81e150f1`, which is unsigned: 1Password signi
 
 Product, fixture and driver code is identical at `27d39324` and the head. The e2e and integration rows below were run at `27d39324`. Check and unit were rerun at `e2a91f55`: check passed 12/12, and unit passed 240 files and 2642 tests, both exit 0.
 
+**Record:** decisions, shortcuts and proof are in [implementer-log.md](implementer-log.md). The Verifier's observation is its own, [verifier-observation.md](verifier-observation.md), returned at `e2a91f55`. It closed findings F1–F7 and asks for no further repair (push 01a1e44d-4077).
+
 ## Open items for the Lead
 
 None. The two-host e2e has landed (below).
