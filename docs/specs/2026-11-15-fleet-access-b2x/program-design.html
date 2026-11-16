@@ -20,14 +20,14 @@
 </nav></ex-nav>
 <ex-document id="doc">
 <h1>B2X · Person tokens and revocation: Program Design</h1>
-<p>How it's built. Sign-in core paths are under <code>packages/sign-in-core/src/</code>; CLI paths under <code>packages/sign-in-owner-cli/src/</code>. The detail follows the recommended device option B.</p>
+<p>How it's built. Sign-in core paths are under <code>packages/sign-in-core/src/</code>; CLI paths under <code>packages/sign-in-owner-cli/src/</code>. Device login uses a real session, as you picked on 15 Nov.</p>
 
 <h2 id="three">The three things for you</h2>
 <ex-callout title="1 · What to check" tone="note" icon="shield-check">
 <p><a href="#device">Device login</a> uses Better Auth's own device flow; browsers can't call the device routes, so page script never gets the session token, and only terminal requests on six paths can use it. <a href="#sync">The sync view</a> counts person changes too, and still answers for a removed person.</p>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p><a href="#branches">Branch notes</a> give A and C.</p>
+<p>Your pick: a real session. <a href="#branches">Shared with machine login</a> says what B3 reuses.</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
 <p>Built on <a href="specification.html">S1–S10</a>; Better Auth and its OAuth provider at 1.7.11 as installed.</p>
@@ -63,7 +63,7 @@ flowchart TB
 <tr><td><code>organizations/revision-delivery-transitions.ts</code>; <code>organizations/authorization-revision-drainer.ts</code></td><td>New / changed</td><td>M1; the drainer becomes its runner.</td></tr>
 </tbody></table></div>
 
-<h2 id="device">Device login, option B</h2>
+<h2 id="device">Device login, with a real session (your pick)</h2>
 <ex-mermaid id="device-sequence" label="Device login keeps a real session" data-width="canvas"><script type="text/plain">
 sequenceDiagram
   participant C as CLI
@@ -127,13 +127,8 @@ sequenceDiagram
 </tbody></table></div>
 <p>An organization's person rows are only pushed after its fence row is acknowledged (<code>organization-not-delivered</code> defers them). The runner is today's drainer, keeping its batch loop, deadline and conditional ACK and defer writes (<code>authorization-revision-delivery-store.ts:229–291</code>). The retry time stays 60,000 ms as a due time, not a timer.</p>
 
-<h2 id="branches">Other device options</h2>
-<div class="ex-table-scroll" data-width="canvas"><table>
-<thead><tr><th>If you choose</th><th>Change</th></tr></thead>
-<tbody>
-<tr><td>A · Sessionless</td><td>Use <code>oauthDeviceAuthorization</code>; no <code>bearer()</code>; the contributor accepts a token without a session under a new profile, and Central's admission and r3 §4 bounds change to match (Lead A). Designed and reviewed before build.</td></tr>
-<tr><td>C · Browser only</td><td>No device parts; the “not available” exit stays and is documented.</td></tr>
-</tbody></table></div>
+<h2 id="branches">Shared with machine login</h2>
+<p>The <code>deviceAuthorization()</code> plugin, its approval page and the device-route containment are the base B3's machine login builds on. B3 admits its machine client beside the Fleet CLI client in the same <code>validateClient</code>. A person's device session is never a machine's identity: machines get B3's own enrollment and token. A later OIDC grant for unattended machines would end in that same B3 enrollment.</p>
 
 <h2 id="trace">Rule homes</h2>
 <div class="ex-table-scroll" data-width="canvas"><table>

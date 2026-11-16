@@ -26,7 +26,7 @@
 <p>The <a href="#calls">calls table</a>: where the sync view appears; how bearer sessions are contained.</p>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p>One open: <a href="#device">how <code>--device</code> keeps a session</a>.</p>
+<p>None open. You picked a real session for <code>--device</code> (<a href="#device">below</a>).</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
 <p>Quotes with transcript lines; nothing built.</p>
@@ -48,6 +48,9 @@
 <ex-card title="No Cloudflare crons" tone="done" icon="clock" tag="8 Nov · Switchboard trace" pick>
 <p><em>“you should have never done cloudflare crons”</em> (Switchboard <code>docs/wip/2026-11-08-b2-sign-in-additions-trace.md:279–289</code>, commit <code>6f94ed4d</code>).</p>
 </ex-card>
+<ex-card title="--device uses Better Auth's device flow with a real session" tone="done" icon="key" tag="15 Nov" pick>
+<p>You picked B: <em>“B · real session (recommended) with key cain doe ssoukdl good”</em>, then <em>“ok lets use real session”</em>. You asked whether it helps later OIDC or automated machine setup. It lays the device-code base that B3's machine login reuses. A person's session is never a machine's identity, though. Unattended machines need the later OIDC grant, which ends in B3's own enrollment; nothing here blocks it.</p>
+</ex-card>
 <ex-card title="Agent session tokens are minted by Central" tone="done" icon="users" tag="15 Nov" pick>
 <p><em>“central must mint the agent sesion tokens”</em>. That's Lead A's deliverable 5, not B2X.</p>
 </ex-card>
@@ -66,7 +69,7 @@
 <h2 id="history">How this choice got here</h2>
 <p>On 8 Nov the Implementer stopped: the OAuth device grant gives no session. I deferred <code>--device</code> and promised you an A/B page (push <code>01a1ba36-49af</code>). It wasn't brought to you; today's assumption audit flagged that (A1-04). This is that decision, with a third option found in the source since.</p>
 
-<h2 id="device">Open: how does <code>--device</code> keep a session?</h2>
+<h2 id="device">Decided: how <code>--device</code> keeps a session (for the record)</h2>
 <ex-mermaid id="device-now" label="Why the OAuth device grant fails today" data-width="canvas"><script type="text/plain">
 flowchart TB
   browser["Browser login"] --> session["Real session"] --> token["Token with session ID"]
@@ -120,13 +123,7 @@ flowchart TB
 <ex-card title="B · Real session" tone="planned" icon="key" tag="Recommended"><p><strong>Cost:</strong> a session secret on the machine; containment rules.</p></ex-card>
 <ex-card title="A · Sessionless" tone="planned" icon="package" tag="Contract change"><p><strong>Cost:</strong> no device session to end; protected commands can't step up; refresh lifetime to design.</p></ex-card>
 </ex-grid>
-<ex-callout title="Recommendation: B" tone="decision" icon="key"><p>It delivers <code>--device</code> and keeps “ending the session ends the token”, using only Better Auth's own parts.</p></ex-callout>
-<ex-callout title="If you defer" tone="risk" icon="clock"><p>B2X can't start: it would ship with device login unfinished.</p></ex-callout>
-<ex-choice id="choice-device" title="How should --device keep a session?">
-<ex-option id="device-b" title="B · Better Auth's device flow with a real session (recommended)"><template slot="summary">Session secret kept like the key; containment rules.</template></ex-option>
-<ex-option id="device-a" title="A · Sessionless tokens"><template slot="summary">Changed contract; no device session to end.</template></ex-option>
-<ex-option id="device-c" title="C · Browser only"><template slot="summary">--device stays unavailable.</template></ex-option>
-</ex-choice>
+<ex-callout title="Your pick: B" tone="decision" icon="key"><p>A real session. It delivers <code>--device</code> and keeps “ending the session ends the token” and step-up working, using only Better Auth's own parts. The other options are gone from the design pages.</p></ex-callout>
 </ex-document>
 </body>
 </html>

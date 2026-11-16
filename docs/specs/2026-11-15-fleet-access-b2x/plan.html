@@ -20,14 +20,14 @@
 </nav></ex-nav>
 <ex-document id="doc">
 <h1>B2X · Person tokens and revocation: Plan</h1>
-<p>Four packets. <strong>Starts when B2 is merged, you have answered the device choice, the unchosen options are removed from these pages and rechecked, Lead A's Central rows in the r3 table are delivered or explicitly scheduled, and you give the go-ahead.</strong> B2X can't ship with device login left as an unfinished row.</p>
+<p>Four packets. <strong>Starts when B2 is merged, these pages (with your device pick applied) are rechecked and approved by you, Lead A's Central rows in the r3 table are delivered or explicitly scheduled, and you give the go-ahead.</strong> B2X can't ship with device login left as an unfinished row.</p>
 
 <h2 id="three">The three things for you</h2>
 <ex-callout title="1 · What to check" tone="note" icon="shield-check">
 <p>Lead A's rows are named as a dependency; if any is missing at acceptance, it comes to you as outstanding, not passed.</p>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p>The device choice changes packet 1's device steps.</p>
+<p>Your pick, a real session, sets packet 1's device steps.</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
 <p>The Reviewer judges against your words and the approved additions, not this plan.</p>
@@ -36,7 +36,7 @@
 <h2 id="order">Order</h2>
 <ex-mermaid id="order-picture" label="B2X delivery" data-width="canvas"><script type="text/plain">
 flowchart TB
-  pre["B2 merged · device choice · Lead A rows · go-ahead"] --> build["Implementer"]
+  pre["B2 merged · pages approved · Lead A rows · go-ahead"] --> build["Implementer"]
   build --> verify["Verifier, joint pairings, Sunclaw"]
   verify --> review["Reviewer"]
   review --> accept["Lead acceptance"]
@@ -49,7 +49,7 @@ flowchart TB
 
 <h2 id="implementer">Packet 1 · Implementer</h2>
 <ol>
-<li><strong>Device (option B).</strong> <code>deviceAuthorization({ validateClient })</code> in <code>provider-configuration.ts</code> (no <code>bearer()</code>); <code>response-release/terminal-session.ts</code>: browser-or-terminal classification, device routes terminal-only, terminal bearer session converted with <code>better-call</code>'s <code>serializeSignedCookie</code> on the six paths, <code>organization/list</code> admitted only there; <code>pages/device-approval-page.tsx</code> and island.</li>
+<li><strong>Device (real session).</strong> <code>deviceAuthorization({ validateClient })</code> in <code>provider-configuration.ts</code> (no <code>bearer()</code>); <code>response-release/terminal-session.ts</code>: browser-or-terminal classification, device routes terminal-only, terminal bearer session converted with <code>better-call</code>'s <code>serializeSignedCookie</code> on the six paths, <code>organization/list</code> admitted only there; <code>pages/device-approval-page.tsx</code> and island.</li>
 <li><strong>CLI.</strong> <code>fleet/device-login-transitions.ts</code> (M3) and <code>fleet/device-login.ts</code> with an injected <code>wait</code>; session secret in <code>ProofKeyStore</code>; remove the “not available” exit and its test; organization selection and second-factor prompts.</li>
 <li><strong>Sync view.</strong> The <code>organizationWithPeople</code> scope in <code>authorization-revision-delivery-store.ts</code> (one read); <code>better-auth/access-sync.ts</code> resolving a person's retained subject in this organization by email; M2 island; status card on the admin page; member and removed-person line on the lookup page.</li>
 <li><strong>Delivery.</strong> <code>organizations/revision-delivery-transitions.ts</code> (M1); the drainer as its runner with the same writes; fix the stale comment.</li>
@@ -69,7 +69,7 @@ flowchart TB
 <thead><tr><th>Rule</th><th>Evidence</th><th>State</th></tr></thead>
 <tbody>
 <tr><td>S1, S2</td><td>V1 on both pairings</td><td>Not started</td></tr>
-<tr><td>S3, S4</td><td>V2; your choice</td><td>Awaiting your answer</td></tr>
+<tr><td>S3, S4</td><td>V2</td><td>Not started</td></tr>
 <tr><td>S5, S7</td><td>V3</td><td>Not started</td></tr>
 <tr><td>S6</td><td>V4</td><td>Not started</td></tr>
 <tr><td>S8</td><td>Every r3 row observed, Lead A rows included</td><td>Not started</td></tr>

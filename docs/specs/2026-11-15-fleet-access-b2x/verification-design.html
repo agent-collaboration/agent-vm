@@ -27,7 +27,7 @@
 <p>V2 signs in with <code>--device</code>, then deletes the device session and requires Central to refuse the token. V4 removes a member, holds Central's ACK, and requires “waiting”, then “reached” only after the ACK lands. The <a href="#r3">r3 table</a> gives every counterexample an owner.</p>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p>V2 follows your device choice.</p>
+<p>V2 proves your pick: device login with a real session.</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
 <p>Each row traces to <a href="specification.html">Specification</a>. A recording Central peer never stands in for real Central here.</p>
@@ -39,7 +39,7 @@
 <h2 id="V1">V1 · Tokens and refresh (S1, S2)</h2>
 <p>Kept and run against real Central: <code>person-fleet-token.host.e2e.test.ts:198–344</code>, <code>fleet-cli.host.e2e.test.ts:173–243</code>. Added: session expiry ten seconds away with native expiry five minutes away → Central refuses at the session deadline, equality included; snapshot paused past S+L with session and native expiry still future → refused. <strong>Wrong builds:</strong> admit until native expiry only; redate the snapshot.</p>
 
-<h2 id="V2">V2 · Device login (S3, S4), option B</h2>
+<h2 id="V2">V2 · Device login with a real session (S3, S4)</h2>
 <ol>
 <li>Run the real CLI with <code>--device</code> and controlled waits; a test browser session approves the printed code on the approval page. The CLI ends signed in; the stored token's claims name a real session ID; a Fleet command succeeds against Central.</li>
 <li>Redeem the same device code again: refused. Deny a second code: CLI ends failed. Expire a third on Better Auth's clock: failed.</li>

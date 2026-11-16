@@ -27,7 +27,7 @@
 <p>S3: a device-login token carries a real session and dies with it. S6: “reached Central” appears only from a fresh read after Central's acknowledgement. S8: every r3 counterexample has an owner.</p>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p>S3 follows your device choice; each option's rule is stated.</p>
+<p>S3 follows your 15 Nov pick: <code>--device</code> uses Better Auth's device flow with a real session.</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
 <p>Sources on <a href="requirements.html">Requirements</a>. Nothing built.</p>
@@ -49,10 +49,10 @@
 <p>From X1, X2. Issuance MUST keep its one-snapshot read and every refusal in <code>person-fleet-issuance.ts</code>, the fixed snapshot bound S+L (L ≤ 300,000 ms), the session and native bounds with equality expired, and the policy-mismatch refusal. A token never outlives the minimum of the three.</p>
 <h3 id="S2">S2 · Refresh with the same key</h3>
 <p>From X3. Refresh MUST need the same key; another key fails without consuming the valid refresh. Each refresh is a fresh issuance from a fresh snapshot. A failed refresh clears the CLI's stored key and refresh credential.</p>
-<h3 id="S3">S3 · <code>--device</code> login (your choice)</h3>
-<p>From X4. <strong>B (recommended), Better Auth's own device flow with a real session:</strong> <code>--device</code> prints a code and URL; the person approves it in a signed-in browser; the CLI polls, redeems the code once and receives a new native session; it then completes the existing PKCE authorization with that session and exchanges as today, so the token carries that session's ID. A redeemed, denied or expired code can't be redeemed again. The new session starts with no second-factor confirmation; protected actions ask for it in the CLI. With several memberships the CLI asks which organization. The session secret is kept like the refresh credential (Keychain, else memory only). A browser can't call the device code or token routes, so no page script ever receives a session token; only the terminal can use the device session, on six named paths. <strong>A, sessionless tokens:</strong> the OAuth device grant as shipped; tokens carry no session of their own, so there's no device session to end or expire; they're still refused after any role, membership or person-wide session-end change (person revisions, S5) and at expiry; the contributor and Central change to accept them, and their refresh lifetime needs designing. <strong>C, browser only:</strong> <code>--device</code> keeps saying it's not available.</p>
+<h3 id="S3">S3 · <code>--device</code> login (your pick: a real session)</h3>
+<p>From X4 and your 15 Nov pick (“ok lets use real session”). <strong>Better Auth's own device flow with a real session:</strong> <code>--device</code> prints a code and URL; the person approves it in a signed-in browser; the CLI polls, redeems the code once and receives a new native session; it then completes the existing PKCE authorization with that session and exchanges as today, so the token carries that session's ID. A redeemed, denied or expired code can't be redeemed again. The new session starts with no second-factor confirmation; protected actions ask for it in the CLI. With several memberships the CLI asks which organization. The session secret is kept like the refresh credential (Keychain, else memory only). A browser can't call the device code or token routes, so no page script ever receives a session token; only the terminal can use the device session, on six named paths.</p>
 <h3 id="S4">S4 · Ending the session ends the device token</h3>
-<p>Under B: signing out or deleting the device session MUST bump the person's revisions exactly as for a browser session; Central refuses the old token after the ACK; refresh fails. Under A this rule is replaced by S5 alone.</p>
+<p>Signing out or deleting the device session MUST bump the person's revisions exactly as for a browser session; Central refuses the old token after the ACK; refresh fails.</p>
 
 <h2 id="revocation">Revocation</h2>
 <h3 id="S5">S5 · Revocation follows the real change</h3>
@@ -66,9 +66,9 @@
 
 <h2 id="quality">Code and proof</h2>
 <h3 id="S9">S9 · Old code removed</h3>
-<p>Remove the “not available” exit for <code>--device</code> once the chosen device path ships (kept under C); replace the drainer's inline decisions with M1; correct the stale periodic comment.</p>
+<p>Remove the “not available” exit for <code>--device</code> when the device path ships; replace the drainer's inline decisions with M1; correct the stale periodic comment.</p>
 <h3 id="S10">S10 · Machines and Hegel</h3>
-<p>Row delivery (M1), the owner's sync view (M2) and the CLI's device login (M3, under A or B) MUST be closed unions with pure transitions, inline <code>x satisfies never</code>, effects as data run after commit, and Hegel families. Issuance's existing pure decision gets its own Hegel family. Real conditional-write races run on D1 and better-sqlite3.</p>
+<p>Row delivery (M1), the owner's sync view (M2) and the CLI's device login (M3) MUST be closed unions with pure transitions, inline <code>x satisfies never</code>, effects as data run after commit, and Hegel families. Issuance's existing pure decision gets its own Hegel family. Real conditional-write races run on D1 and better-sqlite3.</p>
 
 <h2 id="trace">Rules to proof</h2>
 <div class="ex-table-scroll" data-width="canvas"><table>
