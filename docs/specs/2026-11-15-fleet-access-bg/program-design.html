@@ -63,7 +63,7 @@ flowchart TB
 </tbody></table></div>
 
 <h2 id="confirm">Confirming a factor again, after <code>/owner-ready</code> goes</h2>
-<p>Two live callers point at <code>/owner-ready</code>: the Fleet CLI opens it when Central asks for a recent second factor (<code>sign-in-owner-cli/src/fleet/fleet-cli-commands.ts:154–155</code>), and the factor forms return to it (<code>pages/factor-page.tsx:27–28</code> <code>ownerReadyLocation</code>, used by <code>factor-enrollment-page.ts:57</code>). Both move to <code>/account/confirm</code>: a page with the app-code and recovery-code forms (the existing factor controls) for an enrolled person, which on success shows “Confirmed. Go back to your terminal” and, when it carries an <code>authorize</code> destination, continues it as S3 says. The CLI then retries its command once, as today. <code>ownerReadyLocation</code> becomes <code>confirmLocation</code>; its tests and <code>people-organization-page.host.e2e.test.ts:170–201</code> (expired confirmation → confirm again) are retargeted, not dropped.</p>
+<p>Three live callers point at <code>/owner-ready</code>, with two different purposes. <strong>Organization recovery:</strong> the organization admin page redirects a signed-in visitor with no membership matching the session's current choice (<code>sign-in-http-handler.ts:152–156</code>); that redirect moves to <code>/setup</code>, so the page decision shows the pending step, the chooser or the account page. <strong>Confirmation:</strong> the Fleet CLI opens it when Central asks for a recent second factor (<code>sign-in-owner-cli/src/fleet/fleet-cli-commands.ts:154–155</code>), and the factor forms return to it (<code>pages/factor-page.tsx:27–28</code> <code>ownerReadyLocation</code>, used by <code>factor-enrollment-page.ts:57</code>). Those two move to <code>/account/confirm</code>: a page with the app-code and recovery-code forms (the existing factor controls) for an enrolled person, which on success shows “Confirmed. Go back to your terminal” and, when it carries an <code>authorize</code> destination, continues it as S3 says. The CLI then retries its command once, as today. <code>ownerReadyLocation</code> becomes <code>confirmLocation</code>; its tests and <code>people-organization-page.host.e2e.test.ts:170–201</code> (expired confirmation → confirm again) are retargeted, not dropped.</p>
 
 <h2 id="m1">M1 · The page decision</h2>
 <ex-code lang="typescript" title="setup-flow/decide-setup-page.ts"><script type="text/plain">
@@ -90,7 +90,9 @@ type SetupPage =
   | { kind: 'invitation'; invitationId: Uuid7 }
   | { kind: 'invitationUnavailable'; reason: 'not-for-you' | 'used' | 'expired' | 'canceled' | 'not-found' }
   | { kind: 'chooseOrganization' }
-  | { kind: 'continueCommandLine'; authorize: string; deadlineMs: EpochMilliseconds }
+  | { kind: 'continueCommandLine'; authorize: string; deadlineMs: EpochMilliseconds;
+      selection: { kind: 'already-selected' } | { kind: 'select-first'; organizationId: OrganizationId };
+      owner: boolean }
   | { kind: 'account'; notice: 'commandLineExpired' | null };
 export function decideSetupPage(facts: SetupFacts, destination: ReturnDestination, now: EpochMilliseconds): SetupPage;
 </script></ex-code>
@@ -105,8 +107,8 @@ export function decideSetupPage(facts: SetupFacts, destination: ReturnDestinatio
 <tr><td>invitation destination live-for-you</td><td>invitation</td></tr>
 <tr><td>invitation destination not-for-you / used / expired / canceled / not-found</td><td>invitationUnavailable(reason): a message and one action (sign out and use another account; or go to your account); no organization or email shown</td></tr>
 <tr><td>commandLine, now &lt; deadline, several memberships, no current organization</td><td>chooseOrganization</td></tr>
-<tr><td>commandLine, now &lt; deadline, one membership, no current organization (a cleared choice)</td><td>continueCommandLine; M3 first selects that membership with native set-active (a POST from the script; GET still writes nothing)</td></tr>
-<tr><td>commandLine, now &lt; deadline, current organization set</td><td>continueCommandLine</td></tr>
+<tr><td>commandLine, now &lt; deadline, one membership, no current organization (a cleared choice)</td><td>continueCommandLine with <code>selection: select-first(that organization)</code>; the page passes it to M3, which selects with native set-active (a POST from the script; GET still writes nothing)</td></tr>
+<tr><td>commandLine, now &lt; deadline, current organization set</td><td>continueCommandLine with <code>selection: already-selected</code></td></tr>
 <tr><td>commandLine, now ≥ deadline</td><td>account, notice commandLineExpired</td></tr>
 <tr><td>otherwise</td><td>account</td></tr>
 </tbody></table></div>
@@ -123,9 +125,10 @@ export function decideSetupPage(facts: SetupFacts, destination: ReturnDestinatio
 <div class="ex-table-scroll" data-width="canvas"><table>
 <thead><tr><th>From</th><th>Event</th><th>Next and effects</th></tr></thead>
 <tbody>
-<tr><td>ready(authorize, deadline)</td><td><code>start</code>, now &lt; deadline, owner</td><td>bootstrapping; [post-bootstrap]</td></tr>
-<tr><td>ready</td><td><code>start</code>, now &lt; deadline, member</td><td>navigating; [check-deadline-then-navigate(authorize)]</td></tr>
-<tr><td>ready(sole membership, no current)</td><td><code>start</code>, now &lt; deadline</td><td>selecting; [set-active(sole id)]; on success → as above; on failure → retryable</td></tr>
+<tr><td>ready(input), <code>selection: select-first(id)</code></td><td><code>start</code>, now &lt; deadline</td><td>selecting; [set-active(id)] (this row comes first: selection precedes bootstrap and navigation)</td></tr>
+<tr><td>selecting</td><td><code>selected</code> / <code>select-failed</code></td><td>ready(input with <code>already-selected</code>), then the rows below / retryable</td></tr>
+<tr><td>ready(input), <code>already-selected</code>, owner</td><td><code>start</code>, now &lt; deadline</td><td>bootstrapping; [post-bootstrap]</td></tr>
+<tr><td>ready(input), <code>already-selected</code>, member</td><td><code>start</code>, now &lt; deadline</td><td>navigating; [check-deadline-then-navigate(authorize)]</td></tr>
 <tr><td>bootstrapping</td><td><code>bootstrapped</code></td><td>navigating; [check-deadline-then-navigate]</td></tr>
 <tr><td>bootstrapping</td><td><code>bootstrap-failed</code></td><td>retryable; [show Try again]</td></tr>
 <tr><td>any</td><td><code>deadline-reached</code></td><td>expired; [go /account?notice=commandLineExpired]</td></tr>
