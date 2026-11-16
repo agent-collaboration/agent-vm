@@ -20,18 +20,199 @@
 </nav></ex-nav>
 <ex-document id="doc">
 <h1>B2 · Central organizations: Decisions</h1>
-<p>Your decisions, my calls with whether they should have been yours, what was there before, and four choices.</p>
+<p>B2 makes organizations on Central real: the owner creates workspaces, sees the full list and history, and the organization keeps working when sign-in's signing key changes. Four choices are yours. Each one below explains the background, gives a concrete example, and shows what each option means in practice.</p>
 
 <h2 id="three">The three things for you</h2>
 <ex-callout title="1 · What to check" tone="note" icon="shield-check">
-<p>The <a href="#calls">calls table</a>, especially: the engine permission now rolls out with one revision per organization, not the earlier two-step with an issuance pause; and how production maintenance is run.</p>
+<p>The four choices below, in order. Each ends with my recommendation and what happens if you don't answer yet.</p>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p>Four open: <a href="#retry">lost create replies</a>, <a href="#retire">key retirement pause</a>, <a href="#console">engine console scope</a>, <a href="#maintenance">how production maintenance runs</a>.</p>
+<p><a href="#retry">1 · A lost “create workspace” reply</a> · <a href="#retire">2 · Changing the signing key</a> · <a href="#console">3 · The engine repair console</a> · <a href="#maintenance">4 · How you run maintenance</a>.</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
-<p>Decided cards quote you with transcript lines. Nothing here is built.</p>
+<p>Decided cards quote you. Central facts are from codex-router <code>e7b709f6a</code>; sign-in facts from Switchboard <code>f3b2b88b</code>. Nothing here is built.</p>
 </ex-callout>
+
+<h2 id="open">Your four choices</h2>
+
+<h3 id="retry">1 · What happens when the reply to “create workspace” is lost?</h3>
+<p><strong>Background.</strong> When you press Create on the admin page, the page sends Central a request with an <em>operation ID</em>, a unique ID the server makes for that one attempt. Central creates the workspace, using the operation ID as the workspace's ID, and keeps its answer in a request ledger under that ID. If the reply is lost on the way back, for example Wi-Fi drops or the tab closes, the page can send the <em>same</em> operation ID again. Central then returns the stored answer instead of creating a second workspace. Central keeps those stored answers for <strong>24 hours</strong> (<code>organization_workspace_plans.rs:103–135</code>).</p>
+<ex-mermaid id="retry-mech" label="A lost reply and its retry" data-width="canvas"><script type="text/plain">
+sequenceDiagram
+  participant P as Admin page
+  participant C as Central
+  participant L as Central's request ledger
+  P->>C: create "billing" (operation 0193…)
+  C->>L: store answer under 0193…
+  C--xP: reply lost
+  Note over P: you press Try again
+  P->>C: create "billing" (same operation 0193…)
+  alt within 24 hours
+    L-->>C: stored answer
+    C-->>P: "Created" (the original answer)
+  else after 24 hours
+    C-->>P: "name in use" (the ledger entry is gone, but the workspace exists)
+  end
+</script></ex-mermaid>
+<p><strong>Example.</strong> Monday 10:00 you create “billing” and your connection drops before the reply arrives. You don't know if it worked. On Tuesday at 11:00, more than 24 hours later, you press Try again.</p>
+<ex-compare label="After 24 hours" data-width="canvas">
+<section id="retry-24h" label="A · 24 hours, then check by ID (today's Central)" icon="clock">
+<section data-compare-row="sees"><p><strong>What you see on Tuesday</strong></p><p>“Already created on your earlier attempt”, with the workspace. Central says “name in use”, so the page looks up the workspace whose ID is your operation ID. If it's there with the same name, it was yours. If another workspace holds the name, you're told the name is taken.</p></section>
+<section data-compare-row="changes"><p><strong>What changes</strong></p><p>Nothing on Central. One lookup in the page's flow (M4).</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>The reply after a day is built from that lookup, not Central's byte-for-byte original. You see the same outcome either way.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="retry-24h-pic" label="Option A"><script type="text/plain">
+flowchart TB
+  r["Try again after 24 h"] --> n["Central: name in use"]
+  n --> l["Look up workspace with ID = operation ID"]
+  l -->|"found, same name"| own["Already created by you"]
+  l -->|"not found"| taken["Name taken by another workspace"]
+</script></ex-mermaid></section>
+</section>
+<section id="retry-forever" label="B · Central keeps the original answer forever" icon="package">
+<section data-compare-row="sees"><p><strong>What you see on Tuesday</strong></p><p>The exact original reply, whenever you retry, even a year later.</p></section>
+<section data-compare-row="changes"><p><strong>What changes</strong></p><p>Central stops expiring its request ledger for creates. That changes stored data on Central, so Lead A designs it with you first.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>The ledger grows without limit, and B2 can't build until Lead A's change lands.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="retry-forever-pic" label="Option B"><script type="text/plain">
+flowchart TB
+  r["Try again any time"] --> o["Original answer from the ledger"]
+</script></ex-mermaid></section>
+</section>
+</ex-compare>
+<ex-callout title="Recommendation: A" tone="decision" icon="clock"><p>You get the right outcome in both cases, and nothing changes on Central. It's yours because the approved text said “the original answer” with no time limit, and A narrows that to 24 hours plus the lookup.</p></ex-callout>
+<ex-callout title="If you defer" tone="risk" icon="clock"><p>Create still works and retries within a day still work. Only the after-24-hours case isn't counted as delivered.</p></ex-callout>
+<ex-choice id="choice-retry" title="How long is a lost create reply recoverable?">
+<ex-option id="retry-a" title="A · 24 hours, then check by ID (recommended)"><template slot="summary">Today's Central plus one lookup.</template></ex-option>
+<ex-option id="retry-b" title="B · Original answer forever"><template slot="summary">Lead A changes Central's ledger first.</template></ex-option>
+</ex-choice>
+
+<h3 id="retire">2 · Changing sign-in's signing key: may sign-in pause for a few minutes?</h3>
+<p><strong>Background.</strong> Each organization has a signed statement from sign-in (“organization X exists, set up by this owner”). Central checks it with sign-in's public key before doing any work for that organization. Rotating the key is rare: scheduled, or after a suspected leak. Rotating means:</p>
+<ol>
+<li>re-sign every organization's statement with the new key, including idle ones;</li>
+<li>stop publishing the old key;</li>
+<li>make sure every Central has forgotten it (310 seconds; see <a href="specification.html#S11">S11</a>);</li>
+<li>restart each Central, and check every organization still works.</li>
+</ol>
+<p><strong>The danger.</strong> A request already in progress can sign with the <em>old</em> key just after step 1 finished, and land after step 2. That organization is left with a statement Central can't verify, and its Fleet calls fail until someone notices and repairs it.</p>
+<ex-mermaid id="retire-danger" label="Why in-flight work matters" data-width="canvas"><script type="text/plain">
+sequenceDiagram
+  participant R as Key rotation
+  participant W as A sign-in request already running
+  participant S as Stored statement for org X
+  R->>S: re-sign X with the NEW key
+  W->>W: signed X's renewal with the OLD key (started earlier)
+  R->>R: withdraw the old key
+  W->>S: writes the OLD-key statement over the new one
+  Note over S: Central can't verify X any more
+</script></ex-mermaid>
+<p><strong>Example.</strong> You rotate the key on a Sunday morning. An owner in another organization is creating a workspace at that moment, and their request renews their organization's statement.</p>
+<ex-compare label="Key rotation" data-width="canvas">
+<section id="retire-window" label="A · A short maintenance window" icon="clock">
+<section data-compare-row="sees"><p><strong>What people see</strong></p><p>For roughly 10 to 15 minutes, new sign-ins, organization creation and admin actions answer “Maintenance, try again shortly”. Command lines already signed in keep working until their tokens expire (at most 5 minutes). That owner's workspace creation waits; they retry after the window.</p></section>
+<section data-compare-row="changes"><p><strong>What changes</strong></p><ul>
+<li>A deployment setting that turns maintenance on.</li>
+<li>A one-row <code>maintenance_pause</code> table. Every write of an organization statement checks it, so a request that started before the pause can't save its old-key statement afterwards.</li>
+<li>The steps: pause, drain, re-sign all, withdraw, wait 5 min 10 s, restart Central, check, reopen.</li>
+</ul></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Minutes without new sign-ins once in a long while, and one new table (choosing A approves it).</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="retire-window-pic" label="Option A"><script type="text/plain">
+flowchart TB
+  stop["Maintenance on; pause row written"] --> drain["In-flight writes can't commit"]
+  drain --> re["Re-sign every organization"] --> w["Withdraw old key"]
+  w --> wait["Wait 5 min 10 s"] --> rs["Restart Central, check all"] --> open["Maintenance off"]
+</script></ex-mermaid></section>
+</section>
+<section id="retire-live" label="B · No pause: a live key version" icon="key">
+<section data-compare-row="sees"><p><strong>What people see</strong></p><p>Nothing. Sign-in keeps working throughout.</p></section>
+<section data-compare-row="changes"><p><strong>What changes</strong></p><p>A stored “key version” number. Every place that signs is fenced on it, so a signer still holding the old version can't save. Central also needs a matching rule. This is new machinery in both sign-in and Central, not in the approved B2, and would be designed before build.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>A second design across two systems, for an operation you run rarely.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="retire-live-pic" label="Option B"><script type="text/plain">
+flowchart TB
+  e["Key version N+1 stored"] --> f["Signers on version N refused"] --> w["Withdraw while live"]
+</script></ex-mermaid></section>
+</section>
+</ex-compare>
+<ex-callout title="Recommendation: A" tone="decision" icon="clock"><p>Rotation is rare and you run it yourself, so a planned 10 to 15 minute window is far less machinery than a live version scheme across two systems.</p></ex-callout>
+<ex-callout title="If you defer" tone="risk" icon="clock"><p>Everything except the rotation procedure is built; approved rule 6 (“organizations survive a key change”) stays unproven.</p></ex-callout>
+<ex-choice id="choice-retire" title="May key retirement pause sign-in?">
+<ex-option id="retire-a" title="A · Short maintenance window (recommended)"><template slot="summary">A pause setting and a one-row pause table.</template></ex-option>
+<ex-option id="retire-b" title="B · No pause, live key version"><template slot="summary">New machinery in sign-in and Central, designed first.</template></ex-option>
+</ex-choice>
+
+<h3 id="console">3 · The engine repair console: in B2, or its own feature later?</h3>
+<p><strong>Background.</strong> Lead A's new Central engine runs background work for each organization: timers, automations, and moving old notices and workspace drains onto the engine. When a job fails for good, the engine <em>retires</em> it rather than retrying forever. Someone then needs to see the retired jobs and either retry or discard each one. Central offers four routes for that: health, list retired, retry, discard. They need a new owner permission, <code>organization:repairWork</code>. B2 adds that permission either way, because Central's engine expects it.</p>
+<ex-mermaid id="console-mech" label="What the console would do" data-width="canvas"><script type="text/plain">
+flowchart TB
+  job["Background job fails for good"] --> retired["Engine retires it"]
+  retired --> list["Owner lists retired jobs"]
+  list --> retry["Retry it"]
+  list --> discard["Discard it"]
+</script></ex-mermaid>
+<p><strong>Example.</strong> An automation timer in your organization keeps failing because its workspace was deleted. The engine retires it.</p>
+<ex-compare label="Engine console" data-width="canvas">
+<section id="console-later" label="A · B2 adds the permission; the console is its own feature" icon="path">
+<section data-compare-row="sees"><p><strong>What you see now</strong></p><p>Nothing new on the page. The retired job stays recorded on Central; nothing is lost. You can't retry or discard it from Switchboard until the console feature ships.</p></section>
+<section data-compare-row="changes"><p><strong>What changes in B2</strong></p><p>The permission in the owner role, and its rollout (one revision per organization).</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Repairs wait for the later feature, “Engine operations: inspect and repair retired work”.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="console-later-pic" label="Option A"><script type="text/plain">
+flowchart TB
+  p["repairWork in the owner role (B2)"] --> later["Console: its own feature later"]
+</script></ex-mermaid></section>
+</section>
+<section id="console-now" label="B · The whole console inside B2" icon="gear">
+<section data-compare-row="sees"><p><strong>What you see</strong></p><p>An “Engine” section on the admin page: health, the list of retired jobs with their reason, and Retry and Discard buttons. The CLI gets the same commands. You retry or discard the timer yourself.</p></section>
+<section data-compare-row="changes"><p><strong>What changes in B2</strong></p><p>Four forwarded routes with typed results (Retry and Discard carry their own operation ID, like create), paging, a guarded page section and CLI commands.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>B2 grows by a whole feature, which would be designed and reviewed before B2 builds.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="console-now-pic" label="Option B"><script type="text/plain">
+flowchart TB
+  page["Admin page"] --> eng["Engine section"]
+  cli["CLI"] --> eng
+  eng --> central["Central's four engine routes"]
+</script></ex-mermaid></section>
+</section>
+</ex-compare>
+<ex-callout title="Recommendation: A" tone="decision" icon="path"><p>B2 stays one finishable feature, and the console gets its own design and review. Choose B if you want to repair retired work from Switchboard as soon as B2 ships.</p></ex-callout>
+<ex-callout title="If you defer" tone="risk" icon="clock"><p>The permission still lands; no console is built.</p></ex-callout>
+<ex-choice id="choice-console" title="Where does the engine console land?">
+<ex-option id="console-a" title="A · Permission now, console later (recommended)"><template slot="summary">Smallest B2.</template></ex-option>
+<ex-option id="console-b" title="B · Whole console in B2"><template slot="summary">Designed and reviewed first.</template></ex-option>
+</ex-choice>
+
+<h3 id="maintenance">4 · How do you start a maintenance operation in production?</h3>
+<p><strong>Background.</strong> Two operations need to run inside the sign-in service, because only it holds Better Auth's private keys and its database:</p>
+<ul>
+<li>the key rotation above;</li>
+<li>the one-time “permission digest roll” that rolls out the new permission.</li>
+</ul>
+<p>Today there's no way to trigger such an operation. The Node host has no command-line tool, and the Cloudflare host only has the gateway's management binding.</p>
+<p><strong>Example.</strong> You decide to rotate the key. What do you actually do?</p>
+<ex-compare label="Maintenance invocation" data-width="canvas">
+<section id="mt-route" label="A · An owner-only page on the sign-in site" icon="lock">
+<section data-compare-row="sees"><p><strong>What you do</strong></p><p>Sign in as the deployment owner, confirm your second factor, open the maintenance page, press “Prepare key rotation”, and read the report. Same on Cloudflare and Node.</p></section>
+<section data-compare-row="changes"><p><strong>What changes</strong></p><p>One project Better Auth endpoint and page. Everyone except the configured owner, with a factor confirmed in the last 15 minutes, gets “not found”.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>A deployment-wide operation sits on the public sign-in site. Someone who stole your session <em>and</em> your second factor could start a rotation. They could already do as much damage as the owner in other ways.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="mt-route-pic" label="Option A"><script type="text/plain">
+flowchart TB
+  owner["You: owner, fresh second factor"] --> page["/maintenance page"] --> op["Rotate key / roll digest"]
+</script></ex-mermaid></section>
+</section>
+<section id="mt-private" label="B · A private door, opened only for the job" icon="gear">
+<section data-compare-row="sees"><p><strong>What you do</strong></p><p>On Cloudflare: deploy a tiny temporary Worker that can reach sign-in's private entry, call it with a secret from your vault, then delete it. On Node: log in to the server and run a new <code>sign-in-maintenance</code> command.</p></section>
+<section data-compare-row="changes"><p><strong>What changes</strong></p><p>A private Worker entry, a throwaway maintenance Worker config, and a new Node command.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Two different procedures, and a deploy-then-delete step each time. Nothing on the public site.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="mt-private-pic" label="Option B"><script type="text/plain">
+flowchart TB
+  mw["Temporary maintenance Worker"] --> pe["Private entry"] --> op["Rotate key / roll digest"]
+  node["Node: sign-in-maintenance command"] --> op
+</script></ex-mermaid></section>
+</section>
+</ex-compare>
+<ex-callout title="Recommendation: A" tone="decision" icon="lock"><p>One procedure on both hosts, behind the strongest identity you have: deployment owner plus a fresh second factor. Choose B if you want nothing deployment-wide reachable on the public site.</p></ex-callout>
+<ex-callout title="If you defer" tone="risk" icon="clock"><p>B, the private door, stays the design and nothing public is built. B2 can't start until you answer, because only one entry gets built.</p></ex-callout>
+<ex-choice id="choice-maintenance" title="How do you run production maintenance?">
+<ex-option id="maintenance-a" title="A · Owner-only page on sign-in (recommended)"><template slot="summary">Same on both hosts.</template></ex-option>
+<ex-option id="maintenance-b" title="B · Private door via a temporary Worker or a Node command"><template slot="summary">Off the public site; more steps.</template></ex-option>
+</ex-choice>
 
 <h2 id="decided">Already decided by you</h2>
 <ex-card title="Old data: backup only" tone="done" icon="package" tag="13 Nov · Central transcript 97881" pick>
@@ -57,160 +238,21 @@
 <div class="ex-table-scroll" data-width="canvas"><table>
 <thead><tr><th>Call</th><th>Why</th><th>Should it have been yours?</th></tr></thead>
 <tbody>
-<tr><td>Engine permission rolls out with one fence revision per organization; the earlier draft's stop-then-resume and issuance pause are dropped</td><td>Lead A confirmed Central never admits on a mismatched digest and a repairWork token is inert until the engine routes exist (<code>request_admission.rs:135–137,182–196</code>; push <code>01a1e186-03f8</code>). The window refuses, it doesn't leak.</td><td>Possibly: until Central acknowledges, new tokens get “authorization sync required” and clients retry; the length of that window hasn't been measured.</td></tr>
-<tr><td>Key retirement signs with exactly the key you name, and a crash is handled by running the same phase again</td><td>The default key could otherwise be a third key; nothing about a run is stored.</td><td>No.</td></tr>
-<tr><td>Status shows facts, not advice: expiry, pending, counts, last outcome</td><td>Rule 5 says the record keeps the condition for the page; notifications come later.</td><td>No.</td></tr>
-<tr><td>Ready organizations without a local record are seeded on first use and by key retirement, as today</td><td>Existing behaviour and test (<code>organization-statement.host.e2e.test.ts:624–654</code>).</td><td>No.</td></tr>
-<tr><td>Settlement of a send ignores the clock</td><td>An answer to bytes already sent is still true after they expire; dropping it would strand the organization.</td><td>No.</td></tr>
-<tr><td>Unknown record kinds keep failing the history page</td><td>Safer than silently skipping something we don't understand.</td><td>Possibly.</td></tr>
+<tr><td>The engine permission rolls out with one revision per organization; the earlier stop-then-resume with an issuance pause is dropped</td><td>Lead A confirmed Central never admits on a mismatched permission set, and a repairWork token does nothing until the engine routes exist (<code>request_admission.rs:135–137,182–196</code>). During the switch-over, new tokens are refused with “authorization sync required” until Central catches up; nothing leaks.</td><td>Possibly: how long that switch-over window lasts hasn't been measured.</td></tr>
+<tr><td>Key rotation signs with exactly the key you name, and a crash is handled by running the same step again</td><td>Otherwise Better Auth's default key could be a third key. Nothing about a run is stored.</td><td>No.</td></tr>
+<tr><td>Status shows facts, not advice: expiry, pending, counts, last outcome</td><td>Rule 5 keeps the condition on the page; notifications come later.</td><td>No.</td></tr>
+<tr><td>Ready organizations without a local record are seeded on first use and by key rotation, as today</td><td>Existing behaviour and test (<code>organization-statement.host.e2e.test.ts:624–654</code>).</td><td>No.</td></tr>
+<tr><td>An answer to a statement already sent settles even after it expires</td><td>The answer is still true; dropping it would strand the organization.</td><td>No.</td></tr>
+<tr><td>Unknown record kinds make the history page say “unavailable”</td><td>Safer than silently skipping something we don't understand.</td><td>Possibly.</td></tr>
 </tbody></table></div>
 
 <h2 id="before">What was there before</h2>
 <ul>
-<li>A workspace list guessed from the first 100 records; replaced by Central's directory.</li>
+<li>A workspace list guessed from the first 100 history records; replaced by Central's directory.</li>
 <li>A browser-made operation ID; replaced by a server-made UUIDv7.</li>
-<li>A hand-written page and custom dialog; replaced by the shared shell and the shipped confirmation.</li>
+<li>A hand-written page and custom dialog; replaced by the shared shell and Better Auth UI's shipped confirmation.</li>
 <li>A draft rollout with two revisions and a pause; replaced by one revision.</li>
 </ul>
-
-<h2 id="open">Open: your four choices</h2>
-<ex-mermaid id="current-model" label="Where the choices land" data-width="canvas"><script type="text/plain">
-flowchart TB
-  page["Admin page"] --> create["Create workspace: choice 1, lost replies"]
-  ops["Production maintenance"] --> retire["Key retirement: choice 2, pause or not"]
-  engine["Central engine"] --> console["Repair console: choice 3, here or later"]
-  class page,ops,engine slot1
-  class create,retire,console slot2
-</script></ex-mermaid>
-
-<h3 id="retry">1 · How long is a lost create reply recoverable?</h3>
-<ex-compare label="Lost create replies" data-width="canvas">
-<section id="retry-24h" label="A · 24 hours, then reconcile (today)" icon="clock">
-<section data-compare-row="sees"><p><strong>What you see</strong></p><p>A retry within a day gets the exact original answer. Later, a retry that hits “name in use” checks whether it was your own workspace and says so.</p></section>
-<section data-compare-row="changes"><p><strong>What changes</strong></p><p>Nothing on Central; one lookup on the page.</p></section>
-<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>After a day, the exact original answer is gone; the lookup covers the common case.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="retry-24h-pic" label="Option A"><script type="text/plain">
-flowchart TB
-  r["Retry"] --> d{"Within 24 h?"}
-  d -->|"yes"| o["Original answer"]
-  d -->|"no"| l["Lookup own workspace"]
-</script></ex-mermaid></section>
-</section>
-<section id="retry-forever" label="B · Original answer forever" icon="package">
-<section data-compare-row="sees"><p><strong>What you see</strong></p><p>A retry at any time gets the exact original answer.</p></section>
-<section data-compare-row="changes"><p><strong>What changes</strong></p><p>Lead A keeps Central's request ledger indefinitely. Today it keeps CreateWorkspace answers for 24 hours, so this changes stored data on Central. Lead A would design that change with you before B2 builds.</p></section>
-<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Unbounded ledger growth on Central; Lead A's work before B2 can build.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="retry-forever-pic" label="Option B"><script type="text/plain">
-flowchart TB
-  r["Retry any time"] --> o["Original answer from the ledger"]
-</script></ex-mermaid></section>
-</section>
-</ex-compare>
-<ex-grid cols="2" data-width="canvas">
-<ex-card title="A · 24 hours, then reconcile" tone="planned" icon="clock" tag="Recommended"><p><strong>Cost:</strong> exact answer gone after a day.</p></ex-card>
-<ex-card title="B · Forever" tone="planned" icon="package" tag="Central work"><p><strong>Cost:</strong> unbounded ledger.</p></ex-card>
-</ex-grid>
-<ex-callout title="Recommendation: A" tone="decision" icon="clock"><p>It's how Central works today and covers lost replies in practice. The approved text said “original answer” without a time limit, so this narrows it; that's why it's yours.</p></ex-callout>
-<ex-callout title="If you defer" tone="risk" icon="clock"><p>Create works as today; the after-24-hours behaviour isn't marked delivered.</p></ex-callout>
-<ex-choice id="choice-retry" title="How long is a lost create reply recoverable?">
-<ex-option id="retry-a" title="A · 24 hours, then reconcile (recommended)"><template slot="summary">Today's Central behaviour plus one lookup.</template></ex-option>
-<ex-option id="retry-b" title="B · Original answer forever"><template slot="summary">Lead A keeps the ledger indefinitely.</template></ex-option>
-</ex-choice>
-
-<h3 id="retire">2 · May key retirement pause sign-in?</h3>
-<ex-compare label="Key retirement" data-width="canvas">
-<section id="retire-window" label="A · Short maintenance window" icon="clock">
-<section data-compare-row="sees"><p><strong>What you see</strong></p><p>During the window, new sign-ins wait and existing work drains. Then re-sign and withdraw. Wait 5 minutes 10 seconds, so any key response Central requested before withdrawal has expired. Restart each Central (a deploy on Cloudflare), then check and reopen.</p></section>
-<section data-compare-row="changes"><p><strong>What changes</strong></p><p>The maintenance entry and its steps; a pause setting; and one small stored fact, a single-row <code>maintenance_pause</code> table every ordinary stamp write checks, so work admitted before the pause can't commit after it.</p></section>
-<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Minutes of no new sign-ins, plus waiting out outstanding token lifetimes before withdrawal. One new table (choosing A approves it).</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="retire-window-pic" label="Option A"><script type="text/plain">
-flowchart TB
-  stop["Pause issuance"] --> re["Re-sign all"] --> w["Withdraw"] --> rs["Wait 5 min 10 s, restart, check"] --> open["Reopen"]
-</script></ex-mermaid></section>
-</section>
-<section id="retire-live" label="B · No pause: a live key epoch" icon="key">
-<section data-compare-row="sees"><p><strong>What you see</strong></p><p>Nothing; sign-in keeps working throughout.</p></section>
-<section data-compare-row="changes"><p><strong>What changes</strong></p><p>A stored key epoch; every signer fenced on it; a matching Central contract.</p></section>
-<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>New machinery beyond approved B2, in both sign-in and Central, designed before build.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="retire-live-pic" label="Option B"><script type="text/plain">
-flowchart TB
-  e["Epoch N+1 stored"] --> f["Old signers fenced"] --> w["Withdraw while live"]
-</script></ex-mermaid></section>
-</section>
-</ex-compare>
-<ex-grid cols="2" data-width="canvas">
-<ex-card title="A · Maintenance window" tone="planned" icon="clock" tag="Recommended"><p><strong>Cost:</strong> minutes without new sign-ins; one new one-row table.</p></ex-card>
-<ex-card title="B · Live epoch" tone="planned" icon="key" tag="New machinery"><p><strong>Cost:</strong> epoch storage, fences, Central contract.</p></ex-card>
-</ex-grid>
-<ex-callout title="Recommendation: A" tone="decision" icon="clock"><p>Key changes are rare and run by you; a short window is far less machinery.</p></ex-callout>
-<ex-callout title="If you defer" tone="risk" icon="clock"><p>Everything but the retirement procedure builds; rule 6 stays unproven.</p></ex-callout>
-<ex-choice id="choice-retire" title="May key retirement pause sign-in?">
-<ex-option id="retire-a" title="A · Short maintenance window (recommended)"><template slot="summary">A pause setting and a one-row pause table.</template></ex-option>
-<ex-option id="retire-b" title="B · No pause, live key epoch"><template slot="summary">New machinery, designed first.</template></ex-option>
-</ex-choice>
-
-<h3 id="console">3 · Where does the engine-operations console land?</h3>
-<ex-compare label="Engine console" data-width="canvas">
-<section id="console-later" label="A · Permission now, console as its own feature" icon="path">
-<section data-compare-row="sees"><p><strong>What you see</strong></p><p>Nothing new on the page yet; the owner can be granted repair rights.</p></section>
-<section data-compare-row="changes"><p><strong>What changes</strong></p><p>The permission and its rollout only.</p></section>
-<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Repairing retired work waits for the later feature “Engine operations: inspect and repair retired work”.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="console-later-pic" label="Option A"><script type="text/plain">
-flowchart TB
-  p["repairWork in owner role"] --> later["Console feature later"]
-</script></ex-mermaid></section>
-</section>
-<section id="console-now" label="B · Whole console in B2" icon="gear">
-<section data-compare-row="sees"><p><strong>What you see</strong></p><p>An engine section: health, retired work, retry and discard, plus CLI commands.</p></section>
-<section data-compare-row="changes"><p><strong>What changes</strong></p><p>Four forwarded routes, typed results, paging, a guarded UI, CLI.</p></section>
-<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>B2 grows by a feature that must be designed and reviewed before build.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="console-now-pic" label="Option B"><script type="text/plain">
-flowchart TB
-  page["Admin page"] --> eng["Engine section"]
-  cli["CLI"] --> eng
-</script></ex-mermaid></section>
-</section>
-</ex-compare>
-<ex-grid cols="2" data-width="canvas">
-<ex-card title="A · Console later" tone="planned" icon="path" tag="Recommended"><p><strong>Cost:</strong> repairs wait.</p></ex-card>
-<ex-card title="B · Console now" tone="planned" icon="gear" tag="Larger"><p><strong>Cost:</strong> another feature inside B2.</p></ex-card>
-</ex-grid>
-<ex-callout title="Recommendation: A" tone="decision" icon="path"><p>Keeps B2 whole and finishable; the console is a feature of its own.</p></ex-callout>
-<ex-callout title="If you defer" tone="risk" icon="clock"><p>The permission rollout still lands; no console.</p></ex-callout>
-<ex-choice id="choice-console" title="Where does the engine console land?">
-<ex-option id="console-a" title="A · Permission now, console later (recommended)"><template slot="summary">Smallest B2.</template></ex-option>
-<ex-option id="console-b" title="B · Whole console in B2"><template slot="summary">Designed and reviewed first.</template></ex-option>
-</ex-choice>
-
-<h3 id="maintenance">4 · How do you run production maintenance?</h3>
-<p>Key retirement and the digest roll need Better Auth's keys and the sign-in store, so they must run inside the sign-in service. Today there is no way to invoke such an operation (the Node host has no CLI; the Cloudflare host has only the gateway's management binding).</p>
-<ex-compare label="Maintenance invocation" data-width="canvas">
-<section id="mt-route" label="A · Owner-only endpoint and page on sign-in" icon="lock">
-<section data-compare-row="sees"><p><strong>What you do</strong></p><p>Sign in as the deployment owner, confirm a second factor, open the maintenance page, run a phase, read the report.</p></section>
-<section data-compare-row="changes"><p><strong>What changes</strong></p><p>One project Better Auth endpoint and page, same code on both hosts; everyone but the configured owner gets 404.</p></section>
-<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>A deployment-wide operation reachable on the public sign-in origin, guarded by owner identity and a fresh factor.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="mt-route-pic" label="Option A"><script type="text/plain">
-flowchart TB
-  owner["Owner, fresh factor"] --> ep["/api/auth/maintenance/*"] --> op["Retire key / roll digest"]
-</script></ex-mermaid></section>
-</section>
-<section id="mt-private" label="B · Private entrypoint through a maintenance Worker" icon="gear">
-<section data-compare-row="sees"><p><strong>What you do</strong></p><p>Deploy a small maintenance Worker bound to a private sign-in entrypoint for the window, call it, then delete it; on Node, run a new host command on the server.</p></section>
-<section data-compare-row="changes"><p><strong>What changes</strong></p><p>A private WorkerEntrypoint, a maintenance Worker config, and a new Node host command.</p></section>
-<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Two invocation paths and a deploy-and-delete step each time; nothing on the public origin.</p></section>
-<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="mt-private-pic" label="Option B"><script type="text/plain">
-flowchart TB
-  mw["Maintenance Worker (temporary)"] --> pe["Private entrypoint"] --> op["Retire key / roll digest"]
-  node["Node host command"] --> op
-</script></ex-mermaid></section>
-</section>
-</ex-compare>
-<ex-callout title="Recommendation: A" tone="decision" icon="lock"><p>One path on both hosts, behind the strongest identity you have (deployment owner plus fresh factor). Choose B if you want nothing deployment-wide on the public origin.</p></ex-callout>
-<ex-callout title="If you defer" tone="risk" icon="clock"><p>B, the private entry, stays the design and nothing public is built. B2 can't start until you answer, because the Plan builds one entry only.</p></ex-callout>
-<ex-choice id="choice-maintenance" title="How do you run production maintenance?">
-<ex-option id="maintenance-a" title="A · Owner-only endpoint and page (recommended)"><template slot="summary">Same on both hosts.</template></ex-option>
-<ex-option id="maintenance-b" title="B · Private entrypoint via a maintenance Worker"><template slot="summary">Off the public origin; more steps.</template></ex-option>
-</ex-choice>
 </ex-document>
 </body>
 </html>
