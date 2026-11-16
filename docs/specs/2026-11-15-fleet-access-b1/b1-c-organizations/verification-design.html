@@ -139,7 +139,7 @@ sequenceDiagram
 <li>Bodies contain only <code>id</code>, <code>name</code>, <code>slug</code>, <code>logo</code>, <code>createdAt</code>; no canary appears anywhere. Owners get no more than members.</li>
 <li>Any query key (an organization ID, a slug, a member limit, for a real O2 and for a nonexistent ID): identical 400 before Better Auth runs; the session and membership rows unchanged.</li>
 <li>Session read fault on these paths: 503. Signed out: 401.</li>
-<li>Stale current membership: the stored session names O1 after the person was removed from O1; a query-free full read gets Better Auth's 403 and the stored choice becomes null; the page then shows no current choice.</li>
+<li>Stale current membership, in real Chrome on both hosts from a warm page and self-context cache showing O1, with no switch at all: remove the person from O1; the switcher's active-organization query refetches (window focus) and gets Better Auth's 403; the stored choice becomes null; with no further user action the page re-renders and shows no current choice. Wrong build: only the mutation subscriber (the page keeps showing O1).</li>
 <li>A server-internal <code>provider.api.getFullOrganization</code> call still returns the full native shape.</li>
 <li>Unit cases for the projection: null, one, array, extra future fields, bad UUID, bad date, bad JSON. A malformed success becomes 503. Cookies survive; content-length is removed.</li>
 </ul>
