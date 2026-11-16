@@ -206,6 +206,7 @@ flowchart TB
 </section>
 </ex-compare>
 <ex-callout title="Recommendation: A" tone="decision" icon="lock"><p>One path on both hosts, behind the strongest identity you have (deployment owner plus fresh factor). Choose B if you want nothing deployment-wide on the public origin.</p></ex-callout>
+<ex-callout title="If you defer" tone="risk" icon="clock"><p>B, the private entry, stays the design and nothing public is built. B2 can't start until you answer, because the Plan builds one entry only.</p></ex-callout>
 <ex-choice id="choice-maintenance" title="How do you run production maintenance?">
 <ex-option id="maintenance-a" title="A · Owner-only endpoint and page (recommended)"><template slot="summary">Same on both hosts.</template></ex-option>
 <ex-option id="maintenance-b" title="B · Private entrypoint via a maintenance Worker"><template slot="summary">Off the public origin; more steps.</template></ex-option>

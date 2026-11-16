@@ -108,7 +108,9 @@ sequenceDiagram
 <li>Three real keys: old A, requested new B, and a different default C. Every replacement statement's header names B.</li>
 <li>Equal keys, an unknown key and an expired new key are refused before any work.</li>
 <li>Interrupt and invoke the same phase again: before the sent-slot claim, after Central committed, after source confirmation, after withdrawal and before the restart check, after the restart. Each re-invocation reaches the same end; <code>check-after-withdrawal</code> completes only after the preserved Central stores really cold-started and served reads.</li>
-<li>All through the maintenance endpoint on both pairings: the configured owner with a fresh factor succeeds; a member, another owner, a stale factor and the gateway's management binding get nothing.</li>
+<li>Through the chosen entry on both pairings (B: the private entrypoint through a test maintenance Worker and the Node binary; A: the endpoint). Public fetch and the gateway's management binding can't reach it; under A, a member, another owner and a stale factor get 404.</li>
+<li>Key facts: after withdrawal (old row expired, still retained), <code>check-after-withdrawal</code> in a fresh process accepts the state; <code>prepare</code> refuses it; a key with no retained row is refused in both phases.</li>
+<li>Pause coverage: with an owner browser session open and the pause on, attempt organization creation, setup retry, a Fleet admin call (renewal) and a held deferred write while <code>prepare</code> runs; none commits an old-key stamp; after withdrawal and restart every organization reads. Wrong build: pause only token, sign-in and device endpoints (a new organization signed with the old key fails the check).</li>
 </ol>
 <p><strong>Wrong builds:</strong> count the outer loop finishing as success; skip ready organizations with no record; ignore setting-up ones; sign with the default key instead of the requested one.</p>
 

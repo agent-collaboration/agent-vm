@@ -20,7 +20,7 @@
 </nav></ex-nav>
 <ex-document id="doc">
 <h1>B2 · Central organizations: Plan</h1>
-<p>Four packets. <strong>Starts only when B1-A is merged, Lead A's directory-read slice and engine deliverable 1 are merged with their artifacts, you have answered the three choices, I have removed the unchosen branches and had the pages rechecked, and you give the go-ahead.</strong></p>
+<p>Four packets. <strong>Starts only when B1-A is merged, Lead A's directory-read slice and engine deliverable 1 are merged with their artifacts, you have answered the four choices, I have removed the unchosen branches and had the pages rechecked, and you give the go-ahead.</strong></p>
 
 <h2 id="three">The three things for you</h2>
 <ex-callout title="1 · What to check" tone="note" icon="shield-check">
@@ -39,7 +39,7 @@ flowchart TB
   b1a["B1-A merged"] --> go["Your go-ahead"]
   dir["Lead A: workspace directory read merged, artifacts exported"] --> go
   eng["Lead A: engine deliverable 1 merged"] --> go
-  answers["Your three answers"] --> go
+  answers["Your four answers"] --> go
   go --> build["Implementer"]
   build --> verify["Verifier, both pairings, Sunclaw"]
   verify --> review["Reviewer"]
@@ -59,7 +59,7 @@ flowchart TB
 <li><strong>Page.</strong> Replace <code>organization-admin-page.ts</code> with <code>pages/organization-admin-page.tsx</code> and <code>pages/islands/organization-admin.tsx</code>; shipped <code>ConfirmSecondFactorStep</code>; delete the inline script and <code>freshOperationId</code>.</li>
 <li><strong>Machines.</strong> <code>organization-setup-transitions.ts</code> (M1), <code>organization-stamp-transitions.ts</code> (M2: move <code>decideOrganizationStampStep</code>, add <code>settleStampAnswer</code>), <code>key-retirement-transitions.ts</code> (M3), M4 in the island module. Turn the existing provisioning, renewal and key-change code into their runners without changing any conditional write.</li>
 <li><strong>Engine permission.</strong> Add <code>organization:repairWork</code> to the owner; new refusals; digest test; <code>organizations/policy-digest-roll.ts</code> (M5) with its conditional fence write and report.</li>
-<li><strong>Maintenance entry.</strong> <code>better-auth/sign-in-maintenance.ts</code>, <code>better-auth/maintenance-plugin.ts</code> (owner-only <code>POST /api/auth/maintenance/{operation}</code>, configured owner plus fresh factor, 404 for everyone else), <code>pages/maintenance-page.tsx</code>; the explicit <code>signingKeyId</code> override through <code>organization-statement-signing.ts</code>; the <code>SIGN_IN_ISSUANCE_PAUSED</code> setting in <code>contracts/deployment-configuration.ts</code> honoured by token, sign-in and device endpoints. A test-only <code>holdNextReply</code> in <code>b2e/link-fault-proxy.ts</code> and separable joint clocks for V6.</li>
+<li><strong>Maintenance entry,</strong> per your fourth answer: B builds the <code>SignInMaintenance</code> entrypoint and the <code>sign-in-maintenance</code> Node binary; A builds <code>better-auth/maintenance-plugin.ts</code> and <code>pages/maintenance-page.tsx</code>. Either way <code>better-auth/sign-in-maintenance.ts</code>; the explicit <code>signingKeyId</code> override through <code>organization-statement-signing.ts</code>; retained-versus-published key checks; the <code>SIGN_IN_MAINTENANCE_PAUSE</code> setting in <code>contracts/deployment-configuration.ts</code> honoured by issuance, organization creation, setup retry, Fleet admin calls and deferred work. A test-only <code>holdNextReply</code> in <code>b2e/link-fault-proxy.ts</code> and separable joint clocks for V6.</li>
 <li><strong>Tests.</strong> Every file in V1–V10; move joint pins to Lead A's final artifacts; run each wrong build to red and back.</li>
 <li><strong>Gates and PR</strong> (below), on Sunclaw. One draft PR.</li>
 </ol>
