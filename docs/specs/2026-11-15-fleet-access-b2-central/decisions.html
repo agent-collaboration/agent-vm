@@ -120,12 +120,12 @@ flowchart TB
 <h3 id="retire">2 · May key retirement pause sign-in?</h3>
 <ex-compare label="Key retirement" data-width="canvas">
 <section id="retire-window" label="A · Short maintenance window" icon="clock">
-<section data-compare-row="sees"><p><strong>What you see</strong></p><p>During the window, new sign-ins wait and existing work drains. Then re-sign and withdraw, wait at least 5 minutes for Central to drop the old key, check, and reopen.</p></section>
+<section data-compare-row="sees"><p><strong>What you see</strong></p><p>During the window, new sign-ins wait and existing work drains. Then re-sign and withdraw. Wait 5 minutes 10 seconds, so any key response Central requested before withdrawal has expired. Then check and reopen.</p></section>
 <section data-compare-row="changes"><p><strong>What changes</strong></p><p>The maintenance entry and its steps; a pause setting; and one small stored fact, a single-row <code>maintenance_pause</code> table every ordinary stamp write checks, so work admitted before the pause can't commit after it.</p></section>
 <section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Minutes of no new sign-ins, plus waiting out outstanding token lifetimes before withdrawal. One new table (choosing A approves it).</p></section>
 <section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="retire-window-pic" label="Option A"><script type="text/plain">
 flowchart TB
-  stop["Pause issuance"] --> re["Re-sign all"] --> w["Withdraw"] --> rs["Wait 5 min, check"] --> open["Reopen"]
+  stop["Pause issuance"] --> re["Re-sign all"] --> w["Withdraw"] --> rs["Wait 5 min 10 s, check"] --> open["Reopen"]
 </script></ex-mermaid></section>
 </section>
 <section id="retire-live" label="B · No pause: a live key epoch" icon="key">
