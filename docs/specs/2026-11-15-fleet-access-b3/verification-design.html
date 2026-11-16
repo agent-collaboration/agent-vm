@@ -58,7 +58,7 @@
 
 <h2 id="V4">V4 · BA1, re-key, switch (S7, S9)</h2>
 <ul>
-<li>BA1's six cases from approved B3, as Rust tests on both Central builds, plus a property test: at most one active enrollment per machine; no approval activates after a generation change.</li>
+<li>BA1's six cases from approved B3, as Rust tests on both Central builds, plus a <code>hegeltest</code> family over M2 (enrollment). It draws approvals, first Grants, revocations, re-approvals and clock moves past 30 days, compares against an independent model, and checks after every step that a machine has at most one active enrollment and no approval activates after a generation change. Wrong builds: activate without comparing the generation (shrinks to approve, revoke, first Grant); no idle expiry (shrinks to Grant, clock + 30 days, Grant).</li>
 <li>Re-key from three roots (pre-PR-A, post-PR-A, fresh): the machine ID is exactly the peer UUIDv7; sessions and allowances stay; a lost token answer then a retry with the same mapping is accepted; a different mapping is refused.</li>
 <li>Link switch: hold a notice, a read and an install across the switch and kill the Router at each step; never a mix; same-central and other-central rules each hold after restart.</li>
 </ul>
@@ -75,7 +75,13 @@
 <ul>
 <li>Two Routers on macOS log in by device code through the sign-in page, connect through sign-in, against Central's Worker and Tokio builds; one is revoked and refused. Linux memory-only restart runs in the existing Ubuntu job.</li>
 <li>Step 1 unchanged in production configuration; on a test deployment step 2 refuses the old credential and every bad machine token.</li>
-<li>Exhaustiveness: one added variant per TypeScript union fails at <code>satisfies never</code>; Rust enums matched without wildcards.</li>
+<li><code>hegeltest</code> families for the Router's two machines, in the codex-router host crate, each with an independent model, full comparison of next state and proposed effects after every step, and the settings fixed so runs repeat:
+<ul>
+<li><strong>M3 (login):</strong> draws code replies, poll results, slow-downs, publication and retirement results, and a stream end with no terminal frame. Invariants: exactly one of the four endings; <code>loggedIn</code> only after the credential is confirmed and <code>fleet_login</code> replaced; an unconfirmable publication or retirement step is <code>outcomeUnknown</code>, never <code>loggedIn</code>; an old code is never resumed. Wrong builds: report <code>loggedIn</code> before retirement is confirmed; resume the old code after an interruption.</li>
+<li><strong>M4 (renewal):</strong> draws refresh results, renewal replies across 4a's closed refusal set, and clock moves around <code>grant_expires_at</code>. Invariants: a refresh always happens before <code>grant_expires_at</code>; one refusal leads to exactly one more refresh; a second refusal or <code>enrollmentNotActive</code> ends in needs-new-code. Wrong builds: retry forever after refusals; renew at or after <code>grant_expires_at</code>.</li>
+</ul>
+<code>hegeltest</code> is a new dev-dependency in codex-router, by your rule, at Lead A's exact pin. It must run on its native engine with no Python or <code>uv</code> step (codex-router's <code>AGENTS.md</code> forbids Python), and build offline in CI. Lead A is confirming both for Central first; if either fails, that comes to you, and the families don't silently switch library. The refusal set is drawn from 4a's enum once Lead A delivers it.</li>
+<li>Exhaustiveness: one added variant per TypeScript union fails at <code>satisfies never</code>; one added variant per Rust enum fails <code>cargo check</code> at its wildcard-free match.</li>
 </ul>
 </ex-document>
 </body>

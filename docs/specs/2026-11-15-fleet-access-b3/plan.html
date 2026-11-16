@@ -53,7 +53,7 @@ flowchart TB
 <li><strong>Central:</strong> check DecideDeviceLogin, DecideMachineToken and <code>machine_enrollment.rs</code> on main against approved B3 (idle expiry, BA1); fix what differs; add <code>machine_commands.rs</code>.</li>
 <li><strong>Router:</strong> <code>FleetLogin</code>, the device flow, <code>fleet_login</code> and <code>fleet_machine</code>, ordered publication, renewal on the connection, re-key, R10/R10a with the link client's re-enrolled entry.</li>
 <li><strong>Secret store:</strong> traits, envelope, memory, <code>MacKeychain</code>, composition root; remove the <code>cfg</code>-selected access.</li>
-<li><strong>Tests:</strong> V1–V6; wrong builds to red and back.</li>
+<li><strong>Tests:</strong> V1–V6, including the <code>hegeltest</code> families for M2, M3 and M4 (a dev-dependency of the crates that hold them, at Lead A's exact pin, native engine, no Python, offline build); wrong builds to red and back.</li>
 <li><strong>Gates and two PRs.</strong></li>
 </ol>
 <p><strong>May not change:</strong> Lead A's 4a files, Better Auth, existing migrations' meaning without your storage answer, CI. <strong>Stop</strong> if Central's decisions on main differ from approved B3 in a way that changes behaviour you approved.</p>

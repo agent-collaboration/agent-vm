@@ -65,7 +65,7 @@
 <h3 id="S10">S10 · Production stays on today's login</h3>
 <p>Central's <code>machineLogin</code> setting is step 1 in production and step 2 on test deployments. Switching production is your step.</p>
 <h3 id="S11">S11 · Machines and Hegel</h3>
-<p>Device-code decisions (M1), enrollment with BA1 (M2), the Router's login (M3) and on-connection renewal (M4) MUST be closed unions with pure transitions, inline exhaustiveness (<code>x satisfies never</code> in TypeScript; exhaustive <code>match</code> with no wildcard in Rust), effects as data, and Hegel families (TypeScript) or property tests (Rust); plus a real race of two pollers redeeming one code on both databases.</p>
+<p>Device-code decisions (M1), enrollment with BA1 (M2), the Router's login (M3) and on-connection renewal (M4) MUST be closed unions with pure transitions, inline exhaustiveness (<code>x satisfies never</code> in TypeScript; exhaustive <code>match</code> with no wildcard in Rust), effects as data, and Hegel families: <code>@hegeldev/hegel</code> in TypeScript, and <code>hegeltest</code> (hegel-rust) in Rust, pinned to the same version Lead A pins for Central's reducers (your 15 Nov “use hegel” rule). There is also a real race of two pollers redeeming one code, on both databases.</p>
 
 <h2 id="trace">Rules to proof</h2>
 <div class="ex-table-scroll" data-width="canvas"><table>
