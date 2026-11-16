@@ -27,7 +27,7 @@
 <p>S6: workspaces come from Central's directory, not from history. S10: an answer that arrives after the statement expired still settles. S11: an idle organization, and one that is ready but missing its local record, are both re-signed before an old key goes. S15: the new engine permission rolls out with one revision per organization.</p>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p>S5 and S12 follow your answers on <a href="decisions.html#open">Decisions</a>; both branches are stated. Decided by me (operations and sequencing, 16 Nov): maintenance runs through the private entry; the engine console is its own later feature.</p>
+<p>S5 and S12 follow your answers on <a href="decisions.html#open">Decisions</a>; both branches are stated. Your 16 Nov pick: maintenance runs through a hidden owner-only page on sign-in. Decided by me (sequencing): the engine console is its own later feature.</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
 <p>Sources on <a href="requirements.html">Requirements</a>. Central behaviour cited from codex-router <code>e7b709f6a</code>. Nothing here is built.</p>
@@ -59,7 +59,7 @@ erDiagram
 
 <h2 id="admin">Administration</h2>
 <h3 id="S2">S2 · Checks before anything is shown</h3>
-<p>Every request MUST be bound to its person, current organization, permission and operation. A member, another organization's owner, a wrong body organization, a wrong reached store, stale authority, an invalid proof or the wrong token kind reveals and changes nothing. Permissions are the existing ones (<code>organizations/fleet-permission.ts:4–13</code>): status and directory <code>organization:view</code>; history <code>organization:readAudit</code>; create <code>workspace:create</code>. No public route reaches provisioning or maintenance; maintenance runs only through the private entry.</p>
+<p>Every request MUST be bound to its person, current organization, permission and operation. A member, another organization's owner, a wrong body organization, a wrong reached store, stale authority, an invalid proof or the wrong token kind reveals and changes nothing. Permissions are the existing ones (<code>organizations/fleet-permission.ts:4–13</code>): status and directory <code>organization:view</code>; history <code>organization:readAudit</code>; create <code>workspace:create</code>. No public route reaches provisioning. Maintenance is one hidden owner-only endpoint and page on the sign-in origin. It MUST be linked from nowhere and answer the same 404 as an unknown path to everyone except the configured owner with a second factor from the last 15 minutes. The gateway MUST have no path to it.</p>
 <h3 id="S3">S3 · A workspace and its record commit together</h3>
 <p>An allowed create MUST make one workspace with the valid name and description and one person-origin record naming the checked permission; if the record write fails, neither exists. A name already used by another workspace is <code>nameInUse</code>. Bounds stay as today: name 1–256 UTF-8 bytes with no outer whitespace, description up to 2,048 bytes (<code>organizations/fleet-admin-operation.ts:19–40</code>).</p>
 <h3 id="S4">S4 · Operation IDs come from the server</h3>

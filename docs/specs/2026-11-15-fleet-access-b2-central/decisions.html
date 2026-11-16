@@ -27,7 +27,7 @@
 <p>Yours: <a href="#retire">2 · Changing the signing key</a> (a few minutes of downtime and a new one-row table). <a href="#retry">1 · A lost reply</a> is taken as A.</p>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p>Decided by me under your 16 Nov rule: <a href="#console">3 · console later</a> and <a href="#maintenance">4 · the private maintenance door</a>.</p>
+<p>Settled: <a href="#console">3 · console later</a> (my sequencing call) and <a href="#maintenance">4 · a hidden owner-only maintenance page</a> (your pick).</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
 <p>Decided cards quote you. Central facts are from codex-router <code>e7b709f6a</code>; sign-in facts from Switchboard <code>f3b2b88b</code>. Nothing here is built.</p>
@@ -83,7 +83,7 @@ flowchart TB
 <h3 id="retire">2 · Changing sign-in's signing key: may sign-in pause for a few minutes?</h3>
 <p><strong>The key.</strong> Sign-in has one signing key pair, kept in Better Auth's <code>jwks</code> table. The private half signs. The public half is published at sign-in's key URL; Central fetches it from there and keeps a copy for up to 5 minutes.</p>
 <p><strong>What it signs.</strong> Each organization's <em>statement</em> (“organization X exists, set up by this owner”), which Central stores and checks before doing any work for that organization. It also signs people's tokens, which live at most 5 minutes and simply expire.</p>
-<p><strong>Who starts a rotation, and when.</strong> You do, rarely: on a schedule, or if the key might have leaked. You start it through the private maintenance entry (on Node the <code>sign-in-maintenance</code> command, on Cloudflare a temporary Worker); I prepare the exact commands.</p>
+<p><strong>Who starts a rotation, and when.</strong> You do, rarely: on a schedule, or if the key might have leaked. You start it from the hidden owner-only maintenance page on sign-in (decision 4).</p>
 <p><strong>What happens, step by step</strong> (about 15 minutes):</p>
 <ex-mermaid id="rotation-steps" label="A key rotation, step by step" data-width="canvas"><script type="text/plain">
 sequenceDiagram
@@ -214,7 +214,7 @@ flowchart TB
 </script></ex-mermaid></section>
 </section>
 </ex-compare>
-<ex-callout title="Decided by me: B, the private door" tone="decision" icon="gear"><p>This is operations, which you handed to me on 16 Nov. I took the option that adds nothing to the public sign-in site, so the security boundary doesn't change. It costs a few more steps on each rare maintenance run; I prepare the exact commands for you then.</p></ex-callout>
+<ex-callout title="Your pick: A, hidden" tone="decision" icon="lock"><p><em>“A · An owner-only page on the sign-in site hidden and non expoased as psobile is the righ twya i think”</em> (16 Nov). It's linked from nowhere and answers the same 404 as an unknown path to everyone except you with a fresh second factor; the gateway has no path to it.</p></ex-callout>
 
 <h2 id="decided">Already decided by you</h2>
 <ex-card title="Old data: backup only" tone="done" icon="package" tag="13 Nov · Central transcript 97881" pick>
