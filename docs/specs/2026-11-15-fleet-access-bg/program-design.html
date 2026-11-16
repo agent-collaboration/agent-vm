@@ -57,7 +57,7 @@ flowchart TB
 <tr><td><code>better-auth/invitation-decline-plugin.ts</code></td><td>New</td><td>M2 endpoint <code>POST /api/auth/organization/decline-invitation</code>.</td></tr>
 <tr><td><code>better-auth/sign-in-http-handler.ts</code>, <code>response-release/sign-in-request-handler.ts</code></td><td>Changed</td><td>Routes for the four pages; allowlist adds <code>get-invitation</code>, Decline and passkey sign-in; <code>/owner-ready</code> removed.</td></tr>
 <tr><td><code>pages/owner-page.tsx</code>, <code>better-auth/owner-page-script.ts</code></td><td>Removed</td><td>Replaced by the step pages.</td></tr>
-<tr><td><code>pages/factor-page.tsx</code>, <code>better-auth/factor-enrollment-page.ts</code>, <code>sign-in-owner-cli/src/fleet/fleet-cli-commands.ts</code></td><td>Changed</td><td>Every <code>/owner-ready</code> caller moves to <code>/account/confirm</code>.</td></tr>
+<tr><td><code>pages/factor-page.tsx</code>, <code>better-auth/factor-enrollment-page.ts</code>, <code>sign-in-owner-cli/src/fleet/fleet-cli-commands.ts</code>, <code>sign-in-owner-cli/src/fleet/fleet-admin-command.ts</code></td><td>Changed</td><td>Every <code>/owner-ready</code> caller moves to <code>/account/confirm</code>. The CLI's step-up confirms through an authorization and replaces its credential, checking it's the same person, instead of refreshing.</td></tr>
 <tr><td><code>packages/sign-in-owner-cli/src/owner-cli-login.ts</code>, <code>loopback-authorization.ts</code></td><td>Changed</td><td>Adds <code>deadline</code> = start + the existing 300,000 ms wait to the opened URL; the wait ends at that same instant.</td></tr>
 <tr><td><code>packages/sign-in-host-cloudflare/src/staging/</code></td><td>New</td><td>Staging entrypoint, two routes, test identities.</td></tr>
 </tbody></table></div>
@@ -68,9 +68,19 @@ flowchart TB
 <li><strong>Signed out</strong> (common, since the CLI's person token outlives the browser session): the sign-in page, returning to <code>/account/confirm</code> with its parameters after sign-in.</li>
 <li><strong>Unavailable:</strong> 503.</li>
 <li><strong>Second factor never enrolled:</strong> a redirect to <code>/setup</code>, because there is nothing to confirm yet.</li>
-<li><strong>Enrolled:</strong> a page with the app-code and recovery-code forms (the existing factor controls). On success it shows “Confirmed. Go back to your terminal”, and when it carries an <code>authorize</code> destination, it continues that as S3 says.</li>
+<li><strong>Enrolled:</strong> a page with the app-code and recovery-code forms (the existing factor controls). On success it continues the <code>authorize</code> destination it carries, as S3 says.</li>
 </ul>
-<p> The CLI then retries its command once, as today. <code>ownerReadyLocation</code> becomes <code>confirmLocation</code>; its tests and <code>people-organization-page.host.e2e.test.ts:170–201</code> (expired confirmation → confirm again) are retargeted, not dropped.</p>
+<p><strong>Which session the confirmation lands on.</strong> A confirmation is stamped on the browser's current session only (<code>second-factor-provider-plugin.ts:158–169</code>, <code>second-factor-store.ts:70–89</code>). The CLI's credential is bound to the session it was issued from, and refresh keeps that session (<code>fleet-credential.ts:132–150</code>; <code>@better-auth/oauth-provider</code> 1.7.11 refresh issues with <code>sessionId: refreshToken.sessionId</code>). So if the browser had to sign in again (new session S1), confirming S1 does nothing for a CLI credential on S0. Today's <code>sendConfirmingOnce</code> (<code>fleet-admin-command.ts:129–141</code>) confirms, refreshes, and retries; in that case its retry would get <code>secondFactorRequired</code> again.</p>
+<p><strong>The CLI's step-up therefore uses its existing login flow, not refresh.</strong></p>
+<ol>
+<li>On <code>secondFactorRequired</code>, the CLI starts the same loopback authorization as <code>signInFleetCli</code> (<code>fleet-credential.ts:98–125</code>), with PKCE, state and a deadline. It opens <code>/account/confirm</code> carrying that <code>authorize</code> destination.</li>
+<li>The page signs the person in if needed, confirms whichever browser session is current, then continues to authorize with skip-consent. The code is bound to that same, now-confirmed session.</li>
+<li>The CLI exchanges the code, as at login.</li>
+<li>The new credential's person must equal the old credential's person. If someone else is signed in to the browser, the CLI discards the new credential, keeps the old one, and stops with “Signed in as a different person; nothing was changed”.</li>
+<li>Otherwise it replaces the stored credential and retries the operation once, with the same operation identity.</li>
+</ol>
+<p>This works the same whether the browser was on S0 (the new credential is on confirmed S0) or signed in again (the new credential is on confirmed S1). No confirmation is copied between sessions and Better Auth is unchanged. In <code>fleet-admin-command.ts</code>, <code>sendConfirmingOnce</code>'s confirm-refresh pair becomes this confirm-and-authorize step, and <code>confirmSecondFactor</code> becomes the loopback authorization. At or past the deadline, the page lands on the account page with the expired notice, and the CLI reports the step-up as expired.</p>
+<p> <code>ownerReadyLocation</code> becomes <code>confirmLocation</code>; its tests and <code>people-organization-page.host.e2e.test.ts:170–201</code> (expired confirmation → confirm again) are retargeted, not dropped.</p>
 
 <h2 id="m1">M1 · The page decision</h2>
 <ex-code lang="typescript" title="setup-flow/decide-setup-page.ts"><script type="text/plain">
