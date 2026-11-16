@@ -96,7 +96,7 @@ flowchart TB
 <section id="dev-a" label="A · Sessionless tokens" icon="package">
 <section data-compare-row="sees"><p><strong>What a person sees</strong></p><p>A code to approve; signed in.</p></section>
 <section data-compare-row="changes"><p><strong>What changes</strong></p><p>The OAuth device grant as shipped; a new token profile without a session; the contributor and Central's admission change.</p></section>
-<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>There's no device session to end or expire, so ending “the device's login” has no handle; a device token still dies on any role or membership change, on any session end for that person (person-wide), and at expiry. Its refresh lifetime needs designing. A changed contract on both sides.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>There's no device session to end or expire, so ending “the device's login” has no handle; a device token still dies on any role or membership change, on any session end for that person (person-wide), and at expiry. Its refresh lifetime needs designing. A changed contract on both sides.</p><p><strong>Step-up breaks.</strong> Second-factor confirmations are stored per session, and issuance reads the token's own session (<code>person-fleet-authorization-store.ts:51–55,81</code>, <code>person-fleet-issuance.ts:67–69</code> at Switchboard <code>f3b2b88b</code>). A sessionless token has none, so every protected command would answer <code>secondFactorRequired</code> with nothing to confirm. Fixing that needs a new way to bind a confirmation, against R53.</p></section>
 <section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="dev-a-pic" label="Option A"><script type="text/plain">
 flowchart TB
   code["OAuth device grant"] --> tok["Token, no session"]
@@ -106,7 +106,7 @@ flowchart TB
 <ex-grid cols="3" data-width="canvas">
 <ex-card title="C · Browser only" tone="planned" icon="path" tag="No change"><p><strong>Cost:</strong> your choice undelivered.</p></ex-card>
 <ex-card title="B · Real session" tone="planned" icon="key" tag="Recommended"><p><strong>Cost:</strong> a session secret on the machine; containment rules.</p></ex-card>
-<ex-card title="A · Sessionless" tone="planned" icon="package" tag="Contract change"><p><strong>Cost:</strong> no device session to end; refresh lifetime to design.</p></ex-card>
+<ex-card title="A · Sessionless" tone="planned" icon="package" tag="Contract change"><p><strong>Cost:</strong> no device session to end; protected commands can't step up; refresh lifetime to design.</p></ex-card>
 </ex-grid>
 <ex-callout title="Recommendation: B" tone="decision" icon="key"><p>It delivers <code>--device</code> and keeps “ending the session ends the token”, using only Better Auth's own parts.</p></ex-callout>
 <ex-callout title="If you defer" tone="risk" icon="clock"><p>B2X can't start: it would ship with device login unfinished.</p></ex-callout>
