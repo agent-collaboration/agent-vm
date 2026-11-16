@@ -78,7 +78,7 @@ flowchart TB
 <tbody>
 <tr><td>pending</td><td><code>approve(approver, workspaces)</code> allowed by the rule</td><td>pending; [decide-device-login]; on Approved → approved (conditional write on pending)</td></tr>
 <tr><td>pending</td><td><code>deny(approver)</code> allowed</td><td>denied (conditional write on pending)</td></tr>
-<tr><td>approved</td><td><code>redeem</code></td><td>redeemed (conditional write on approved); [create-client, decide-machine-token]</td></tr>
+<tr><td>approved</td><td><code>redeem</code></td><td>redeemed (logical: Better Auth's <code>consumeOne</code> deletes the row on an approved, owned, unexpired code, <code>routes.mjs:350–378</code>); [create-client, decide-machine-token, issue machine tokens]</td></tr>
 <tr><td>approved</td><td><code>redeem</code> losing the race</td><td>refused (<code>already-redeemed</code>)</td></tr>
 <tr><td>any</td><td><code>expired(now)</code></td><td>expired</td></tr>
 <tr><td>denied, redeemed, expired</td><td>any</td><td>refused</td></tr>
