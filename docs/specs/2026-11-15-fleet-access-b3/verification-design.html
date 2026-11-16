@@ -36,14 +36,15 @@
 <ul>
 <li>Kept: #11/#14's tests, merged forward, both hosts against real Central.</li>
 <li>Two pollers redeem one approved code at once, barriers around the conditional write, on D1 and better-sqlite3: exactly one machine token.</li>
-<li>Deny with an old confirmation: asked for a second factor. Someone else denying: the code stays for the owner.</li>
+<li>Through the real page, Deny with an old confirmation: confirm the factor, and Deny is retried: the code is denied, no approval call is made, no machine token can be redeemed. Approve with an old confirmation, confirm, Approve: approved. Someone else denying: the code stays for the owner. Wrong build: #11's unconditional <code>decide('approve')</code> after confirmation.</li>
 <li>Repeat approval with changed workspaces: the first stored approval returns; the page shows Central's stored values.</li>
 <li>Hegel family <code>device-approval-rule.hegel.unit.test.ts</code> (M1) over code states, approvers, factor ages and time.</li>
+<li><strong>Redemption family (R33):</strong> <code>device-redemption.hegel.host.e2e.test.ts</code> on D1 and better-sqlite3, <code>{ testCases: 100, derandomize: true, database: hegel.Database.disabled }</code>. Each case approves one code, then generates 2–5 pollers, a release order through barriers placed just before Better Auth's conditional consume (<code>routes.mjs:289–379</code>, <code>consumeOne</code> by code ID, owner and approved status), and optional pollers arriving after expiry on the controlled clock. Invariant: exactly one poller gets a session, every other gets a refusal, and the code row ends redeemed. Wrong build: a read-then-update redemption shrinks to two pollers both getting sessions.</li>
 </ul>
 
 <h2 id="V2">V2 · Connection and renewal (S3, S6)</h2>
 <ul>
-<li>A Router connects through the sign-in carrier on both pairings; a person token, a stale token, another installation's token and a superseded enrollment's token are refused (4a's check, observed).</li>
+<li>A Router connects through the sign-in carrier on both pairings: on Node through the real listener's upgrade handler and the real Unix socket (not an in-process fetch), on workerd through the service binding. Messages flow both ways; closing either end closes the other; shutting the Node listener down closes upgraded sockets. A person token, a stale token, another installation's token and a superseded enrollment's token are refused by Central and that status reaches the Router (4a's check, observed).</li>
 <li>On a controlled clock, a running machine renews many times on the open connection; a machine idle 30 days is refused <code>idleExpired</code>.</li>
 <li>Token at <code>grant_expires_at</code> − 1 ms admitted, at equality refused.</li>
 </ul>
@@ -65,8 +66,8 @@
 <h2 id="V5">V5 · Secret store (S8)</h2>
 <ul>
 <li>The login code compiles against <code>RefreshCredentialStore</code> alone; the crate selects no platform.</li>
-<li>Fake-source unit tests: absent then usable picks the second; a locked, denied or damaged first source stops with no later access; all absent gives memory only.</li>
-<li>Kill between credential confirmation, metadata publication and retirement: no inconsistent pair is used.</li>
+<li>Fake-source unit tests: absent then usable picks the second; a locked, denied or damaged first source stops with no later access; all absent with an empty store gives memory only; all absent with existing ciphertext, legacy data, temporary data, a missing key item, a wrong key or damaged metadata is an error, and the store's bytes are unchanged afterwards.</li>
+<li>Kill between credential confirmation, metadata publication and retirement: no inconsistent pair is used. Separately, without killing the Host, make retirement fail after the public row committed: the terminal frame is <code>outcomeUnknown</code> (not “interrupted”), and the stored credential and metadata form a usable pair.</li>
 <li>No plaintext on disk; memory-only restart needs a new code and comes back as the same machine. The Keychain case runs on your Mac with your yes.</li>
 </ul>
 

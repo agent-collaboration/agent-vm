@@ -45,6 +45,7 @@
 <tr><td>Deny needs a recent second factor, like Approve</td><td>R53: changes need step-up; the audit found it missing.</td><td>No.</td></tr>
 <tr><td>Machines are managed from a section on B2's admin page</td><td>Where the owner already administers the organization.</td><td>Possibly: placement.</td></tr>
 <tr><td>The Central decisions merged in #281 are checked and extended, not rewritten</td><td>Lead A's boundary (push 01a1e199-bf63).</td><td>No.</td></tr>
+<tr><td>The re-key records the former ID in a new column on Central's <code>machines</code> table</td><td>Needed to accept a repeat of the same mapping and refuse a different one.</td><td><strong>Yes, at build time:</strong> a schema change; the SQL comes to you for approval before it is built.</td></tr>
 </tbody></table></div>
 
 <h2 id="open">Open</h2>
