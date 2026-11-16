@@ -57,9 +57,13 @@ flowchart TB
 <tr><td><code>better-auth/invitation-decline-plugin.ts</code></td><td>New</td><td>M2 endpoint <code>POST /api/auth/organization/decline-invitation</code>.</td></tr>
 <tr><td><code>better-auth/sign-in-http-handler.ts</code>, <code>response-release/sign-in-request-handler.ts</code></td><td>Changed</td><td>Routes for the four pages; allowlist adds <code>get-invitation</code>, Decline and passkey sign-in; <code>/owner-ready</code> removed.</td></tr>
 <tr><td><code>pages/owner-page.tsx</code>, <code>better-auth/owner-page-script.ts</code></td><td>Removed</td><td>Replaced by the step pages.</td></tr>
+<tr><td><code>pages/factor-page.tsx</code>, <code>better-auth/factor-enrollment-page.ts</code>, <code>sign-in-owner-cli/src/fleet/fleet-cli-commands.ts</code></td><td>Changed</td><td>Every <code>/owner-ready</code> caller moves to <code>/account/confirm</code>.</td></tr>
 <tr><td><code>packages/sign-in-owner-cli/src/owner-cli-login.ts</code>, <code>loopback-authorization.ts</code></td><td>Changed</td><td>Adds <code>deadline</code> = start + the existing 300,000 ms wait to the opened URL; the wait ends at that same instant.</td></tr>
 <tr><td><code>packages/sign-in-host-cloudflare/src/staging/</code></td><td>New</td><td>Staging entrypoint, two routes, test identities.</td></tr>
 </tbody></table></div>
+
+<h2 id="confirm">Confirming a factor again, after <code>/owner-ready</code> goes</h2>
+<p>Two live callers point at <code>/owner-ready</code>: the Fleet CLI opens it when Central asks for a recent second factor (<code>sign-in-owner-cli/src/fleet/fleet-cli-commands.ts:154–155</code>), and the factor forms return to it (<code>pages/factor-page.tsx:27–28</code> <code>ownerReadyLocation</code>, used by <code>factor-enrollment-page.ts:57</code>). Both move to <code>/account/confirm</code>: a page with the app-code and recovery-code forms (the existing factor controls) for an enrolled person, which on success shows “Confirmed. Go back to your terminal” and, when it carries an <code>authorize</code> destination, continues it as S3 says. The CLI then retries its command once, as today. <code>ownerReadyLocation</code> becomes <code>confirmLocation</code>; its tests and <code>people-organization-page.host.e2e.test.ts:170–201</code> (expired confirmation → confirm again) are retargeted, not dropped.</p>
 
 <h2 id="m1">M1 · The page decision</h2>
 <ex-code lang="typescript" title="setup-flow/decide-setup-page.ts"><script type="text/plain">
@@ -70,15 +74,21 @@ type SetupFacts =
       factor: 'never-enrolled' | 'enrolled';
       context: PersonOrganizationContext; // from B1-C
       configuredOwner: boolean;
-      invitation: { id: Uuid7; forThisPerson: boolean; status: 'pending' | 'answered' | 'expired' } | null };
+      pendingInvitations: readonly Uuid7[];          // this verified email's pending, unexpired invitations
+      invitation: InvitationView | null };           // the destination invitation, if any
+type InvitationView =
+  | { kind: 'live-for-you'; id: Uuid7 }
+  | { kind: 'not-for-you' }                          // no organization or email disclosed
+  | { kind: 'used' } | { kind: 'expired' } | { kind: 'canceled' } | { kind: 'not-found' };
 type ReturnDestination =
   | { kind: 'commandLine'; authorize: string; deadlineMs: EpochMilliseconds }
   | { kind: 'invitation'; invitationId: Uuid7; then: ReturnDestination | null }
   | { kind: 'none' };
 type SetupPage =
   | { kind: 'signIn' } | { kind: 'unavailable' }
-  | { kind: 'step'; step: { kind: 'secondFactor' } | { kind: 'organization'; offer: 'create' | 'invitations' | 'askForInvitation' } }
+  | { kind: 'step'; step: { kind: 'secondFactor' } | { kind: 'organization'; create: boolean; invitations: readonly Uuid7[] } }
   | { kind: 'invitation'; invitationId: Uuid7 }
+  | { kind: 'invitationUnavailable'; reason: 'not-for-you' | 'used' | 'expired' | 'canceled' | 'not-found' }
   | { kind: 'chooseOrganization' }
   | { kind: 'continueCommandLine'; authorize: string; deadlineMs: EpochMilliseconds }
   | { kind: 'account'; notice: 'commandLineExpired' | null };
@@ -90,18 +100,21 @@ export function decideSetupPage(facts: SetupFacts, destination: ReturnDestinatio
 <tr><td>signed-out</td><td>signIn (destination kept in the URL)</td></tr>
 <tr><td>unavailable</td><td>unavailable (503)</td></tr>
 <tr><td>factor never-enrolled</td><td>step secondFactor</td></tr>
-<tr><td>no memberships, destination is a pending invitation for this person</td><td>invitation</td></tr>
-<tr><td>no memberships</td><td>step organization: create if configured owner, invitations if any pending for this email, else askForInvitation</td></tr>
-<tr><td>invitation destination, pending, for this person</td><td>invitation</td></tr>
-<tr><td>commandLine, now &lt; deadline, no current organization (several memberships)</td><td>chooseOrganization</td></tr>
-<tr><td>commandLine, now &lt; deadline, ready</td><td>continueCommandLine</td></tr>
+<tr><td>no memberships, destination invitation live-for-you</td><td>invitation</td></tr>
+<tr><td>no memberships</td><td>step organization: <code>create</code> true for the configured owner; <code>invitations</code> = <code>pendingInvitations</code> (for the owner too); both empty means “ask for an invitation”</td></tr>
+<tr><td>invitation destination live-for-you</td><td>invitation</td></tr>
+<tr><td>invitation destination not-for-you / used / expired / canceled / not-found</td><td>invitationUnavailable(reason): a message and one action (sign out and use another account; or go to your account); no organization or email shown</td></tr>
+<tr><td>commandLine, now &lt; deadline, several memberships, no current organization</td><td>chooseOrganization</td></tr>
+<tr><td>commandLine, now &lt; deadline, one membership, no current organization (a cleared choice)</td><td>continueCommandLine; M3 first selects that membership with native set-active (a POST from the script; GET still writes nothing)</td></tr>
+<tr><td>commandLine, now &lt; deadline, current organization set</td><td>continueCommandLine</td></tr>
 <tr><td>commandLine, now ≥ deadline</td><td>account, notice commandLineExpired</td></tr>
 <tr><td>otherwise</td><td>account</td></tr>
 </tbody></table></div>
-<p>Each row is a case in a switch on the facts' kind with an inline <code>x satisfies never</code>. Readiness reads enrolment only; a stale confirmation never routes to a setup step. The handler reads facts once per request and renders the chosen page; GET never writes.</p>
+<p>Each row is a case in a switch on the facts' kind with an inline <code>x satisfies never</code>. Readiness reads enrolment only; a stale confirmation never routes to a setup step. The handler reads facts once per request and renders the chosen page; GET never writes. <code>setup-facts.ts</code> reads the pending invitations for the verified email and the destination invitation by ID through injected Drizzle (not native <code>get-invitation</code>, which refuses non-pending rows before saying why, <code>crud-invites.mjs:502–509</code>); a failed read makes the facts <code>unavailable</code>, never “ask for an invitation”.</p>
+<p><strong>After Accept or Decline,</strong> the invitation controller promotes the destination's <code>then</code> (if any) to the top-level destination and navigates to <code>/setup</code> with it, keeping its original deadline; the answered invitation is gone from the URL, so it is never shown again, and M1 decides the next page from the remaining destination.</p>
 
 <h2 id="factor">Authenticator step and recovery codes</h2>
-<p>The step page uses Better Auth's <code>two-factor/enable</code> and <code>verify-totp</code>. After a correct code, the island holds the recovery codes from <code>enable</code>'s reply in memory only and shows them with a Finish button; navigation away is disabled until Finish, which then GETs <code>/setup</code>. A reload re-decides: the factor is enrolled, so the codes are gone.</p>
+<p>The step page uses Better Auth's <code>two-factor/enable</code> and <code>verify-totp</code>. It shows the QR code and the same key as text (R59). A wrong code keeps the same setup and lets the person try again. After a correct code, the island holds the recovery codes from <code>enable</code>'s reply in memory only and shows them with a Finish button; navigation away is disabled until Finish, which then GETs <code>/setup</code>. A reload or a second tab re-decides: the factor is enrolled, the codes are not shown again, and the next page says “To get new recovery codes, confirm with two factors on your account page” (R59).</p>
 
 <h2 id="m2">M2 · Decline</h2>
 <p>States <code>pending | accepted | rejected | canceled</code> as Better Auth stores them; our only transition is <code>pending → rejected</code>. Endpoint (in <code>invitation-decline-plugin.ts</code>, beside <code>passkey-confirmation-plugin.ts</code>): require a verified current session whose email equals the invitation's; then one Drizzle update <code>status = 'rejected' WHERE id = ? AND status = 'pending' AND expiresAt &gt; now</code>. One row changed → declined; zero rows → re-read: accepted or rejected → <code>already-answered</code>; expired → <code>expired</code>; not found or not the recipient → <code>not-found</code> (no detail). An intent record is written before and an outcome after, like the other people changes.</p>
@@ -112,6 +125,7 @@ export function decideSetupPage(facts: SetupFacts, destination: ReturnDestinatio
 <tbody>
 <tr><td>ready(authorize, deadline)</td><td><code>start</code>, now &lt; deadline, owner</td><td>bootstrapping; [post-bootstrap]</td></tr>
 <tr><td>ready</td><td><code>start</code>, now &lt; deadline, member</td><td>navigating; [check-deadline-then-navigate(authorize)]</td></tr>
+<tr><td>ready(sole membership, no current)</td><td><code>start</code>, now &lt; deadline</td><td>selecting; [set-active(sole id)]; on success → as above; on failure → retryable</td></tr>
 <tr><td>bootstrapping</td><td><code>bootstrapped</code></td><td>navigating; [check-deadline-then-navigate]</td></tr>
 <tr><td>bootstrapping</td><td><code>bootstrap-failed</code></td><td>retryable; [show Try again]</td></tr>
 <tr><td>any</td><td><code>deadline-reached</code></td><td>expired; [go /account?notice=commandLineExpired]</td></tr>
@@ -121,10 +135,10 @@ export function decideSetupPage(facts: SetupFacts, destination: ReturnDestinatio
 <h2 id="staging">Staging</h2>
 <ul>
 <li><strong>Entrypoint.</strong> <code>sign-in-host-cloudflare/src/staging/index.ts</code> builds the same configuration with the same core factory and options, plus Better Auth's <code>testUtils</code> plugin. Its own Worker, D1 and auth secret.</li>
-<li><strong>Routes,</strong> each requiring the staging secret (from agent-vault): <code>POST /__staging/test-identity</code> creates or finds a user under the <code>.invalid</code> test domain with verified email and signs it in through <code>testUtils</code>, returning its cookie; <code>POST /__staging/reset</code> deletes test-domain users, their sessions and memberships, organizations owned only by test users, and asks Central to remove those organizations' stores.</li>
+<li><strong>Routes,</strong> each requiring the staging secret (from agent-vault): <code>POST /__staging/test-identity</code> creates or finds a user under the <code>.invalid</code> test domain with verified email and signs it in through <code>testUtils</code>, returning its cookie; <code>POST /__staging/reset</code> first lists the organizations owned only by test users and returns their IDs in its report, then deletes test-domain users, their sessions and memberships, and those organizations' sign-in rows. <strong>Central cleanup is an open dependency:</strong> Central has no operation that removes an organization's store (<code>organization_signin_http.rs:25–58</code>), so their Central stores remain as unreferenced residue until Lead A's post-engine slice adds <code>RemoveOrganizationStores</code> (Lead A, push <code>01a1e1aa-6656</code>): a private-link operation with a request ID, 1–50 organization IDs in, one result per ID out (<code>removed | notFound | refused { reason } | unavailable</code>, no all-or-nothing), and refused before any read unless Central's own deployment is configured as staging. The reset then passes its returned IDs and retries the unavailable ones. Lead A will show you that slice before it's built, since it deletes stores. The real test account outside the test domain keeps its factor.</li>
 <li><strong>M4 · test identity:</strong> absent → created → signed-in → reset; reset only matches the test domain.</li>
 <li><strong>Run.</strong> A script <code>scripts/verify-auth/staging-journeys.mts</code> resets, creates identities, drives the six journeys in headless Chrome from signed-in identities, and computes TOTP codes from the displayed key and the server's Date header.</li>
-<li><strong>Production checks</strong> in the same script against production: <code>/__staging/*</code> → 404; a staging cookie → refused; artifact search finds no <code>testUtils</code>; configured owner not under the test domain.</li>
+<li><strong>Production checks</strong> in the same script against production: <code>/__staging/*</code> → 404; a staging cookie → refused; configured owner not under the test domain; and module exclusion from the build's own record: the production Worker build writes its bundler metafile, and the check requires it to contain no module under <code>better-auth/dist/plugins/test-utils/</code>, <code>sign-in-host-cloudflare/src/staging/</code> or <code>sign-in-test-support/</code>, bound to the deployed Worker version ID. Module paths don't change when a symbol is renamed or minified.</li>
 </ul>
 
 <h2 id="trace">Rule homes</h2>

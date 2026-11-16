@@ -49,7 +49,8 @@
 <tbody>
 <tr><td>Readiness depends on enrolment only, not on how recent the confirmation is</td><td>R53, your “step-up only for changes”.</td><td>No.</td></tr>
 <tr><td>Decline writes an intent and an outcome record like other people changes</td><td>OD26 “record first, then confirm”.</td><td>No.</td></tr>
-<tr><td>Staging reset also removes the test organizations' Central stores</td><td>Otherwise Central keeps orphaned stores across runs.</td><td>Possibly: part of S06's scope.</td></tr>
+<tr><td>Staging reset cleans the sign-in side and returns the test organization IDs; removing their Central stores waits on a staging-only Central operation, which doesn't exist yet (asked of Lead A)</td><td>Otherwise Central keeps orphaned test stores across runs; until the operation exists, they remain and are named as open.</td><td>Possibly: part of S06's scope.</td></tr>
+<tr><td>Every <code>/owner-ready</code> caller (the CLI's step-up link, the factor forms) moves to <code>/account/confirm</code></td><td>Removing <code>/owner-ready</code> must not break confirming a factor for a change.</td><td>No.</td></tr>
 </tbody></table></div>
 
 <h2 id="assumptions">Open: the three assumption groups</h2>

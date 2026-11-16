@@ -51,11 +51,11 @@ flowchart TB
 <h2 id="implementer">Packet 1 · Implementer</h2>
 <ol>
 <li><strong>Prototype</strong> on both hosts: skip-consent continuation for a clean owner, an incomplete bootstrap, a member who skips bootstrap, a bootstrap held across the deadline; guarded Decline against native Accept (expired, wrong recipient, competing). Keep it only if it becomes the real code.</li>
-<li><strong>Decision and router.</strong> <code>setup-flow/</code> files; the four routes in the handler; allowlist changes; remove <code>/owner-ready</code>, <code>owner-page.tsx</code> and <code>owner-page-script.ts</code>.</li>
+<li><strong>Decision and router.</strong> <code>setup-flow/</code> files (facts with pending invitations and the closed invitation view); the four routes plus <code>/account/confirm</code> in the handler; allowlist changes; move every <code>/owner-ready</code> caller (<code>fleet-cli-commands.ts:154–155</code>, <code>factor-page.tsx:27–28</code>, <code>factor-enrollment-page.ts:57</code>) to <code>/account/confirm</code>; remove <code>/owner-ready</code>, <code>owner-page.tsx</code> and <code>owner-page-script.ts</code>.</li>
 <li><strong>Pages.</strong> One component per page kind on the shared shell; recovery-code Finish; account page with B1-C's choice surface; invitation page.</li>
 <li><strong>Decline.</strong> <code>better-auth/invitation-decline-plugin.ts</code> with its conditional write and records.</li>
 <li><strong>Deadline.</strong> <code>owner-cli-login.ts</code> and <code>loopback-authorization.ts</code>; continuation island (M3).</li>
-<li><strong>Staging.</strong> Entrypoint, two routes, reset including Central residue; <code>scripts/verify-auth/staging-journeys.mts</code> with production checks.</li>
+<li><strong>Staging.</strong> Entrypoint, two routes, reset of the sign-in side returning the test organization IDs (Central store removal is an open dependency on Lead A); <code>scripts/verify-auth/staging-journeys.mts</code> with the staging refusals and the production checks, including the build metafile module check.</li>
 <li><strong>Tests.</strong> V1–V5; wrong builds to red and back. Retarget the owner-page and short-name tests.</li>
 <li><strong>Gates and PR</strong> on Sunclaw.</li>
 </ol>
