@@ -41,3 +41,14 @@ Target: merged head `65b0cf00dc1f47c85edd4e48344b789c1df0a716` (parents `9cb00ca
 5. **Decision:** accepted, conditional on CI being green on `65b0cf00`. If CI is green, the next steps are a fresh independent review, then merge after telling Lead A.
 
 CI on `65b0cf00`: pending at time of writing (run 44149512628).
+
+## Update, 2026-11-17 evening: final head `6166432a`
+
+- **Review findings closed.** The fresh Opus review of `65b0cf00` found F1 through F9:
+  - F1, a real product leak in redaction, was split into its own PR #5.
+  - F2 through F8 were fixed in #3. Those changes touch 11 Hegel test and fixture files and no product code.
+  - F9 was left as is.
+- **Delta review.** The same reviewer re-checked `65b0cf00..6166432a` and found it READY. Every finding is closed at its anchor, and no oracle got weaker.
+- **Verifier.** It ran 19 sensitivity probes against the 16 changed properties at `81512637`. Each failed as intended and passed again once restored. `6166432a` changes only the `tc.note` serialization.
+- **CI** run 44157796177 on `6166432a` is green on all three checks.
+- **Decision.** Accepted at `6166432a`. Merge after telling Lead A.
