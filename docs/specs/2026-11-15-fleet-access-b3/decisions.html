@@ -145,6 +145,7 @@ flowchart TB
 <tr><td>Deny needs a recent second factor, like Approve</td><td>R53: changes need step-up; the audit found it missing.</td><td>No.</td></tr>
 <tr><td>Machines are managed from a section on B2's admin page</td><td>Where the owner already administers the organization.</td><td>Possibly: placement.</td></tr>
 <tr><td>The Central decisions merged in #281 are checked and extended, not rewritten</td><td>Lead A's boundary (push 01a1e199-bf63).</td><td>No.</td></tr>
+<tr><td>B3 M4 pinned to Lead A's <code>MachineTokenSource</code> seam (d23724feb). <code>CentralUnavailable</code> is transient and does not count toward needing a new code; <code>DifferentMachine</code> and <code>EnrollmentNotActive</code> stop at once; <code>TokenRejected</code> and <code>DifferentEnrollment</code> refresh once more</td><td>A Central outage must not push machines into asking a person for a new code. An identity mismatch must never auto-heal</td><td>No: a renewal mechanism inside the approved R40 / B3 contract</td></tr>
 </tbody></table></div>
 </ex-document>
 </body>
