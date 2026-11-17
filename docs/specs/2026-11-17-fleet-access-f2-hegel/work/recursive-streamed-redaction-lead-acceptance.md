@@ -48,3 +48,8 @@ Governing file: `work/recursive-streamed-redaction-rulings.md` (O1 and O2, from 
 5. **Decision.** Accepted, conditional on CI run 44178013201 on `e76bf5a6` being green. Next: a fresh Opus review against the rulings and the PR, then merge after telling Lead A.
 
 CI on `e76bf5a6`: pending at time of writing.
+CI run 44178013201 on `e76bf5a6`: E2E (host), Validation and check all passed. I checked this myself with `gh run view`.
+
+## Update: fresh review READY, L1 fix in progress
+
+The fresh Opus review (`tmp/2026-11-17-pr7-review/report.md`) is READY, with five Low or informational notes. L1 is a regression this PR introduced: key redaction renames `isError` or `content` before the error classification reads them. It is fixed before merge, under the L1 refinement in the rulings file. **This acceptance does not cover the L1 head.** It is updated once the L1 diff passes my review, the Verifier pairs red on `e76` with green on the fix, CI runs on the new head, and the same reviewer reads the delta.
