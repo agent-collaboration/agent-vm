@@ -9,7 +9,7 @@
 - Where they differ, the plan wins; stop and ask the Lead.
 
 ## You
-🐒 Implementer, OpenAI Sol high, codex-local (this session). Task guidance: Designed Outcome.
+🐒 Implementer, OpenAI Sol high, codex-local `01a1e75d-dfca-76f1-8385-aed1aff70ebc`. Task guidance: Designed Outcome.
 - **Scope:** plan steps 1–11 only. Build the candidate branch; don't rename, create or push any repository other than the candidate branch on today's private origin; no visibility or settings change.
 
 ## Where
