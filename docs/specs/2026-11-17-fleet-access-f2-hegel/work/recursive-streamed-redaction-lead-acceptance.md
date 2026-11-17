@@ -73,3 +73,5 @@ The fresh Opus review (`tmp/2026-11-17-pr7-review/report.md`) is READY, with fiv
 - **CI** on `962d258d`, run 44185671558: pending; see below.
 
 **Decision:** accepted at `962d258d`, conditional on CI 44185671558 being green. Then merge after telling Lead A.
+
+CI run 44185671558 on `962d258d`: E2E (host), Validation and check all passed (checked by me). Main is still `b0198164`, and the PR is CLEAN and mergeable. **Accepted at `962d258d`.** Merging after telling Lead A.
