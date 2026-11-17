@@ -51,3 +51,17 @@ Fleet access Lead, 2026-11-17. This file is the governing authority for the foll
 - The diff goes to the Lead before push.
 - The Verifier pairs as for PR #5: red on main, green on the fix, plus sensitivity challenges.
 - After the Lead's acceptance, a fresh review, then merge after telling Lead A.
+
+## Addendum, 17 Nov evening: PR #7 review L1 and L2 (Lead)
+
+The fresh review of `e76bf5a6` (`tmp/2026-11-17-pr7-review/report.md`) was READY with five Low or informational notes.
+
+- **L1, fixed in PR #7 before merge.** Response-path key redaction runs before `isMcpToolErrorResult` and `providerErrorMessageFromMcpToolError` read the envelope. Both runtimes do this: `upstream-mcp-client-runtime.ts:259-268` and `stdio-upstream-runtime.ts:260-266`. So a configured value that is a substring of `isError` or `content` turns an upstream tool error into a success, or drops its provider message. This PR introduced the regression; it is not a leak, but it is wrong behaviour.
+  - **Repair, at the owning boundary.** Classify the error and extract the provider message from the unredacted upstream result. Pass the extracted message through `redactCredentialText` with the same options. Return or throw only redacted data.
+  - **Unchanged.** The redaction policy and the redacted output are unchanged.
+  - **Tests.** One regression per runtime, red on `e76bf5a6`: exact values `['Error']` and `['on']` with `{ isError: true, content: [text with a secret] }`. Each must still give `tool_error`, with the provider message present and redacted.
+- **L2, comment only.** The cap comment states the invariant: the cap must be at least the longest rule prefix (9, `password=`).
+- **L3, L4, L5 accepted as is.**
+  - L3: a held `Basic`/`Bearer` line equals batch and flushes at stream end.
+  - L4: stderr after finish is dropped by design.
+  - L5: the batch pattern side is pinned by literals. The generator reach gaps are logged as test debt.
