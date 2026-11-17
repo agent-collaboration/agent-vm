@@ -24,3 +24,16 @@
 5. **Decision.** Accepted, conditional on CI being green. Next: a fresh Opus review, then merge after telling Lead A. It's security-relevant.
 
 CI on `5e99fc30`: Validation passed; the E2E host run was in progress when this was written.
+
+## Update: final head `1f52a401`
+
+The PR received four more changes after the first acceptance:
+
+- **Review.** The fresh Opus review found it READY. Its two low findings were added:
+  - P1: per-value span coalescing, with a counted large-input bound;
+  - T1: Hegel alphabets now include the pattern schemes and astral characters.
+- **Verifier.** It accepts the final `84685de5`: 13 unit and 15 runtime tests, and 5 challenges that each fail twice and are green once restored.
+- **Merge.** Main `ac497e46` (F2) was merged in. The tool-engine Hegel devDependency is one entry, and the PR diff is two files.
+- **CI.** Run 44164225588 on `1f52a401` is green on all three checks.
+
+Decision: accepted at `1f52a401`. Merge after telling Lead A. The follow-up (O1 JSON keys and numbers, O2 stderr across chunks) starts from the new main.
