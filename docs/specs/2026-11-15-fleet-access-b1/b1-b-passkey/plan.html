@@ -59,7 +59,7 @@ flowchart TB
 <p><strong>Where everything lives:</strong> every file the roles return goes in <code>docs/specs/2026-11-15-fleet-access-b1/b1-b-passkey/work/</code> (the "work folder" below), in the agent-vm worktree <code>/Users/shravansunder/code/projects/agent-vm.design-portal-remediation</code>. The code is in switchboard, <code>/Users/shravansunder/code/projects/switchboard</code>, on a new branch from <code>main</code> (with B1-A merged) in an Agent Studio worktree.</p>
 
 <h2 id="implementer">Packet 1 · The Implementer (Opus high)</h2>
-<p><strong>You build B1-B.</strong> Read these first: the <a href="specification.html">Specification</a> (rules S1–S12), the <a href="program-design.html">Program Design</a> (every file and type), the <a href="verification-design.html">Verification Design</a> (what must pass), and switchboard <code>AGENTS.md</code>. Your paired Verifier's address is filled in here at go-ahead.</p>
+<p><strong>You build B1-B.</strong> Read the whole design first: all seven pages (Audit, Requirements, the <a href="specification.html">Specification</a> with rules S1–S12, the <a href="program-design.html">Program Design</a> with every file and type, the <a href="verification-design.html">Verification Design</a> with what must pass, this Plan, and Decisions), plus switchboard <code>AGENTS.md</code>. The design pages are the authority, and the steps below are a checklist pointing into them; where they differ, the design wins and you stop and ask the Lead. Your paired Verifier's address is in <code>work/commission.md</code>.</p>
 <h3 id="order">The order of the work</h3>
 <ol>
 <li><strong>Routes.</strong> Add <code>GET /api/auth/passkey/generate-authenticate-options</code> and <code>POST /api/auth/passkey/verify-authentication</code> to <code>isPublicSignInRoute</code> (<code>response-release/sign-in-request-handler.ts</code>), with V1's unit cases.</li>
@@ -129,7 +129,7 @@ flowchart TB
 </ul>
 
 <h2 id="verifier">Packet 2 · The Verifier (Sol high, a different model)</h2>
-<p><strong>You prove B1-B, and you never repair product code.</strong> Read the <a href="verification-design.html">Verification Design</a> and the <a href="specification.html">Specification</a>. Load switchboard's <code>.agents/skills/verify-auth/</code>. Run each check yourself on the PR head commit the Implementer names. Never use the Implementer's results as proof.</p>
+<p><strong>You prove B1-B, and you never repair product code.</strong> Read all seven design pages first; expected results come from the <a href="specification.html">Specification</a> and the <a href="verification-design.html">Verification Design</a>. Load switchboard's <code>.agents/skills/verify-auth/</code>. Run each check yourself on the PR head commit the Implementer names. Never use the Implementer's results as proof.</p>
 <h3 id="runs">What you run, where, and what passing looks like</h3>
 <div class="ex-table-scroll" data-width="canvas"><table>
 <thead><tr><th>Check</th><th>Command and target</th><th>Passes when</th><th>The deliberate break you run, then revert</th></tr></thead>
