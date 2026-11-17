@@ -1,6 +1,6 @@
 # F2 Hegel design review
 
-**Latest result, revision 2 (`30352bfd4`): twelve findings closed; F7 (P1) and F10 (P2) remain partly open. See the correction check at the end of this report.**
+**Latest result, revision 3 (`971be5f97`): F10 is closed; F7 (P1) and new F15 (P1) remain open. See the correction check at the end of this report.**
 
 **Verdict: FINDINGS — needs revision.** Eight P1 findings and six P2 findings. Several properties reject intended behavior; several counterfactuals do not reach the behavior they name. This is the five-check, inspect-only design review in `brief.md`, not software acceptance or a passing campaign.
 
@@ -279,5 +279,38 @@ These are source-design closures, not observations that implementation cases pas
 At the final checkpoint, design HEAD had advanced to `0475c68bda12bdfb80dd678692307f776859c719`; the diff against `30352bfd4` for all six F2 pages remained empty, so the reviewed content and coverage were unchanged. The report's local source links resolved to existing files and in-range lines; that mechanical check is not semantic or runtime proof.
 
 Only this report was changed. Tests, mutants, builds, lint and host runs remain **NOT RUN**. Work log remains **no-home**, with no separate authorized entries destination. This appendix is the correction checkpoint and supersedes the initial fourteen-open status.
+
+## Correction check — revision 3, `971be5f97`
+
+**Current verdict: FINDINGS — needs revision. F10 is closed; F7 remains partly open and new F15 (P1) replaces the old P6 failure form. Open count: 14 -> 2 -> 2.** This is one flat comparison, not two, so the convergence stop has not fired.
+
+The Lead's [revision-3 request](router://0ff962c5-7fa3-4c18-a5ca-1bbe8db09e89/push/01a1e9bc-f4ea-72f0-a698-e39529051de7) names **`971be5f97f0db13ee74fbe063eb7f10b10dee11a`** and asks only for the two remaining corrections. I reopened both changed Specification rows and both complete changed Verification Design rows at that revision. Program Design and the other pages are unchanged. Switchboard remains clean at `b03d35ffeea00f79061353dce1db6231a670c62f`; the deciding source branches and multi-command permanent test were opened again. The original grant and all unaffected closures remain.
+
+### F7 partly open — Reaching backend.invoke twice is allowed; two selected.invoke effects are forbidden
+
+**Current target:** [specification.html:45](/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/specification.html:45), [verification-design.html:37](/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/verification-design.html:37).
+
+The production entry is now correctly `prepareStandaloneBatchDispatch`'s returned `backend.invoke`, closing the wrong-owner part. But the wrong build is still described as that entry being “reached twice.” Correct code can enter `backend.invoke` twice for one operation: its guard refuses the second call **inside** the function at [standalone-batch-dispatch.ts:143](/Users/shravansunder/code/projects/switchboard-public/packages/tool-host-node/src/standalone-tool-portal/standalone-batch-dispatch.ts:143). The actual observable effect is `props.selected.invoke` at line 155, after the guard and the mark at line 153. Counting entries either fails correct duplicate refusal or produces no named red for the stated counterfactual.
+
+**Exact correction:** drive `backend.invoke` twice with the same valid prepared operation; count calls/effects at the injected **`selected.invoke`** callback. Correct code produces one selected effect and a second refusal. The wrong build bypasses the `dispatched.has(plan.operationId)` guard so both calls reach `selected.invoke`, producing two effects. State that boundary and mutation in the verification row; retain both state models and the existing effect obligation.
+
+**Route:** design-verification, with the Specification's counting wording aligned if needed. **Disposition:** accepted residual of F7 (P1), still within U3. No new seam or product change is proposed. Source prediction only; no mutant was run.
+
+### F10 closed; F15 new — The restored per-descriptor equality rejects a valid multi-command config
+
+**Current target:** [specification.html:33](/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/specification.html:33). **Rule:** U1's authority bound must reject overgrant and allow intended compilation.
+
+F10's missing bound and unnamed projection are fixed: P6 again requires authored authority, names the command-set path projection, and its wrong build retains an excluded alias. That closes the original failure form.
+
+The added sentence says **each** descriptor's `paths` “equals the authored admitted paths.” A single configured Gog operation can legitimately admit both `gmail search` and `gmail send`; the permanent test does so at [oauth-policy-compiler.unit.test.ts:227](/Users/shravansunder/code/projects/switchboard-public/packages/config-contracts/src/oauth-policy-compiler.unit.test.ts:227). Those commands belong to different descriptors in [oauth-policy-compiler-test-fixture.ts:158](/Users/shravansunder/code/projects/switchboard-public/packages/config-contracts/src/oauth-policy-compiler-test-fixture.ts:158). Correct compilation puts only search's authored aliases in the search descriptor and send's authored aliases in the send descriptor. Neither individual `paths` equals the full two-command set. Production explicitly filters **each descriptor's own catalog paths** against authored paths at [oauth-tool-portal-config.ts:195](/Users/shravansunder/code/projects/switchboard-public/packages/config-contracts/src/oauth-tool-portal-config.ts:195). Local help/version also lives separately in `noOAuthPaths`, not in each descriptor.
+
+**Exact correction:** for each emitted descriptor `d`, independently expect `paths(d) = authoredCommandPaths ∩ knownCatalogPaths(d.operationId)`, preserving the contract's ordering if asserted. Keep the local help/version projection separate and preserve the compiler's legitimate omission of descriptors for operations excluded by its policy rules. Equivalently, assert every emitted path is authored and belongs to that descriptor, plus the appropriately partitioned completeness check. The two-command case above must pass; retaining the unselected `mail search` alias in the search descriptor must fail. Do not compare every descriptor with the entire configured command set.
+
+**Route:** design-specification -> design-verification. **Disposition:** accepted new finding F15 (P1), inside U1. This replaces F10's old failure form; it is not counted as F10 recurring after closure. It requires no new policy, only the correctly partitioned existing oracle.
+
+**Next owner: design-specification for F15, then design-verification for both exact corrections.** Other twelve original closures and F10's closure stand; there is no owner decision waiting. The previous report's ranking and implementation notes remain outside this bounded recheck.
+
+Only this report changed. All tests, mutants, builds, lint and host proof remain **NOT RUN** under the inspect-only grant. Work log remains **no-home**; this section is the current checkpoint and supersedes revision 2's open-finding list.
+
 
 
