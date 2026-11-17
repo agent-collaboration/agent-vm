@@ -1,6 +1,6 @@
 # F2 Hegel design review
 
-**Latest result, revision 3 (`971be5f97`): F10 is closed; F7 (P1) and new F15 (P1) remain open. See the correction check at the end of this report.**
+**Latest result, revision 4 (`681934c82`): READY for the commissioned source-design review. All accepted findings are closed. See the final correction check at the end of this report.**
 
 **Verdict: FINDINGS — needs revision.** Eight P1 findings and six P2 findings. Several properties reject intended behavior; several counterfactuals do not reach the behavior they name. This is the five-check, inspect-only design review in `brief.md`, not software acceptance or a passing campaign.
 
@@ -302,7 +302,7 @@ The production entry is now correctly `prepareStandaloneBatchDispatch`'s returne
 
 F10's missing bound and unnamed projection are fixed: P6 again requires authored authority, names the command-set path projection, and its wrong build retains an excluded alias. That closes the original failure form.
 
-The added sentence says **each** descriptor's `paths` “equals the authored admitted paths.” A single configured Gog operation can legitimately admit both `gmail search` and `gmail send`; the permanent test does so at [oauth-policy-compiler.unit.test.ts:227](/Users/shravansunder/code/projects/switchboard-public/packages/config-contracts/src/oauth-policy-compiler.unit.test.ts:227). Those commands belong to different descriptors in [oauth-policy-compiler-test-fixture.ts:158](/Users/shravansunder/code/projects/switchboard-public/packages/config-contracts/src/oauth-policy-compiler-test-fixture.ts:158). Correct compilation puts only search's authored aliases in the search descriptor and send's authored aliases in the send descriptor. Neither individual `paths` equals the full two-command set. Production explicitly filters **each descriptor's own catalog paths** against authored paths at [oauth-tool-portal-config.ts:195](/Users/shravansunder/code/projects/switchboard-public/packages/config-contracts/src/oauth-tool-portal-config.ts:195). Local help/version also lives separately in `noOAuthPaths`, not in each descriptor.
+The added sentence says **each** descriptor's `paths` “equals the authored admitted paths.” A single configured Gog operation can legitimately admit both `gmail search` and `gmail send`; the permanent test does so at [oauth-policy-compiler.unit.test.ts:227](/Users/shravansunder/code/projects/switchboard-public/packages/config-contracts/src/oauth-policy-compiler.unit.test.ts:227). Those commands belong to different descriptors in [oauth-policy-compiler-test-fixture.ts:128](/Users/shravansunder/code/projects/switchboard-public/packages/config-contracts/src/oauth-policy-compiler-test-fixture.ts:128). Correct compilation puts only search's authored aliases in the search descriptor and send's authored aliases in the send descriptor. Neither individual `paths` equals the full two-command set. Production explicitly filters **each descriptor's own catalog paths** against authored paths at [oauth-tool-portal-config.ts:195](/Users/shravansunder/code/projects/switchboard-public/packages/config-contracts/src/oauth-tool-portal-config.ts:195). Local help/version also lives separately in `noOAuthPaths`, not in each descriptor.
 
 **Exact correction:** for each emitted descriptor `d`, independently expect `paths(d) = authoredCommandPaths ∩ knownCatalogPaths(d.operationId)`, preserving the contract's ordering if asserted. Keep the local help/version projection separate and preserve the compiler's legitimate omission of descriptors for operations excluded by its policy rules. Equivalently, assert every emitted path is authored and belongs to that descriptor, plus the appropriately partitioned completeness check. The two-command case above must pass; retaining the unselected `mail search` alias in the search descriptor must fail. Do not compare every descriptor with the entire configured command set.
 
@@ -311,6 +311,26 @@ The added sentence says **each** descriptor's `paths` “equals the authored adm
 **Next owner: design-specification for F15, then design-verification for both exact corrections.** Other twelve original closures and F10's closure stand; there is no owner decision waiting. The previous report's ranking and implementation notes remain outside this bounded recheck.
 
 Only this report changed. All tests, mutants, builds, lint and host proof remain **NOT RUN** under the inspect-only grant. Work log remains **no-home**; this section is the current checkpoint and supersedes revision 2's open-finding list.
+
+## Correction check — revision 4, `681934c82`
+
+**READY for the commissioned five-check source-design review. F7 and F15 are closed; no accepted finding remains open.** The open count is **14 -> 2 -> 2 -> 0**. This is a design readiness result, not implementation, runtime, delivery or owner acceptance.
+
+Authority and target: the Lead's [revision-4 request](router://0ff962c5-7fa3-4c18-a5ca-1bbe8db09e89/push/01a1e9c0-181c-74c3-8e7e-ea76a68c8beb) names **`681934c82f91db7f819b77b20d3f8e4634e1d351`** and requests only F7/F15. I reopened the complete changed P6/M3 Specification rows and their Verification Design rows. Their changes are confined to those two properties and wrong builds; other design pages and prior closures retain coverage. The public Switchboard source identity remains `b03d35ffeea00f79061353dce1db6231a670c62f`.
+
+| Finding | Current anchors | Verified closure |
+| --- | --- | --- |
+| F7 | [Specification:45](/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/specification.html:45), [Verification Design:37](/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/verification-design.html:37) | Counts `selected.invoke` at production line 155. Correct duplicate entry/refusal is explicitly allowed; bypassing `dispatched.has` is the named two-effect wrong build. This matches the guard, mark and selected invocation at [standalone-batch-dispatch.ts:143](/Users/shravansunder/code/projects/switchboard-public/packages/tool-host-node/src/standalone-tool-portal/standalone-batch-dispatch.ts:143). |
+| F15 | [Specification:33](/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/specification.html:33), [Verification Design:31](/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/verification-design.html:31) | Expected paths are authored command paths intersected with the independently known catalog paths for **that descriptor's operation ID**. Help/version stays separate. The legitimate search+send case is explicitly preserved, and the unselected mail/search alias is the counterfactual. This matches per-descriptor filtering at [oauth-tool-portal-config.ts:195](/Users/shravansunder/code/projects/switchboard-public/packages/config-contracts/src/oauth-tool-portal-config.ts:195) and the multi-command fixture/test opened for revision 3. |
+
+The changed oracle permits the materially different legitimate multi-command implementation and rejects the stated broader descriptor. The changed effect assertion observes the selected invocation behind the production duplicate guard, rather than mere entry to a function. Both corrections remain inside the test-only goal; no owner decision, new production mechanism, or proof waiver is introduced.
+
+All five original source-review checks now have their coverage in the initial account plus the verified correction closures above. The earlier narrower reviews are superseded by this result at this target. No full workflow/visual/design-rule certification or original-owner-quotation authentication is claimed. The initial prioritization recommendation and P1 receipt-fixture notes remain useful implementation handback context; neither is an open accepted finding in this scoped review.
+
+**Handback:** the Lead can use the corrected design and this closure record for the next phase. Implementation must still demonstrate its independent oracles, clean baseline, named wrong-build failure with shrinking, restored pass, case/seed replay, applicable repository gates, and real DO/UDS host evidence. None of those runtime obligations has been executed or accepted here.
+
+Only this report changed. No build, test, lint, mutant, browser, host or provider execution occurred. Work log remains **no-home**; this section is the final review checkpoint. The bounded review assignment is complete.
+
 
 
 
