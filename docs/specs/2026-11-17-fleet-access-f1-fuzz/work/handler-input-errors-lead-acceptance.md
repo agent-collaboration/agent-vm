@@ -32,3 +32,20 @@
    - Main has since moved (`ac497e46`, `8e7c4416`). The new commits touch only tool-* and oauth-* packages, plus a lock entry adding the hegel devDependency, with no sign-in file. The branch must merge main and pass CI again before merge.
 
 5. **Decision:** accepted, conditional on that merge and CI. Next: a fresh Opus review, then merge after telling Lead A.
+
+## Update, 17 Nov evening: final head `34fb46d1` (review finding F1 closed)
+
+- **Main merged** (`f363ff21`, main `8e7c4416`). The merge brought no sign-in file change.
+- **The F1 fix, which I read myself.** `basicClientId` now calls `@better-auth/core` 1.7.11 `decodeBasicCredentials` (`basic-credentials.mjs:48-62`). It is the same installed copy that oauth-provider's `basicToClientCredentials` uses (`utils-vIo_wPv5.mjs:607-621`), so the wrapper and the provider can't disagree about which client a header names.
+- **Test.** A new host case uses a real agent and extra `==` padding.
+- **Sunclaw red and green** (packet `395d7cec`):
+  - red: 1 pass and 1 intended failure on each host (400 vs 200 at `:91`);
+  - fixed: 2/0 on each host;
+  - all 4 retention audits are 0.
+
+  The Verifier's independent audit is SUPPORTED (`work/handler-input-errors-f1-verifier.md`). The Implementer also checked the raw archive.
+- **CI** run 44176566607 on `34fb46d1`: all three jobs passed. I checked this myself.
+- **Delta review** by the same reviewer: READY with no findings (`tmp/2026-11-17-pr6-review/delta-report.md`). D-O1 (form `client_id` precedence; old behaviour that fails closed) is logged as a follow-up.
+- **Not covered.** The full host suite was not repeated at `34fb46d1`. The delta reaches only `tokenClientId`, whose sole consumer is the agent claims branch, and CI's workerd host lane ran the whole suite at this head (485 passed).
+
+**Decision:** accepted at `34fb46d1`. Merge after telling Lead A.
