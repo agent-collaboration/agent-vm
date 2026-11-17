@@ -19,78 +19,82 @@
 </nav></ex-nav>
 <ex-document id="doc">
 <h1>F1 · Fuzz testing for sign-in: Program Design</h1>
-<p>How it's built. F1 is test code only. It adds no product behaviour, changes no product file, and adds no CI gate (CI already runs the unit, integration and host suites the Hegel tests join). Everything lives in <code>packages/sign-in-test-support</code>, plus one on-demand driver under <code>scripts/</code>, following the repo's rule that <code>scripts/</code> holds drivers and tests live under packages.</p>
+<p>How it's built, revision 2, after design review F1–F10. F1 is test code only: no product file changes and no CI gate changes. Pure tests go in the unit lane. Anything that needs a live Miniflare or Node host (the provider inventory, dual-engine storage, host requests) goes in the existing host e2e lane, which CI already requires (<code>ci.yml:43</code>), per Switchboard's <code>AGENTS.md:35</code>. Bombadil runs through an on-demand driver in <code>scripts/</code>.</p>
 <ex-mermaid id="parts" label="Where the parts sit" data-width="canvas"><script type="text/plain">
 flowchart TB
-  inv["installedProviderEndpointInventory<br/>(existing)"] --> cov["fuzz/endpoint-coverage.unit.test.ts<br/>S1"]
-  fam["fuzz/body-families/*.ts<br/>one generator per endpoint (E2)"] --> cov
-  fam --> ep["fuzz/endpoint-bodies.host.e2e.test.ts<br/>S2 · Hegel testAsync, both hosts"]
-  harness["local-auth-harness auth(pathname, init)<br/>(existing, both hosts)"] --> ep
-  model["fuzz/organization-model.ts<br/>independent model of the rules"] --> st["fuzz/organization-storage.hegel.integration.test.ts<br/>S3 · Hegel StateMachine"]
-  stores["injected Drizzle stores<br/>(existing, both engines)"] --> st
-  spec["bombadil/specs/*.ts<br/>S4 properties"] --> drv["scripts/bombadil/run-sign-in-ui-fuzz.mts<br/>on-demand driver"]
+  prov["installedProviderEndpointInventory (existing)"] --> covh["fuzz/route-coverage.host.e2e.test.ts<br/>S1, host lane"]
+  handler["outer-handler route list<br/>fuzz/handler-routes.ts (hand-written from the handlers)"] --> covh
+  table["fuzz/route-classification.ts<br/>independent table (E2)"] --> covh
+  table --> covu["fuzz/route-classification.unit.test.ts<br/>table shape, pure"]
+  fam["fuzz/request-families/*.ts<br/>query / form / JSON parts (E3)"] --> req["fuzz/route-requests.host.e2e.test.ts<br/>S2 · Hegel testAsync, both hosts"]
+  harness["local-auth-harness auth(pathname, init) (existing)"] --> req
+  model["fuzz/organization-model.ts + model.unit.test.ts<br/>pure"] --> st["fuzz/organization-sequences.host.e2e.test.ts<br/>S3 · Hegel StateMachine, both engines"]
+  harness --> st
+  spec["bombadil/specs/*.ts"] --> drv["scripts/bombadil/run-sign-in-ui-fuzz.mts<br/>run and replay"]
   harness --> drv
-  class inv,harness,stores slot6
-  class cov,fam,ep,model,st,spec,drv slot2
+  class prov,harness slot6
+  class covh,handler,table,covu,fam,req,model,st,spec,drv slot2
 </script></ex-mermaid>
 
-<h2 id="hegel-bodies">Hegel: request bodies (S1, S2)</h2>
+<h2 id="coverage">Coverage (S1)</h2>
 <ul>
-<li><strong><code>fuzz/body-families/</code>:</strong> one module per fuzzed endpoint, exporting <code>{ method, path, callers, documentedAnswers, generate }</code>. <code>generate</code> is a Hegel generator built with <code>composite</code> and <code>oneOf</code>, drawing:
+<li><strong><code>handler-routes.ts</code></strong> lists the routes the outer handlers own, written by reading <code>sign-in-request-handler.ts</code> and <code>sign-in-http-handler.ts</code>.</li>
+<li><strong><code>route-classification.ts</code></strong> is the independent table (E2). Each row: method, path, exposure, request parts, documented answers, disclosure rule, permitted refusal effects. It's written from the specs and tests, not computed from the product allowlist.</li>
+<li><strong><code>route-coverage.host.e2e.test.ts</code></strong> builds the live provider inventory, then checks that provider rows plus handler routes equal the classification rows, and that the reachable rows equal the families.</li>
+<li><strong>The pure unit test</strong> checks the table's own consistency: every reachable row has request parts and answers.</li>
+</ul>
+
+<h2 id="requests">Requests (S2)</h2>
+<ul>
+<li><strong>Families:</strong> one module per reachable row, exporting <code>{ route, callers, generate }</code>. <code>generate</code> draws:
   <ul>
-  <li>a valid body from the endpoint's real Zod schema's shape (hand-written; Hegel has no Zod adapter);</li>
-  <li>near-valid bodies (one field mutated);</li>
-  <li>boundaries (empty, very long, Unicode, numbers at limits);</li>
-  <li>junk JSON, non-JSON and a wrong content type.</li>
+  <li>the query map for GET routes;</li>
+  <li>the URL-encoded form for the token route;</li>
+  <li>the JSON body for body routes;</li>
+  <li>malformed JSON and the wrong content type where Fetch allows them (no GET body: Fetch rejects it before the host).</li>
   </ul>
-  The body is drawn as its own value, so failures shrink to it.</li>
-<li><strong><code>endpoint-coverage.unit.test.ts</code></strong> compares the family list with the reachable rows of <code>installedProviderEndpointInventory</code>, in both directions (S1).</li>
-<li><strong><code>endpoint-bodies.host.e2e.test.ts</code></strong> runs <code>hegel.testAsync</code> per family and per caller (signed out, member, owner), for each <code>SIGN_IN_TEST_HOST</code>, with its own <code>testCases</code> count (default 200 per family).
+  Values come from Hegel generators per field: valid, near-valid, boundary.</li>
+<li><strong><code>route-requests.host.e2e.test.ts</code>:</strong> per family, caller and <code>SIGN_IN_TEST_HOST</code>, it runs <code>hegel.testAsync</code> (200 cases default, derandomized in CI).
   <ul>
-  <li><strong>Each case:</strong> it sends the request through the existing harness entry, then asserts the answer is in <code>documentedAnswers</code>, there's no 5xx, and no forbidden values appear in the body (S2).</li>
-  <li><strong>For a refusal:</strong> it compares stored-row snapshots before and after, using the existing recording database helpers.</li>
-  <li><strong>Reset:</strong> each case starts from a fresh fixture state, so shrinking and replay are sound; Hegel reruns the body, and the harness gives each case its own state.</li>
+  <li><strong>Each case:</strong> it sets up fresh fixture state for its caller, sends through the harness, then checks the S2 answer, disclosure and effect rules from the row.</li>
+  <li><strong>Disclosure:</strong> it scans body and headers for every credential class (reusing <code>credential-free-refusal.ts</code>) and for identities beyond the caller's entitlement.</li>
+  <li><strong>Effects:</strong> a stored-row snapshot diff before and after, allowing exactly the row's permitted effects.</li>
   </ul></li>
-<li><strong>Settings:</strong> <code>derandomize: true</code> in CI, the database disabled in CI (Hegel's own CI default), and failing values printed through <code>tc.note</code>.</li>
 </ul>
 
-<h2 id="hegel-storage">Hegel: storage sequences (S3)</h2>
+<h2 id="sequences">Organization sequences (S3)</h2>
 <ul>
-<li><strong><code>organization-model.ts</code></strong> is a small independent model: maps of organizations, members with roles, invitations, sessions and fence revisions. It's written from the domain rules, not copied from product code.</li>
-<li><strong><code>organization-storage.hegel.integration.test.ts</code></strong> uses <code>hegel.stateful.StateMachine</code> with <code>runAsync</code>.
+<li><strong><code>organization-model.ts</code> (pure, unit-tested):</strong> people, organizations, memberships with roles, invitations, sessions, and fence pairs keyed on (organization, person) with an active flag. It's written from the domain rules and the fence contract (<code>authorization-fence-mutations.ts:233–354</code>, <code>person-session-store.ts:239</code>).</li>
+<li><strong><code>organization-sequences.host.e2e.test.ts</code>:</strong> a <code>hegel.stateful.StateMachine</code> with <code>runAsync</code>, on each storage engine via the existing dual-storage host.
   <ul>
-  <li><strong>State:</strong> the model plus real stores, built through the existing injected Drizzle store factories for each engine: the D1 fixture and better-sqlite3.</li>
-  <li><strong>Rules:</strong> one per operation in S3. Each applies the operation to both the model and the real stores; where the domain refuses, both must refuse and the stores must be unchanged.</li>
-  <li><strong>Invariants:</strong> each S3 rule, plus “model equals stored projection”, all with <code>alwaysCheck: true</code>, because Hegel otherwise samples invariants between steps.</li>
-  <li><strong>Pools</strong> hold created people, organizations and sessions.</li>
-  <li><strong>Budget:</strong> 50 steps per case, 200 cases per engine.</li>
+  <li><strong>Each rule</strong> performs its operation through the real entry: the Better Auth organization routes or service operations through the harness, as the right caller. It applies the same operation to the model, then reads stored state back through the existing store readers.</li>
+  <li><strong>Refused operations</strong> must be refused by both.</li>
+  <li><strong>Invariants</strong> are S3's rules plus “model equals stored projection”, all with <code>alwaysCheck: true</code>.</li>
+  <li><strong>Pools</strong> hold people, organizations and sessions. 50 steps per case; 100 cases per engine.</li>
   </ul></li>
-<li><strong>Limit:</strong> Hegel runs steps one at a time, so this proves sequential rules, not concurrent interleavings. The existing fence and concurrency tests keep covering those.</li>
 </ul>
 
-<h2 id="bombadil">Bombadil: UI exploration (S4)</h2>
+<h2 id="bombadil">Bombadil (S4, S5)</h2>
 <ul>
-<li><strong>Dependency:</strong> <code>@antithesishq/bombadil</code> as an exact-pinned dev dependency of sign-in-test-support. It gives the TypeScript types and a wrapper for the binary on darwin-arm64, linux-x64 and linux-arm64. The version is 0.7.10 (source); the Implementer confirms the npm release exists and is at least two weeks old, or uses the newest that is.</li>
-<li><strong>Specs (<code>bombadil/specs/</code>):</strong> one per campaign: <code>sign-in-signed-out.ts</code>, <code>owner-pages.ts</code> and <code>member-people-denied.ts</code>. They're written in Bombadil's spec runtime, so they can't import Node packages. Each spec:
+<li><strong>Dependency:</strong> <code>@antithesishq/bombadil</code>, an exact-pinned dev dependency. The driver maps the existing <code>CHROME_BIN</code> to Bombadil's <code>CHROME</code> variable.</li>
+<li><strong>Specs:</strong> <code>sign-in-signed-out.ts</code>, <code>owner-pages.ts</code> and <code>member-people-denied.ts</code>. Each:
   <ul>
-  <li>re-exports the defaults except <code>noConsoleErrors</code>, which is replaced by an allowlisted version;</li>
-  <li>adds S4's properties as <code>always(...)</code> formulas over extractors: page text and attributes; <code>performance</code> resource entries for the passkey challenge path before the click; People-row presence;</li>
-  <li>adds action generators that keep exploration inside the page under test.</li>
+  <li>keeps <code>noUncaughtExceptions</code> and <code>noUnhandledPromiseRejections</code>;</li>
+  <li>replaces <code>noConsoleErrors</code> with an allowlisted version;</li>
+  <li>replaces <code>noHttpErrorCodes</code> with a navigation-status property that accepts only the route's documented refusal (403 plus generic content for the member campaign);</li>
+  <li>adds the S2 disclosure rule over page text and attributes, per campaign;</li>
+  <li>uses action generators that stay inside the page under test.</li>
   </ul></li>
-<li><strong>Driver (<code>scripts/bombadil/run-sign-in-ui-fuzz.mts</code>, on demand):</strong> for each host it:
+<li><strong>Passkey click-only witness:</strong> the harness counts passkey-challenge requests on its own side. The driver reads the trace's recorded actions (<code>bombadil trace</code> JSON) and counts clicks on the passkey button. Equal counts pass. A request with no click fails, regardless of timing, which avoids the snapshot-timing problem.</li>
+<li><strong>Driver, run mode, per host:</strong>
   <ul>
-  <li>starts the existing harness, which binds 127.0.0.1 port 0 and exposes its issuer;</li>
-  <li>creates the needed people and sessions through existing fixtures, then passes the session cookie with <code>--cookie</code>;</li>
-  <li>runs <code>bombadil browser test --headless --time-limit 5m --exit-on-violation --output-path &lt;private trace&gt; &lt;issuer&gt;/&lt;page&gt; &lt;spec&gt;</code>, using the existing <code>CHROME_BIN</code>;</li>
-  <li>records the exit code (0 clean, 2 violation, 1 error), the trace path and the reproduce command;</li>
-  <li>tears the harness down.</li>
-  </ul>
-  Traces stay in a private folder outside git (S6).</li>
-<li><strong>Limits:</strong> Bombadil exposes no seed, its replay can diverge, and its shrinking is experimental. A violation is a finding to reproduce and turn into an ordinary test, not a gate on its own.</li>
+  <li>start the harness;</li>
+  <li>seed the campaign's people, organization and sessions;</li>
+  <li>run <code>bombadil browser test --headless --time-limit 5m --exit-on-violation --output-path &lt;private&gt; &lt;issuer&gt;/&lt;page&gt; &lt;spec&gt;</code> with one <code>--cookie</code> per cookie;</li>
+  <li>then compare the challenge counts, record the exit code, trace path and campaign settings, and tear down.</li>
+  </ul></li>
+<li><strong>Driver, replay mode:</strong> recreate the same host, fixtures, controlled clock and signed-in state, then run <code>bombadil browser test --reproduce &lt;trace&gt;</code> against the new issuer, with the same spec and cookies, and without <code>--time-limit</code> or <code>--exit-on-violation</code>.</li>
 </ul>
-
-<h2 id="owners">Who owns what</h2>
-<p>All F1 files are new test or support files in <code>sign-in-test-support</code> and <code>scripts/bombadil/</code>, plus one dev dependency. No product file changes. When a fuzz finding needs a product fix, that fix is a normal bug fix in the owning package, with the finding as its regression test.</p>
 </ex-document>
 </body>
 </html>
