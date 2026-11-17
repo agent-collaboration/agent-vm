@@ -36,3 +36,13 @@ Out of scope: the invite-member catch-all convention (`sign-in-request-handler.t
   - a null body skips the parse;
   - a malformed Basic header gives 401 `invalid_client` with a Basic challenge.
 - Diff to the Lead before push. Heavy host runs go to Sunclaw; the commission covers it, and packets come to the Lead under Decision 8.
+- **L1 scope (Lead, 17 Nov, on Implementer departure 1).** Parity with Better Auth applies to the **parse stage only**. The wrapper's own signed-out 403 (`sign-in-http-handler.ts:312-319`) runs before native, so the wrapper reproduces Better Call 1.4.2's parse stage (`utils.mjs:4-31`, under `allowedMediaTypes ["application/json"]`) itself, before that check. That gives native's exact 415 and 400 bodies.
+  - **After a successful parse**, the signed-out 403 policy is unchanged. Native would answer 400 `VALIDATION_ERROR` there; the wrapper answers 403, as main already does. This is an explicit **non-goal**, not a gap.
+  - A null body cannot reach the handler through either host; a unit test proves that case.
+- **Proof apparatus.** Every host leg (red, green and the full suite) uses the established verify-auth retention:
+  - `prepareProofBundles` and `prepareNodeProofArtifacts` run before the leg;
+  - `AUTH_PROOF_MANIFEST_FILE` and `AUTH_PROOF_NODE_MANIFEST_FILE` are set;
+  - Worker modules, config and client are compared afterwards;
+  - initiated and actual Node receipts are paired, with `compareNodeProofReceipts`.
+
+  A dist listing alone is not target proof.
