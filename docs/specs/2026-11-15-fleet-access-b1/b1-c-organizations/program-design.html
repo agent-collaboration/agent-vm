@@ -332,7 +332,7 @@ sequenceDiagram
 <div class="ex-table-scroll" data-width="canvas"><table>
 <thead><tr><th>Rule</th><th>Needs, entities</th><th>Owning code and shape</th><th>State, native effects, failure</th><th>Proof</th></tr></thead>
 <tbody>
-<tr><td>S1</td><td>U27, U51; E19, Session</td><td><code>acquireReadSession</code>; <code>readPersonOrganizationContext</code> → <code>personOrganizationContextSchema</code></td><td>Project code writes nothing; Better Auth may delete an expired session and clear its cookie; DB failure → 503</td><td>V1</td></tr>
+<tr><td>S1</td><td>U27, U51; E19, Session</td><td><code>acquireReadSession</code>; <code>readPersonOrganizationContext</code> → <code>personOrganizationContextSchema</code></td><td>Project code writes nothing; Better Auth may delete an expired session and clear its cookie (which, through the existing fence, bumps that person's revision and queues the drain); DB failure → 503</td><td>V1</td></tr>
 <tr><td>S2</td><td>U51; E19, Session</td><td>Page props <code>memberships</code>, <code>selectionRequired</code>; the card</td><td>Every switch ending re-renders the page from stored state</td><td>V2</td></tr>
 <tr><td>S3</td><td>U27; Session</td><td>Native set-active from the card; re-render in every ending</td><td>Foreign switch: native 403 and clearing; lost reply: the re-render decides</td><td>V2, V6</td></tr>
 <tr><td>S4</td><td>U43; Session</td><td><code>readPersonOrganizationContext</code> (self read), native set-active (switch), the person-membership and people-list endpoints: none calls <code>requireFactorActor</code> or reads factor state</td><td>No confirmation read or written; a protected change elsewhere still refuses without a recent factor</td><td>V1, V2, V4</td></tr>
