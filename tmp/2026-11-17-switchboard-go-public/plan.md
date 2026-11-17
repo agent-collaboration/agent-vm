@@ -52,7 +52,8 @@
    - input-otp 1.5.0, MIT, © 2024 Guilherme Rodz, gitHead `3daad8fc…`: `packages/auth-ui/src/auth-ui.css:6–42`.
    - Cloudflare/Microsoft runtime declarations, Apache-2.0: both `worker-configuration.gen.d.ts`. Keep their headers; add `LICENSES/Apache-2.0.txt` and any upstream NOTICE.
    - BridgeWeb theme from AgentStudio (`panel-theme.css`, `sign-in-theme.css`): same copyright holder, AGPL-3.0. Record its provenance, and check AgentStudio's `bridge-app.css` for third-party pieces; record any.
-   - Each copied file gets a one-line header pointing to its notice entry. Inventory any other copy you find (CSS, icons, generated files, producer fixtures) the same way and list it in the handback.
+   - Each copied **source file whose format allows comments** (TS, TSX, CSS, JS) gets a one-line header pointing to its notice entry. JSON and other structured or generated data files get no inline header: they are mapped to their full entry in `THIRD_PARTY_NOTICES.md` or an adjacent README. Their parsed producer objects must stay byte-identical, because the tests `JSON.parse` them (R7; `organization-provisioning-client.unit.test.ts:39–50`).
+   - The BridgeWeb theme imports Tailwind, tw-animate-css and shadcn, and carries Pierre-derived palette and selection values (AgentStudio `bridge-app.css:11–13,153–169,278–287`). Record each in the inventory. Inventory any other copy you find (CSS, icons, generated files, producer fixtures) the same way and list it in the handback.
    - Package-artifact notice inclusion (`files: ["dist"]`) is deferred to the future release design; this cut is git-source only.
 5. **F4:**
    - `"license": "AGPL-3.0-only"` in all 20 `package.json` files and in `python/agent-vm-agent-portal-sdk/pyproject.toml`.
@@ -84,7 +85,11 @@
      - provider-token patterns
      - high-entropy candidates
    - Any tracked image or binary is also a match.
-   - Every match gets a disposition: removed, or kept as a documented synthetic example or negative test (for example `portal-attachment-contracts.unit.test.ts:43` `/Users/person/file`, which asserts rejection) with its purpose.
+   - Every match gets one of three dispositions:
+     - **removed**;
+     - **kept as a synthetic example or negative test**, with its purpose (for example `portal-attachment-contracts.unit.test.ts:43` `/Users/person/file`, which asserts rejection);
+     - **kept as a verified non-sensitive technical or public value**, with its source and reason: public commit SHAs, artifact SHA-256 digests, producer records (for example `contract-fixtures/central-organization-admin/README.md:10–25`, `joint-central-pins.ts:18,29,38–42`). Private labels around them are neutralized while the value and its check stay (for example the `sunclawSigned` key becomes a neutral name such as `signedForDirectExecution`).
+   - Private host, signing-team and approval metadata never qualifies for the third disposition.
    - Zero unresolved sensitive matches. Redact values in the report. Include the final file manifest.
 10. **Gates on Sunclaw:** `pnpm install --frozen-lockfile`, `pnpm check`, unit and integration suites, `pnpm python:test:host`, and `pnpm test:e2e:host` on both hosts. A failure caused by a removed path that isn't covered above: report to the Lead and stop.
 11. **Handback** in `tmp/2026-11-17-switchboard-go-public/work/implementer-handback.md`: the candidate head SHA, the tree hash, sweep dispositions, gate counts, the notice inventory, and every judgment call.
@@ -99,7 +104,8 @@
     - Check for external `uses: agent-collaboration/switchboard/...` references.
     - Tell every agent with a Switchboard worktree to stop pushing.
 15. **Build the public commit in a separate clean directory,** never in a checkout with private history:
-    - `git init`, copy the accepted tree, one commit (owner identity; signed if signing works);
+    - `git init`, copy the accepted tree, one commit signed if signing works, authored and committed as the owner with their **GitHub noreply address** (`<id>+<login>@users.noreply.github.com`, from `gh api user`), never a personal email;
+    - before any push, inspect and record the commit's author and committer names and emails, dates, the message (a neutral "Initial public release of Switchboard" plus licence line) and the signature key ID (R4);
     - verify there are no parents and the tree hash equals the accepted candidate tree.
 16. Rename today's repo to `switchboard-history`.
 17. **Repoint every local remote and worktree** on this Mac and Sunclaw that points at `agent-collaboration/switchboard.git`:
