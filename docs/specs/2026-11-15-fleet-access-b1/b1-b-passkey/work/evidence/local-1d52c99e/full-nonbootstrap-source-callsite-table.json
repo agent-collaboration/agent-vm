@@ -1,0 +1,795 @@
+{
+  "head": "1d52c99e82c5c595f8f3df2ddf068209b8715c95",
+  "unit": "auth harness instances, not cases",
+  "callsiteIndexTotal": 133,
+  "rootNoneCallsites": [
+    {
+      "file": "packages/sign-in-test-support/src/people-passkey-sign-in.host.e2e.test.ts",
+      "line": 167,
+      "multiplicity": 1,
+      "scope": "root auth harness receipt",
+      "reason": "Only public challenge or page/stylesheet requests; no readiness promotion",
+      "sourceTitle": "it('people: an accepted public passkey challenge stores exactly one challenge and its cookie')"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/served-page-assets.host.e2e.test.ts",
+      "line": 10,
+      "multiplicity": 1,
+      "scope": "root auth harness receipt",
+      "reason": "Only public challenge or page/stylesheet requests; no readiness promotion",
+      "sourceTitle": "it('serves the sign-in stylesheet through the production host with panel tokens, component recipes and immutable caching')"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/turnstile-provider.host.e2e.test.ts",
+      "line": 53,
+      "multiplicity": 1,
+      "scope": "root auth harness receipt",
+      "reason": "Only public/provider captcha or challenge requests; no usable JWKS, verified callback or personToken",
+      "sourceTitle": "test('turnstile: actual deployed provider options contain only its own hostname and disjoint actions')"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/turnstile-provider.host.e2e.test.ts",
+      "line": 78,
+      "multiplicity": 4,
+      "scope": "root auth harness receipt",
+      "reason": "Only public/provider captcha or challenge requests; no usable JWKS, verified callback or personToken",
+      "sourceTitle": "test.each(['missing', 'rejected', 'wrong-action', 'wrong-hostname'])('turnstile: private provider passkey %s refusal creates no challenge or seed')"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/turnstile-provider.host.e2e.test.ts",
+      "line": 112,
+      "multiplicity": 1,
+      "scope": "root auth harness receipt",
+      "reason": "Only public/provider captcha or challenge requests; no usable JWKS, verified callback or personToken",
+      "sourceTitle": "test('turnstile: accepted private passkey options store a real challenge and replay changes nothing')"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/turnstile-provider.host.e2e.test.ts",
+      "line": 145,
+      "multiplicity": 2,
+      "scope": "root auth harness receipt",
+      "reason": "Only public/provider captcha or challenge requests; no usable JWKS, verified callback or personToken",
+      "sourceTitle": "test.each(['error-response', 'connection-refused'])('turnstile: real provider passkey fails closed when siteverify is %s')"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/turnstile-provider.host.e2e.test.ts",
+      "line": 187,
+      "multiplicity": 7,
+      "scope": "root auth harness receipt",
+      "reason": "Only public/provider captcha or challenge requests; no usable JWKS, verified callback or personToken",
+      "sourceTitle": "test.each([\n\t'missing',\n\t'rejected',\n\t'wrong-action',\n\t'wrong-hostname',\n\t'duplicate',\n\t'unavailable',\n\t'accepted',\n])('turnstile: observer preserves the native captcha hook result for %s')"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/turnstile-provider.host.e2e.test.ts",
+      "line": 232,
+      "multiplicity": 1,
+      "scope": "root auth harness receipt",
+      "reason": "Only public/provider captcha or challenge requests; no usable JWKS, verified callback or personToken",
+      "sourceTitle": "test('turnstile: a non-captcha provider refusal after verification emits no captcha observation')"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/turnstile-provider.host.e2e.test.ts",
+      "line": 259,
+      "multiplicity": 2,
+      "scope": "root auth harness receipt",
+      "reason": "Only public/provider captcha or challenge requests; no usable JWKS, verified callback or personToken",
+      "sourceTitle": "test.each(['wrong-action-first', 'duplicate-first'])('turnstile: overlapping native provider refusals retain each request reason (%s)')"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/turnstile-sign-in.host.e2e.test.ts",
+      "line": 33,
+      "multiplicity": 1,
+      "scope": "root auth harness receipt",
+      "reason": "Only public/provider captcha or challenge requests; no usable JWKS, verified callback or personToken",
+      "sourceTitle": "test('turnstile: refuses social start without a token before any owner or OAuth write')"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/turnstile-sign-in.host.e2e.test.ts",
+      "line": 68,
+      "multiplicity": 3,
+      "scope": "root auth harness receipt",
+      "reason": "Only public/provider captcha or challenge requests; no usable JWKS, verified callback or personToken",
+      "sourceTitle": "test.each(['rejected', 'wrong-action', 'wrong-hostname'])('turnstile: public social %s refusal preserves every stored field')"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/turnstile-sign-in.host.e2e.test.ts",
+      "line": 99,
+      "multiplicity": 1,
+      "scope": "root auth harness receipt",
+      "reason": "Only public/provider captcha or challenge requests; no usable JWKS, verified callback or personToken",
+      "sourceTitle": "test('turnstile: accepts distinct tokens once each and refuses replay without a write')"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/turnstile-sign-in.host.e2e.test.ts",
+      "line": 131,
+      "multiplicity": 1,
+      "scope": "root auth harness receipt",
+      "reason": "Only public/provider captcha or challenge requests; no usable JWKS, verified callback or personToken",
+      "sourceTitle": "test('turnstile: host-trusted address overrides forged client headers')"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/turnstile-sign-in.host.e2e.test.ts",
+      "line": 154,
+      "multiplicity": 1,
+      "scope": "root auth harness receipt",
+      "reason": "Only public/provider captcha or challenge requests; no usable JWKS, verified callback or personToken",
+      "sourceTitle": "test('turnstile: absent CF address never forwards either forged client header')"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/turnstile-sign-in.host.e2e.test.ts",
+      "line": 183,
+      "multiplicity": 1,
+      "scope": "root auth harness receipt",
+      "reason": "Only public/provider captcha or challenge requests; no usable JWKS, verified callback or personToken",
+      "sourceTitle": "test('turnstile: a later social body validation400 is not a captcha refusal')"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/turnstile-sign-in.host.e2e.test.ts",
+      "line": 208,
+      "multiplicity": 1,
+      "scope": "root auth harness receipt",
+      "reason": "Only public/provider captcha or challenge requests; no usable JWKS, verified callback or personToken",
+      "sourceTitle": "test('turnstile: an error siteverify response fails closed before any write')"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/turnstile-sign-in.host.e2e.test.ts",
+      "line": 232,
+      "multiplicity": 1,
+      "scope": "root auth harness receipt",
+      "reason": "Only public/provider captcha or challenge requests; no usable JWKS, verified callback or personToken",
+      "sourceTitle": "test('turnstile: a missing Worker secret never removes the captcha gate')"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/turnstile-sign-in.host.e2e.test.ts",
+      "line": 250,
+      "multiplicity": 1,
+      "scope": "root auth harness receipt",
+      "reason": "Only public/provider captcha or challenge requests; no usable JWKS, verified callback or personToken",
+      "sourceTitle": "test('turnstile: a real refused siteverify connection fails closed without a timer')"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/turnstile-sign-in.host.e2e.test.ts",
+      "line": 273,
+      "multiplicity": 1,
+      "scope": "root auth harness receipt",
+      "reason": "Only public/provider captcha or challenge requests; no usable JWKS, verified callback or personToken",
+      "sourceTitle": "test('turnstile: token, bootstrap and unoffered passkey operations do not ask for captcha')"
+    }
+  ],
+  "childWrapperNoneCallsites": [
+    {
+      "file": "packages/sign-in-test-support/src/test-fixtures/native-browser-scenario.ts",
+      "line": 112,
+      "multiplicity": 2,
+      "scope": "browser child wrapper receipt",
+      "reason": "One factor child for each host; real Chrome requests bypass createLocalAuthBrowser witness hooks; actual authenticated UI is separate"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/test-fixtures/native-passkey-browser-scenario.ts",
+      "line": 95,
+      "multiplicity": 8,
+      "scope": "browser child wrapper receipt",
+      "reason": "Four modes per host; each prepares one auth harness and native Chrome drives auth, preserving wrapper none"
+    }
+  ],
+  "sourceCount": {
+    "rootOnly": 32,
+    "browserChildren": 10,
+    "combined": 42
+  },
+  "inventoryTies": [
+    {
+      "host": "cloudflare",
+      "file": "turnstile-sign-in.host.e2e.test.ts",
+      "eligibleInstances": 12
+    },
+    {
+      "host": "cloudflare",
+      "file": "turnstile-provider.host.e2e.test.ts",
+      "eligibleInstances": 18
+    },
+    {
+      "host": "cloudflare",
+      "file": "people-passkey-sign-in.host.e2e.test.ts",
+      "eligibleInstances": 1
+    },
+    {
+      "host": "cloudflare",
+      "file": "served-page-assets.host.e2e.test.ts",
+      "eligibleInstances": 1
+    },
+    {
+      "host": "node",
+      "file": "turnstile-sign-in.host.e2e.test.ts",
+      "eligibleInstances": 12
+    },
+    {
+      "host": "node",
+      "file": "turnstile-provider.host.e2e.test.ts",
+      "eligibleInstances": 18
+    },
+    {
+      "host": "node",
+      "file": "people-passkey-sign-in.host.e2e.test.ts",
+      "eligibleInstances": 1
+    },
+    {
+      "host": "node",
+      "file": "served-page-assets.host.e2e.test.ts",
+      "eligibleInstances": 1
+    }
+  ],
+  "zeroHarnessCases": [
+    {
+      "file": "packages/sign-in-test-support/src/native-browser-click.host.e2e.test.ts",
+      "cases": 2,
+      "instances": 0,
+      "reason": "Chrome-only fixture; no startLocalAuthHarness import or call"
+    }
+  ],
+  "otherCallsites": [
+    {
+      "file": "packages/sign-in-test-support/src/agent-issuer.host.e2e.test.ts",
+      "line": 127,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/agent-issuer.host.e2e.test.ts",
+      "line": 204,
+      "classification": "beforeEach one instance per four selected cases; every case calls harness.ownerToken at210/346/468/553"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/agent-registration-faults.host.e2e.test.ts",
+      "line": 52,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/agent-registration-faults.host.e2e.test.ts",
+      "line": 179,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/agent-registration-faults.host.e2e.test.ts",
+      "line": 340,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/agent-token-races.host.e2e.test.ts",
+      "line": 31,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/auth-proof-teardown.host.e2e.test.ts",
+      "line": 24,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/auth-proof-teardown.host.e2e.test.ts",
+      "line": 44,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/authorization-fence.host.e2e.test.ts",
+      "line": 66,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/authorization-fence.host.e2e.test.ts",
+      "line": 532,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/authorization-fence.host.e2e.test.ts",
+      "line": 748,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/authorization-revision-drain.host.e2e.test.ts",
+      "line": 34,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts",
+      "line": 46,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/management-boundaries.host.e2e.test.ts",
+      "line": 31,
+      "classification": "Shared beforeAll instance; sole selected case calls harness.ownerToken:71"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/native-code-protocol.host.e2e.test.ts",
+      "line": 29,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/organization-admin.host.e2e.test.ts",
+      "line": 56,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/organization-statement.host.e2e.test.ts",
+      "line": 38,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/owner-authority-boundaries.host.e2e.test.ts",
+      "line": 22,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/owner-clock-policy.host.e2e.test.ts",
+      "line": 24,
+      "classification": "Helper used by four offset cases; observeLogin calls ownerToken and native social callback creates verified session before CLI lifetime judgment"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/owner-clock-policy.host.e2e.test.ts",
+      "line": 92,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/owner-clock-policy.host.e2e.test.ts",
+      "line": 140,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-factor-enrollment.host.e2e.test.ts",
+      "line": 74,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-factor-enrollment.host.e2e.test.ts",
+      "line": 140,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-factor-enrollment.host.e2e.test.ts",
+      "line": 179,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-factor-enrollment.host.e2e.test.ts",
+      "line": 228,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-factor-enrollment.host.e2e.test.ts",
+      "line": 282,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-factor-enrollment.host.e2e.test.ts",
+      "line": 353,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-factor-enrollment.host.e2e.test.ts",
+      "line": 539,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts",
+      "line": 57,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-organization-page.host.e2e.test.ts",
+      "line": 138,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-organization-page.host.e2e.test.ts",
+      "line": 171,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-organization-page.host.e2e.test.ts",
+      "line": 209,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-organization-provisioning.host.e2e.test.ts",
+      "line": 45,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-organization-provisioning.host.e2e.test.ts",
+      "line": 73,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-organization-provisioning.host.e2e.test.ts",
+      "line": 94,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-organization-provisioning.host.e2e.test.ts",
+      "line": 149,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-organization-provisioning.host.e2e.test.ts",
+      "line": 226,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-organization-provisioning.host.e2e.test.ts",
+      "line": 268,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-organization-provisioning.host.e2e.test.ts",
+      "line": 383,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-organization-provisioning.host.e2e.test.ts",
+      "line": 412,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-organizations.host.e2e.test.ts",
+      "line": 40,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-organizations.host.e2e.test.ts",
+      "line": 87,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-organizations.host.e2e.test.ts",
+      "line": 188,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-organizations.host.e2e.test.ts",
+      "line": 216,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-organizations.host.e2e.test.ts",
+      "line": 254,
+      "classification": "Explicit usable JWKS request through harness auth"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-organizations.host.e2e.test.ts",
+      "line": 333,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-organizations.host.e2e.test.ts",
+      "line": 422,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-organizations.host.e2e.test.ts",
+      "line": 447,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-organizations.host.e2e.test.ts",
+      "line": 495,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-owner-page.host.e2e.test.ts",
+      "line": 26,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-owner-page.host.e2e.test.ts",
+      "line": 66,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-passkey-confirmation.host.e2e.test.ts",
+      "line": 31,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-passkey-confirmation.host.e2e.test.ts",
+      "line": 93,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-passkey-confirmation.host.e2e.test.ts",
+      "line": 167,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-passkey-confirmation.host.e2e.test.ts",
+      "line": 226,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-passkey-page.host.e2e.test.ts",
+      "line": 174,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-passkey-sign-in.host.e2e.test.ts",
+      "line": 131,
+      "classification": "Explicit usable JWKS request through harness auth"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-passkey-sign-in.host.e2e.test.ts",
+      "line": 180,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-passkey-sign-in.host.e2e.test.ts",
+      "line": 203,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-passkey-sign-in.host.e2e.test.ts",
+      "line": 257,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-passkey-sign-in.host.e2e.test.ts",
+      "line": 278,
+      "classification": "Explicit usable JWKS request through harness auth"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-passkey-sign-in.host.e2e.test.ts",
+      "line": 299,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-passkey-sign-in.host.e2e.test.ts",
+      "line": 350,
+      "classification": "Explicit usable JWKS request through harness auth"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-passkey-sign-in.host.e2e.test.ts",
+      "line": 387,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-record-faults.host.e2e.test.ts",
+      "line": 124,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-record-faults.host.e2e.test.ts",
+      "line": 143,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-record-faults.host.e2e.test.ts",
+      "line": 204,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+      "line": 59,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+      "line": 84,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+      "line": 113,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+      "line": 165,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+      "line": 190,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+      "line": 211,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+      "line": 272,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+      "line": 318,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/person-fleet-token.host.e2e.test.ts",
+      "line": 88,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/person-introspection.host.e2e.test.ts",
+      "line": 77,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/person-introspection.host.e2e.test.ts",
+      "line": 129,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/person-introspection.host.e2e.test.ts",
+      "line": 165,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/person-live-management.host.e2e.test.ts",
+      "line": 29,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/provider-controlled-expiry.host.e2e.test.ts",
+      "line": 13,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/served-page-assets.host.e2e.test.ts",
+      "line": 47,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/served-page-csp.host.e2e.test.ts",
+      "line": 14,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/session-read-routes.host.e2e.test.ts",
+      "line": 55,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/session-read-routes.host.e2e.test.ts",
+      "line": 84,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/session-read-routes.host.e2e.test.ts",
+      "line": 119,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/sign-in-identifiers.host.e2e.test.ts",
+      "line": 18,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/social-login-linking.host.e2e.test.ts",
+      "line": 101,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/social-login-linking.host.e2e.test.ts",
+      "line": 120,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/social-login-linking.host.e2e.test.ts",
+      "line": 177,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/social-login-linking.host.e2e.test.ts",
+      "line": 202,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/social-login-linking.host.e2e.test.ts",
+      "line": 226,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/social-login-linking.host.e2e.test.ts",
+      "line": 254,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/social-login-linking.host.e2e.test.ts",
+      "line": 288,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/test-fixtures/b2e/joint-node-central.ts",
+      "line": 55,
+      "classification": "Explicit usable JWKS request through harness auth"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/test-fixtures/b2e/joint-workerd-central.ts",
+      "line": 128,
+      "classification": "Explicit usable JWKS request through harness auth"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/test-fixtures/fleet-cli-fixture.ts",
+      "line": 84,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/workspace-agent-issuance.host.e2e.test.ts",
+      "line": 41,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/workspace-agent-issuance.host.e2e.test.ts",
+      "line": 349,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/workspace-agent-issuance.host.e2e.test.ts",
+      "line": 420,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/workspace-agent-issuance.host.e2e.test.ts",
+      "line": 485,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/workspace-agent-issuance.host.e2e.test.ts",
+      "line": 536,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/workspace-management-audit-faults.host.e2e.test.ts",
+      "line": 30,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/workspace-management-boundaries.host.e2e.test.ts",
+      "line": 31,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/workspace-management-boundaries.host.e2e.test.ts",
+      "line": 149,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/workspace-management-boundaries.host.e2e.test.ts",
+      "line": 221,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/workspace-management-boundaries.host.e2e.test.ts",
+      "line": 301,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/workspace-management-boundaries.host.e2e.test.ts",
+      "line": 375,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/workspace-owner-cli.host.e2e.test.ts",
+      "line": 29,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/workspace-person-boundary.host.e2e.test.ts",
+      "line": 25,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/workspace-retirement-overlap.host.e2e.test.ts",
+      "line": 30,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/workspace-retirement-overlap.host.e2e.test.ts",
+      "line": 216,
+      "classification": "Direct or named helper path reaches real JWKS/session/personToken witness; helper owners inspected"
+    }
+  ],
+  "unresolved": [],
+  "scopeCaveat": "Actual reported32 is ROOT receipts only; C wrapper10 live in child directories and must remain separate. A combined comparison requires42actual none, not32. Full original archive population and exact selected inventory still pending audit; these ties use own same-head whole offered inventories from focused admission, not invented runtime joins.",
+  "limits": "No receiptID-to-case association. No none bootstrap credit. Root source counter match alone is not full gate or controls qualification."
+}
