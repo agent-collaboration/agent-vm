@@ -132,7 +132,7 @@ sequenceDiagram
   H-->>T: 401 refused, no subject
 </script></ex-mermaid>
 <ul>
-<li>As a member of O1, owner of O2 only, removed owner, ended session, expired session, no cookie, and agent, bot and Fleet-session bearer tokens: the documented 401 or 403 body, and the facts query never runs (seam counter is zero).</li>
+<li>As a member of O1, owner of O2 only, removed owner, ended session, expired session, no cookie, and agent and Fleet-session bearer tokens (the only bearer kinds that exist; no bot credential exists): the documented 401 or 403 body, and the facts query never runs (seam counter is zero).</li>
 <li>Hold the real subject read, then in turn: delete the session through fixture Drizzle (release: 401); move the controlled clock past the session's expiry (401); change the stored session's current organization to O2 (403); change the role row so <code>organization:view</code> is lost (403). No subject in any case. Changing rows is a fixture, not a claim the public API can do it.</li>
 <li>Permission name: a forwarding spy around the real <code>checkOrganizationPermission</code> records <code>organization:view</code> at both checks. Changing the literal to <code>organization:readAudit</code> must fail that assertion even though owners hold both.</li>
 <li>Fail the permission's role read, the session read and the facts read in turn: 503, no subject.</li>
@@ -146,7 +146,7 @@ sequenceDiagram
 <li><strong>Contents:</strong> as O1's current owner, 51 members across two pages: the first has 50, <code>memberTotal</code> 51 and <code>nextOffset</code> 50; the second has 1 and null. Each row has exactly name, email and role.</li>
 <li><strong>Invitations:</strong> exactly the pending ones with expiry after controlled now. An expired-at-now, cancelled, rejected or accepted invitation is absent, and so is a pending invitation whose email is already a member.</li>
 <li><strong>Nothing extra:</strong> no user, member, invitation or inviter ID, no O2 row, and no canary anywhere in the body.</li>
-<li><strong>Refused:</strong> a member of O1, the owner of O2 only, a removed owner, an ended or expired session, no cookie, and agent, bot and Fleet-session bearers each get the documented 401 or 403 with nothing listed. The member-page query never runs (the seam counter is zero).</li>
+<li><strong>Refused:</strong> a member of O1, the owner of O2 only, a removed owner, an ended or expired session, no cookie, and agent and Fleet-session bearers (no bot credential exists) each get the documented 401 or 403 with nothing listed. The member-page query never runs (the seam counter is zero).</li>
 <li><strong>Removal mid-read:</strong> hold the real member-page read, then end the owner's session, or move O1's current choice, or remove <code>organization:view</code>. Each release is refused with nothing listed.</li>
 <li><strong>Bad requests:</strong> an extra query key, a non-UUIDv7 organization, offset 7 or −50: the generic 400 and no read. Malformed stored role, status, expiry or email: 503, never a shorter list. A store fault on any of its three selects (member page, count, invitations): 503.</li>
 <li><strong>Read-only:</strong> user, member, invitation, session, factor and audit tables are unchanged around every list read.</li>
