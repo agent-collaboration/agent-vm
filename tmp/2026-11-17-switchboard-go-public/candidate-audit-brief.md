@@ -4,7 +4,7 @@
 
 **Target:** the exact tree that would be published.
 - Branch `pub/public-candidate` on `agent-collaboration/switchboard` (private).
-- Commit and tree hash are the ones named in `work/implementer-handback.md`: currently `108bc0fd998df234ae51ef852b3585b7c90f6381`, tree `b71f3a0158a9ef904b91997588085d59c47ad1e5`, unless the handback declares a later head.
+- Commit and tree hash are the ones named in `work/implementer-handback.md`: **`bb34e6b0712cc10fc764f90c0236e9e1319d1b6a`, tree `9ae099be244768eac6c37f558fde706160ee7b29`** (follow-up to `108bc0fd`, a three-file diff of test literals and one comment), unless the handback declares a later head.
 - Audit the **tree only**. The candidate's parent history stays private and is never published; the public commit will be a new parentless commit with this exact tree (plan steps 15 and 19).
 
 **Grant:** inspect only (read and run read-only commands, `pnpm dlx` read-only scanners, no installs into the repo); write only `tmp/2026-11-17-switchboard-go-public/candidate-audit.md`. Never print secret values; redact to the first 4 characters. **Work log:** no-home.
@@ -32,6 +32,6 @@
 3. **Notices:** every copied third-party piece in the tree has a correct entry in `THIRD_PARTY_NOTICES.md`, plus a header where the format allows comments. The Apache text is present. Licence fields say AGPL-3.0-only everywhere planned. LICENSE is the unmodified AGPLv3 text with the project header. CLA, PR template and CONTRIBUTING are consistent. Look for any copy the inventory missed.
 4. **Workflows:** no workflow grants `id-token: write` or `contents: write`, or publishes. No `pull_request_target`, no self-hosted runner, no `secrets.*` in PR-triggered jobs.
 5. **Usability:** public docs and agent skills reference only paths that exist in the tree. No link points to a private spec, branch or repo.
-6. **Gates:** read the handback's Sunclaw receipts. Are the counts complete (both hosts, Python, check)? Anything skipped without a reason?
+6. **Gates** (the Sunclaw run may still be in progress when you start; do checks 1–5 first, then read the receipts once the handback has them, and say if they never arrived): read the handback's Sunclaw receipts. Are the counts complete (both hosts, Python, check)? Anything skipped without a reason?
 
 **End with** PUBLISHABLE (this exact tree may be published) or NOT PUBLISHABLE plus the blocking items. State what you didn't cover.
