@@ -1,0 +1,8 @@
+010f535cfef998fd4622d8a2b9e8e3ce17bacbb2c2697ddd646d5287750df2e2  docs/specs/2026-11-15-fleet-access-b1/b1-c-organizations/audit.html
+661533b9cff2a5664034ebbcc861a4f7c308cea11b214c58184191e3f89f453d  docs/specs/2026-11-15-fleet-access-b1/b1-c-organizations/requirements.html
+212a6b6e97bcb93d6355444c3f9f58ac7ebeff3710d7c5a963bc101338eaae90  docs/specs/2026-11-15-fleet-access-b1/b1-c-organizations/specification.html
+5423b445c5c54671af65db5eec12fcc20308b554e0019b1cea49c4f6a4b9adff  docs/specs/2026-11-15-fleet-access-b1/b1-c-organizations/program-design.html
+41e5d9e3c2a93cc38aad5375d8e7a0747ab44133679c59ce4585a665eab30cf4  docs/specs/2026-11-15-fleet-access-b1/b1-c-organizations/verification-design.html
+4dcd5775a3776083d19865767baa4ff957cba21f6005cf72a320e7471837a4c2  docs/specs/2026-11-15-fleet-access-b1/b1-c-organizations/plan.html
+2c81f51b76e0399216da6ede96b1c9c7d1ac15a62ba6224bbec1ee89994efe64  docs/specs/2026-11-15-fleet-access-b1/b1-c-organizations/decisions.html
+16c36d89d6d874eda0cc37004a0553d9ab911f549898354bfc49360a8effc961  docs/specs/2026-11-15-fleet-access-b1/b1-c-organizations/work/commission.md

@@ -117,6 +117,7 @@ sequenceDiagram
 <tr><td>verify-auth skill updates are the Implementer&#39;s, checked by the Verifier</td><td>One branch, one writer, as in B1-B</td><td>No</td></tr>
 <tr><td>Built on the public repo, from a fresh clone at <code>switchboard-public</code></td><td>Switchboard went public 17 Nov; the old checkout is private history</td><td>No: follows your go-public picks</td></tr>
 <tr><td>V8 “answer kept after refusal” is proven by the component test, not Hegel</td><td>The pure machine's refusal carries no answer; the stale answer can only appear where it's rendered</td><td>No: same rule, proven where it can fail</td></tr>
+<tr><td>The hook assigns <code>ctx.context.session</code> directly (<code>null</code> included), and the read endpoints carry the hook's <code>set-cookie</code></td><td>Real bug, reproduced: <code>defu</code> ignored the <code>null</code> session and endpoint headers dropped the cookie clearing, so an expired session got 200. My design line caused it</td><td>No: a bug fix that restores the agreed behaviour</td></tr>
 <tr><td>Started with paid credits</td><td>Your Decision 7, 17 Nov</td><td>Yes: you chose it</td></tr>
 </tbody></table></div>
 </ex-document>

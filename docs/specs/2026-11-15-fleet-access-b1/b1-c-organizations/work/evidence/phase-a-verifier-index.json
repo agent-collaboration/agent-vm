@@ -1,0 +1,147 @@
+{
+  "sourceHead": "91bfdc5a3bf1632f0ffc70f22a2c34f3a9b469b5",
+  "sourceTree": "32225ad42586237dee4fdf3eb538e430db1a2ec0",
+  "rawReport": "/private/tmp/2026-11-b1c-implementer/phase-a-safe-report.json",
+  "rawReportSha256": "a181de2edddc753c44851eeffccc6fbeb344a912ee056f0225c1aba0dafa10af",
+  "screenshot": {
+    "file": "/private/tmp/2026-11-b1c-implementer/phase-a-people-dark-400.png",
+    "sha256": "560cad075106092154e4919647d835e6b710ba795c186cda69de6ec93e74abfb",
+    "width": 400,
+    "height": 844,
+    "scope": "Intermediate People frame from failed journey; visually inspected by Verifier"
+  },
+  "sourceChecks": {
+    "immutableGitInputHashesMatched": 278,
+    "configurationSourceFilesMatched": 39,
+    "clientSourceFilesMatched": 14,
+    "localOfferedEqualsRemoteExecutedWithMultiplicity": 55
+  },
+  "runner": {
+    "hostname": "Sunclaw.local",
+    "node": "v24.7.0",
+    "pnpm": "10.33.0",
+    "chrome": "Google Chrome 157.0.8103.79"
+  },
+  "suites": [
+    {
+      "label": "storage-smoke",
+      "success": true,
+      "counts": {
+        "passed": 34,
+        "failed": 0,
+        "skipped": 149,
+        "total": 183,
+        "files": 1
+      },
+      "selected": 34,
+      "selectedSkips": 0,
+      "unselectedByName": 149,
+      "runtimeInventoryEqual": true
+    },
+    {
+      "label": "workerd-smoke",
+      "success": false,
+      "counts": {
+        "passed": 49,
+        "failed": 6,
+        "skipped": 0,
+        "total": 55,
+        "files": 4
+      },
+      "selected": 55,
+      "selectedSkips": 0,
+      "unselectedByName": 0,
+      "runtimeInventoryEqual": true
+    }
+  ],
+  "failures": [
+    {
+      "file": "packages/sign-in-test-support/src/people-membership-lookup.host.e2e.test.ts",
+      "name": "people: lookup refuses expired before a facts query and releases no subject fields",
+      "status": "failed",
+      "firstError": "AssertionError: expected false to be true // Object.is equality"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-organization-browser.host.e2e.test.ts",
+      "name": "people: real Chrome switches twice, completes the original native CLI, and reads back lost and refused switch replies",
+      "status": "failed",
+      "firstError": "Error: STACK_TRACE_ERROR"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-organization-browser.host.e2e.test.ts",
+      "name": "people: real Chrome keeps the latest checked lookup and list page in a read-only accessible people page",
+      "status": "failed",
+      "firstError": "Error: People provider callback refused"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-organization-context.host.e2e.test.ts",
+      "name": "people: self-context distinguishes signed out from a verified person with zero memberships without selecting or writing",
+      "status": "failed",
+      "firstError": "AssertionError: expected { twoFactor: [], \u2026(20) } to deeply equal { twoFactor: [], \u2026(20) }"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-organization-context.host.e2e.test.ts",
+      "name": "people: an expired self-context performs exactly native session cleanup, retained fence bumps and the queued ACK drain",
+      "status": "failed",
+      "firstError": "AssertionError: expected 200 to be 401 // Object.is equality"
+    },
+    {
+      "file": "packages/sign-in-test-support/src/people-organization-list.host.e2e.test.ts",
+      "name": "people: people-list refuses expired before the member page query with no listed fields",
+      "status": "failed",
+      "firstError": "AssertionError: expected false to be true // Object.is equality"
+    }
+  ],
+  "workerReceipts": {
+    "count": 55,
+    "sameIdentityAndActualModuleMaps": true,
+    "readiness": [
+      {
+        "ready": true,
+        "event": "signInSession",
+        "count": 52
+      },
+      {
+        "ready": false,
+        "event": "none",
+        "count": 1
+      },
+      {
+        "ready": true,
+        "event": "personToken",
+        "count": 2
+      }
+    ],
+    "nodeReceiptCount": 0
+  },
+  "lifecycle": {
+    "preparationExit": {
+      "exit": null,
+      "signal": "SIGTERM"
+    },
+    "invalidOperatorClockComparisonExit": 1,
+    "correctedFileVerificationExit": 0,
+    "smokeNaturalExit": 1,
+    "immediateCleanupPassed": false,
+    "postExitOwnedGroupAbsentOnReadback": true,
+    "processSamplingLimit": "268 sampled PIDs; not an exhaustive birth ledger"
+  },
+  "notRun": [
+    "Node Smoke3 (first semantic failure stopped remaining smoke commands)",
+    "Full check/unit/integration/sweeps (NOT AUTHORIZED by Phase A)",
+    "Mutations/sensitivity (NOT AUTHORIZED)",
+    "Any correction-head smoke",
+    "Real provider/secret/physical authenticator/staging/deployment/production/acceptance"
+  ],
+  "limits": [
+    "This report preserves setup/lifecycle failures, Operator audit correction, all183 storage report rows (34 selected pass/149 unrelated name-filter skips), all55 workerd rows (49 pass/6fail), and missing/unstarted evidence. No combined green claim.",
+    "Storage proof exercises both actual storage legs; only the workerd storage leg emits a three-module map.",
+    "No Node HTTP runtime is claimed: Node smoke never ran and zero Node pairing files were produced. Node artifact files were prepared and hash-verified only.",
+    "55 Worker receipts match frozen identity; actual readiness events retained verbatim, including one none. No false witness upgraded.",
+    "Only one read-only attach to exact owned chooser Chrome, one safe Runtime.evaluate, then disconnect diagnostic socket. No UI actions, repeated attachment, Network/Fetch enable or time/state changes.",
+    "The one400x844 People screenshot contains only synthetic organization/user data. It is an intermediate artifact from a failed browser case; chooser screenshot/observation absent.",
+    "Raw files/logs/manifests/profiles remain private with hashes. Complete response headers, expired Set-Cookie names/flags and raw in-memory intermediate state were not retained by the original tests; not inferred.",
+    "All actual source/config/build inputs remain frozen and clean. No builder replay, source/test/oracle/config change, push, SSH, global install, real-provider/secret access, production Router or unrelated process action.",
+    "Process cleanup facts are bounded group sampling and observed PID readback, not an exhaustive process birth ledger."
+  ]
+}
