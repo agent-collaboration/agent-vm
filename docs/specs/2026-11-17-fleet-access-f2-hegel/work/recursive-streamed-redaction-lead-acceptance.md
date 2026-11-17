@@ -53,3 +53,23 @@ CI run 44178013201 on `e76bf5a6`: E2E (host), Validation and check all passed. I
 ## Update: fresh review READY, L1 fix in progress
 
 The fresh Opus review (`tmp/2026-11-17-pr7-review/report.md`) is READY, with five Low or informational notes. L1 is a regression this PR introduced: key redaction renames `isError` or `content` before the error classification reads them. It is fixed before merge, under the L1 refinement in the rulings file. **This acceptance does not cover the L1 head.** It is updated once the L1 diff passes my review, the Verifier pairs red on `e76` with green on the fix, CI runs on the new head, and the same reviewer reads the delta.
+
+## Update: final head `962d258d` (L1 and L2 fixed, main merged)
+
+- **L1 and L2 diff `e76bf5a6..571ae9ba`, read by me before push:**
+  - Both runtimes classify on the raw result.
+  - Both helpers take an optional `RedactionOptions` and redact each raw block before the existing trim, join and cap, so the pre-PR order is kept.
+  - The error path carries only the redacted message.
+  - The success path returns `redactUpstreamResponse(...)`.
+  - L2 is one comment.
+- **Merge `962d258d`** brings in main `b0198164` (PR #6). `git diff 571ae9ba 962d258d -- packages/tool-engine packages/tool-host-node` is empty; I ran it myself.
+- **Verifier at `571ae9ba`:**
+  - 4 Error/on cases fail on `e76` and pass on the fix.
+  - 4 preservation controls: the long value across the cap, and the whitespace trim.
+  - 6 rollback probes are each rejected twice: classification, raw extraction, and redact-after-trim/cap.
+  - The helpers with no options give output equal to `e76`.
+- **Implementer at `962d258d`:** check 12/12, unit 2739, integration 333.
+- **Delta review** by the same reviewer: READY, with 0 findings and one informational note. N1: a configured value inside the literal `text` no longer drops the message, which is correct.
+- **CI** on `962d258d`, run 44185671558: pending; see below.
+
+**Decision:** accepted at `962d258d`, conditional on CI 44185671558 being green. Then merge after telling Lead A.
