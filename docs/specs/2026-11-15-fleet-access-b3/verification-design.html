@@ -26,7 +26,14 @@
 <p>V6 is the real journey: two Routers on macOS log in by device code through the sign-in page, connect through sign-in, against both Central builds; one is revoked and refused. V1 races two pollers on one code.</p>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p>V3's allowance checks read <code>machine_allowances</code> rows (your 9 Nov decision): an approval leaves exactly the picked rows active; Withdraw flips one row; revoke leaves none active; admission refuses a withdrawn or missing row.</p>
+<p>V3's allowance checks read <code>machine_allowances</code> rows (your 9 Nov decision). Cases:</p>
+<ul>
+<li><strong>active re-login adds:</strong> a machine with W1 and W2 active is approved again for W2 and W3; afterwards W1, W2 and W3 are active (W1 not withdrawn);</li>
+<li><strong>Withdraw is targeted:</strong> withdrawing W2 leaves W1 and W3 active;</li>
+<li><strong>revoke clears:</strong> after revoke none is active, and a fresh approval for W3 activates only W3 (W1 is not restored);</li>
+<li><strong>admission:</strong> a withdrawn or missing row refuses with <code>WorkspaceNotAllowed</code>.</li>
+</ul>
+<p>Fails on: a build that replaces the set at approval (the W1 case); a build that restores old rows after revoke.</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
 <p>Approved B3 proof table; Lead A's 4a rows are observed here, built there.</p>
