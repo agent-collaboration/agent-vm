@@ -38,7 +38,7 @@
 <tr><td>M4</td><td>admission allowed while unlink is pending, or after disable</td></tr>
 <tr><td>M5</td><td>(a) abort keeps the pending entry: filling capacity while the cancelled reply is held fails the released-slot property; (b) the decoder limit raised: the oversized-frame property fails</td></tr>
 </tbody></table></div>
-<p>Each red is recorded with the property name, the shrunk values or steps, and the seed, then restored green. Unit and integration rows run locally and in CI. M4 (Durable Object) and M5 (real Unix socket) run in the host lane, on Sunclaw and in CI.</p>
+<p>Each red is recorded with the property name and the shrunk values or steps, then restored green. Tests run with <code>derandomize: true</code>, so generation is fixed and a rerun reproduces the same case. Hegel 0.4.10 prints no numeric seed in that mode (<code>runnerCore.js:283</code>), and none is required. (Lead call, 17 Nov.) Unit and integration rows run locally and in CI. M4 (Durable Object) and M5 (real Unix socket) run in the host lane, on Sunclaw and in CI.</p>
 </ex-document>
 </body>
 </html>
