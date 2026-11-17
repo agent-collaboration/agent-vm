@@ -246,3 +246,37 @@ Consequently the documented run/replay startup does not exercise the sign-in pag
 **Route:** design-program -> design-verification. **Disposition:** accepted; new failure form introduced in revision 4. No owner outcome, product change or weakened proof is requested.
 
 Only this report was appended; no browser, test, mutant, build, lint or replay was run. The earlier one-shot checker wake `01a1e990-e706-7a23-ade2-679888991642` was cancelled after this correction arrived; Router reported `cancelled`, no first fire, and no dispatched deliveries. The new handback is for the Lead's bounded startup correction, not implementation work in this session.
+
+## Correction check — revision 5, `9b4eb1fff`
+
+**Current result: NOT-CONVERGING.** F13's missing navigation owner is corrected. A new P1 startup/readiness race, F14, remains. The open count is **1 -> 1 -> 1** across revisions 3, 4 and 5: two adjacent correction comparisons without a decrease. This meets the design-review convergence rule; no further automatic correction round is admitted until the Lead settles the required handback.
+
+Authority and scope: the [revision-5 handback](router://0ff962c5-7fa3-4c18-a5ca-1bbe8db09e89/push/01a1e994-7e04-7140-ba39-abb1c3f0e47c) requested only Program Design:88–104. I reopened that whole changed startup/run/replay sequence at **`9b4eb1fff03d4fccba6ad2fc6784b68e1a0089db`** and checked current content against the target. Unchanged review coverage is retained. No executable probe was granted or run.
+
+**F13 closed:** Program Design:88,99–103 now assigns `Page.navigate` to the driver, with both observers armed and the same external target used in run and replay. It no longer relies on `test-external` to navigate. The new first-capture barrier must, however, survive the actual runner's behavior below.
+
+### F14 new — The first-state barrier does not hold Bombadil on the blank page (P1)
+
+**Target:** [program-design.html:88](/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f1-fuzz/program-design.html:88), [program-design.html:99](/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f1-fuzz/program-design.html:99), [program-design.html:103](/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f1-fuzz/program-design.html:103).
+
+The driver now waits for Bombadil's **first state capture at `about:blank`**, then navigates. But the initial state is not a paused startup handshake. At the pinned Bombadil revision:
+
+- `about:blank` is outside the campaign's HTTP issuer boundary. The strategy removes every action except Back for an out-of-bound URL: [strategy.rs:64](/Users/shravansunder/Documents/dev/open-source/bombadil/lib/bombadil-browser/src/strategy.rs:64).
+- A fresh blank page has no prior campaign history; the default Back generator offers no action without a back entry: [defaults/actions.ts:293](/Users/shravansunder/Documents/dev/open-source/bombadil/lib/bombadil/src/specification/browser/defaults/actions.ts:293).
+- After processing/capturing a state, the runner constrains actions, writes the trace, and immediately calls the strategy; there is no external-driver acknowledgement between those steps: [runner.rs:228](/Users/shravansunder/Documents/dev/open-source/bombadil/lib/bombadil/src/runner.rs:228).
+- Empty actions cause `no actions available` at [strategy.rs:97](/Users/shravansunder/Documents/dev/open-source/bombadil/lib/bombadil-browser/src/strategy.rs:97). Both random and reproduce modes take that check.
+
+A permitted scheduling order is: the first blank state is captured/reported; Bombadil finishes that callback and errors; the external driver then handles the readiness notification and issues navigation. Navigation cannot revive the exited campaign. Finding an output marker for “first state captured” does not create the missing hold/release contract. The revised instruction to let Implementer find a signal or report it missing acknowledges an input gap, but does not establish a usable startup procedure. U3/V4 still lack a reliable route into the application before the on-load counterfactual.
+
+**Smallest correction target:** settle a source-supported startup protocol that keeps action selection from proceeding on the blank document until navigation is handed off, while arming all observations before application code. Do not replace that protocol with a sleep or a prompt to guess a signal. Validate the adverse ordering explicitly: delay the driver's reaction to startup readiness and prove the campaign remains viable, reaches the intended document, and catches its on-load challenge.
+
+**Route:** caller (Lead) for the convergence handback, then design-program -> design-verification after that boundary is settled. **Disposition:** accepted; a new failure form, not recurrence of F13. This is source evidence of an admitted race, not an observed runtime failure.
+
+**Options for the Lead's handback:**
+
+- Commission one bounded startup feasibility probe using the pinned Bombadil and the local fixture, recording actual attachment/navigation/first-action events. Gain: one observed protocol can replace the repeated prose assumptions. Cost: a separate explicitly authorized runtime investigation; this inspect-only checker does not run it.
+- Hold the Bombadil lane as an explicit unresolved design dependency while the Hegel design proceeds under its existing obligations. Gain: independent progress. Cost: U3/U4's Bombadil work remains unfinished and cannot be reported READY or dropped without authority.
+
+**Recommendation:** the bounded feasibility probe, followed by one source-grounded Program Design correction and its affected verification check. The repeated failure is the startup/observation handshake, not the settled need for fuzzing or the Hegel API. The Lead's owner brief should preserve those outcomes and name this exact unresolved boundary.
+
+The controlling [design-review rule](</Users/shravansunder/.codex/plugins/cache/sunstack/sunstack-workflow-v2/0.4.0/skills/design-review/references/finding-and-reduction-schema.md:133>) says to return not-converging when the count “did not drop in two adjacent comparisons in a row.” No extra review pass, product repair, test or browser execution is authorized by this handback. The prior checker wake `01a1e994-00fd-72f0-a5de-0f42d6870654` was cancelled on receipt of revision 5; Router reports no first fire and no dispatched deliveries.

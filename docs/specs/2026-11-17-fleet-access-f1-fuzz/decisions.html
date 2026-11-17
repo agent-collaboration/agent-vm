@@ -47,6 +47,7 @@ flowchart TB
 <tr><td>Body fuzzing at the real host entry, not only at schema parse</td><td>A crash or leak only shows at the real entry</td><td>No</td></tr>
 <tr><td>Storage invariants checked every step (<code>alwaysCheck</code>)</td><td>Hegel samples invariants between steps by default (<code>stateful.d.ts:55–71</code>)</td><td>No</td></tr>
 <tr><td>A Bombadil finding becomes an ordinary regression test</td><td>Bombadil has no seed and its replay can diverge</td><td>No</td></tr>
+<tr><td>F1 split: Hegel built now; Bombadil waits for a feasibility probe</td><td>The design review stopped converging on Bombadil's startup handshake; an experiment beats a fifth paper revision</td><td>No: Bombadil stays required (U3), only sequenced later</td></tr>
 <tr><td>Turmoil isn't in F1</td><td>It's for Rust network simulation; Central's crates are Lead A's</td><td>No</td></tr>
 </tbody></table></div>
 </ex-document>

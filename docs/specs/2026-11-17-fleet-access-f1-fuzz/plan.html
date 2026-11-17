@@ -28,6 +28,16 @@ flowchart TB
   acc --> r2["Fresh review of the PR"]
   r2 --> merge["Merge (tell Lead A first)"]
 </script></ex-mermaid>
+<h2 id="split">Split, 17 Nov (my call after design review F14)</h2>
+<ul>
+<li><strong>Build now:</strong> the Hegel parts: S1 coverage, S2 requests, S3 organization sequences, and S5 for Hegel. The review closed every finding on them.</li>
+<li><strong>Unfinished, not waived: S4 Bombadil and S5 for Bombadil.</strong> The startup handshake between the driver's observers and Bombadil didn't converge on paper (review F14: on a blank page Bombadil has no valid action, so it errors before the driver can navigate). Before any further design, one bounded feasibility probe on Sunclaw tries two handshakes against a tiny local page with a deliberate on-load request:
+  <ul>
+  <li>(a) the driver's browser-level <code>Target.setAutoAttach</code> with <code>waitForDebuggerOnStart</code> arms its observers on the target Bombadil creates (<code>test-external --create-target</code>), then releases it;</li>
+  <li>(b) a hold-and-release start page that Bombadil can act on, kept inside the issuer origin.</li>
+  </ul>
+  The probe reports which one records an on-load challenge before any click and lets Bombadil explore. The S4 design is then corrected from that result and re-reviewed.</li>
+</ul>
 <h2 id="order">Order and overlap</h2>
 <ul>
 <li><strong>Base:</strong> public <code>main</code>. F1 fuzzes the endpoints that exist when it lands. The S1 coverage test makes the PR that lands later add families for any endpoint B1-B or B1-C adds, so whichever lands second extends F1.</li>
