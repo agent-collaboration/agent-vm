@@ -299,7 +299,7 @@ sequenceDiagram
 <p>Uses the existing <code>readStoreValue</code> / <code>SignInStoreFailure</code> conventions (<code>storage/store-query-results.ts</code>). No migration, raw SQL or index change; fields exist in <code>storage/sign-in-schema.ts:355–393</code>. The two queries share no transaction; the promise is per read.</p>
 
 <h2 id="endpoints">The four endpoints</h2>
-<p><code>better-auth/organization-membership-read-plugin.ts</code> uses <code>createAuthEndpoint</code> like <code>passkey-confirmation-plugin.ts:58–70</code>, and is registered beside the organization provider plugin in <code>provider-configuration.ts</code>. Each endpoint reads the session the before-hook stored, through <code>getSessionFromCtx</code>, which returns it without re-reading.</p>
+<p><code>better-auth/organization-membership-read-plugin.ts</code> uses <code>createAuthEndpoint</code> like <code>passkey-confirmation-plugin.ts:58–70</code>, and is registered beside the organization provider plugin in <code>provider-configuration.ts</code>. Each endpoint reads the session the before-hook stored <strong>directly from <code>ctx.context.session</code></strong>, parsed through the <code>ReadSession</code> helper, and never calls <code>getSessionFromCtx</code>. That helper reuses only a truthy stored session (<code>session.mjs:248</code>): a stored <code>null</code> (signed out) would trigger a second <code>getSession()</code> with refresh on, whose <code>.catch(() =&gt; null)</code> hides failures. So signed-out requests would break the one-acquisition rule. (Corrected 17 Nov from the Implementer's source read of Better Auth 1.7.11.)</p>
 <div class="ex-table-scroll" data-width="canvas"><table>
 <thead><tr><th>Route</th><th>Does</th><th>Replies</th></tr></thead>
 <tbody>

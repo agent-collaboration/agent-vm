@@ -77,7 +77,7 @@ flowchart TB
 <div class="ex-table-scroll" data-width="canvas"><table>
 <thead><tr><th>Observation</th><th>Decide from</th><th>Wrong build to run, then restore</th></tr></thead>
 <tbody>
-<tr><td>V1 self read</td><td>Bodies against stored rows; 503 on a session-read fault</td><td>Acquire with <code>getSessionFromCtx</code>; skip the membership check on the stored choice</td></tr>
+<tr><td>V1 self read</td><td>Bodies against stored rows; 503 on a session-read fault</td><td>Acquire with <code>getSessionFromCtx</code>, or call it a second time in the endpoint; skip the membership check on the stored choice</td></tr>
 <tr><td>V2 switch twice, Continue</td><td>Stored session after each switch; CLI token names O2; foreign switch leaves null</td><td>Today's hide condition; Continue keyed on the old field</td></tr>
 <tr><td>V3 answers</td><td>Exact bodies; byte equality of elsewhere and nowhere; unchanged snapshots</td><td>Drop an organization filter; <code>&gt;=</code> expiry; SQL status filter</td></tr>
 <tr><td>V4 refusals and mid-read removal</td><td>Facts counter zero on refusal; held case refused</td><td>Skip either check; role-name comparison</td></tr>
