@@ -59,3 +59,8 @@
 ## Addendum: session addresses
 - Implementer SessionRef `{serviceId: 0ff962c5-7fa3-4c18-a5ca-1bbe8db09e89, endpointId: codex-local, sessionId: 01a1e93c-01c2-7b52-826f-b04571b02916}`
 - Verifier SessionRef `{serviceId: 0ff962c5-7fa3-4c18-a5ca-1bbe8db09e89, endpointId: codex-local, sessionId: 01a1e93c-020f-7dd3-984d-d2f0c49c53ce}`
+
+## Addendum: verify-auth skill maintenance (Lead, 17 Nov)
+- The lasting journeys B1-C declares (V1, V2, V3, V5, V6) need the public `.agents/skills/verify-auth` skill brought up to date: `SKILL.md`, `references/agent-bootstrap.md` people inventory, the journey inventory `auth-verification-journeys.ts` and any script that lists journeys.
+- **The Implementer owns those edits,** in the same draft PR, as in B1-B: one branch, one writer. They cover the four new host files and the self-context, person-membership and people-list journeys, and remove the served-page chooser wording at `SKILL.md:36`.
+- **The Verifier owns checking them:** inventory equality, the unknown-case refusal still holding, and every reference resolving in the tree. Those checks are recorded in `verifier-observation.md`. The Verifier writes no repo files.
