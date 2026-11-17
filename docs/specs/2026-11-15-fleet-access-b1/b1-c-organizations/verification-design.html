@@ -174,6 +174,7 @@ sequenceDiagram
 <li>Keep the old result on failure: step 6 fails.</li>
 <li>Render invite or remove controls: step 9 fails.</li>
 </ul>
+<p><strong>Limit (Lead call, 17 Nov, from the B05 control):</strong> one wrong build can't be caught in the browser. If the card drops the re-render after a lost reply (removes <code>browser.replace()</code> in <code>switchPersonOrganization</code>'s <code>finally</code>, <code>person-organization-choice.tsx:19–26</code>), the page just stays pending. It sets no status, clears no flag and fires no event (<code>:32–40</code>), so step 3 waits forever, and a timeout isn't allowed. The unit test <code>person-organization-choice.unit.test.ts</code> catches it: a rejected request must still call <code>replace</code>. In the browser it stays unproven.</p>
 <p><strong>Lasting:</strong> <code>people-organization-browser.host.e2e.test.ts</code> with <code>test-fixtures/organization-browser-scenario.ts</code>.</p>
 
 <h2 id="V7">V7 · Old paths kept, old code gone (S7, S11, S12)</h2>

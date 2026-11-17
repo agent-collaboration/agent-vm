@@ -32,6 +32,7 @@
 <tr><td>Fourteen targets: P1–P9 and M1–M5</td><td>Picked from the roughly 100 decisions collected, favouring allow/deny, secret and one-use logic with a pure or stateful seam</td><td>No</td></tr>
 <tr><td>Allow/deny and secrets first</td><td>Highest harm if wrong</td><td>No</td></tr>
 <tr><td>Test code only; findings become separate bug fixes</td><td>Keeps the proof separate from the repair</td><td>No</td></tr>
+<tr><td>M4 (Durable Object workspace authority) runs 25 cases, not 100</td><td>At 100 it took 715 s in CI, about 12 minutes on every host run. 99.95% of that is in the generated steps: each always-checked invariant makes up to 10 HTTP→DO round trips per step. Setup isn't the cost. CI is derandomized, so every run explores the same sequences: 25 explores a quarter of them, still 50 steps each, with every invariant checked after every step</td><td>No: test cost is mine. Cost: fewer distinct DO sequences in CI. Undo: raise the count</td></tr>
 </tbody></table></div>
 </ex-document>
 </body>

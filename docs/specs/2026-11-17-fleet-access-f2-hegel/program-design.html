@@ -43,7 +43,7 @@ flowchart TB
 <li><strong>Generators</strong> are built from the target's real Zod input schema, hand-written (Hegel has no Zod adapter), drawing valid, near-valid and boundary values. Security targets add adversarial strings: <code>..</code>, encoded separators, Unicode lookalikes, case and port variants, overlong values.</li>
 <li><strong>Oracles</strong> are independent: P5's operation/group/scope/support model built from literal catalog cases, P2's per-entry decision table, P3's authored-policy table, round trips and frozen vectors for P1 and P8, the code's documented rules for P4 and P9, and small state models for M1–M5. Never the function under test.</li>
 <li><strong>State machines</strong> use <code>hegel.stateful.StateMachine</code> with <code>runAsync</code>. Invariants are <code>alwaysCheck: true</code> (Hegel otherwise samples between steps). Clocks are injected, and stores come from the package's own injected Drizzle/store factories. 50 steps per case.</li>
-<li><strong>Settings:</strong> 500 cases per pure property, 100 per state machine, <code>derandomize</code> and the database disabled in CI. Failures print values through <code>tc.note</code>.</li>
+<li><strong>Settings:</strong> 500 cases per pure property, 100 per state machine except M4 at 25 (Lead call, 17 Nov: see Decisions), <code>derandomize</code> and the database disabled in CI. Failures print values through <code>tc.note</code>.</li>
 <li><strong>A finding:</strong> the Implementer stops and reports it to the Lead with the minimal case. A product fix is a separate bug fix with that case as its regression test.</li>
 </ul>
 </ex-document>
