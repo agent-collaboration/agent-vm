@@ -244,10 +244,10 @@ flowchart TB
   <ol>
   <li>sign in with Google over the controlled provider, as the test does today, and confirm with the app (codes computed at the controlled time);</li>
   <li>on the passkey page, click Add passkey; the virtual authenticator answers;</li>
-  <li>sign out;</li>
+  <li>sign out: clear the browser's cookies (the native sign-out route is closed by B1-A, <code>session-read-public-routes.unit.test.ts</code>), so the browser has no session;</li>
   <li>on <code>/sign-in</code>, click Continue with Passkey;</li>
   <li>the page lands on <code>/owner-ready</code> and then the account page;</li>
-  <li>invite a person from the page; the invitation is created with no confirmation step;</li>
+  <li>invite a person from the signed-in page: the page's own context posts <code>POST /api/auth/organization/invite-member</code> with its cookie (no invite button exists until B1-C's People page, whose journey will click it). The invitation is created with no confirmation step, checked in the stored invitations;</li>
   <li><code>document.cookie</code> has no session token readable by script, and no response body seen by the page contains it.</li>
   </ol></li>
 <li><strong>The refusal run:</strong> the same steps 1 to 3, then <code>WebAuthn.setUserVerified(false)</code>, then step 4. The page shows Better Auth UI's error notice, stays on <code>/sign-in</code>, and <code>/api/auth/get-session</code> returns no session.</li>
