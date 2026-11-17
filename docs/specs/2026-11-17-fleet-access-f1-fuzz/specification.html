@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>F1 · Fuzz testing · Specification</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
+<a href="../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
+<a href="requirements.html">F1 · 1 Requirements</a>
+<a href="specification.html">F1 · 2 Specification</a>
+<a href="program-design.html">F1 · 3 Program Design</a>
+<a href="verification-design.html">F1 · 4 Verification Design</a>
+<a href="plan.html">F1 · 5 Plan</a>
+<a href="decisions.html">F1 · 6 Decisions</a>
+</nav></ex-nav>
+<ex-document id="doc">
+<h1>F1 · Fuzz testing for sign-in: Specification</h1>
+<p>What must be true. Each obligation (S) traces to a need (U) on <a href="requirements.html">Requirements</a>. Facts about the tools come from source, recorded in <code>tmp/2026-11-17-fuzz-research/report.md</code>: Hegel 0.4.10 as installed, and Bombadil at <code>7c7081b</code> (0.7.10).</p>
+
+<h2 id="entities">Entities</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Id</th><th>Entity</th><th>Identity</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td>E1</td><td>Fuzzed endpoint</td><td>Method plus path, from the existing <code>installedProviderEndpointInventory</code></td><td>A route the sign-in service answers, with its documented outcomes: success shape, and refusal codes with their generic bodies</td></tr>
+<tr><td>E2</td><td>Body family</td><td>One per fuzzed endpoint</td><td>The generator for that endpoint's requests: valid, near-valid (one field wrong), boundary, junk JSON, non-JSON and wrong content type</td></tr>
+<tr><td>E3</td><td>Storage rule</td><td>Named invariant</td><td>A fact about stored data that must hold after every operation</td></tr>
+<tr><td>E4</td><td>UI property</td><td>Exported name in a Bombadil spec</td><td>A rule about what a person can see or cause on a page, written as a temporal formula</td></tr>
+<tr><td>E5</td><td>Finding</td><td>Tool, property and minimal case</td><td>A violation with its shrunk input or sequence (Hegel) or its trace and reproduce command (Bombadil)</td></tr>
+</tbody></table></div>
+
+<h2 id="obligations">Obligations</h2>
+<h3 id="s1">S1 · Every endpoint has a body family (U1)</h3>
+<p>Every endpoint in <code>installedProviderEndpointInventory</code> that its existing classification marks reachable by a browser or CLI MUST have exactly one body family. A coverage test MUST fail when an inventoried reachable endpoint has no family, or when a family names an endpoint that isn't in the inventory. A new endpoint therefore can't ship unfuzzed.</p>
+<h3 id="s2">S2 · Generated bodies get only documented answers (U1)</h3>
+<p>For each generated request, on each host, the endpoint MUST answer with its documented success, or one of its documented refusals with the generic body. The tests MUST observe all three of these:</p>
+<ul>
+<li>no 5xx, except the documented 503 for an injected storage fault, which F1 doesn't inject;</li>
+<li>no response body containing a session token, a cookie value, or a person's email or ID other than the caller's own;</li>
+<li>no change to stored rows when the answer is a refusal.</li>
+</ul>
+<p>Requests go through the real host entry (the existing harness's <code>auth(pathname, init)</code>), as signed out, signed in as a member, and signed in as an owner.</p>
+<h3 id="s3">S3 · Storage rules hold over any sequence (U2)</h3>
+<p>Over Hegel-generated sequences of real store operations, run on each storage engine through the injected Drizzle stores, each rule MUST hold after every step (checked every step, never sampled). The operations are: create organization, invite, accept, cancel, remove member, change role, choose current organization, create and expire session, and delete person. The rules:</p>
+<ul>
+<li>R-owner: every organization has at least one owner;</li>
+<li>R-choice: a stored current-organization choice is null or an organization the person belongs to;</li>
+<li>R-removed: a removed member has no live session scoped to that organization;</li>
+<li>R-fence: a person's fence revision never decreases, and increases on every member or session delete;</li>
+<li>R-invite: invitation states move only along the documented lifecycle.</li>
+</ul>
+<p>Operations the domain refuses (for example removing the last owner) MUST be refused with no row changed.</p>
+<h3 id="s4">S4 · UI properties hold under exploration (U3)</h3>
+<p>Bombadil campaigns, each on both hosts, cover:</p>
+<ul>
+<li>the sign-in page signed out;</li>
+<li>the owner page and People page signed in as an owner;</li>
+<li>the People URL signed in as a plain member.</li>
+</ul>
+<p>Every reachable state MUST satisfy:</p>
+<ul>
+<li>Bombadil's defaults (no uncaught exceptions, no unhandled rejections, no console errors, no failing navigation status), except console messages on an explicit allowlist, each with its reason;</li>
+<li>no session token, cookie value or other person's email in page text or attributes;</li>
+<li>passkey click-only: no passkey-challenge request until the passkey button is clicked;</li>
+<li>a plain member never sees People rows;</li>
+<li>every refused route stays refused.</li>
+</ul>
+<h3 id="s5">S5 · Findings are reproducible (U4)</h3>
+<p>Every finding MUST record:</p>
+<ul>
+<li>for Hegel, the failing case's printed values and seed;</li>
+<li>for Bombadil, its private trace path and reproduce command.</li>
+</ul>
+<p>A fixed finding MUST become a permanent ordinary regression test. Hegel runs derandomized in CI so results repeat.</p>
+<h3 id="s6">S6 · Limits are stated (all)</h3>
+<p>Results hold for the local hosts, software authenticator, controlled providers and injected clock only. Bombadil traces may hold sensitive values; they stay private and never go into git or reports unredacted.</p>
+</ex-document>
+</body>
+</html>

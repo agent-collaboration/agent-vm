@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>F1 · Fuzz testing · Plan</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
+<a href="../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
+<a href="requirements.html">F1 · 1 Requirements</a>
+<a href="specification.html">F1 · 2 Specification</a>
+<a href="program-design.html">F1 · 3 Program Design</a>
+<a href="verification-design.html">F1 · 4 Verification Design</a>
+<a href="plan.html">F1 · 5 Plan</a>
+<a href="decisions.html">F1 · 6 Decisions</a>
+</nav></ex-nav>
+<ex-document id="doc">
+<h1>F1 · Fuzz testing for sign-in: Plan</h1>
+<p><strong>Status:</strong> designed 17 Nov. Next comes an independent Sol xhigh review of these pages; the build starts when it's READY. Implementers and Verifiers read all six pages first; the design wins over these steps.</p>
+<ex-mermaid id="flow" label="From design to merge" data-width="canvas"><script type="text/plain">
+flowchart TB
+  rev["Sol xhigh design review"] --> build["Implementer (Sol high) on public main"]
+  build --> ver["Verifier (Sol high): every V row red then green, both hosts, Sunclaw"]
+  ver --> acc["Lead acceptance"]
+  acc --> r2["Fresh review of the PR"]
+  r2 --> merge["Merge (tell Lead A first)"]
+</script></ex-mermaid>
+<h2 id="order">Order and overlap</h2>
+<ul>
+<li><strong>Base:</strong> public <code>main</code>. F1 fuzzes the endpoints that exist when it lands. The S1 coverage test makes the PR that lands later add families for any endpoint B1-B or B1-C adds, so whichever lands second extends F1.</li>
+<li><strong>Files:</strong> new test and support files only, so conflicts with B1-B and B1-C are unlikely.</li>
+</ul>
+<h2 id="p1">Packet 1 · Implementer</h2>
+<ol>
+<li>Body families and the coverage test (S1), against <code>installedProviderEndpointInventory</code>.</li>
+<li>Body fuzzing through the harness, both hosts, three callers (S2).</li>
+<li>Model plus <code>StateMachine</code> storage test on both engines (S3).</li>
+<li>Bombadil dev dependency (exact pin; release at least two weeks old), three specs and the on-demand driver (S4). Confirm the binary runs on Sunclaw (darwin-arm64).</li>
+<li>Run all three locally where light; heavy and browser runs go to Sunclaw (heavy-run rules from the B1-C commission).</li>
+<li>Any real finding: stop and report it to the Lead with its minimal case, before any product fix (a product fix is a separate bug fix).</li>
+<li>Draft PR on the public repo with green CI; handback in <code>work/implementer-handback.md</code>.</li>
+</ol>
+<h2 id="p2">Packet 2 · Verifier</h2>
+<p>Run every wrong build in Verification Design V1–V6 in a scratch copy: red with a recorded minimal case, then restored green. Hegel rows run on both hosts and both engines; Bombadil rows on both hosts. Check S1 coverage equality yourself, and that no trace file is committed. Return <code>work/verifier-observation.md</code>.</p>
+<h2 id="p3">Packet 3 · Reviewer, then Lead acceptance</h2>
+<p>A fresh reviewer (different lineage when available) reads all pages except this plan, the PR and the evidence. The Lead fills acceptance from the evidence, then merges after telling Lead A.</p>
+</ex-document>
+</body>
+</html>

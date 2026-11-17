@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>F1 · Fuzz testing · Decisions</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
+<a href="../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
+<a href="requirements.html">F1 · 1 Requirements</a>
+<a href="specification.html">F1 · 2 Specification</a>
+<a href="program-design.html">F1 · 3 Program Design</a>
+<a href="verification-design.html">F1 · 4 Verification Design</a>
+<a href="plan.html">F1 · 5 Plan</a>
+<a href="decisions.html">F1 · 6 Decisions</a>
+</nav></ex-nav>
+<ex-document id="doc">
+<h1>F1 · Fuzz testing for sign-in: Decisions</h1>
+
+<h2 id="open">For you to decide</h2>
+<ex-callout title="One decision: when Bombadil gates merges" tone="decision" icon="users"><p>Everything else on this page is decided by you (quoted) or by me (listed with reasons).</p></ex-callout>
+<h3 id="f1-2">Decision F1-2 · Should Bombadil run in CI?</h3>
+<p>The Hegel tests join the unit, integration and host suites that CI already runs, so they need no new gate. Bombadil is different: a 5-minute real-Chrome exploration per page per host, from a 0.x experimental tool, with no seed, so one run can find what another misses. Adding it to CI is a new gate, and gate changes are yours.</p>
+<ex-mermaid id="f12" label="The three options" data-width="canvas"><script type="text/plain">
+flowchart TB
+  a["A · On demand only<br/>run on Sunclaw for each sign-in PR"] --> ag["merges never wait on a random UI run"]
+  b["B · Nightly CI job, not required for merge"] --> bg["finds problems within a day; never blocks a PR"]
+  c["C · Required PR check"] --> cg["blocks merges on findings; slower PRs, possible noise"]
+</script></ex-mermaid>
+<ex-choice id="decision-f1-2" title="Decision F1-2 · Bombadil in CI">
+<ex-option id="f12-a" title="A · On demand now; decide CI after a week of clean runs (recommended)"><template slot="summary">Gain: no new gate; you see real results before committing to one. Cost: someone has to run it for each sign-in PR; my plans will say so.</template></ex-option>
+<ex-option id="f12-b" title="B · Nightly CI job, not required"><template slot="summary">Gain: automatic, catches problems within a day. Cost: a new workflow (about 30 minutes of runner time a night across both hosts); findings arrive after merge.</template></ex-option>
+<ex-option id="f12-c" title="C · Required check on every PR"><template slot="summary">Gain: nothing merges with a UI finding. Cost: 15–30 minutes on every PR, and an experimental tool can block merges with noise.</template></ex-option>
+</ex-choice>
+
+<h2 id="decided">Decided by you</h2>
+<ul>
+<li>Use Hegel for fuzz testing: <em>“yes i hegel is fuzz testing we hsoudld use it”</em> (17 Nov).</li>
+<li>UI fuzz testing with Bombadil: <em>“and ui fuzz testing with bombardil if we need it as a later step”</em>, then <em>“did you add diesgns and paln out and execute fuzz testing? for heagel ts and bombardil ts?”</em> (17 Nov).</li>
+<li>Property-based testing is the norm; proof never changes in a move: AGENTS.md rules 6 and 7, PR #297 (17 Nov).</li>
+</ul>
+
+<h2 id="calls">My calls</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Call</th><th>Why</th><th>Should it have been yours?</th></tr></thead>
+<tbody>
+<tr><td>F1 is its own deliverable, not folded into B1-B or B1-C</td><td>Those are nearly done; F1 then covers their endpoints through the S1 coverage test</td><td>No: sequencing</td></tr>
+<tr><td>Body fuzzing at the real host entry, not only at schema parse</td><td>A crash or leak only shows at the real entry</td><td>No</td></tr>
+<tr><td>Storage invariants checked every step (<code>alwaysCheck</code>)</td><td>Hegel samples invariants between steps by default (<code>stateful.d.ts:55–71</code>)</td><td>No</td></tr>
+<tr><td>A Bombadil finding becomes an ordinary regression test</td><td>Bombadil has no seed and its replay can diverge</td><td>No</td></tr>
+<tr><td>Turmoil isn't in F1</td><td>It's for Rust network simulation; Central's crates are Lead A's</td><td>No</td></tr>
+</tbody></table></div>
+</ex-document>
+</body>
+</html>

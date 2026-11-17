@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>F1 · Fuzz testing · Verification Design</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
+<a href="../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
+<a href="requirements.html">F1 · 1 Requirements</a>
+<a href="specification.html">F1 · 2 Specification</a>
+<a href="program-design.html">F1 · 3 Program Design</a>
+<a href="verification-design.html">F1 · 4 Verification Design</a>
+<a href="plan.html">F1 · 5 Plan</a>
+<a href="decisions.html">F1 · 6 Decisions</a>
+</nav></ex-nav>
+<ex-document id="doc">
+<h1>F1 · Fuzz testing for sign-in: Verification Design</h1>
+<p>A fuzz test is only proof if it can fail. Every row below names a deliberately wrong build that the fuzz test must catch, run in a scratch copy and then restored. A clean fuzz run alone proves nothing.</p>
+<ex-mermaid id="vpath" label="How each row is proven" data-width="canvas"><script type="text/plain">
+flowchart TB
+  base["Fuzz test passes on the real build"] --> wrong["Apply one deliberate break in a scratch copy"]
+  wrong --> red["Fuzz test fails, and Hegel shrinks it to a small case<br/>(or Bombadil records a trace)"]
+  red --> restore["Restore exact bytes; the same test passes again"]
+</script></ex-mermaid>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Row</th><th>Proven by</th><th>Wrong build that must fail it</th><th>Where</th></tr></thead>
+<tbody>
+<tr><td>V1 (S1)</td><td>The coverage test compares body families with the endpoint inventory</td><td>Remove one family; or add an inventory row with no family</td><td>Unit, local and CI</td></tr>
+<tr><td>V2 (S2)</td><td>Hegel body fuzzing through the real host, both hosts, three callers</td><td>(a) an endpoint throws on an over-long field, so a 500 must be found and shrunk to that field; (b) an endpoint echoes the request's session cookie in its error body, so a secret must be found; (c) a refused request writes a row, so the row-change check must fail</td><td>Host e2e: Sunclaw full sweep, then CI</td></tr>
+<tr><td>V3 (S3)</td><td>Hegel <code>StateMachine</code> on both storage engines</td><td>(a) drop the last-owner guard, so R-owner fails with a shrunk sequence (create, then remove the owner); (b) don't clear the stored choice on removal, so R-choice fails; (c) skip the fence bump on session delete, so R-fence fails</td><td>Integration: local, Sunclaw, CI</td></tr>
+<tr><td>V4 (S4)</td><td>Bombadil campaigns, both hosts</td><td>(a) <code>passkeyPlugin()</code> with autofill on, so the challenge-before-click property is violated; (b) render the session token into a data attribute, so the no-secret property is violated; (c) show People rows to a member, so the member property is violated. Each needs exit code 2 and a trace.</td><td>On demand on Sunclaw (Decision F1-2 decides any CI)</td></tr>
+<tr><td>V5 (S5)</td><td>Each red above records its values and seed, or its trace and reproduce command; one finding is turned into an ordinary regression test</td><td>A red with no recorded case doesn't count</td><td>Handback evidence</td></tr>
+<tr><td>V6 (S6)</td><td>A tree scan shows no trace or screenshot files committed; the reports are redacted</td><td>A trace committed under <code>packages/</code></td><td>Verifier read</td></tr>
+</tbody></table></div>
+<p><strong>Unverified by design:</strong> concurrent interleavings (Hegel is sequential), real providers and authenticators, hosted Cloudflare, and Bombadil determinism (no seed; replay can diverge).</p>
+</ex-document>
+</body>
+</html>
