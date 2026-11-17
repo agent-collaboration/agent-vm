@@ -23,6 +23,16 @@ Out of scope: the invite-member catch-all convention (`sign-in-request-handler.t
 
 ## Seats
 
-- Implementer: F1 Implementer, codex-local `01a1e99b-385e-7162-a944-eb9c91dd3438`. F1 host work keeps its priority whenever its Sunclaw probe is admitted.
+- Implementer (from 17 Nov 19:30 UTC): Claude Opus high, claude-local `53bfc6e5-3044-4654-813b-5b9a81316be1`. It replaced the Sol F1 Implementer, which the provider's policy filter blocked twice on this task. Worktree: `/Users/shravansunder/code/projects/switchboard-public.fix-handler-input-errors` (branch `fix/handler-input-errors`, clean at main `d96e9650`).
 - Verifier: F1 Verifier, codex-local `01a1e99b-44eb-77f3-b4ff-27d8a1f9339c`.
 - Review: a fresh reviewer the Lead picks after the Lead's acceptance.
+
+## Lead rulings since the commission
+
+- **O3b** (`ownerAuthorizationResume`, `minimal-owner-pages.ts:8-38`; callers `sign-in-http-handler.ts:190` and `:290`): the strict check is deliberate, but the 503 is not. Map exactly that refusal at its two call sites to **400**. Use the handler's existing page-level refusal shape (no-store, no Set-Cookie) and cite it. **Not** "invalid => none". Regression on both hosts: a malformed `authorize` (unparsable, wrong client_id, non-loopback redirect_uri) gives 400 with no cookie and no row change; a valid one still resumes.
+- The Verifier's native-parity notes are in `work/handler-input-errors-verifier.md`:
+  - JSON 400;
+  - non-JSON, missing or vendor+json content type 415;
+  - a null body skips the parse;
+  - a malformed Basic header gives 401 `invalid_client` with a Basic challenge.
+- Diff to the Lead before push. Heavy host runs go to Sunclaw; the commission covers it, and packets come to the Lead under Decision 8.
