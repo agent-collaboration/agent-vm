@@ -1,0 +1,11 @@
+{
+  "id": "M1-replay",
+  "project": "integration",
+  "source": "packages/tool-host-core/src/workspace-authority/approval-token-use-rules.ts",
+  "file": "packages/tool-host-core/src/workspace-authority/approval-token-replay.hegel.integration.test.ts",
+  "property": "models replay, expiry pruning and each capacity across generated sequences",
+  "before": "if ((uses[props.tokenId] ?? 0) > props.nowMs)",
+  "after": "if (false && (uses[props.tokenId] ?? 0) > props.nowMs)",
+  "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+  "originalSha256": "e46f92e41b656ad34017e0186c376422428fcaea2cc46830d01129f474b1c527"
+}

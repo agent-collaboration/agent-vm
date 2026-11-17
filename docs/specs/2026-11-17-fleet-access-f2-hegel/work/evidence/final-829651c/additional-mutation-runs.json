@@ -1,0 +1,650 @@
+[
+  {
+    "id": "P6-alias",
+    "red": {
+      "phase": "red",
+      "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "unit",
+        "packages/config-contracts/src/oauth-policy-compiler.hegel.unit.test.ts",
+        "--testNamePattern",
+        "intersects authored command paths with the independent catalog and preserves local help",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/final-829651c/P6-alias-red.json"
+      ],
+      "exit": 1,
+      "signal": null
+    },
+    "repeatedRed": {
+      "phase": "red-repeat",
+      "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "unit",
+        "packages/config-contracts/src/oauth-policy-compiler.hegel.unit.test.ts",
+        "--testNamePattern",
+        "intersects authored command paths with the independent catalog and preserves local help",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/final-829651c/P6-alias-red-repeat.json"
+      ],
+      "exit": 1,
+      "signal": null
+    },
+    "green": {
+      "phase": "restored",
+      "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "unit",
+        "packages/config-contracts/src/oauth-policy-compiler.hegel.unit.test.ts",
+        "--testNamePattern",
+        "intersects authored command paths with the independent catalog and preserves local help",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/final-829651c/P6-alias-restored.json"
+      ],
+      "exit": 0,
+      "signal": null
+    }
+  },
+  {
+    "id": "P8-digest",
+    "red": {
+      "phase": "red",
+      "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "unit",
+        "packages/tool-engine/src/capability-dispatch/dispatch-intent.hegel.unit.test.ts",
+        "--testNamePattern",
+        "binds every committed intent field while ignoring object insertion order and noncommitted fields",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/final-829651c/P8-digest-red.json"
+      ],
+      "exit": 1,
+      "signal": null
+    },
+    "repeatedRed": {
+      "phase": "red-repeat",
+      "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "unit",
+        "packages/tool-engine/src/capability-dispatch/dispatch-intent.hegel.unit.test.ts",
+        "--testNamePattern",
+        "binds every committed intent field while ignoring object insertion order and noncommitted fields",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/final-829651c/P8-digest-red-repeat.json"
+      ],
+      "exit": 1,
+      "signal": null
+    },
+    "green": {
+      "phase": "restored",
+      "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "unit",
+        "packages/tool-engine/src/capability-dispatch/dispatch-intent.hegel.unit.test.ts",
+        "--testNamePattern",
+        "binds every committed intent field while ignoring object insertion order and noncommitted fields",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/final-829651c/P8-digest-restored.json"
+      ],
+      "exit": 0,
+      "signal": null
+    }
+  },
+  {
+    "id": "M1-replay",
+    "red": {
+      "phase": "red",
+      "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "integration",
+        "packages/tool-host-core/src/workspace-authority/approval-token-replay.hegel.integration.test.ts",
+        "--testNamePattern",
+        "models replay, expiry pruning and each capacity across generated sequences",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/final-829651c/M1-replay-red.json"
+      ],
+      "exit": 1,
+      "signal": null
+    },
+    "repeatedRed": {
+      "phase": "red-repeat",
+      "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "integration",
+        "packages/tool-host-core/src/workspace-authority/approval-token-replay.hegel.integration.test.ts",
+        "--testNamePattern",
+        "models replay, expiry pruning and each capacity across generated sequences",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/final-829651c/M1-replay-red-repeat.json"
+      ],
+      "exit": 1,
+      "signal": null
+    },
+    "green": {
+      "phase": "restored",
+      "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "integration",
+        "packages/tool-host-core/src/workspace-authority/approval-token-replay.hegel.integration.test.ts",
+        "--testNamePattern",
+        "models replay, expiry pruning and each capacity across generated sequences",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/final-829651c/M1-replay-restored.json"
+      ],
+      "exit": 0,
+      "signal": null
+    }
+  },
+  {
+    "id": "M2-principal",
+    "red": {
+      "phase": "red",
+      "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "integration",
+        "packages/oauth-broker/src/oauth-transaction-store.hegel.integration.test.ts",
+        "--testNamePattern",
+        "M2 transaction and completion principals, first use, cancellation, caps and expiry follow the sequential model",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/final-829651c/M2-principal-red.json"
+      ],
+      "exit": 1,
+      "signal": null
+    },
+    "repeatedRed": {
+      "phase": "red-repeat",
+      "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "integration",
+        "packages/oauth-broker/src/oauth-transaction-store.hegel.integration.test.ts",
+        "--testNamePattern",
+        "M2 transaction and completion principals, first use, cancellation, caps and expiry follow the sequential model",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/final-829651c/M2-principal-red-repeat.json"
+      ],
+      "exit": 1,
+      "signal": null
+    },
+    "green": {
+      "phase": "restored",
+      "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "integration",
+        "packages/oauth-broker/src/oauth-transaction-store.hegel.integration.test.ts",
+        "--testNamePattern",
+        "M2 transaction and completion principals, first use, cancellation, caps and expiry follow the sequential model",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/final-829651c/M2-principal-restored.json"
+      ],
+      "exit": 0,
+      "signal": null
+    }
+  },
+  {
+    "id": "M2-completion",
+    "red": {
+      "phase": "red",
+      "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "integration",
+        "packages/oauth-broker/src/oauth-transaction-store.hegel.integration.test.ts",
+        "--testNamePattern",
+        "M2 transaction and completion principals, first use, cancellation, caps and expiry follow the sequential model",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/final-829651c/M2-completion-red.json"
+      ],
+      "exit": 1,
+      "signal": null
+    },
+    "repeatedRed": {
+      "phase": "red-repeat",
+      "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "integration",
+        "packages/oauth-broker/src/oauth-transaction-store.hegel.integration.test.ts",
+        "--testNamePattern",
+        "M2 transaction and completion principals, first use, cancellation, caps and expiry follow the sequential model",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/final-829651c/M2-completion-red-repeat.json"
+      ],
+      "exit": 1,
+      "signal": null
+    },
+    "green": {
+      "phase": "restored",
+      "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "integration",
+        "packages/oauth-broker/src/oauth-transaction-store.hegel.integration.test.ts",
+        "--testNamePattern",
+        "M2 transaction and completion principals, first use, cancellation, caps and expiry follow the sequential model",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/final-829651c/M2-completion-restored.json"
+      ],
+      "exit": 0,
+      "signal": null
+    }
+  },
+  {
+    "id": "M2-browser",
+    "red": {
+      "phase": "red",
+      "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "integration",
+        "packages/oauth-broker/src/oauth-browser-stores.hegel.integration.test.ts",
+        "--testNamePattern",
+        "M2 login continuations bind the browser secret, consume once and enforce capacity and exact expiry",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/final-829651c/M2-browser-red.json"
+      ],
+      "exit": 1,
+      "signal": null
+    },
+    "repeatedRed": {
+      "phase": "red-repeat",
+      "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "integration",
+        "packages/oauth-broker/src/oauth-browser-stores.hegel.integration.test.ts",
+        "--testNamePattern",
+        "M2 login continuations bind the browser secret, consume once and enforce capacity and exact expiry",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/final-829651c/M2-browser-red-repeat.json"
+      ],
+      "exit": 1,
+      "signal": null
+    },
+    "green": {
+      "phase": "restored",
+      "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "integration",
+        "packages/oauth-broker/src/oauth-browser-stores.hegel.integration.test.ts",
+        "--testNamePattern",
+        "M2 login continuations bind the browser secret, consume once and enforce capacity and exact expiry",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/final-829651c/M2-browser-restored.json"
+      ],
+      "exit": 0,
+      "signal": null
+    }
+  },
+  {
+    "id": "M3-effect",
+    "red": {
+      "phase": "red",
+      "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "integration",
+        "packages/tool-host-node/src/standalone-tool-portal/standalone-batch-dispatch.hegel.integration.test.ts",
+        "--testNamePattern",
+        "models repeated backend admission while the selected resource runs at most once",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/final-829651c/M3-effect-red.json"
+      ],
+      "exit": 1,
+      "signal": null
+    },
+    "repeatedRed": {
+      "phase": "red-repeat",
+      "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "integration",
+        "packages/tool-host-node/src/standalone-tool-portal/standalone-batch-dispatch.hegel.integration.test.ts",
+        "--testNamePattern",
+        "models repeated backend admission while the selected resource runs at most once",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/final-829651c/M3-effect-red-repeat.json"
+      ],
+      "exit": 1,
+      "signal": null
+    },
+    "green": {
+      "phase": "restored",
+      "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "integration",
+        "packages/tool-host-node/src/standalone-tool-portal/standalone-batch-dispatch.hegel.integration.test.ts",
+        "--testNamePattern",
+        "models repeated backend admission while the selected resource runs at most once",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/final-829651c/M3-effect-restored.json"
+      ],
+      "exit": 0,
+      "signal": null
+    }
+  },
+  {
+    "id": "M4-admission-core",
+    "red": {
+      "phase": "red",
+      "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "integration",
+        "packages/tool-host-core/src/workspace-authority/agent-removal.hegel.integration.test.ts",
+        "--testNamePattern",
+        "M4 models admission, pending and completed unlink/disable, idempotency and intent conflicts",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/final-829651c/M4-admission-core-red.json"
+      ],
+      "exit": 1,
+      "signal": null
+    },
+    "repeatedRed": {
+      "phase": "red-repeat",
+      "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "integration",
+        "packages/tool-host-core/src/workspace-authority/agent-removal.hegel.integration.test.ts",
+        "--testNamePattern",
+        "M4 models admission, pending and completed unlink/disable, idempotency and intent conflicts",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/final-829651c/M4-admission-core-red-repeat.json"
+      ],
+      "exit": 1,
+      "signal": null
+    },
+    "green": {
+      "phase": "restored",
+      "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "integration",
+        "packages/tool-host-core/src/workspace-authority/agent-removal.hegel.integration.test.ts",
+        "--testNamePattern",
+        "M4 models admission, pending and completed unlink/disable, idempotency and intent conflicts",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/final-829651c/M4-admission-core-restored.json"
+      ],
+      "exit": 0,
+      "signal": null
+    }
+  },
+  {
+    "id": "M5-decoder",
+    "red": {
+      "phase": "red",
+      "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "unit",
+        "packages/agent-portal-sdk/src/gateway-runtime-client/gateway-runtime-protocol.hegel.unit.test.ts",
+        "--testNamePattern",
+        "M5 decoder rejects bodies above the independently measured UTF-8 limit",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/final-829651c/M5-decoder-red.json"
+      ],
+      "exit": 1,
+      "signal": null
+    },
+    "repeatedRed": {
+      "phase": "red-repeat",
+      "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "unit",
+        "packages/agent-portal-sdk/src/gateway-runtime-client/gateway-runtime-protocol.hegel.unit.test.ts",
+        "--testNamePattern",
+        "M5 decoder rejects bodies above the independently measured UTF-8 limit",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/final-829651c/M5-decoder-red-repeat.json"
+      ],
+      "exit": 1,
+      "signal": null
+    },
+    "green": {
+      "phase": "restored",
+      "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "unit",
+        "packages/agent-portal-sdk/src/gateway-runtime-client/gateway-runtime-protocol.hegel.unit.test.ts",
+        "--testNamePattern",
+        "M5 decoder rejects bodies above the independently measured UTF-8 limit",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/final-829651c/M5-decoder-restored.json"
+      ],
+      "exit": 0,
+      "signal": null
+    }
+  }
+]

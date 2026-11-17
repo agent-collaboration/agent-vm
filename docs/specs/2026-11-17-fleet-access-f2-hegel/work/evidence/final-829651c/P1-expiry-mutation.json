@@ -1,0 +1,10 @@
+{
+  "id": "P1-expiry",
+  "source": "packages/tool-engine/src/mcp-gateway/signed-tokens/approval-token-signing.ts",
+  "file": "packages/tool-engine/src/mcp-gateway/signed-tokens/approval-token-signing.hegel.unit.test.ts",
+  "property": "binds the audience, ordered call fields, key, agent, and expiry",
+  "before": "if (payload.exp <= props.nowMs)",
+  "after": "if (false && payload.exp <= props.nowMs)",
+  "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+  "originalSha256": "deee01623091fdfcbcfc07a7e001c044ec88168ff6cbe4faf646b3d7540600b5"
+}

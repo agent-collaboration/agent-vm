@@ -1,0 +1,10 @@
+{
+  "id": "P9-origin",
+  "source": "packages/tool-host-node/src/mcp-proxy-server/http-request-policy.ts",
+  "file": "packages/tool-host-node/src/mcp-proxy-server/http-boundaries.hegel.unit.test.ts",
+  "property": "checks Host by canonical hostname and Origin by canonical scheme, host and port",
+  "before": "return policy.allowedOrigins.has(normalizeOrigin(originHeader));",
+  "after": "normalizeOrigin(originHeader); return true;",
+  "sourceRevision": "78c0a98ef3709d4bbd55108944a97d8f3d57f825",
+  "originalSha256": "2c052bd592ecc09afaa852e0c00e01c106a8cc7faa20af9f1a3473e1e2157c32"
+}

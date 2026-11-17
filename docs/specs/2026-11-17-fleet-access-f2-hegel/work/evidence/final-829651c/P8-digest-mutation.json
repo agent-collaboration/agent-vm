@@ -1,0 +1,10 @@
+{
+  "id": "P8-digest",
+  "source": "packages/tool-engine/src/capability-dispatch/dispatch-intent.ts",
+  "file": "packages/tool-engine/src/capability-dispatch/dispatch-intent.hegel.unit.test.ts",
+  "property": "binds every committed intent field while ignoring object insertion order and noncommitted fields",
+  "before": "\n\t\t\tsurface: invocation.surface,",
+  "after": "",
+  "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+  "originalSha256": "d466e6701a33d8bf9d39f0bbf8ca8e62ed9f805da2f91a4b5134bc85ed72cd0f"
+}

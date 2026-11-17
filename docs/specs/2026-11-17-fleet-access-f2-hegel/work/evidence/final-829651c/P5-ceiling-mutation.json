@@ -1,0 +1,10 @@
+{
+  "id": "P5-ceiling",
+  "source": "packages/oauth-broker/src/google/google-permission-catalog.ts",
+  "file": "packages/oauth-broker/src/google/google-operation-grants.hegel.unit.test.ts",
+  "property": "refuses groups above the ceiling and unknown or foreign-family selections and ceilings",
+  "before": " || !ceiling.has(groupId)",
+  "after": "",
+  "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+  "originalSha256": "7d42fb7eec7318658911812a45f559b8d5c9493582a24cd1f856dc1ca9e5244d"
+}

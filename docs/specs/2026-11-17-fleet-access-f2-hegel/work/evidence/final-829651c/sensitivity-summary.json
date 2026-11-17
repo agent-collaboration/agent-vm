@@ -1,0 +1,393 @@
+[
+  {
+    "id": "M1-replay",
+    "red": [
+      {
+        "name": "models replay, expiry pruning and each capacity across generated sequences",
+        "message": "Error: expected { ok: true } to deeply equal { ok: false, reason: 'replayed' } [at useToken (/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c/packages/tool-host-core/src/workspace-authority/approval-token-replay.hegel.integration.test.ts:66:73)]"
+      }
+    ],
+    "repeatedRed": [
+      {
+        "name": "models replay, expiry pruning and each capacity across generated sequences",
+        "message": "Error: expected { ok: true } to deeply equal { ok: false, reason: 'replayed' } [at useToken (/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c/packages/tool-host-core/src/workspace-authority/approval-token-replay.hegel.integration.test.ts:66:73)]"
+      }
+    ],
+    "sameFailure": true,
+    "sameShrunkDraws": true,
+    "shrunkEvidence": "Step 1: consume\nvar draw_1 = 'token-a';\nvar draw_2 = 1;\nconsume token-a now=100 expiry=101\n\nStep 2: consume\nvar draw_3 = 'token-a';\nvar draw_4 = 1;\nconsume token-a now=100 expiry=101\n\nRule consume failed:\n\n\nexpected { ok: true } to deeply equal { ok: false, reason: 'replayed' }",
+    "green": {
+      "passed": 1,
+      "failed": 0,
+      "unselected": 1
+    }
+  },
+  {
+    "id": "M2-browser",
+    "red": [
+      {
+        "name": "M2 login continuations bind the browser secret, consume once and enforce capacity and exact expiry",
+        "message": "Error: expected { kind: 'accepted', …(2) } to deeply equal { kind: 'browser-mismatch' } [at consumeContinuation (/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c/packages/oauth-broker/src/oauth-browser-stores.hegel.integration.test.ts:99:18)]"
+      }
+    ],
+    "repeatedRed": [
+      {
+        "name": "M2 login continuations bind the browser secret, consume once and enforce capacity and exact expiry",
+        "message": "Error: expected { kind: 'accepted', …(2) } to deeply equal { kind: 'browser-mismatch' } [at consumeContinuation (/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c/packages/oauth-broker/src/oauth-browser-stores.hegel.integration.test.ts:99:18)]"
+      }
+    ],
+    "sameFailure": true,
+    "sameShrunkDraws": true,
+    "shrunkEvidence": "var draw_1 = 1;\ncapacity=1\nvar draw_2 = { kind: 'agents' };\nvar draw_3 = { kind: 'agents' };\nvar draw_4 = { issuer: 'https://identity.example.test', subject: 'synthetic-owner' };\n\n\nexpected { kind: 'accepted', …(2) } to deeply equal { kind: 'browser-mismatch' }",
+    "green": {
+      "passed": 1,
+      "failed": 0,
+      "unselected": 1
+    }
+  },
+  {
+    "id": "M2-completion",
+    "red": [
+      {
+        "name": "M2 transaction and completion principals, first use, cancellation, caps and expiry follow the sequential model",
+        "message": "Error: expected { Object (kind, session) } to deeply equal { kind: 'rejected', …(1) } [at decideModeledCompletion (/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c/packages/oauth-broker/src/oauth-ceremony-hegel-fixture.ts:342:44)]"
+      }
+    ],
+    "repeatedRed": [
+      {
+        "name": "M2 transaction and completion principals, first use, cancellation, caps and expiry follow the sequential model",
+        "message": "Error: expected { Object (kind, session) } to deeply equal { kind: 'rejected', …(1) } [at decideModeledCompletion (/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c/packages/oauth-broker/src/oauth-ceremony-hegel-fixture.ts:342:44)]"
+      }
+    ],
+    "sameFailure": true,
+    "sameShrunkDraws": true,
+    "shrunkEvidence": "var draw_1 = 1;\nvar draw_2 = 1;\nvar draw_3 = 1;\n{\"capacity\":1,\"transactionTtlMs\":1,\"completionTtlMs\":1}\n\n\nexpected { Object (kind, session) } to deeply equal { kind: 'rejected', …(1) }",
+    "green": {
+      "passed": 1,
+      "failed": 0,
+      "unselected": 0
+    }
+  },
+  {
+    "id": "M2-principal",
+    "red": [
+      {
+        "name": "M2 transaction and completion principals, first use, cancellation, caps and expiry follow the sequential model",
+        "message": "Error: expected [Function] to throw an error [at exercisePrincipalAndFirstUse (/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c/packages/oauth-broker/src/oauth-transaction-store.hegel.integration.test.ts:209:5)]"
+      }
+    ],
+    "repeatedRed": [
+      {
+        "name": "M2 transaction and completion principals, first use, cancellation, caps and expiry follow the sequential model",
+        "message": "Error: expected [Function] to throw an error [at exercisePrincipalAndFirstUse (/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c/packages/oauth-broker/src/oauth-transaction-store.hegel.integration.test.ts:209:5)]"
+      }
+    ],
+    "sameFailure": true,
+    "sameShrunkDraws": true,
+    "shrunkEvidence": "var draw_1 = 1;\nvar draw_2 = 1;\nvar draw_3 = 1;\n{\"capacity\":1,\"transactionTtlMs\":1,\"completionTtlMs\":1}\n\n\nexpected [Function] to throw an error",
+    "green": {
+      "passed": 1,
+      "failed": 0,
+      "unselected": 0
+    }
+  },
+  {
+    "id": "M3-effect",
+    "red": [
+      {
+        "name": "models repeated backend admission while the selected resource runs at most once",
+        "message": "Error: expected 'completed' to be 'not-dispatched' // Object.is equality [at Array.invoke (/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c/packages/tool-host-node/src/standalone-tool-portal/standalone-batch-dispatch.hegel.integration.test.ts:98:24)]"
+      }
+    ],
+    "repeatedRed": [
+      {
+        "name": "models repeated backend admission while the selected resource runs at most once",
+        "message": "Error: expected 'completed' to be 'not-dispatched' // Object.is equality [at Array.invoke (/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c/packages/tool-host-node/src/standalone-tool-portal/standalone-batch-dispatch.hegel.integration.test.ts:98:24)]"
+      }
+    ],
+    "sameFailure": true,
+    "sameShrunkDraws": true,
+    "shrunkEvidence": "Step 1: invoke\nattempt=1\n\nStep 2: invoke\nattempt=2\n\nRule invoke failed:\n\n\nexpected 'completed' to be 'not-dispatched' // Object.is equality",
+    "green": {
+      "passed": 1,
+      "failed": 0,
+      "unselected": 0
+    }
+  },
+  {
+    "id": "M4-admission-core",
+    "red": [
+      {
+        "name": "M4 models admission, pending and completed unlink/disable, idempotency and intent conflicts",
+        "message": "Error: the authority must refuse this transition: expected false to be true // Object.is equality [at expectConflict (/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c/packages/tool-host-core/src/workspace-authority/test-fixtures/agent-removal-hegel-model.ts:53:63)]"
+      }
+    ],
+    "repeatedRed": [
+      {
+        "name": "M4 models admission, pending and completed unlink/disable, idempotency and intent conflicts",
+        "message": "Error: the authority must refuse this transition: expected false to be true // Object.is equality [at expectConflict (/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c/packages/tool-host-core/src/workspace-authority/test-fixtures/agent-removal-hegel-model.ts:53:63)]"
+      }
+    ],
+    "sameFailure": true,
+    "sameShrunkDraws": true,
+    "shrunkEvidence": "Step 1: beginUnlink\nvar draw_1 = {\n  clientId: '019a9310-0000-7000-8000-000000000001',\n  persona: null,\n  removal: null\n};\nvar draw_2 = '019a9310-0000-7000-8000-000000000101';\nbegin 019a9310-0000-7000-8000-000000000001 request=019a9310-0000-7000-8000-000000000101 intent={\"operation\":\"unlink\"} previous=null\n\nforbidden admission probe 019a9310-0000-7000-8000-000000000001 {\"kind\":\"pending\",\"operation\":\"unlink\",\"requestId\":\"019a9310-0000-7000-8000-000000000101\"}\n\nInvariant pendingRemovalAndDisableRefuseAdmission failed after step 1:\n\n\nthe authority must refuse this transition: expected false to be true // Object.is equality",
+    "green": {
+      "passed": 1,
+      "failed": 0,
+      "unselected": 0
+    }
+  },
+  {
+    "id": "M5-decoder",
+    "red": [
+      {
+        "name": "M5 decoder rejects bodies above the independently measured UTF-8 limit",
+        "message": "Error: expected function to throw an error, but it didn't [at __vite_ssr_import_0__.test.testCases (/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c/packages/agent-portal-sdk/src/gateway-runtime-client/gateway-runtime-protocol.hegel.unit.test.ts:21:6)]"
+      }
+    ],
+    "repeatedRed": [
+      {
+        "name": "M5 decoder rejects bodies above the independently measured UTF-8 limit",
+        "message": "Error: expected function to throw an error, but it didn't [at __vite_ssr_import_0__.test.testCases (/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c/packages/agent-portal-sdk/src/gateway-runtime-client/gateway-runtime-protocol.hegel.unit.test.ts:21:6)]"
+      }
+    ],
+    "sameFailure": true,
+    "sameShrunkDraws": true,
+    "shrunkEvidence": "var draw_1 = 'a';\n{\"payload\":\"a\",\"bodyLength\":37}\n\nexpected function to throw an error, but it didn't",
+    "green": {
+      "passed": 1,
+      "failed": 0,
+      "unselected": 0
+    }
+  },
+  {
+    "id": "P1-expiry",
+    "red": [
+      {
+        "name": "binds the audience, ordered call fields, key, agent, and expiry",
+        "message": "Error: expected { ok: true } to deeply equal { ok: false, reason: 'expired' } [at __vite_ssr_import_0__.testAsync.testCases (/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c/packages/tool-engine/src/mcp-gateway/signed-tokens/approval-token-signing.hegel.unit.test.ts:40:86)]"
+      }
+    ],
+    "repeatedRed": [
+      {
+        "name": "binds the audience, ordered call fields, key, agent, and expiry",
+        "message": "Error: expected { ok: true } to deeply equal { ok: false, reason: 'expired' } [at __vite_ssr_import_0__.testAsync.testCases (/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c/packages/tool-engine/src/mcp-gateway/signed-tokens/approval-token-signing.hegel.unit.test.ts:40:86)]"
+      }
+    ],
+    "sameFailure": true,
+    "sameShrunkDraws": true,
+    "shrunkEvidence": "var draw_1 = 1;\nvar draw_2 = 0;\nvar draw_3 = 1;\nvalue=1 issued=0 lifetime=1\n\n\nexpected { ok: true } to deeply equal { ok: false, reason: 'expired' }",
+    "green": {
+      "passed": 1,
+      "failed": 0,
+      "unselected": 1
+    }
+  },
+  {
+    "id": "P2-trust",
+    "red": [
+      {
+        "name": "uses the independent MCP annotation and selector decision table",
+        "message": "Error: expected 'allow_without_approval' to be 'blocked' // Object.is equality [at /Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c/packages/tool-access/src/authorization/portal-access-policy.hegel.unit.test.ts:128:5]"
+      }
+    ],
+    "repeatedRed": [
+      {
+        "name": "uses the independent MCP annotation and selector decision table",
+        "message": "Error: expected 'allow_without_approval' to be 'blocked' // Object.is equality [at /Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c/packages/tool-access/src/authorization/portal-access-policy.hegel.unit.test.ts:128:5]"
+      }
+    ],
+    "sameFailure": true,
+    "sameShrunkDraws": true,
+    "shrunkEvidence": "var draw_1 = 0;\nvar draw_2 = 1;\nvar draw_3 = 0;\nvar draw_4 = 0;\nvar draw_5 = 0;\n{\"trusted\":false,\"readOnly\":true,\"destructive\":false,\"alwaysAsk\":false,\"selector\":0}\n\nexpected 'allow_without_approval' to be 'blocked' // Object.is equality",
+    "green": {
+      "passed": 1,
+      "failed": 0,
+      "unselected": 4
+    }
+  },
+  {
+    "id": "P3-and",
+    "red": [
+      {
+        "name": "applies AND predicates, OR alternatives, and deny before ask and baseline",
+        "message": "Error: expected { …(7) } to match object { kind: 'admitted', …(1) }"
+      }
+    ],
+    "repeatedRed": [
+      {
+        "name": "applies AND predicates, OR alternatives, and deny before ask and baseline",
+        "message": "Error: expected { …(7) } to match object { kind: 'admitted', …(1) }"
+      }
+    ],
+    "sameFailure": true,
+    "sameShrunkDraws": true,
+    "shrunkEvidence": "var draw_1 = 0;\nvar draw_2 = 1;\nvar draw_3 = 0;\nvar draw_4 = 0;\nvar draw_5 = 0;\n{\"argv\":[\"project\",\"edit\",\"../ordinary\",\"--format=json\"],\"deny\":false,\"baseline\":\"without_approval\"}\n\nexpected { …(7) } to match object { kind: 'admitted', …(1) }\n(5 matching properties omitted from actual)",
+    "green": {
+      "passed": 1,
+      "failed": 0,
+      "unselected": 2
+    }
+  },
+  {
+    "id": "P4-directory",
+    "red": [
+      {
+        "name": "P4 raw Gog argv and normalized file metadata refuses directory-only values as files and refuses input-directory descriptors",
+        "message": "Error: expected '' to be undefined [at /Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c/packages/oauth-broker-contracts/src/gog-file-arguments.hegel.unit.test.ts:160:55]"
+      }
+    ],
+    "repeatedRed": [
+      {
+        "name": "P4 raw Gog argv and normalized file metadata refuses directory-only values as files and refuses input-directory descriptors",
+        "message": "Error: expected '' to be undefined [at /Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c/packages/oauth-broker-contracts/src/gog-file-arguments.hegel.unit.test.ts:160:55]"
+      }
+    ],
+    "sameFailure": true,
+    "sameShrunkDraws": true,
+    "shrunkEvidence": "var draw_1 = [ '' ];\nvar draw_2 = '';\n{\"directoryOnly\":[\".\",\"./\",\"fx/\"]}\n\nexpected '' to be undefined",
+    "green": {
+      "passed": 1,
+      "failed": 0,
+      "unselected": 3
+    }
+  },
+  {
+    "id": "P5-ceiling",
+    "red": [
+      {
+        "name": "P5 Google grants against independent literal catalog rules refuses groups above the ceiling and unknown or foreign-family selections and ceilings",
+        "message": "Error: expected [Function] to throw an error [at /Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c/packages/oauth-broker/src/google/google-operation-grants.hegel.unit.test.ts:142:77]"
+      }
+    ],
+    "repeatedRed": [
+      {
+        "name": "P5 Google grants against independent literal catalog rules refuses groups above the ceiling and unknown or foreign-family selections and ceilings",
+        "message": "Error: expected [Function] to throw an error [at /Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c/packages/oauth-broker/src/google/google-operation-grants.hegel.unit.test.ts:142:77]"
+      }
+    ],
+    "sameFailure": true,
+    "sameShrunkDraws": true,
+    "shrunkEvidence": "var draw_1 = {\n  operationId: 'drive.upload',\n  familyId: 'documents',\n  requiredGroupChoices: [ [ 'drive.all-files.write', 'drive.app-files.write' ] ]\n};\nvar draw_2 = 'drive.all-files.write';\nvar draw_3 = [];\nvar draw_4 = {\n  groupId: 'gmail.read',\n  familyId: 'communications',\n  serviceId: 'gmail',\n  effect: 'read',\n  scope: 'https://www.googleapis.com/auth/gmail.readonly'\n};\nvar draw_5 = '0';\n{\"selectionInput\":{\"familyId\":\"documents\",\"groupIds\":[\"drive.all-files.write\"],\"ceiling\":[]},\"grantInput\":{\"operationId\":\"drive.upload\",\"familyId\":\"documents\",\"selectedGroupIds\":[\"drive.all-files.write\"],\"ceiling\":[],\"actualScopes\":[\"openid\",\"https://www.googleapis.com/auth/userinfo.email\",\"https://www.googleapis.com/auth/drive\"]}}\n\nexpected [Function] to throw an error",
+    "green": {
+      "passed": 1,
+      "failed": 0,
+      "unselected": 6
+    }
+  },
+  {
+    "id": "P5-scope",
+    "red": [
+      {
+        "name": "P5 Google grants against independent literal catalog rules refuses missing, surplus and substituted exact-scope evidence",
+        "message": "Error: expected { kind: 'admitted' } to deeply equal { kind: 'scope-mismatch' } [at /Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c/packages/oauth-broker/src/google/google-operation-grants.hegel.unit.test.ts:186:49]"
+      }
+    ],
+    "repeatedRed": [
+      {
+        "name": "P5 Google grants against independent literal catalog rules refuses missing, surplus and substituted exact-scope evidence",
+        "message": "Error: expected { kind: 'admitted' } to deeply equal { kind: 'scope-mismatch' } [at /Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c/packages/oauth-broker/src/google/google-operation-grants.hegel.unit.test.ts:186:49]"
+      }
+    ],
+    "sameFailure": true,
+    "sameShrunkDraws": true,
+    "shrunkEvidence": "var draw_1 = {\n  operationId: 'drive.upload',\n  familyId: 'documents',\n  requiredGroupChoices: [ [ 'drive.all-files.write', 'drive.app-files.write' ] ]\n};\nvar draw_2 = 'drive.all-files.write';\nvar draw_3 = [];\nvar draw_4 = 0;\n{\"operationId\":\"drive.upload\",\"familyId\":\"documents\",\"selectedGroupIds\":[\"drive.all-files.write\"],\"ceiling\":[\"forms.body.read\",\"forms.body.write\",\"forms.responses.read\",\"drive.all-files.read\",\"drive.all-files.write\",\"drive.app-files.read\",\"drive.app-files.write\",\"docs.all-files.read\",\"docs.all-files.write\",\"docs.app-files.read\",\"docs.app-files.write\",\"sheets.all-files.read\",\"sheets.all-files.write\",\"sheets.app-files.read\",\"sheets.app-files.write\",\"slides.all-files.read\",\"slides.all-files.write\",\"slides.app-files.read\",\"slides.app-files.write\"],\"actualScopes\":[\"https://www.googleapis.com/auth/userinfo.email\",\"https://www.googleapis.com/auth/drive\"]}\n\nexpected { kind: 'admitted' } to deeply equal { kind: 'scope-mismatch' }",
+    "green": {
+      "passed": 1,
+      "failed": 0,
+      "unselected": 6
+    }
+  },
+  {
+    "id": "P6-alias",
+    "red": [
+      {
+        "name": "intersects authored command paths with the independent catalog and preserves local help",
+        "message": "Error: expected { 'gmail.search': [ [ …(2) ], …(1) ] } to deeply equal { 'gmail.search': [ [ …(2) ] ] } [at /Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c/packages/config-contracts/src/oauth-policy-compiler.hegel.unit.test.ts:43:28]"
+      }
+    ],
+    "repeatedRed": [
+      {
+        "name": "intersects authored command paths with the independent catalog and preserves local help",
+        "message": "Error: expected { 'gmail.search': [ [ …(2) ], …(1) ] } to deeply equal { 'gmail.search': [ [ …(2) ] ] } [at /Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c/packages/config-contracts/src/oauth-policy-compiler.hegel.unit.test.ts:43:28]"
+      }
+    ],
+    "sameFailure": true,
+    "sameShrunkDraws": true,
+    "shrunkEvidence": "var draw_1 = 0;\nvar draw_2 = 0;\nvar draw_3 = 0;\nvar draw_4 = 0;\nvar draw_5 = 0;\n{\"alias\":false,\"send\":false,\"help\":false,\"version\":false,\"versionWord\":false}\n\nexpected { 'gmail.search': [ [ …(2) ], …(1) ] } to deeply equal { 'gmail.search': [ [ …(2) ] ] }",
+    "green": {
+      "passed": 1,
+      "failed": 0,
+      "unselected": 2
+    }
+  },
+  {
+    "id": "P7-recursion",
+    "red": [
+      {
+        "name": "redacts nested credential keys while retaining ordinary fields",
+        "message": "Error: expected { rows: [ { nested: { …(6) } } ] } to deeply equal { rows: [ { nested: { …(6) } } ] } [at /Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c/packages/tool-engine/src/upstream-mcp-connectors/upstream-response-middleware.hegel.unit.test.ts:72:5]"
+      }
+    ],
+    "repeatedRed": [
+      {
+        "name": "redacts nested credential keys while retaining ordinary fields",
+        "message": "Error: expected { rows: [ { nested: { …(6) } } ] } to deeply equal { rows: [ { nested: { …(6) } } ] } [at /Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c/packages/tool-engine/src/upstream-mcp-connectors/upstream-response-middleware.hegel.unit.test.ts:72:5]"
+      }
+    ],
+    "sameFailure": true,
+    "sameShrunkDraws": true,
+    "shrunkEvidence": "var draw_1 = 1;\ncredential suffix=1\n\nexpected { rows: [ { nested: { …(6) } } ] } to deeply equal { rows: [ { nested: { …(6) } } ] }",
+    "green": {
+      "passed": 1,
+      "failed": 0,
+      "unselected": 3
+    }
+  },
+  {
+    "id": "P8-digest",
+    "red": [
+      {
+        "name": "binds every committed intent field while ignoring object insertion order and noncommitted fields",
+        "message": "Error: expected '1279028f1238edadd5fb2d3985448a2a72d43…' not to be '1279028f1238edadd5fb2d3985448a2a72d43…' // Object.is equality [at /Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c/packages/tool-engine/src/capability-dispatch/dispatch-intent.hegel.unit.test.ts:82:80]"
+      }
+    ],
+    "repeatedRed": [
+      {
+        "name": "binds every committed intent field while ignoring object insertion order and noncommitted fields",
+        "message": "Error: expected '1279028f1238edadd5fb2d3985448a2a72d43…' not to be '1279028f1238edadd5fb2d3985448a2a72d43…' // Object.is equality [at /Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c/packages/tool-engine/src/capability-dispatch/dispatch-intent.hegel.unit.test.ts:82:80]"
+      }
+    ],
+    "sameFailure": true,
+    "sameShrunkDraws": true,
+    "shrunkEvidence": "var draw_1 = 1;\nvalue=1\n\n\nexpected '1279028f1238edadd5fb2d3985448a2a72d43…' not to be '1279028f1238edadd5fb2d3985448a2a72d43…' // Object.is equality",
+    "green": {
+      "passed": 1,
+      "failed": 0,
+      "unselected": 1
+    }
+  },
+  {
+    "id": "P9-origin",
+    "red": [
+      {
+        "name": "checks Host by canonical hostname and Origin by canonical scheme, host and port",
+        "message": "Error: expected true to be false // Object.is equality [at /Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c/packages/tool-host-node/src/mcp-proxy-server/http-boundaries.hegel.unit.test.ts:114:6]"
+      }
+    ],
+    "repeatedRed": [
+      {
+        "name": "checks Host by canonical hostname and Origin by canonical scheme, host and port",
+        "message": "Error: expected true to be false // Object.is equality [at /Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c/packages/tool-host-node/src/mcp-proxy-server/http-boundaries.hegel.unit.test.ts:114:6]"
+      }
+    ],
+    "sameFailure": true,
+    "sameShrunkDraws": true,
+    "shrunkEvidence": "var draw_1 = 0;\nvar draw_2 = 1024;\nhost=host0.example port=1024\n\nexpected true to be false // Object.is equality",
+    "green": {
+      "passed": 1,
+      "failed": 0,
+      "unselected": 2
+    }
+  }
+]

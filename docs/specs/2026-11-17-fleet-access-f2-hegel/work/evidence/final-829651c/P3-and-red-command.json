@@ -1,0 +1,23 @@
+{
+  "phase": "red",
+  "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+  "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c",
+  "command": [
+    "pnpm",
+    "exec",
+    "vitest",
+    "run",
+    "--project",
+    "unit",
+    "packages/tool-access/src/authorization/cli-allowances/cli-allowance.hegel.unit.test.ts",
+    "--testNamePattern",
+    "applies AND predicates, OR alternatives, and deny before ask and baseline",
+    "--maxWorkers",
+    "1",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/final-829651c/P3-and-red.json"
+  ],
+  "exit": 1,
+  "signal": null
+}
