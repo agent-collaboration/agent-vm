@@ -95,7 +95,7 @@ flowchart TB
   <li><code>owner-page-document.tsx</code>: pass <code>continueLocation</code>, and load the island script on the sign-in page.</li>
   </ul>
   Add V7's host test of the served page.</li>
-<li><strong>Real browser.</strong> In <code>test-fixtures/native-browser-scenario.ts</code>, on a harness started with <code>issuerHostname: 'localhost'</code>, add the four runs of <a href="verification-design.html#V8">V8</a>: the journey, no user verification, the command-line login (through <code>loginThroughNativeOwnerCli</code>), and the Turnstile script failure. They use:
+<li><strong>Real browser.</strong> In <code>test-fixtures/native-passkey-browser-scenario.ts</code> (new; imported by <code>native-browser-scenario.ts</code>, whose entry drives both; split to keep files under the size limit, Lead ruling 17 Nov), each run on its own fresh harness started with <code>issuerHostname: 'localhost'</code>, add the four runs of <a href="verification-design.html#V8">V8</a>: the journey, no user verification, the command-line login (through <code>loginThroughNativeOwnerCli</code>), and the Turnstile script failure. They use:
   <ul>
   <li>the WebAuthn domain calls through <code>native-browser-protocol.ts</code>'s <code>call</code>;</li>
   <li>the Turnstile script stand-in served through <code>Fetch.enable</code> and <code>Fetch.fulfillRequest</code>, or failed with <code>Fetch.failRequest</code>.</li>
