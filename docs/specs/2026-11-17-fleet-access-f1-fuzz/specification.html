@@ -40,7 +40,7 @@
 
 <h2 id="obligations">Obligations</h2>
 <h3 id="s1">S1 · Every reachable route has a request family (U1)</h3>
-<p>Every route in E1 (both sources) MUST have one classification row. Every row that isn't blocked or server-only MUST have exactly one request family. A coverage check MUST fail when:</p>
+<p>Every route in E1 MUST have one classification row. Handler-owned routes are discovered from the real handler source, not only from a hand-written list. Every row that isn't blocked or server-only MUST have exactly one request family. A coverage check MUST fail when:</p>
 <ul>
 <li>a provider endpoint or a handler-owned route has no classification row;</li>
 <li>a reachable row has no family;</li>
@@ -60,7 +60,7 @@
 <ul>
 <li>be the documented success, or a documented refusal with its generic body;</li>
 <li>never be 5xx (F1 injects no storage faults);</li>
-<li><strong>respect the route's disclosure rule:</strong> no credential of any class in body or headers (browser session tokens, access, refresh and ID tokens, client secrets, cookie values). The exceptions are the route's legitimate success <code>Set-Cookie</code> and legitimate cookie deletion. No person's email or ID beyond what the caller is entitled to see. The owner may see their own organization's members and invitees; a member may not; nobody sees another organization's. The existing refusal-field list in <code>credential-free-refusal.ts</code> is the floor.</li>
+<li><strong>respect the route's disclosure rule:</strong> no credential of any class in body or headers (browser session tokens, access, refresh and ID tokens, client secrets, cookie values). The exceptions are each route's <em>authorized success credential outputs</em>, checked against its existing issuance and release contract: the session <code>Set-Cookie</code> on sign-in success, the token route's <code>access_token</code>, and a refresh credential only for the configured fleet CLI under <code>sign-in-response-release.ts</code>'s release checks. Legitimate cookie deletion is also allowed. A credential in any error response, or issued outside the route and caller's entitlement, fails. No person's email or ID beyond what the caller is entitled to see. The owner may see their own organization's members and invitees; a member may not; nobody sees another organization's. The existing refusal-field list in <code>credential-free-refusal.ts</code> is the floor.</li>
 <li><strong>respect the route's permitted refusal effects:</strong> a refusal changes only what its row permits. Examples are consuming a passkey-confirm challenge before validation, recording a factor-change intent, clearing a cookie, and expired-session cleanup with its fence bump. Every other stored row stays unchanged, and a replay of a consumed challenge is refused.</li>
 </ul>
 
@@ -83,7 +83,7 @@
   <li>rejoining bumps the retained pair, never resets it;</li>
   <li>session deletion bumps every retained pair of that person;</li>
   <li>person cleanup bumps and marks inactive every retained pair;</li>
-  <li>refused and no-op operations bump nothing;</li>
+  <li>fence changes follow what the operation actually committed, not whether its HTTP answer was success or refusal. An operation that commits no authorized change bumps nothing. A refused read that legitimately cleans up an expired session bumps that person's retained pairs, as the existing expiry cleanup does (<code>expired-session-cleanup-proof.ts:60</code>).</li>
   <li>a revision never decreases.</li>
   </ul></li>
 <li><strong>R-invite:</strong> invitation states move only along the documented lifecycle.</li>
@@ -102,7 +102,7 @@
 <li>no console errors outside an explicit allowlist (each entry with its reason);</li>
 <li>no navigation failure except the route's documented refusal. On the member's People URL the expected answer is the 403 refusal with its generic content, and any other status ≥400 still fails.</li>
 <li>the S2 disclosure rule applied to page text and attributes: the owner's People page may show its own organization's emails, the member's page shows none.</li>
-<li>passkey click-only: the number of passkey-challenge requests the server received during the campaign equals the number of passkey-button clicks in the campaign's recorded actions. A request with no click behind it fails, however it was timed.</li>
+<li>passkey click-only: in each document, every passkey-challenge request is <em>initiated</em> after a passkey-button click in that document, judged on one ordered witness of both events (see the Program Design). A click with no request is allowed, for example after navigation, cancel or a transport failure.</li>
 </ul>
 
 <h3 id="s5">S5 · Findings are reproducible (U4)</h3>

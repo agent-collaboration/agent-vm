@@ -35,17 +35,19 @@ flowchart TB
 <div class="ex-table-scroll" data-width="canvas"><table>
 <thead><tr><th>Row</th><th>Clean build must pass</th><th>Wrong builds that must fail</th><th>Lane</th></tr></thead>
 <tbody>
-<tr><td>V1 (S1)</td><td>Provider rows plus handler routes equal the classification; reachable rows equal the families</td><td>(a) remove one family; (b) add a new handler-owned public route with no family; (c) add a provider endpoint with no classification row</td><td>Host e2e (live inventory); table consistency in unit</td></tr>
+<tr><td>V1 (S1)</td><td>Provider rows plus handler routes equal the classification; reachable rows equal the families</td><td>(a) remove one family; (b) add a real new public branch to the actual outer handler, editing no test list: discovery must fail; (c) add a provider endpoint with no classification row; (d) a handler branch on a non-literal pathname: discovery must fail</td><td>Host e2e (live inventory); table consistency in unit</td></tr>
 <tr><td>V2 (S2)</td><td>
   <ul>
   <li>the owner reading their own organization's People returns its emails (allowed);</li>
   <li>a valid GET query at a pagination boundary;</li>
-  <li>a valid URL-encoded token request;</li>
+  <li>a valid URL-encoded token request, whose success body carries its authorized <code>access_token</code> (allowed);</li>
+  <li>an expired session's refused read with its legitimate cleanup and fence bump;</li>
   <li>a passkey-confirm with a valid challenge and invalid assertion is refused, consuming the challenge, and its replay is refused.</li>
   </ul></td><td>
   <ul>
   <li>(a) an endpoint throws on an over-long field: a 500, shrunk to that field;</li>
-  <li>(b) an error body echoes the session cookie: a credential disclosure;</li>
+  <li>(b) an error body echoes the session cookie, or a token refusal includes an <code>access_token</code>: a credential disclosure;</li>
+  <li>(e) a token issued to a caller outside the route's entitlement: a credential disclosure;</li>
   <li>(c) a member's People request returns rows, or an owner sees another organization's email: an identity disclosure;</li>
   <li>(d) a refused request writes an unrelated row: an effect violation.</li>
   </ul></td><td>Host e2e, both hosts</td></tr>
@@ -58,7 +60,7 @@ flowchart TB
   </ul></td><td>Host e2e, both engines</td></tr>
 <tr><td>V4 (S4)</td><td>All three campaigns on both hosts, including the member's 403 on People</td><td>
   <ul>
-  <li>(a) mount Better Auth UI's passkey autofill for real, at the island's provider, so a challenge goes out on load: the challenge-versus-click count fails;</li>
+  <li>(a) mount Better Auth UI's passkey autofill for real, at the island's provider, so a challenge is initiated on load before any click. The named <em>ordering</em> property must fail, including when a later click makes the totals equal and when the challenge response is held until after the click.</li>
   <li>(b) render the session token into a data attribute: disclosure fails;</li>
   <li>(c) show People rows to the member: the member property fails;</li>
   <li>(d) make the owner page answer 500 on one action: the navigation-status property fails.</li>

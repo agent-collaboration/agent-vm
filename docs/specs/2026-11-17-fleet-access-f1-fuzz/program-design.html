@@ -23,7 +23,7 @@
 <ex-mermaid id="parts" label="Where the parts sit" data-width="canvas"><script type="text/plain">
 flowchart TB
   prov["installedProviderEndpointInventory (existing)"] --> covh["fuzz/route-coverage.host.e2e.test.ts<br/>S1, host lane"]
-  handler["outer-handler route list<br/>fuzz/handler-routes.ts (hand-written from the handlers)"] --> covh
+  handler["real handler source<br/>parsed by handler-route-discovery.unit.test.ts"] --> covh
   table["fuzz/route-classification.ts<br/>independent table (E2)"] --> covh
   table --> covu["fuzz/route-classification.unit.test.ts<br/>table shape, pure"]
   fam["fuzz/request-families/*.ts<br/>query / form / JSON parts (E3)"] --> req["fuzz/route-requests.host.e2e.test.ts<br/>S2 · Hegel testAsync, both hosts"]
@@ -38,7 +38,7 @@ flowchart TB
 
 <h2 id="coverage">Coverage (S1)</h2>
 <ul>
-<li><strong><code>handler-routes.ts</code></strong> lists the routes the outer handlers own, written by reading <code>sign-in-request-handler.ts</code> and <code>sign-in-http-handler.ts</code>.</li>
+<li><strong>Handler route discovery:</strong> <code>handler-route-discovery.unit.test.ts</code> parses the real <code>sign-in-request-handler.ts</code> and <code>sign-in-http-handler.ts</code> source with the TypeScript compiler API. It collects every route literal the handlers branch on (<code>pathname ===</code>, <code>startsWith</code> prefixes, route tables) and fails when a discovered literal or prefix has no classification row. Adding a real handler branch therefore fails coverage with no test list edited. Limit: a route assembled at run time from variables can't be discovered; the test fails on any non-literal pathname comparison it finds, so that case can't pass silently.</li>
 <li><strong><code>route-classification.ts</code></strong> is the independent table (E2). Each row: method, path, exposure, request parts, documented answers, disclosure rule, permitted refusal effects. It's written from the specs and tests, not computed from the product allowlist.</li>
 <li><strong><code>route-coverage.host.e2e.test.ts</code></strong> builds the live provider inventory, then checks that provider rows plus handler routes equal the classification rows, and that the reachable rows equal the families.</li>
 <li><strong>The pure unit test</strong> checks the table's own consistency: every reachable row has request parts and answers.</li>
@@ -85,8 +85,13 @@ flowchart TB
   <li>adds the S2 disclosure rule over page text and attributes, per campaign;</li>
   <li>uses action generators that stay inside the page under test.</li>
   </ul></li>
-<li><strong>Passkey click-only witness:</strong> the harness counts passkey-challenge requests on its own side. The driver reads the trace's recorded actions (<code>bombadil trace</code> JSON) and counts clicks on the passkey button. Equal counts pass. A request with no click fails, regardless of timing, which avoids the snapshot-timing problem.</li>
-<li><strong>Driver, run mode, per host:</strong>
+<li><strong>Passkey click-only witness, ordered:</strong> the driver launches Chrome itself (<code>CHROME_BIN</code>, headless, remote debugging on 127.0.0.1) and runs <code>bombadil browser test-external --remote-debugger &lt;url&gt; --create-target</code>. The driver holds its own CDP session on the same target and:
+  <ul>
+  <li>enables <code>Network</code>, recording <code>requestWillBeSent</code> for the challenge path, which marks a request's <em>initiation</em>, not its response;</li>
+  <li>adds, through <code>Page.addScriptToEvaluateOnNewDocument</code> in an <em>isolated world</em> (test-side observer only, no product change), a capture-phase click listener on the passkey button that reports through a <code>Runtime</code> binding.</li>
+  </ul>
+  Both events arrive on that one connection in order, tagged with the document's loader ID. The property: in each document, every challenge initiation comes after a passkey-button click in that document. Clicks without requests pass.</li>
+<li><strong>Driver, run mode, per host</strong> (Chrome launched by the driver, Bombadil attached with <code>test-external</code>):
   <ul>
   <li>start the harness;</li>
   <li>seed the campaign's people, organization and sessions;</li>

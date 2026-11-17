@@ -140,3 +140,64 @@ Only this report was written. No installation, build, test, lint, browser launch
 Work log: **no-home**, as commissioned. No separate authorized entries-file destination was supplied; the report is the scoped evidence/checkpoint handback. The narrow five-check commission governs this report; it does not claim visual/rendered-document review, full workflow design certification, product acceptance, or owner acceptance. Existing source rules and owner quotations in the design were not promoted into new owner decisions. No helpers were commissioned.
 
 The next revision starts with the observable contracts in **F1/F2/F5/F7/F9** (`design-specification`), then aligns Program Design and Verification Design in that order. The local-host/injected-provider boundary can remain. No new owner tradeoff is needed to preserve the existing People, anti-replay and authorization contracts. Bombadil CI remains the owner's open decision as the design already states.
+
+## Correction check — revision 2, `073eb8839`
+
+**Current verdict: FINDINGS — needs revision.** Eight original findings close at the design level. F5 and F6 remain open. The corrections introduce F11 (P1) and F12 (P2): **four open findings, three P1 and one P2**, down from ten. This is a converging correction check, not a new baseline review.
+
+Authority: the Lead's [correction handback](router://0ff962c5-7fa3-4c18-a5ca-1bbe8db09e89/push/01a1e987-2b9a-7ae3-bf79-f2bdc96c9e06) accepts F1–F10 and requests only their revised anchors and affected proof. I reopened the complete rewritten Specification, Program Design and Verification Design from **`073eb8839b01c56800b1ec87696e07e1b015b29e`**, and compared the current files with that target. The decisive product reads below use the same pinned Switchboard `91bfdc5a3bf1632f0ffc70f22a2c34f3a9b469b5`. Unchanged earlier checks are reused; there was no new general review, implementation, or runtime execution.
+
+| Original finding | Correction disposition | Revised anchors inspected at `073eb8839` |
+| --- | --- | --- |
+| F1 | **Closed.** The owner's same-organization People disclosures are permitted. The new credential prohibition is a separate defect, F11. | Specification:63,104; Verification Design:41,49 |
+| F2 | **Closed.** Per-route permitted effects replace blanket row equality; consumed challenge plus rejected replay is an explicit clean case. F12 records the newly introduced fence contradiction separately. | Specification:64,72; Program Design:61; Verification Design:44,50 |
+| F3 | **Closed at the reviewed design boundary.** Sequence actions now use real provider/service entries; the model no longer supplies policy missing from raw stores. Both owner-removal guards are named in the wrong build. Existing `createOrganizationProofProvider` is a real-provider precedent on the dual-storage context, not a public HTTP coverage claim. Exact command wiring and reaching each mutation remain implementation proof obligations. | Specification:68–72; Program Design:68–72; Verification Design:54; reopened product `organization-provider-proof.ts:28–40` |
+| F4 | **Closed.** The member campaign replaces the generic navigation default and permits only its contracted 403/content. | Specification:103; Program Design:82–84; Verification Design:59,63 |
+| F5 | **Open, P1.** Classification and current handler coverage improve, but the actual handler still has no dependency into the proposed new-route completeness check. | Program Design:26,41–43; Verification Design:38 |
+| F6 | **Open, P1.** The mounted-trigger intention improves; final count equality still cannot establish request/click ordering. | Specification:105; Program Design:88,94; Verification Design:61 |
+| F7 | **Closed.** Query, URL-encoded form and JSON/wire cases are separated, with GET/form clean cases. | Specification:52–57; Program Design:49–54; Verification Design:42–43 |
+| F8 | **Closed.** Live inventory and dual-engine campaigns move to the existing host lane; pure table/model checks stay unit. | Program Design:22,25–31,68; Verification Design:38,58 |
+| F9 | **Closed for the original missing key/transitions.** Pair identity, role/rejoin/delete/cleanup changes and both fence counterfactuals are now present. The added blanket refusal rule is F12. | Specification:79–87; Program Design:67; Verification Design:56–57 |
+| F10 | **Closed at the design level.** Replay now recreates the backend/fixture and correct CLI options; V5 requires replay after the original harness closes. Execution/replay success remains unobserved. | Specification:110; Program Design:96; Verification Design:67 |
+
+### F5 retained — A new real handler route is still invisible to the coverage comparison (P1)
+
+**Revised target:** [program-design.html:41](/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f1-fuzz/program-design.html:41), [verification-design.html:38](/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f1-fuzz/verification-design.html:38).
+
+`handler-routes.ts` is expressly handwritten by reading the handlers; the check then compares that list plus the provider inventory with a second handwritten classification. Add a new public branch to the **actual** outer handler while leaving both test lists unchanged: provider inventory, handler list, classification and families are all unchanged, so their equality still passes. This is precisely V1(b)'s promised wrong build. S1 at Specification:45–49 says it must fail. Adding the row to the test list as part of the mutant would test omission from a test list, not discovery of a real new handler route.
+
+**Smallest correction:** give the coverage check an inspected dependency on the real handler-owned surface, while retaining independent expected exposure/outcomes. Identify how the existing handler shape is enumerated or checked; do not silently substitute a manual review for the promised automated failure. Validate by adding only a real handler route and observing the missing-classification/family failure. No product registration refactor is implied or authorized by this finding.
+
+**Route:** design-program -> design-verification. **Disposition:** retained; U1/S1 coverage obligation unchanged.
+
+### F6 retained — Final count equality loses the causal order and imposes an extra guarantee (P1)
+
+**Revised target:** [specification.html:105](/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f1-fuzz/specification.html:105), [program-design.html:88](/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f1-fuzz/program-design.html:88), [program-design.html:94](/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f1-fuzz/program-design.html:94).
+
+The driver compares totals **after** the campaign. `request on load -> later button click with no second request` produces one request and one click, exactly like `button click -> request`. The first violates U3's click-only rule; both pass the revised assertion. A delayed pre-click response also remains indistinguishable. Conversely, click-only does not require every click to reach the server: navigation/cancellation or transport failure can leave a click without a received challenge. Equality would reject that permitted behavior. Moving the counter to the server fixes visibility of received requests, not their causal order relative to browser input.
+
+**Smallest correction:** preserve the original observable rule—no challenge initiation before its relevant user action—and specify an ordered, retained witness for that initiation and action in each document. Counts may supplement it. Add a wrong case whose final totals match despite a pre-click request, including the held-response case from F6; also permit a click with no received request. The real autofill mutation must fail the named ordering property, rather than an incidental count imbalance.
+
+**Route:** design-specification -> design-program -> design-verification. **Disposition:** retained; preserve U3 rather than replacing it with a one-request-per-click requirement.
+
+### F11 new — S2 now rejects the token endpoint's legitimate success body (P1)
+
+**Revised target:** [specification.html:63](/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f1-fuzz/specification.html:63), [program-design.html:60](/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f1-fuzz/program-design.html:60), [verification-design.html:43](/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f1-fuzz/verification-design.html:43).
+
+The correction forbids access/refresh/ID tokens and client secrets in **every body or header**, with exceptions expressly limited to legitimate success `Set-Cookie` and cookie deletion. Yet V2 requires a valid token request to pass. The actual release path requires `access_token` in that success body and permits a refresh credential for the configured fleet CLI under its release checks: [sign-in-response-release.ts:111](/Users/shravansunder/code/projects/switchboard-public.b1c-organizations-finished/packages/sign-in-core/src/response-release/sign-in-response-release.ts:111). The permanent real-host assertion checks a 200 response and parses its access token: [person-fleet-token.host.e2e.test.ts:205](/Users/shravansunder/code/projects/switchboard-public.b1c-organizations-finished/packages/sign-in-test-support/src/person-fleet-token.host.e2e.test.ts:205). `credential-free-refusal.ts` is a **refusal** oracle; applying it unchanged to every success cannot satisfy both requirements.
+
+**Smallest correction:** allow only each route's explicitly authorized successful credential outputs, checked against their existing issuance/release contract; keep refusal and unauthorized-disclosure checks strict. State the success-body exception in S2 rather than leaving the implementer to override it. Validate valid token issuance (pass), the same credential in an error response (fail), and issuance outside the route/caller entitlement (fail).
+
+**Route:** design-specification -> design-program -> design-verification. **Disposition:** accepted; introduced by revision 2 while correcting the disclosure rule.
+
+### F12 new — The new refusal fence rule contradicts permitted expiry cleanup (P2)
+
+**Revised target:** [specification.html:64](/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f1-fuzz/specification.html:64), [specification.html:86](/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f1-fuzz/specification.html:86).
+
+S2 now correctly permits expired-session cleanup **with its fence bump**, but the new R-fence clause says all refused operations bump nothing. The existing self-context expiry test returns **401**, then verifies native deletion and every retained pair's increment: [people-organization-context.host.e2e.test.ts:160](/Users/shravansunder/code/projects/switchboard-public.b1c-organizations-finished/packages/sign-in-test-support/src/people-organization-context.host.e2e.test.ts:160), [expired-session-cleanup-proof.ts:60](/Users/shravansunder/code/projects/switchboard-public.b1c-organizations-finished/packages/sign-in-test-support/src/test-fixtures/expired-session-cleanup-proof.ts:60). After an expiry in the generated sequence, this legitimate refused read cannot satisfy both rules. Applying the no-bump clause would undo F2's correction or give the model the wrong expected fence state.
+
+**Smallest correction:** scope no-bump to operations that make no authorized mutation, including no permitted cleanup effect. Classify fence expectations by the committed effect, not the HTTP success/refusal label. Validate the existing 401-plus-cleanup increment alongside a policy refusal with no cleanup and no bump.
+
+**Route:** design-specification -> design-program -> design-verification. **Disposition:** accepted; introduced by revision 2's added refusal clause.
+
+**Correction-check boundary:** only this report was appended. No tests, mutants, builds, browser campaigns, lints or replay runs were performed; closures above concern corrected design meaning only. The no-home record and source-only proof limits remain. The next revision starts with S2's legitimate success credential exception and S3's effect-based fence rule (`design-specification`), carries the retained F6 causal obligation unchanged, then corrects the F5/F6 Program/Verification Design dependencies. No owner outcome or CI gate was waived.
