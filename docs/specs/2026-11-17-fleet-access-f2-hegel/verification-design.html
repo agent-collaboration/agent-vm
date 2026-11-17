@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>F2 · Hegel on critical systems · Verification Design</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
+<a href="../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
+<a href="requirements.html">F2 · 1 Requirements</a>
+<a href="specification.html">F2 · 2 Specification</a>
+<a href="program-design.html">F2 · 3 Program Design</a>
+<a href="verification-design.html">F2 · 4 Verification Design</a>
+<a href="plan.html">F2 · 5 Plan</a>
+<a href="decisions.html">F2 · 6 Decisions</a>
+</nav></ex-nav>
+<ex-document id="doc">
+<h1>F2 · Hegel on critical systems: Verification Design</h1>
+<p>Each target counts only if a deliberately wrong build, in a scratch copy, makes its <em>named</em> property fail with a shrunk case, and the restored build passes again.</p>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Target</th><th>Wrong build that must fail</th></tr></thead>
+<tbody>
+<tr><td>P1</td><td><code>verify</code> ignores digest order, or skips the expiry check</td></tr>
+<tr><td>P2</td><td>an unknown tool falls through to allow; or a grant removal leaves a cached allow</td></tr>
+<tr><td>P3</td><td>the path check normalizes after matching (so <code>a/../../x</code> passes)</td></tr>
+<tr><td>P4</td><td>normalization drops the kind check</td></tr>
+<tr><td>P5</td><td>uses the granted scopes without intersecting with the ceiling</td></tr>
+<tr><td>P6</td><td>the compiler iterates an unordered map, so the digest isn't deterministic; or it unions the authored grant with a default</td></tr>
+<tr><td>P7</td><td>pattern redaction misses JSON-escaped secrets</td></tr>
+<tr><td>P8</td><td>pagination off-by-one at the page boundary</td></tr>
+<tr><td>P9</td><td>host comparison case-insensitive on a configured exact host, or one that ignores the port</td></tr>
+<tr><td>M1</td><td>use doesn't mark the token consumed</td></tr>
+<tr><td>M2</td><td>consume doesn't check cancel; or browser identity isn't compared</td></tr>
+<tr><td>M3</td><td><code>transitionIsAllowed</code> permits activate from a terminal state</td></tr>
+<tr><td>M4</td><td>re-add after removal skips the removal tombstone</td></tr>
+<tr><td>M5</td><td>cancel leaves the pending ID, so a late frame settles it twice</td></tr>
+</tbody></table></div>
+<p>Each red is recorded with the property name, the shrunk values or steps, and the seed, then restored green. Unit and integration rows run locally and in CI; M4 runs on Sunclaw (host lane) and in CI.</p>
+</ex-document>
+</body>
+</html>

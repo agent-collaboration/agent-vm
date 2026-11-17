@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>F2 · Hegel on critical systems · Specification</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
+<a href="../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
+<a href="requirements.html">F2 · 1 Requirements</a>
+<a href="specification.html">F2 · 2 Specification</a>
+<a href="program-design.html">F2 · 3 Program Design</a>
+<a href="verification-design.html">F2 · 4 Verification Design</a>
+<a href="plan.html">F2 · 5 Plan</a>
+<a href="decisions.html">F2 · 6 Decisions</a>
+</nav></ex-nav>
+<ex-document id="doc">
+<h1>F2 · Hegel on critical systems: Specification</h1>
+<p>What must be true, per target. Every target and anchor comes from the source collection in <code>tmp/2026-11-17-f2-research/report.md</code> (public Switchboard <code>b03d35ff</code>). The ranking is mine. Each target's property is judged against an <em>independent</em> oracle: a small model, a round trip, or a stated rule. The product's own code is never the oracle.</p>
+
+<h2 id="pure">Pure decisions (unit lane)</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Id</th><th>Target (package · function)</th><th>Property that MUST hold for every generated input</th></tr></thead>
+<tbody>
+<tr><td>P1</td><td>tool-engine · <code>sign</code>/<code>verifyAudienceScopedApprovalToken</code>, <code>receiptMatches</code></td><td>Round trip: a token signed for (audience, ordered digests, time window) verifies only for exactly those values. Changing any field, the order, the audience or the key, or moving past expiry, is refused.</td></tr>
+<tr><td>P2</td><td>tool-access · <code>resolvePortalAccessPolicy</code>, <code>mcpPortalCallPolicyDecision</code>, <code>createAccessAssessor</code></td><td>Deny by default: a tool not reachable through any granted selector is denied. Monotonic: adding a grant never removes an allow, and removing a grant never adds one. The decision is the same for the same inputs.</td></tr>
+<tr><td>P3</td><td>tool-access · <code>evaluateCliAllowanceInvocation</code>, <code>classifyCliPathContribution</code></td><td>Generated argv is allowed only when an allowance matches it by its stated rule. A path argument that escapes its allowed root (<code>..</code>, absolute, encoded, Unicode lookalikes) is never allowed.</td></tr>
+<tr><td>P4</td><td>oauth-broker-contracts · <code>normalizeGogFileArgument</code>, <code>createGogOperationResolver</code></td><td>A normalized file argument never resolves outside its permitted kind and root; operation classification gives the same answer before and after normalization.</td></tr>
+<tr><td>P5</td><td>oauth-broker · <code>evaluateGoogleOperationGrant</code>, <code>compileGooglePermissionSelection</code></td><td>Model oracle: an operation is allowed only when its required scopes are within (granted ∩ ceiling). Compiled selections never exceed the ceiling.</td></tr>
+<tr><td>P6</td><td>config-contracts · <code>toolPortalConfigSchema</code>, <code>compileCommandSet</code>, <code>compileOAuthPolicy</code></td><td>Compiling is deterministic (same input, same output and digest). Compiled grants never exceed what the config authored. Invalid configs are refused with a schema error, never a crash.</td></tr>
+<tr><td>P7</td><td>tool-engine · exact and pattern redaction</td><td>For any secret embedded anywhere in any value (prefix, suffix, JSON-escaped, nested), the redacted output never contains the secret.</td></tr>
+<tr><td>P8</td><td>tool-engine · <code>encode</code>/<code>decodeToolRef</code>, <code>paginateMcpTools</code>; tool-engine and tool-access canonical digests</td><td>Round trips are exact. Pagination returns every tool exactly once. Canonical digests don't depend on key order, and different values give different digests.</td></tr>
+<tr><td>P9</td><td>tool-host-node · credential parse/authenticate, Host/Origin/request-target checks</td><td>Only the exactly configured hosts, origins and credentials pass; generated header variants (case, ports, trailing dots, Unicode, extra slashes) never pass when they don't match.</td></tr>
+</tbody></table></div>
+
+<h2 id="stateful">Stateful flows (integration or host lane, Hegel <code>StateMachine</code>)</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Id</th><th>Target</th><th>Operations</th><th>Invariants checked every step</th></tr></thead>
+<tbody>
+<tr><td>M1</td><td>tool-engine · <code>createInMemoryApprovalTokenUse</code>; tool-host-core · <code>decideApprovalTokenUse</code></td><td>issue, use, expire (injected clock), replay</td><td>A token is used at most once; it's never used after expiry; the byte and count caps are never exceeded</td></tr>
+<tr><td>M2</td><td>oauth-broker · <code>OAuthTransactionStore</code>, continuations, sessions</td><td>create, read, consume, cancel, expire</td><td>Consume at most once; nothing consumed after cancel or expiry; the capacity bound holds; one browser identity can't consume another's</td></tr>
+<tr><td>M3</td><td>tool-host-node · operation store (<code>transitionIsAllowed</code>, reserve, arm, prove-not-dispatched, activate)</td><td>each transition in any order</td><td>Never dispatched twice; terminal states are final; only allowed transitions commit (checked by compare-and-set)</td></tr>
+<tr><td>M4</td><td>tool-host-core · <code>createWorkspaceAuthority</code>, agent removal</td><td>admit, remove, re-add, retire</td><td>A removed or retired agent is never admitted; removal is idempotent</td></tr>
+<tr><td>M5</td><td>agent-portal-sdk · framed JSON-RPC receive, request, cancel, close</td><td>generated frames, including malformed and oversized ones</td><td>Each pending ID is settled once; frames beyond the bound are refused; nothing is left after close</td></tr>
+</tbody></table></div>
+<p><strong>Limits:</strong> sequential only (Hegel runs one step at a time); local stores and hosts; no real Google or upstream MCP servers.</p>
+</ex-document>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>F2 · Hegel on critical systems · Decisions</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
+<a href="../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
+<a href="requirements.html">F2 · 1 Requirements</a>
+<a href="specification.html">F2 · 2 Specification</a>
+<a href="program-design.html">F2 · 3 Program Design</a>
+<a href="verification-design.html">F2 · 4 Verification Design</a>
+<a href="plan.html">F2 · 5 Plan</a>
+<a href="decisions.html">F2 · 6 Decisions</a>
+</nav></ex-nav>
+<ex-document id="doc">
+<h1>F2 · Hegel on critical systems: Decisions</h1>
+<ex-callout title="Nothing open for you" tone="decision" icon="users"><p>You decided the goal. The choice of targets and their order are my calls, listed below.</p></ex-callout>
+<h2 id="decided">Decided by you</h2>
+<ul>
+<li><em>“get hegel working on critical systems too”</em> (17 Nov).</li>
+<li>Testing-tool choices are the Lead's: <em>“these are not important decisions for me to make for now”</em> (17 Nov).</li>
+</ul>
+<h2 id="calls">My calls</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Call</th><th>Why</th><th>Should it have been yours?</th></tr></thead>
+<tbody>
+<tr><td>Fourteen targets: P1–P9 and M1–M5</td><td>Picked from the roughly 100 decisions collected, favouring allow/deny, secret and one-use logic with a pure or stateful seam</td><td>No</td></tr>
+<tr><td>Allow/deny and secrets first</td><td>Highest harm if wrong</td><td>No</td></tr>
+<tr><td>Test code only; findings become separate bug fixes</td><td>Keeps the proof separate from the repair</td><td>No</td></tr>
+</tbody></table></div>
+</ex-document>
+</body>
+</html>
