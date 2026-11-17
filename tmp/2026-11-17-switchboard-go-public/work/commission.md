@@ -11,6 +11,9 @@
 ## You
 🐒 Implementer, OpenAI Sol high, codex-local `01a1e75d-dfca-76f1-8385-aed1aff70ebc`. Task guidance: Designed Outcome.
 - **Scope:** plan steps 1–11 only. Build the candidate branch; don't rename, create or push any repository other than the candidate branch on today's private origin; no visibility or settings change.
+- **No paired Verifier** (a named gap): nothing user-facing changes behaviour, so the independent check is the fresh Sol auditor of the exact candidate tree (plan step 12) after your handback. Your own gates and sweeps are the proof you own.
+- **Stop condition:** stop and hand back when steps 1–11 are complete with gates green; or stop and report to the Lead on a gate failure that the plan does not already cover, or on any plan contradiction.
+- **"Both hosts"** means the two runtime hosts, workerd and Node, not macOS. Both run on Sunclaw; nothing heavy runs on this Mac.
 
 ## Where
 - **Repo:** `/Users/shravansunder/code/projects/switchboard`, base `origin/main` (fetch first; record the SHA).
