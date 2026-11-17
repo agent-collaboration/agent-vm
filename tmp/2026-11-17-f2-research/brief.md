@@ -20,11 +20,7 @@
    - any Hegel or property tests (`*.hegel.*`), and whether any of the package's own tests run hosts;
    - the test lanes and Vitest projects per `vitest.config.ts`, and AGENTS.md's taxonomy.
 3. **State and storage:** what each package stores (Durable Object or SQLite through Drizzle?) and what invariants hold across sequences of operations (for example a token can't be used after revocation, or an approval can't be replayed).
-4. **Candidate Hegel properties,** grounded in the code, not invented:
-   - for pure functions, the property with its oracle (model, round-trip, idempotence or monotonicity);
-   - for stateful flows, the operations and the invariants.
-
-   Mark each with how its wrong behaviour would be caught.
+4. **Labels, no judgment:** tag each decision you found with one or more of these supplied categories: `allow-deny`, `secret-handling`, `state-transition`, `parse-compile`, `routing`, `path-validation`, `expiry-revocation`. Quote the existing comment, spec line or test assertion that states its expected behaviour, or write `no stated expectation`.
 5. **Gaps:** decisions with no tests at all.
 
-**Return:** `report.md` with one section per package, exact anchors, and a ranked list of the 10–15 highest-value property targets with the reason. Then send a short message to the Lead with the path. No design.
+**Return:** `report.md` with one section per package and exact anchors, plus one flat table of every decision found: package, file:line, function, categories, pure or I/O-mixed, existing tests (file:line) or none, and the quoted expectation. No ranking, no proposed properties: the Lead does that. Then send a short message to the Lead with the path.
