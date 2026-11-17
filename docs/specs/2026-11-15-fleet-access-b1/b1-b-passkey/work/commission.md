@@ -18,7 +18,10 @@
   - Write only your own return files there; never edit the design pages.
 
 ## The pair
-- 🐒 Implementer: Claude Opus, high effort. SessionRef `{serviceId: 0ff962c5-7fa3-4c18-a5ca-1bbe8db09e89, endpointId: claude-local, sessionId: 11d7359e-5406-4beb-971f-aa2718dc4666}`.
+- 🐒 Implementer: OpenAI Sol, high effort. SessionRef `{serviceId: 0ff962c5-7fa3-4c18-a5ca-1bbe8db09e89, endpointId: codex-local, sessionId: 01a1e734-e29e-75c0-a74c-cf45c14f12ba}`.
+  - Replaced on 17 Nov 01:55 UTC: the first Implementer (claude-local 11d7359e, Opus) hit the Claude usage limit, with about 48 hours to headroom, before doing any work. It had only created the worktree and fast-forwarded it to `7bee7182`. That worktree, `/Users/shravansunder/code/projects/switchboard.b1b-passkey-sign-in`, is yours; reuse it.
+  - **Write scope:** your working root is `/Users/shravansunder/code/projects` only so git (whose metadata is in the main `switchboard/.git`) and your return file work. Write only in the B1-B worktree, git metadata through git commands, and `work/implementer-handback.md`. Touch nothing else under that root.
+  - **Same lineage as the Verifier** (both Sol). No Opus verification row exists and the Opus route is rate-limited, so this is a named gap; the fresh Reviewer will include Claude Opus high when its quota returns.
 - 🔬 Verifier: OpenAI Sol, high effort, a different lineage. SessionRef `{serviceId: 0ff962c5-7fa3-4c18-a5ca-1bbe8db09e89, endpointId: codex-local, sessionId: 01a1e709-8628-73d2-98a1-b8995fe5db2d}`.
 - Talk to each other directly through agent-router about setup, reproductions, repairs and rechecks. Blockers, design questions and anything you think is wrong in the design go to the Lead, not the owner.
 
