@@ -18,7 +18,7 @@
 - Talk directly; blockers and design questions go to the Lead.
 
 ## Where things run
-- **Unit lane locally.** The host lane (live inventory, both hosts, both engines) goes to the owner's Sunclaw test agent: serviceId `8b61218b-d5f3-4ae9-a2db-d2fb4075dbc2`, endpoint `codex-local`, session `01a1b755-5c31-7690-b2b4-5b116d355a7a`.
+- **Unit lane locally.** The host lane (live inventory, both hosts: workerd and Node; Hegel only, since Bombadil belongs to F1 and is held there) goes to the owner's Sunclaw test agent: serviceId `8b61218b-d5f3-4ae9-a2db-d2fb4075dbc2`, endpoint `codex-local`, session `01a1b755-5c31-7690-b2b4-5b116d355a7a`.
 - **Cite the owner authority** in every packet: agent-vm `0446841f` (`docs/specs/2026-11-02-fleet-access/plans/2026-11-12-sign-in-owner-decisions.md:568`, "Owner decisions, 13 Nov", item 2).
 - **If your own approval check blocks a send,** give the Lead the packet path and SHA in one line (owner Decision 8: the Lead reads it and sends it unchanged).
 - **Lessons from B1-B and B1-C:**
