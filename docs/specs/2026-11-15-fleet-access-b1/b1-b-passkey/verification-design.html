@@ -128,7 +128,7 @@ flowchart TB
   <li><code>/api/auth/get-session</code> from that browser returns no session.</li>
   <li>One <code>sign_in_audit</code> row records <code>anonymous</code>, <code>failed</code>, <code>passkey</code>.</li>
   </ul></li>
-<li><strong>Unit cases</strong> (<code>sign-in-test-support/src/core-tests/passkey-sign-in-completion.unit.test.ts</code>):
+<li><strong>Unit cases</strong> (<code>sign-in-core/src/better-auth/passkey-sign-in-completion.unit.test.ts</code>, beside the module because <code>completePasskeySignIn</code> is internal to sign-in-core (Lead ruling 17 Nov; same reason as V7)):
   <ul>
   <li>a 200 with one session records <code>succeeded</code> for that person;</li>
   <li>a 401 with no session records <code>failed</code> and doesn't throw;</li>
