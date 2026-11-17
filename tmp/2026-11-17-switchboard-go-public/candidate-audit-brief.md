@@ -4,7 +4,7 @@
 
 **Target:** the exact tree that would be published.
 - Branch `pub/public-candidate` on `agent-collaboration/switchboard` (private).
-- Commit and tree hash are the ones named in `work/implementer-handback.md`: **`bb34e6b0712cc10fc764f90c0236e9e1319d1b6a`, tree `9ae099be244768eac6c37f558fde706160ee7b29`** (follow-up to `108bc0fd`, a three-file diff of test literals and one comment), unless the handback declares a later head.
+- Commit and tree hash are the ones named in `work/implementer-handback.md`: **`027c73aa7b09d4ac2c91b5cfdb85c88067d31deb`, tree `473cffaeaf889c382f3aa7b46d13ce8f9724b964`** (corrections after your early findings at `bb34e6b0`), unless the handback declares a later head.
 - Audit the **tree only**. The candidate's parent history stays private and is never published; the public commit will be a new parentless commit with this exact tree (plan steps 15 and 19).
 
 **Grant:** inspect only (read and run read-only commands, `pnpm dlx` read-only scanners, no installs into the repo); write only `tmp/2026-11-17-switchboard-go-public/candidate-audit.md`. Never print secret values; redact to the first 4 characters. **Work log:** no-home.
