@@ -106,6 +106,18 @@ sequenceDiagram
   Note over P: two or more left: Choose your organization. One left: no switch in B1-C; BG selects it for a waiting CLI
 </script></ex-mermaid>
 <p>The option you didn't pick, keeping O1 current, would have needed our own wrapper around Better Auth's write, and a removal between the two checks would still have cleared it.</p>
+<h2 id="build-calls">My calls during the build (17 Nov), each brought to you</h2>
+<p>Corrections to my own design, or rulings inside it, made while the Implementer and Verifier worked. None changes what you decided; each is listed so you can overturn it.</p>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Call</th><th>Why</th><th>Should it have been yours?</th></tr></thead>
+<tbody>
+<tr><td>Endpoints read <code>ctx.context.session</code> directly, never <code>getSessionFromCtx</code></td><td>The helper re-reads a signed-out session with refresh on and hides failures (<code>session.mjs:248</code>); my design was wrong</td><td>No: keeps the one-read rule</td></tr>
+<tr><td>Refusal tests name agent and Fleet-session tokens; “bot” removed</td><td>Switchboard has no bot credential; the rule still refuses any bearer</td><td>No</td></tr>
+<tr><td>Expired-session cleanup also bumps the person fence</td><td>That&#39;s existing B1-A security behaviour my design missed</td><td>No: no behaviour change</td></tr>
+<tr><td>verify-auth skill updates are the Implementer&#39;s, checked by the Verifier</td><td>One branch, one writer, as in B1-B</td><td>No</td></tr>
+<tr><td>Built on the public repo, from a fresh clone at <code>switchboard-public</code></td><td>Switchboard went public 17 Nov; the old checkout is private history</td><td>No: follows your go-public picks</td></tr>
+<tr><td>Started with paid credits</td><td>Your Decision 7, 17 Nov</td><td>Yes: you chose it</td></tr>
+</tbody></table></div>
 </ex-document>
 </body>
 </html>
