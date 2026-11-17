@@ -22,7 +22,7 @@
 
 <h2 id="open">For you to decide</h2>
 <ex-callout title="One decision: when Bombadil gates merges" tone="decision" icon="users"><p>Everything else on this page is decided by you (quoted) or by me (listed with reasons).</p></ex-callout>
-<h3 id="f1-2">Decision F1-2 · Should Bombadil run in CI?</h3>
+<h3 id="f1-1">Decision F1-1 · Should Bombadil run in CI?</h3>
 <p>The Hegel tests join the unit, integration and host suites that CI already runs, so they need no new gate. Bombadil is different: a 5-minute real-Chrome exploration per page per host, from a 0.x experimental tool, with no seed, so one run can find what another misses. Adding it to CI is a new gate, and gate changes are yours.</p>
 <ex-mermaid id="f12" label="The three options" data-width="canvas"><script type="text/plain">
 flowchart TB
@@ -30,7 +30,7 @@ flowchart TB
   b["B · Nightly CI job, not required for merge"] --> bg["finds problems within a day; never blocks a PR"]
   c["C · Required PR check"] --> cg["blocks merges on findings; slower PRs, possible noise"]
 </script></ex-mermaid>
-<ex-choice id="decision-f1-2" title="Decision F1-2 · Bombadil in CI">
+<ex-choice id="decision-f1-1" title="Decision F1-1 · Bombadil in CI">
 <ex-option id="f12-a" title="A · On demand now; decide CI after a week of clean runs (recommended)"><template slot="summary">Gain: no new gate; you see real results before committing to one. Cost: someone has to run it for each sign-in PR; my plans will say so.</template></ex-option>
 <ex-option id="f12-b" title="B · Nightly CI job, not required"><template slot="summary">Gain: automatic, catches problems within a day. Cost: a new workflow (about 30 minutes of runner time a night across both hosts); findings arrive after merge.</template></ex-option>
 <ex-option id="f12-c" title="C · Required check on every PR"><template slot="summary">Gain: nothing merges with a UI finding. Cost: 15–30 minutes on every PR, and an experimental tool can block merges with noise.</template></ex-option>
