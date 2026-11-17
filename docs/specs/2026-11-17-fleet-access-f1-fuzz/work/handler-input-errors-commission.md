@@ -46,3 +46,10 @@ Out of scope: the invite-member catch-all convention (`sign-in-request-handler.t
   - initiated and actual Node receipts are paired, with `compareNodeProofReceipts`.
 
   A dist listing alone is not target proof.
+
+## Delta review of the F1 fix (17 Nov evening)
+
+`tmp/2026-11-17-pr6-review/delta-report.md`: READY, no findings; F1 is closed.
+
+- **D-O1, logged and not fixed here.** The form `client_id` takes precedence over a Basic header (`sign-in-http-handler.ts:306-307`). This is old behaviour, unchanged by the fix. Native authenticates the Basic header first, so for a request native would accept, the wrapper can fail closed with a 400 instead. The release fence still prevents a token for the wrong client. Mirroring native's order (`basicClientId(header) ?? non-empty form client_id`) is a candidate follow-up, not a merge blocker.
+- **D-O2, optional, not taken.** Also asserting the issued token's `client_id`.
