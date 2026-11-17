@@ -210,6 +210,7 @@ flowchart TB
 <tr><td>Stale “passkey closed” tests and README lines updated to click-only</td><td>They described the state before B1-B</td><td>No: your 15 Nov click-only pick</td></tr>
 <tr><td>Passkey browser runs split into <code>native-passkey-browser-scenario.ts</code>, each on a fresh setup</td><td>File size limit; the rate limiter correctly refused a shared setup</td><td>No</td></tr>
 <tr><td>Five extra Node runs required before acceptance</td><td>An earlier stall had no known cause (0 of 5 since)</td><td>No</td></tr>
+<tr><td>Fragile B1-A rate-limit test split into an exact check with a test-controlled limiter window plus a real-Miniflare wiring check (by request 601)</td><td>Miniflare's limiter windows follow the real clock (<code>floor(Date.now()/60000)</code>), so a run crossing a minute boundary read 552, not 301; no wall clock in tests</td><td>No: test design, which you made the Lead's</td></tr>
 <tr><td>Didn&#39;t send the Verifier&#39;s blocked packet until you chose</td><td>No getting around a safety check</td><td>Yes: you chose Decision 6 on 17 Nov; Decision 8 is open</td></tr>
 </tbody></table></div>
 </ex-document>
