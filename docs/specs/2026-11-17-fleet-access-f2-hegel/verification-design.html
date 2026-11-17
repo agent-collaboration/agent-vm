@@ -24,21 +24,21 @@
 <thead><tr><th>Target</th><th>Wrong build that must fail</th></tr></thead>
 <tbody>
 <tr><td>P1</td><td><code>verify</code> ignores digest order, or skips the expiry check</td></tr>
-<tr><td>P2</td><td>an unknown tool falls through to allow; or a grant removal leaves a cached allow</td></tr>
-<tr><td>P3</td><td>the path check normalizes after matching (so <code>a/../../x</code> passes)</td></tr>
-<tr><td>P4</td><td>normalization drops the kind check</td></tr>
-<tr><td>P5</td><td>uses the granted scopes without intersecting with the ceiling</td></tr>
-<tr><td>P6</td><td>the compiler iterates an unordered map, so the digest isn't deterministic; or it unions the authored grant with a default</td></tr>
-<tr><td>P7</td><td>pattern redaction misses JSON-escaped secrets</td></tr>
-<tr><td>P8</td><td>pagination off-by-one at the page boundary</td></tr>
-<tr><td>P9</td><td>host comparison case-insensitive on a configured exact host, or one that ignores the port</td></tr>
-<tr><td>M1</td><td>use doesn't mark the token consumed</td></tr>
-<tr><td>M2</td><td>consume doesn't check cancel; or browser identity isn't compared</td></tr>
-<tr><td>M3</td><td><code>transitionIsAllowed</code> permits activate from a terminal state</td></tr>
-<tr><td>M4</td><td>re-add after removal skips the removal tombstone</td></tr>
-<tr><td>M5</td><td>cancel leaves the pending ID, so a late frame settles it twice</td></tr>
+<tr><td>P2</td><td>an untrusted annotation treated as trusted; or a denied selector allowed through an override</td></tr>
+<tr><td>P3</td><td>deny loses to ask/baseline precedence; or an AND matcher evaluated as OR</td></tr>
+<tr><td>P4</td><td>a directory-only value such as <code>./</code> admitted as a file</td></tr>
+<tr><td>P5</td><td>(a) a group above the ceiling admitted; (b) the consent/exact-scope check skipped. Each is challenged separately.</td></tr>
+<tr><td>P6</td><td>an authored grant unioned with a default in a named projection; or a declared semantic refusal turned into a crash</td></tr>
+<tr><td>P7</td><td>one real matching or recursion branch of a redactor skipped (for example credential-key recursion into nested objects)</td></tr>
+<tr><td>P8</td><td>pagination off by one at the page boundary, reached with generated multi-page cases; or a committed digest field left out</td></tr>
+<tr><td>P9</td><td>a foreign Origin accepted by the origin guard; or allowlist membership checked by prefix</td></tr>
+<tr><td>M1</td><td>a live replay allowed before pruning; or a token admitted at its exact expiry instant</td></tr>
+<tr><td>M2</td><td>(a) the principal comparison removed from the transaction/completion check; (b) the browser-secret check removed from continuations</td></tr>
+<tr><td>M3</td><td>ambiguous → armed allowed at the current revision; or the coordinator calls the backend twice for one operation</td></tr>
+<tr><td>M4</td><td>admission allowed while unlink is pending, or after disable</td></tr>
+<tr><td>M5</td><td>(a) abort keeps the pending entry: filling capacity while the cancelled reply is held fails the released-slot property; (b) the decoder limit raised: the oversized-frame property fails</td></tr>
 </tbody></table></div>
-<p>Each red is recorded with the property name, the shrunk values or steps, and the seed, then restored green. Unit and integration rows run locally and in CI; M4 runs on Sunclaw (host lane) and in CI.</p>
+<p>Each red is recorded with the property name, the shrunk values or steps, and the seed, then restored green. Unit and integration rows run locally and in CI. M4 (Durable Object) and M5 (real Unix socket) run in the host lane, on Sunclaw and in CI.</p>
 </ex-document>
 </body>
 </html>
