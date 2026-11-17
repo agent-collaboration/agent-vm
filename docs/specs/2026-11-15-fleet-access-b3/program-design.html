@@ -24,10 +24,10 @@
 
 <h2 id="three">The three things for you</h2>
 <ex-callout title="1 · What to check" tone="note" icon="shield-check">
-<p><a href="#ownership">Ownership table</a>: who builds each part. <a href="#signin">Sign-in</a> starts from #11, merged forward, with Deny fixed. <a href="#allowances">Allowances</a> stay in Central's existing column (recommended).</p>
+<p><a href="#ownership">Ownership table</a>: who builds each part. <a href="#signin">Sign-in</a> starts from #11, merged forward, with Deny fixed. <a href="#allowances">Allowances</a> live in a <code>machine_allowances</code> table, as you approved on 9 Nov.</p>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
-<p>B3 is finished on #11 and merged whole (my call; you handed merging and sequencing to me on 16 Nov). Storage A and allowances in the existing column are the recommendations, pending your answers.</p>
+<p>B3 is finished on #11 and merged whole (my call; you handed merging and sequencing to me on 16 Nov). Storage is decided by you (9 Nov B3 SQL review, option A): one row per login, a <code>machine_allowances</code> table, and a former-ID column.</p>
 </ex-callout>
 <ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
 <p>Boundary from Lead A, push <code>01a1e199-bf63</code>, checked against Central main <code>e7b709f6a</code> and C2 <code>963f5739d</code>.</p>
@@ -89,11 +89,35 @@ flowchart TB
 <li><strong>Check the decisions on main</strong> against approved B3: request ID idempotency, <code>codeExpiresAt</code> passed through, first Grant activation with BA1, repeat Grants reading live, re-key once.</li>
 <li><strong>M2 · Enrollment:</strong> reserved → approved → enrolled (first Grant, generation unchanged; bump) → revoked (bump) | expired (30 days without a Grant). Stale approval at first Grant → refused, never activates.</li>
 <li><strong>The re-key, end to end.</strong> The Router sends <code>formerServiceId</code> (optional; a UUID v4 or v7, its former routing ID) in the device authorization; the machine-login plugin stores it as an extra field on the device-code record (beside installation, peer, label and organization, <code>machine-login-plugin.ts:32–52,78–85</code> on <code>d60372cc</code>); sign-in's strict <code>DecideDeviceLogin</code> schema (<code>machine-login/machine-login-contracts.ts:33–44</code>) and Central's (<code>identity_contract/identity_decisions.rs:9–29</code>, <code>deny_unknown_fields</code>) both gain <code>formerInstallation: Option&lt;string&gt;</code> accepting v4 or v7. In <code>device_login_decision.rs</code>'s one transaction: if no machine exists under the new UUIDv7 installation, and a machine in this organization exists under the former ID, that row takes the new ID, every reference to it is repointed in the same transaction (its sessions, the board relationships keyed by installation, and queued mail: <code>messages.target_machine_id</code> references <code>machines(installation_id)</code>, <code>migrations/central/0002_mail_notices_timers.sql:3–4</code> on 4a's base; the new ID can't already exist because <code>machines_installation</code> is unique, <code>0001:4</code>), its routing and watches under the former ID are retired, and the former ID is recorded on the row; if the same mapping is already recorded, it is a repeat and succeeds; if the former ID is recorded against a different UUIDv7, it is refused (<code>formerInstallationMismatch</code>). Recording the former ID needs a column on Central's <code>machines</code> table, a schema change that comes to you for approval with the SQL before build.</li>
-<li><strong>Commands</strong> in <code>machine_commands.rs</code>, each one transaction in the organization's central store (the organization object's <code>WorkspaceRuntime</code> store, not the legacy Fleet object) with a change record: <code>AllowMachine</code> and <code>WithdrawMachineAllowance</code> edit the machine's <code>allowed_workspaces</code>; <code>RevokeMachineEnrollment</code> does S5's steps and records the close.</li>
+<li><strong>Commands</strong> in <code>machine_commands.rs</code>, each one transaction in the organization's central store (the organization object's <code>WorkspaceRuntime</code> store, not the legacy Fleet object) with a change record: <code>AllowMachine</code> and <code>WithdrawMachineAllowance</code> set one <code>machine_allowances</code> row to <code>active</code> or <code>withdrawn</code>; <code>RevokeMachineEnrollment</code> does S5's steps and records the close.</li>
 </ul>
 
-<h3 id="allowances">Allowances: the existing column</h3>
-<p>Central's <code>machines.allowed_workspaces</code> (<code>0001_workspace_requests.sql:3</code>) is already what 4a's admission reads live. Recommended: keep it authoritative; history comes from <code>allowanceChanged</code> change records. The approved B3 sketched a <code>machine_allowances</code> table as a logical proposal to reconcile with existing columns; reconciling, the column suffices. Storage is your choice (Decisions).</p>
+<h3 id="allowances">Allowances: the <code>machine_allowances</code> table (your 9 Nov decision)</h3>
+<p><strong>What changes.</strong> Today Central (#281) keeps a machine's current workspaces as a JSON list in <code>machines.allowed_workspaces</code>. B3 moves that truth into its own table, one row per machine and workspace, as you approved. <strong>Behaviour stays exactly as today:</strong> an approval sets the machine's allowed set to what you picked (those rows <code>active</code>, the rest <code>withdrawn</code>); Allow and Withdraw change one row; revoke withdraws every row; all in the same transaction as today, each with its change record. <code>machine_approvals.allowed_workspaces</code> stays as that approval's record of what was approved then. It's history, never read for admission.</p>
+<p><strong>SQL.</strong> These are edits to Central's <code>0001_workspace_requests.sql</code> in place, per the owner's 17 Nov choice for Central migrations. They land with Lead A's 0001/0002 fixes in one change and one staging reset. Names follow Central's current tables; timestamps are TEXT like the rest of <code>machines</code>.</p>
+<pre><code>-- machines: allowed_workspaces removed; former_installation_id added (the re-key, set once)
+CREATE TABLE machines (machine_id TEXT PRIMARY KEY, installation_id TEXT NOT NULL,
+  former_installation_id TEXT UNIQUE, label TEXT NOT NULL, state TEXT NOT NULL,
+  enrollment_generation INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+
+-- new: which workspaces each machine may serve
+CREATE TABLE machine_allowances (
+  allowance_id TEXT PRIMARY KEY,                         -- UUIDv7 from the injected ID source
+  machine_id   TEXT NOT NULL REFERENCES machines(machine_id),
+  workspace_id TEXT NOT NULL,
+  state        TEXT NOT NULL,                            -- active | withdrawn
+  created_at   TEXT NOT NULL,
+  updated_at   TEXT NOT NULL,
+  UNIQUE (machine_id, workspace_id));</code></pre>
+<p><strong>Admission read</strong> (<code>workspace_admission.rs:16</code>, Lead A's 4a). The query drops <code>m.allowed_workspaces</code> and instead reads this one workspace's row:</p>
+<pre><code>SELECT m.machine_id, m.state, c.expires_at, w.state AS workspace_state,
+       (SELECT a.state FROM machine_allowances a
+         WHERE a.machine_id = m.machine_id AND a.workspace_id = ?1) AS allowance_state
+FROM machines m JOIN machine_credentials c ON c.machine_id = m.machine_id
+LEFT JOIN workspaces w ON w.workspace_id = ?1
+WHERE m.machine_id = ?2 AND c.token_hash = ?3</code></pre>
+<p>With a workspace: <code>allowance_state = 'active'</code> admits; <code>'withdrawn'</code> or NULL refuses with <code>WorkspaceNotAllowed</code>; any other value is a corrupt row. Without a workspace, the allowance isn't read. Refusals are unchanged. The JSON decode at <code>:33–36</code> goes away.</p>
+<p><strong>Who changes what.</strong> Lead A owns Central: the schema edit, the admission read, and the machine-login reads and writes (<code>machine_login_reads.rs</code>, <code>machine_login_writes.rs</code>, <code>machine_login_rows.rs</code>, <code>machine_token_decision.rs</code>, <code>revoke_enrollment.rs</code>), plus the Central tests that seed <code>allowed_workspaces</code> directly. B3's Central commands use the table. The pure decisions keep their <code>AllowedWorkspaces</code> type; only the storage mapping changes.</p>
 
 <h2 id="router">Router host</h2>
 <ul>
