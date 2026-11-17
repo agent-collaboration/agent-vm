@@ -1,0 +1,11 @@
+--- packages/sign-in-core/src/pages/islands/passkey-sign-in-turnstile.ts baseline
++++ packages/sign-in-core/src/pages/islands/passkey-sign-in-turnstile.ts wrong-build
+@@ -90,7 +90,7 @@
+ 	if (state === null) {
+ 		state = { script: window.signInTurnstile ?? 'loading', executing: null, waiting: [] };
+ 		window.addEventListener('sign-in-turnstile-ready', () => dispatch({ kind: 'scriptReady' }));
+-		window.addEventListener('sign-in-turnstile-failed', () => dispatch({ kind: 'scriptFailed' }));
++		window.addEventListener('sign-in-turnstile-failed', () => undefined);
+ 	}
+ 	const id = ++nextRequestId;
+ 	return new Promise<string>((resolve, reject) => {

@@ -1,0 +1,27 @@
+B1-B independent verifier collection, target 1f6bc41c75b8d297a2bac87a3b44ff87bfbfdc0e, draft PR https://github.com/agent-collaboration/switchboard/pull/19.
+Commission authority: B1-B commission.md / Packet 2, supplied by Lead cd5902e2; I own verification. This is separate from Implementer's packet 01a1e750-588d-7f32-9353-85f3201d4d43. Do NOT reuse its runtime results. Use your existing test-agent role, exact collection only; no product fixes, tests changes, global install, SSH, workflow changes or secret output.
+
+Own root /tmp/2026-11-b1b-verifier-1f6bc41c (clone isolated; never share mutable source/build with Implementer). Private evidence root /tmp/2026-11-b1b-verifier-evidence-1f6bc41c mode0700 OUTSIDE checkout; TMPDIR there. If root exists inspect identity/status before reuse, never reset/clean other work. Clone https://github.com/agent-collaboration/switchboard.git, checkout detached exact commit, retain git HEAD/status, node/pnpm/Chrome versions, origin, frozen-lock install and build logs, artifact hashes. Node24.7.0 and pnpm10.33.0 explicitly via mise. Install Chromium only if already authorized; otherwise report missing Chrome. CHROME_BIN may point to existing Chrome. No Chrome sandbox bypass.
+
+Required install per commission: create ONLY <root>/bin/node-gyp, executable script:
+#!/bin/sh
+exec node "$(dirname "$(dirname "$(command -v node)")")/lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js" "$@"
+First verify npm's bundled node-gyp exists under the pinned Node layout; absent -> report and stop. Then PATH="<root>/bin:$PATH" mise exec node@24.7.0 pnpm@10.33.0 -- pnpm install --frozen-lockfile. This wrapper is a recorded setup overlay, not product source. Keep root/bin outside tracked source comparison.
+
+Run from root, capture each separate command's raw log, exit and Vitest JSON/counts. Do not pipe away status. Build once:
+mise exec node@24.7.0 pnpm@10.33.0 -- pnpm build
+Then focused baseline on default workerd/D1:
+mise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:e2e:host packages/sign-in-test-support/src/people-passkey-sign-in.host.e2e.test.ts packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts packages/sign-in-test-support/src/people-passkey-confirmation.host.e2e.test.ts packages/sign-in-test-support/src/served-page-csp.host.e2e.test.ts --exclude packages/sign-in-owner-cli/src/fleet/macos-keychain-proof-key-store.host.e2e.test.ts --reporter=default --reporter=json --outputFile=/tmp/2026-11-b1b-verifier-evidence-1f6bc41c/focused-workerd.json
+Repeat exact command with SIGN_IN_TEST_HOST=node and outputFile focused-node.json.
+Run real browser BOTH hosts (file owns both):
+mise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:e2e:host packages/sign-in-test-support/src/sign-in-native-browser.host.e2e.test.ts --exclude packages/sign-in-owner-cli/src/fleet/macos-keychain-proof-key-store.host.e2e.test.ts --reporter=default --reporter=json --outputFile=/tmp/2026-11-b1b-verifier-evidence-1f6bc41c/browser.json
+Every host invocation on Darwin must include that exclusion, even focused ones. Missing prerequisites/setup failures are NOT product failures or sensitivity reds. Keep failures and exact stack/step and teardown evidence; no repair/weakening. For any failure report immediately then continue independent focused commands only if safe. Do not start full sweeps until all focused baseline passes.
+
+If all focused passes, independent full gates:
+mise exec node@24.7.0 pnpm@10.33.0 -- pnpm check
+mise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:unit
+mise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:integration
+mise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:e2e:host --exclude packages/sign-in-owner-cli/src/fleet/macos-keychain-proof-key-store.host.e2e.test.ts --reporter=default --reporter=json --outputFile=/tmp/2026-11-b1b-verifier-evidence-1f6bc41c/full-workerd.json
+Repeat full host command with SIGN_IN_TEST_HOST=node and full-node.json.
+
+Report: exact source/config/toolchain/build/client identities; every command exit/count/pass/fail/skip and raw-log path; early failures by layer; native-browser private evidence dirs and step JSON/versions/origin/PNG identities plus Node initiated/actual receipt comparison and cleanup; any narrowed/unrun check. Preserve private runtime/cookies/keys/recovery/SQLite/profile outside Git. Share only redacted receipts via Router; do not send or expose raw session tokens, cookies, auth URIs/recovery codes. Browser invite is API-via-browser with stored invitation readback, not an invite-button claim. CI NOT RUN for billing, not green. Mutations will be separately supplied after baseline source/assertion inspection. Acknowledge own root and return initial readiness/failure, then results.

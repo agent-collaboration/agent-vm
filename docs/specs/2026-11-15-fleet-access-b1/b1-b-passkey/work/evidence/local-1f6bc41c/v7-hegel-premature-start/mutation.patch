@@ -1,0 +1,11 @@
+--- packages/sign-in-core/src/pages/islands/passkey-sign-in-turnstile-queue.ts baseline
++++ packages/sign-in-core/src/pages/islands/passkey-sign-in-turnstile-queue.ts wrong-build
+@@ -56,7 +56,7 @@
+ 					state,
+ 					effects: [{ kind: 'reject', id: event.id, reason: 'verification-unavailable' }],
+ 				};
+-			if (state.script === 'ready' && state.executing === null)
++			if (state.script === 'ready')
+ 				return { state: { ...state, executing: event.id }, effects: executionEffects };
+ 			return { state: { ...state, waiting: [...state.waiting, event.id] }, effects: [] };
+ 		case 'widgetToken':

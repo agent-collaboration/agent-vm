@@ -230,7 +230,7 @@ flowchart TB
   <ul>
   <li><code>WebAuthn.enable</code>;</li>
   <li><code>WebAuthn.addVirtualAuthenticator</code> with <code>protocol: 'ctap2'</code>, <code>transport: 'internal'</code>, <code>hasResidentKey: true</code>, <code>hasUserVerification: true</code>, <code>isUserVerified: true</code>, <code>automaticPresenceSimulation: true</code>;</li>
-  <li><code>WebAuthn.setUserVerified</code> to switch it off.</li>
+  <li><code>WebAuthn.setResponseOverrideBits({authenticatorId, isBadUV: true})</code> for the refusal run: the authenticator still signs a real assertion with its credential key, but with the user-verified bit cleared, so the server, not the browser, must refuse it. (<code>setUserVerified(false)</code> was wrong: Chrome's virtual device then refuses before any assertion is sent, so the server is never asked; pinned Chrome source <code>virtual_ctap2_device.cc:1046–1050</code> versus <code>:1750–1772</code>.)</li>
   </ul>
   Each is a DevTools command whose reply ends the wait.</li>
 <li><strong>Turnstile in the browser:</strong> the page loads Turnstile's script from Cloudflare, which the test doesn't reach. The scenario intercepts that one script URL with <code>Fetch.enable</code> and answers it with <code>Fetch.fulfillRequest</code>. The answer is a stand-in that:
@@ -250,7 +250,7 @@ flowchart TB
   <li>invite a person from the signed-in page: the page's own context posts <code>POST /api/auth/organization/invite-member</code> with its cookie (no invite button exists until B1-C's People page, whose journey will click it). The invitation is created with no confirmation step, checked in the stored invitations;</li>
   <li><code>document.cookie</code> has no session token readable by script, and no response body seen by the page contains it.</li>
   </ol></li>
-<li><strong>The refusal run:</strong> the same steps 1 to 3, then <code>WebAuthn.setUserVerified(false)</code>, then step 4. The page shows Better Auth UI's error notice, stays on <code>/sign-in</code>, and <code>/api/auth/get-session</code> returns no session.</li>
+<li><strong>The refusal run:</strong> the same steps 1 to 3, then <code>WebAuthn.setResponseOverrideBits({isBadUV: true})</code>, then step 4. The verify request reaches the service and is refused with 401 and its error code. The page shows Better Auth UI's error notice and stays on <code>/sign-in</code>, and <code>/api/auth/get-session</code> returns no session. The override is then reset (<code>isBadUV: false</code>) before any positive or CLI step.</li>
 <li><strong>The command-line run:</strong> after steps 1 to 3, the scenario starts the real owner CLI with <code>loginThroughNativeOwnerCli({ target, repositoryRoot, browser })</code> (<code>native-cli-proof.ts:92</code>). Its <code>browser</code> callback navigates Chrome to the CLI's own <code>sign-in?authorize=…</code> address and clicks Continue with Passkey.
   <ul>
   <li><strong>Passes when:</strong> Chrome follows the real continuation through <code>/owner-ready?authorize=…</code>; the CLI's loopback receives its code; the CLI exits 0 with the person's token in its private cache.</li>

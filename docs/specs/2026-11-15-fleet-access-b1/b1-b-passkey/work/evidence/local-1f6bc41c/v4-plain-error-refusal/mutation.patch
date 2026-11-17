@@ -1,0 +1,10 @@
+--- packages/sign-in-core/src/better-auth/passkey-sign-in-completion.ts baseline
++++ packages/sign-in-core/src/better-auth/passkey-sign-in-completion.ts wrong-build
+@@ -16,6 +16,6 @@
+ 		return;
+ 	}
+ 	await props.recordSignIn({ actor: 'anonymous', outcome: 'failed', method: 'passkey' });
+-	if (props.response.ok || props.issuedSessions.length > 0)
++	if (props.response.ok)
+ 		throw new Error('Passkey sign-in answer and issued sessions disagree');
+ }

@@ -1,0 +1,11 @@
+--- packages/sign-in-core/src/pages/islands/passkey-sign-in-turnstile.ts baseline
++++ packages/sign-in-core/src/pages/islands/passkey-sign-in-turnstile.ts wrong-build
+@@ -63,7 +63,7 @@
+ 			window.turnstile.execute(widgetId);
+ 			return;
+ 		case 'resolve':
+-			pending.get(effect.id)?.resolve(effect.token);
++			pending.get(effect.id)?.resolve('first-token');
+ 			pending.delete(effect.id);
+ 			return;
+ 		case 'reject':

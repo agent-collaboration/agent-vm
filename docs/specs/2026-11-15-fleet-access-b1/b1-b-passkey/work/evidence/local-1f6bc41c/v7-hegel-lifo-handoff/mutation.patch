@@ -1,0 +1,12 @@
+--- packages/sign-in-core/src/pages/islands/passkey-sign-in-turnstile-queue.ts baseline
++++ packages/sign-in-core/src/pages/islands/passkey-sign-in-turnstile-queue.ts wrong-build
+@@ -26,7 +26,8 @@
+ const executionEffects = [{ kind: 'ensureWidget' }, { kind: 'resetAndExecute' }] as const;
+ 
+ function startWaitingRequest(state: QueueState, effects: readonly QueueEffect[]): QueueTransition {
+-	const [next, ...waiting] = state.waiting;
++	const next = state.executing === null ? state.waiting[0] : state.waiting.at(-1);
++	const waiting = state.executing === null ? state.waiting.slice(1) : state.waiting.slice(0, -1);
+ 	if (next === undefined) return { state: { ...state, executing: null }, effects };
+ 	return {
+ 		state: { ...state, executing: next, waiting },

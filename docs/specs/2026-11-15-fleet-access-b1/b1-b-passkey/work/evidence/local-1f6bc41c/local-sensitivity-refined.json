@@ -1,0 +1,54 @@
+[
+  {
+    "name": "v7-hegel-lost-rejection-executing",
+    "file": "packages/sign-in-core/src/pages/islands/passkey-sign-in-turnstile-queue.ts",
+    "test": "packages/sign-in-core/src/pages/islands/passkey-sign-in-turnstile-queue.hegel.unit.test.ts",
+    "command": [
+      "mise",
+      "exec",
+      "node@24.7.0",
+      "pnpm@10.33.0",
+      "--",
+      "pnpm",
+      "exec",
+      "vitest",
+      "run",
+      "--project",
+      "unit",
+      "packages/sign-in-core/src/pages/islands/passkey-sign-in-turnstile-queue.hegel.unit.test.ts"
+    ],
+    "redExit": 1,
+    "redSignal": null,
+    "greenExit": 0,
+    "greenSignal": null,
+    "originalSha256": "b77f8701cd26a4eb3c22e25815a5bf014aa36deac295f281aeefe748d61f28b3",
+    "modifiedSha256": "d9e1da7b874c26ce226b0020199fcdcc4fc692f30fe996928424428d04379a8b",
+    "restoredSha256": "b77f8701cd26a4eb3c22e25815a5bf014aa36deac295f281aeefe748d61f28b3"
+  },
+  {
+    "name": "v7-hegel-lifo-handoff",
+    "file": "packages/sign-in-core/src/pages/islands/passkey-sign-in-turnstile-queue.ts",
+    "test": "packages/sign-in-core/src/pages/islands/passkey-sign-in-turnstile-queue.hegel.unit.test.ts",
+    "command": [
+      "mise",
+      "exec",
+      "node@24.7.0",
+      "pnpm@10.33.0",
+      "--",
+      "pnpm",
+      "exec",
+      "vitest",
+      "run",
+      "--project",
+      "unit",
+      "packages/sign-in-core/src/pages/islands/passkey-sign-in-turnstile-queue.hegel.unit.test.ts"
+    ],
+    "redExit": 1,
+    "redSignal": null,
+    "greenExit": 0,
+    "greenSignal": null,
+    "originalSha256": "b77f8701cd26a4eb3c22e25815a5bf014aa36deac295f281aeefe748d61f28b3",
+    "modifiedSha256": "5985e53877afa316c219aa83cbc01e469d1496b2092555d9e8b41b25be111103",
+    "restoredSha256": "b77f8701cd26a4eb3c22e25815a5bf014aa36deac295f281aeefe748d61f28b3"
+  }
+]
