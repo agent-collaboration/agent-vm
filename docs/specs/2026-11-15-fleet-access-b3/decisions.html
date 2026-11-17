@@ -20,11 +20,11 @@
 </nav></ex-nav>
 <ex-document id="doc">
 <h1>B3 · Machine login: Decisions</h1>
-<p>B3 lets a machine (a Router on a laptop or server) log in to your organization with a device code you approve once. Its token then renews itself while it stays connected, and you can revoke it from the admin page. Two storage choices and one SQL approval are yours; the merge question is mine (decided below). Each is explained with background and an example.</p>
+<p>B3 lets a machine (a Router on a laptop or server) log in to your organization with a device code you approve once. Its token then renews itself while it stays connected, and you can revoke it from the admin page. <strong>Nothing is open for you.</strong> You decided all three storage questions on 9 Nov in the B3 SQL review (option A), and the merge question is mine. Each is explained with background and an example.</p>
 
 <h2 id="three">The three things for you</h2>
 <ex-callout title="1 · What to check" tone="note" icon="shield-check">
-<p>Yours: <a href="#storage">how Central stores each login</a>, <a href="#allow">where a machine's allowed workspaces live</a>, and the <a href="#rekey">re-key column's SQL</a>. All three are about stored data.</p>
+<p>Nothing open. Decided by you on 9 Nov: <a href="#storage">one row per login</a>, <a href="#allow">a machine_allowances table</a>, <a href="#rekey">the former-ID column</a>.</p>
 </ex-callout>
 <ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
 <p>Decided by me under your 16 Nov rule: <a href="#pr11">B3 is finished on #11 and merged whole</a>.</p>
@@ -51,7 +51,7 @@ sequenceDiagram
   S->>C: end enrollment; the connection closes; the next renewal is refused
 </script></ex-mermaid>
 
-<h2 id="open">Your choices</h2>
+<h2 id="open">The decisions (all decided)</h2>
 
 <h3 id="pr11">1 · What happens to the existing login PR (#11)?</h3>
 <p><strong>Background.</strong> Draft PR #11 (with its verification PR #14) already has the device-code login and refresh, built before B3 was regrouped into one whole feature. It's frozen. It lacks revoke, the workspace picker, the connection through sign-in, and Deny's second-factor check: today Deny skips step-up and a stale confirmation can turn a Deny into an Approve.</p>
@@ -77,7 +77,7 @@ flowchart TB
 <ex-callout title="Decided by me: A" tone="decision" icon="path"><p>This is merging and sequencing, which you handed to me on 16 Nov: <em>“i dont care about of merging or operations you have to think and propelry seqeuknce things”</em>. B3 is finished on #11 and merged once, whole, per your whole-feature rule.</p></ex-callout>
 
 <h3 id="storage">2 · How Central stores each login (“enrollment storage”)</h3>
-<p><strong>Background.</strong> Each time you approve a machine's code, Central records an <em>enrollment</em>: who approved it, when, which machine, and later how it ended (revoked, replaced, or idle for 30 days). Central already stores enrollments as their own rows, one per login (A, merged in #281, <code>machine_enrollment.rs</code>). On the earlier audit page you picked A but wrote <em>“whats teh cons i don tkudnetand fully”</em>, and you never confirmed it after the explanation. So this asks again, with the costs spelled out.</p>
+<p><strong>Background.</strong> Each time you approve a machine's code, Central records an <em>enrollment</em>: who approved it, when, which machine, and later how it ended (revoked, replaced, or idle for 30 days). Central already stores enrollments as their own rows, one per login (A, merged in #281, <code>machine_enrollment.rs</code>). You approved this on 9 Nov in the B3 SQL review (option A: <code>machine_enrollments</code>, one row per login). An earlier version of this page wrongly asked again.</p>
 <p><strong>Example.</strong> You log in your laptop in March, revoke it in June after losing it, then log in a new laptop under the same name.</p>
 <ex-compare label="Enrollment storage" data-width="canvas">
 <section id="st-a" label="A · One row per login (already built)" icon="package">
@@ -98,11 +98,7 @@ flowchart TB
 </script></ex-mermaid></section>
 </section>
 </ex-compare>
-<ex-callout title="Recommendation: A" tone="decision" icon="package"><p>It keeps the history you'd want after a lost machine, and it's already built and tested.</p></ex-callout>
-<ex-choice id="choice-storage" title="Approve enrollment storage A?">
-<ex-option id="storage-a" title="A · One row per login (recommended)"><template slot="summary">Built; keeps history.</template></ex-option>
-<ex-option id="storage-b" title="B · Current login on the machine row"><template slot="summary">Rework; history lost.</template></ex-option>
-</ex-choice>
+<ex-callout title="Decided by you: A, one row per login" tone="done" icon="package"><p>9 Nov, B3 SQL review: <em>“Approve option A”</em>. Already built on Central in #281.</p></ex-callout>
 
 <h3 id="allow">3 · Where a machine's allowed workspaces live</h3>
 <p><strong>Background.</strong> When you approve a machine you pick which workspaces it may use, and later you can allow or withdraw one at a time. Central already has a column for this, <code>machines.allowed_workspaces</code> (<code>0001_workspace_requests.sql:3</code>). Central's admission reads it live on every request (Lead A's 4a). The approved B3 sketched a separate table, to be reconciled with existing columns.</p>
@@ -128,17 +124,12 @@ flowchart TB
 </script></ex-mermaid></section>
 </section>
 </ex-compare>
-<ex-callout title="Recommendation: A" tone="decision" icon="code"><p>No new table and no second place holding the same truth; the history is still visible as records.</p></ex-callout>
-<ex-callout title="If you defer" tone="risk" icon="clock"><p>B3 can't start: the commands and admission depend on it.</p></ex-callout>
-<ex-choice id="choice-allow" title="Where do allowed workspaces live?">
-<ex-option id="allow-a" title="A · Existing column plus change records (recommended)"><template slot="summary">No migration.</template></ex-option>
-<ex-option id="allow-b" title="B · New machine_allowances table"><template slot="summary">Migration and admission change.</template></ex-option>
-</ex-choice>
+<ex-callout title="Decided by you: B, a machine_allowances table" tone="done" icon="code"><p>9 Nov, B3 SQL review, option A: <code>machine_allowances</code>, “which workspaces each machine may serve”, one row per machine and workspace. An earlier version of this page recommended Central's newer column instead; your table stands. B3 retires <code>machines.allowed_workspaces</code> in its migration and moves admission's read to the table, coordinated with Lead A.</p></ex-callout>
 
-<h3 id="rekey">4 · The re-key column (SQL approval at build time)</h3>
+<h3 id="rekey">4 · The re-key column (decided)</h3>
 <p><strong>Background.</strong> Today a machine is known on Central by an older routing ID. At its first B3 login it takes its permanent ID: the Router's own UUIDv7. To keep its sessions, allowances and queued mail, Central renames the machine in one transaction and records the old ID, so that a retried login with the same mapping is accepted and a different mapping is refused. Recording it needs one new column on Central's <code>machines</code> table (<code>former_installation_id</code>).</p>
 <p><strong>Example.</strong> Your laptop's Router logs in, and the reply is lost. It retries with the same old-to-new mapping: accepted, with nothing duplicated. A different machine claiming the same old ID is refused.</p>
-<ex-callout title="What you approve" tone="decision" icon="database"><p>The exact SQL comes to you before it's built: one nullable column on <code>machines</code>, filled once at re-key. Nothing is written until you approve it.</p></ex-callout>
+<ex-callout title="Decided by you" tone="done" icon="database"><p>9 Nov, B3 SQL review, option A: the machine's former ID, set once and never reused (then <code>former_service_id</code>). It sits on Central's current <code>machines</code> table under the name <code>former_installation_id</code>. The exact SQL goes on the B3 PR for you to see; it isn't a new decision.</p></ex-callout>
 
 <h2 id="decided">Already decided by you</h2>
 <ex-card title="Device-code login" tone="done" icon="key" tag="Fleet transcript 12490" pick><p><em>“login i want login to work with device codes in codex”</em>.</p></ex-card>

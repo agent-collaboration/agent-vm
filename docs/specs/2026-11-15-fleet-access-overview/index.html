@@ -24,7 +24,7 @@
 
 <h2 id="three">The three things for you</h2>
 <ex-callout title="1 · What's yours, in order" tone="decision" icon="users">
-<p>First, approve <strong>B1-C</strong>: it's next after B1-A. Then approve <strong>B2 additions</strong> and <strong>BG</strong>, give <strong>B2</strong> a “yes” on the lost-reply window and say whether Central's restart stays in rule 6, and make <strong>B3</strong>'s two storage picks plus its SQL. Merging, operations and sequencing are mine (your 16 Nov rule), so those choices are decided on each page with the reason. “Take your recommendations” is a valid answer for B2 and B3. <a href="#check">What to check</a> lists the few things worth your eyes in each.</p>
+<p>Only one thing in this lane is yours: <strong>one go-ahead to build B1-C, B2 additions and BG</strong>, in that order after B1-B (Decision 5 on the sitrep). B2 and B3 have nothing open: you decided B2 on 16 Nov and B3's storage on 9 Nov. Merging, operations and sequencing are mine (your 16 Nov rule), so those choices are decided on each page with the reason. “Take your recommendations” is a valid answer for B2 and B3. <a href="#check">What to check</a> lists the few things worth your eyes in each.</p>
 </ex-callout>
 <ex-callout title="2 · Stored-data changes that need your SQL approval" tone="risk" icon="database">
 <p>B3's enrollment storage (option A) and the new former-ID column on Central's <code>machines</code> table. B2 adds no table: key rotation uses no pause.</p>
@@ -39,11 +39,11 @@
 <tbody>
 <tr><td><strong>B1-A</strong> One sign-in core</td><td>Built: draft PR switchboard#18, head <code>e2a91f55</code>. The Verifier is finishing its observation. The last scanner gap (F7) is fixed in that head.</td><td>Nothing now. It comes to you only when accepted and ready to merge.</td></tr>
 <tr><td><strong>B1-B</strong> Passkey sign-in</td><td>Designed, reviewed, approved 15 Nov.</td><td>Nothing. Built after B1-A merges.</td></tr>
-<tr><td><strong>B1-C</strong> Organizations finished</td><td>READY at <code>e30c1278</code>, with all four of your picks applied: today's card; its own shadcn People page; an owner-only list with email fallback; Better Auth's behaviour after a refused switch, with a redirect.</td><td><strong>Approve</strong> (<a href="../2026-11-15-fleet-access-b1/b1-c-organizations/decisions.html">Decisions</a>)</td></tr>
-<tr><td><strong>B2</strong> Central organizations</td><td>READY at <code>73eb14c6</code>; Lead A's engine contract details added since. Key-rotation timing depends on Lead A's 10-second Cloudflare key-fetch bound. Settled: key rotation with no pause (your pick); maintenance through a hidden owner-only page (your pick); console later (my call). READY again at <code>4fe4e30c</code> after these changes.</td><td><strong>A “yes”</strong> on lost-reply A, and <strong>keep or drop</strong> Central's restart in rule 6 (<a href="../2026-11-15-fleet-access-b2-central/decisions.html">Decisions</a>)</td></tr>
-<tr><td><strong>B2 additions</strong> Person tokens, revocation</td><td>READY at <code>e30c1278</code>, with your pick applied: device login with a real session.</td><td><strong>Approve</strong> (<a href="../2026-11-15-fleet-access-b2x/decisions.html">Decisions</a>)</td></tr>
-<tr><td><strong>BG</strong> Getting in, staging proof</td><td>READY at <code>20c85d12</code>; you agreed all three assumption groups (<code>b7a4f8ad</code>).</td><td><strong>Approve</strong> (<a href="../2026-11-15-fleet-access-bg/decisions.html">Decisions</a>)</td></tr>
-<tr><td><strong>B3</strong> Machine login, locked link</td><td>READY at <code>73eb14c6</code>; Rust machines use Hegel (<code>hegeltest =0.52.6</code>), shared with Lead A. I decided B3 is finished on #11 and merged whole.</td><td><strong>Two storage picks and the SQL</strong>, explained with examples (<a href="../2026-11-15-fleet-access-b3/decisions.html">Decisions</a>)</td></tr>
+<tr><td><strong>B1-C</strong> Organizations finished</td><td>READY at <code>e30c1278</code>, with all four of your picks applied: today's card; its own shadcn People page; an owner-only list with email fallback; Better Auth's behaviour after a refused switch, with a redirect.</td><td><strong>Go-ahead to build</strong>, one answer for all three (<a href="../2026-11-15-fleet-access-b1/b1-c-organizations/decisions.html">Decisions</a>)</td></tr>
+<tr><td><strong>B2</strong> Central organizations</td><td>READY at <code>73eb14c6</code>; Lead A's engine contract details added since. Key-rotation timing depends on Lead A's 10-second Cloudflare key-fetch bound. Settled: key rotation with no pause (your pick); maintenance through a hidden owner-only page (your pick); console later (my call). READY again at <code>4fe4e30c</code> after these changes.</td><td>Nothing: lost reply (look up by ID) and restart (dropped) decided by you on 16 Nov (<a href="../2026-11-15-fleet-access-b2-central/decisions.html">Decisions</a>)</td></tr>
+<tr><td><strong>B2 additions</strong> Person tokens, revocation</td><td>READY at <code>e30c1278</code>, with your pick applied: device login with a real session.</td><td><strong>Go-ahead to build</strong>, one answer for all three (<a href="../2026-11-15-fleet-access-b2x/decisions.html">Decisions</a>)</td></tr>
+<tr><td><strong>BG</strong> Getting in, staging proof</td><td>READY at <code>20c85d12</code>; you agreed all three assumption groups (<code>b7a4f8ad</code>).</td><td><strong>Go-ahead to build</strong>, one answer for all three (<a href="../2026-11-15-fleet-access-bg/decisions.html">Decisions</a>)</td></tr>
+<tr><td><strong>B3</strong> Machine login, locked link</td><td>READY at <code>73eb14c6</code>; Rust machines use Hegel (<code>hegeltest =0.52.6</code>), shared with Lead A. I decided B3 is finished on #11 and merged whole.</td><td>Nothing: storage decided by you on 9 Nov (per-login rows, <code>machine_allowances</code> table, former-ID column). FIXING: pages being brought back to your table (<a href="../2026-11-15-fleet-access-b3/decisions.html">Decisions</a>)</td></tr>
 </tbody></table></div>
 
 <h2 id="check">What to check before you approve or pick</h2>
@@ -72,15 +72,15 @@
 </ul></td><td>Specification S1, S2a, S6, S8</td></tr>
 <tr><td><strong>B2</strong></td><td>
 <ul>
-<li>Is “check by ID after 24 hours” fine for a lost create reply? (It never makes a duplicate.)</li>
-<li>Keep Central's restart after a key change, or rely on the 5-minute wait?</li>
-</ul></td><td>Decisions 1 and 2b</td></tr>
-<tr><td><strong>B3</strong></td><td>Your stored-data picks:
+<li>Decided 16 Nov: a lost create reply is resolved by looking the workspace up by its ID.</li>
+<li>Decided 16 Nov: no Central restart after a key change.</li>
+</ul></td><td>Decisions 1 and 2b (decided)</td></tr>
+<tr><td><strong>B3</strong></td><td>Decided by you on 9 Nov:
 <ul>
-<li>keep every machine login as its own row (history kept);</li>
-<li>allowed workspaces in Central's existing column;</li>
-<li>one new nullable column for the re-key.</li>
-</ul></td><td>Decisions 2, 3 and 4</td></tr>
+<li>every machine login is its own row (history kept);</li>
+<li>allowed workspaces in a <code>machine_allowances</code> table;</li>
+<li>a former-ID column for the re-key.</li>
+</ul></td><td>Decisions 2, 3 and 4 (decided)</td></tr>
 </tbody></table></div>
 
 <h2 id="order">The order of work, and what blocks what</h2>
