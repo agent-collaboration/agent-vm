@@ -212,6 +212,8 @@ flowchart TB
 <tr><td>Five extra Node runs required before acceptance</td><td>An earlier stall had no known cause (0 of 5 since)</td><td>No</td></tr>
 <tr><td>Fragile B1-A rate-limit test split into an exact check with a test-controlled limiter window plus a real-Miniflare wiring check (by request 601)</td><td>Miniflare's limiter windows follow the real clock (<code>floor(Date.now()/60000)</code>), so a run crossing a minute boundary read 552, not 301; no wall clock in tests</td><td>No: test design, which you made the Lead's</td></tr>
 <tr><td>Didn&#39;t send the Verifier&#39;s blocked packet until you chose</td><td>No getting around a safety check</td><td>Yes: you chose Decision 6 on 17 Nov; Decision 8 is open</td></tr>
+<tr><td>Short temp folder for every 288 gate run, author and independent</td><td>Four Unix sockets failed to bind (<code>listen EINVAL</code>) because the long private temp path pushed socket addresses over the length limit. With the short folder, integration went 314/0</td><td>No: test environment, no code change</td></tr>
+<tr><td>The independent A/B runs aren't repeated. The missing before/after build inventory is rebuilt from the hashes of the modules that actually ran, checked against a fresh inventory taken before C; a host is rerun once only if anything differs</td><td>The loaded-module maps already tie every executed module to the manifest, and the strict audit passed. Repeating clean runs adds cost without adding proof. The gap is named as "reconstructed", not "captured at the time"</td><td>No: verification evidence is mine. Undo: rerun A/B</td></tr>
 </tbody></table></div>
 </ex-document>
 </body>
