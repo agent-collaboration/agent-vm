@@ -65,3 +65,15 @@ The fresh review of `e76bf5a6` (`tmp/2026-11-17-pr7-review/report.md`) was READY
   - L3: a held `Basic`/`Bearer` line equals batch and flushes at stream end.
   - L4: stderr after finish is dropped by design.
   - L5: the batch pattern side is pinned by literals. The generator reach gaps are logged as test debt.
+
+### L1 refinement (Lead, after the Implementer's and the Verifier's probes)
+
+My first wording, "extract from the unredacted result, then redact the message", was wrong. Both `providerErrorMessageFromMcpToolError` helpers trim, join and cut the text to 2000 characters before returning it (`upstream-mcp-protocol.ts:138-161`, `stdio-upstream-protocol.ts:30`). A secret that straddles the cut then leaves a fragment that redaction no longer recognises. Both probes on `e76` showed it: `followup-l1-extraction-boundary-probe.json`, and `evidence/followup-e76bf5a/L1-raw-extraction-truncation-observation.json`.
+
+The repair:
+- Classify `isError` from the unredacted result.
+- Both helpers take an optional `RedactionOptions`. When it is given, the helper applies `redactCredentialText` to each raw text block before its existing trim, join and cap. That reproduces the pre-PR order (redact, then trim, join, cap) while reading unredacted envelope keys. Without options, behaviour is unchanged.
+- Each runtime passes its own redaction options.
+- No new helper, module or rule set. The exported helper's new parameter is optional, so it stays compatible.
+
+Regressions per runtime: `Error`, `on`, and a long opaque value that straddles the 2000-character cap. Every case is red on `e76` where it applies; the long-value case is a preservation control for the reordered extraction.
