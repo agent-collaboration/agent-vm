@@ -1,5 +1,7 @@
 # F2 Hegel design review
 
+**Latest result, revision 2 (`30352bfd4`): twelve findings closed; F7 (P1) and F10 (P2) remain partly open. See the correction check at the end of this report.**
+
 **Verdict: FINDINGS — needs revision.** Eight P1 findings and six P2 findings. Several properties reject intended behavior; several counterfactuals do not reach the behavior they name. This is the five-check, inspect-only design review in `brief.md`, not software acceptance or a passing campaign.
 
 Reviewed all six pages at **agent-vm `9ce51cb21`**, with the plan checked only for consistency. The live checkout initially reported `b5ebc34e6b51038056605b0f3d8ee8fed54043e8`; `git diff 9ce51cb21 -- docs/specs/2026-11-17-fleet-access-f2-hegel` was empty. Switchboard was clean at **`b03d35ffeea00f79061353dce1db6231a670c62f`**. Hegel was the commissioned installed **0.4.10**, under the B1c worktree's pnpm package directory. These identities govern the source anchors below.
@@ -220,4 +222,62 @@ Only this report was written. No product/config/design file changed. No dependen
 Work log: **no-home**, as supplied. There was no authorized separate entries-file destination; this report is the scoped record/checkpoint. Source routes were the declared local design -> collection pointers -> primary Switchboard owners and permanent tests -> installed pinned Hegel. DeepWiki `ask_question` was absent from the advertised tools; installed source was used for the pinned library API. A lightweight memory search produced older project leads, none used as evidence. No web freshness claim, live provider claim or UI observation is made. No helpers were commissioned.
 
 Read gaps in the collection were not treated as absent behavior. The collection was used for pointers and ranking context, not as an oracle. The F1 original findings and latest scoped-readiness conclusion informed the checks for false oracles, real entries, proof sensitivity and lanes; their historical runtime limits remain intact.
+
+## Correction check — revision 2, `30352bfd4`
+
+**Current verdict: FINDINGS — needs revision. Twelve findings closed; F7 (P1) and F10 (P2) remain partly open.** Open count **14 -> 2**. No new finding or expanded scope is introduced.
+
+Authority: the Lead's [revision-2 recheck request](router://0ff962c5-7fa3-4c18-a5ca-1bbe8db09e89/push/01a1e9b8-e520-7871-a066-4879d08a30bd) accepts all fourteen and names **`30352bfd4d0584c07fde2f991259ecac634b512d`**. I reopened the current brief, the complete changed Specification/Program Design/Verification Design passages, and their affected source/proof owners. The other three pages are unchanged. Live design HEAD matched that revision; Switchboard remained clean at **`b03d35ffeea00f79061353dce1db6231a670c62f`**. Unchanged initial source coverage and the inspect-only/report-only grant are retained.
+
+### F7 partly open — The coordinator still has no backend-effect seam
+
+**Current target:** [specification.html:45](/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/specification.html:45), [verification-design.html:37](/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/verification-design.html:37).
+
+The operation-index and approval-coordinator models are now separated, and ambiguous -> armed versus completed -> result-expired correctly replaces the nonexistent activate transition. That portion is closed. The remaining clause still places “never dispatched twice” at the **coordinator's backend-effect seam**, and the wrong build says the coordinator calls a backend twice.
+
+The actual `StandaloneToolPortalApprovalCoordinator` interface contains only reserve, arm, prove-not-dispatched and credential activation ([standalone-batch-approval.ts:125](/Users/shravansunder/code/projects/switchboard-public/packages/tool-host-node/src/standalone-tool-portal/standalone-batch-approval.ts:125)). Its arm operation returns `dispatch-authorized`, without a backend callback or effect ([standalone-batch-approval.ts:348](/Users/shravansunder/code/projects/switchboard-public/packages/tool-host-node/src/standalone-tool-portal/standalone-batch-approval.ts:348)). Actual repeated-effect suppression and invocation belong to the backend returned by `prepareStandaloneBatchDispatch`: [standalone-batch-dispatch.ts:136](/Users/shravansunder/code/projects/switchboard-public/packages/tool-host-node/src/standalone-tool-portal/standalone-batch-dispatch.ts:136), especially the `dispatched.has`/`dispatched.add` guard and `props.selected.invoke` at lines 143,153,155. An invented backend callback around the coordinator would prove the test adapter rather than that production guard.
+
+**Smallest correction:** name `prepareStandaloneBatchDispatch`'s returned backend `invoke` as the effect-counting entry, keep the real batch preparation/coordinator path, and count an injected selected invocation's effects. Invoke the same valid prepared operation twice and assert the real entry permits at most one effect. Locate the deliberately wrong second invocation at that production backend's dispatch guard/invocation. Keep the operation-index and coordinator state models distinct; they observe transition/authorization results, not backend effects.
+
+**Route:** design-program -> design-verification, aligning the M3 Specification binding at the same time. **Disposition:** accepted residual of F7, still inside U3; no product seam or behavior change requested. Recheck the corrected entry, guard and named property before closing.
+
+### F10 partly open — P6's overgrant wrong build no longer has an assertion to violate
+
+**Current target:** [specification.html:33](/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/specification.html:33), [verification-design.html:31](/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/verification-design.html:31).
+
+The three refusal/failure classes, public-owner access to the private compiler, and restriction of permutation invariance are corrected. The unsupported unordered-Map example is gone. Those portions close.
+
+However, the new P6 property **drops** revision 1's “compiled grants never exceed what the config authored,” while its counterfactual still demands an authored grant unioned with a default fail. A deterministic, schema-valid compiler returning broader offers now satisfies every stated P6 property: it has the same output for the same input, emits no unexpected failure, and can preserve the same refusal classes for invalid inputs. “In a named projection” is still a placeholder, not the name of the projection/assertion.
+
+There is an existing precise projection: `compileOAuthPolicy(...).commandSetsByConfiguredOperation[key].descriptors[*].paths`. Production filters descriptor paths against authored admitted paths at [oauth-tool-portal-config.ts:195](/Users/shravansunder/code/projects/switchboard-public/packages/config-contracts/src/oauth-tool-portal-config.ts:195) and publishes that command set at lines 367–369. A wrong build retaining the catalog's additional alias path is schema-valid and deterministic but broadens the compiled executable offer. The current property has no independent expected-path bound to reject it. Other exposed grant/default projections also have literal expectations in [oauth-policy-compiler.unit.test.ts:52](/Users/shravansunder/code/projects/switchboard-public/packages/config-contracts/src/oauth-policy-compiler.unit.test.ts:52).
+
+**Smallest correction:** restore P6's authored-authority bound and name the selected projection. For this command-set case, derive the expected admitted paths independently from the generated authored policy, allow the existing explicit local help/version separation, and assert that the emitted descriptor paths are exactly the contracted admitted catalog paths. Make the wrong build retain one catalog path excluded by that authored policy. Keep semantic refusal/crash separation as its own challenge. This reinstates an existing obligation; it adds no new policy.
+
+**Route:** design-specification -> design-program -> design-verification. **Disposition:** accepted residual of F10, inside U1. Recheck the restored oracle, concrete projection and reachable mutation together.
+
+### Closed corrections
+
+| Finding | Current corrected anchors | Closure basis |
+| --- | --- | --- |
+| F1 | Specification:29, Program Design:44, Verification Design:27 | Per-entry policy/default/annotation rules; bounded monotonic changes and matching challenges. |
+| F2 | Specification:30, Verification Design:28 | Authored command policy replaces universal filesystem containment. |
+| F3 | Specification:31, Verification Design:29 | Raw argv -> metadata, allowed output-directory root, distinct file/directory cases. |
+| F4 | Specification:43, Verification Design:35 | Replay retention/caps separated from verifier/gateway expiry and effects; existing Hegel retained. |
+| F5 | Specification:46, Verification Design:38 | Pending removal/disable refusal versus completed-unlink readmission. |
+| F6 | Specification:36, Verification Design:34 | Separate Host/Origin rules; foreign-origin/prefix mutation replaces normal Host canonicalization as a mutant. |
+| F8 | Specification:34, Verification Design:32 | Exact/pattern/key/parsed-value domains, marker exclusions, ordinary-data preservation and an actual redactor branch. |
+| F9 | Specification:32, Program Design:44, Verification Design:30 | Operation/family/group/scope/effect model and independent expected scopes. |
+| F11 | Specification:35, Verification Design:33 | Canonical domains/equivalences, frozen vectors, committed fields and pagination refusal domain. Program Design:44 retains the codec round trips. |
+| F12 | Specification:44, Verification Design:36 | Real per-store entries; accepted/refused cancellation; bound principal versus pre-login browser secret. |
+| F13 | Specification:47, Verification Design:39 | Released pending slot observed while the late reply is held; late reply, subsequent request and close behavior. |
+| F14 | Program Design:34,37; Verification Design:41 | M5 real UDS and M4 DO are in the host lane. |
+
+These are source-design closures, not observations that implementation cases passed. The changed oracle directions, wrong-build paths and lane assignments were read against their already inspected production owners; a repetition of unchanged runtime checks was neither granted nor performed.
+
+**Next owner: design-specification for F10's missing authority bound; then design-program/design-verification for F7's actual effect owner and both proof rows.** No owner decision is waiting. Existing P1 receipt-binding and target-prioritization observations remain implementation/design handback notes, not new findings in this correction pass. No convergence stop applies: the accepted open count decreased.
+
+At the final checkpoint, design HEAD had advanced to `0475c68bda12bdfb80dd678692307f776859c719`; the diff against `30352bfd4` for all six F2 pages remained empty, so the reviewed content and coverage were unchanged. The report's local source links resolved to existing files and in-range lines; that mechanical check is not semantic or runtime proof.
+
+Only this report was changed. Tests, mutants, builds, lint and host runs remain **NOT RUN**. Work log remains **no-home**, with no separate authorized entries destination. This appendix is the correction checkpoint and supersedes the initial fourteen-open status.
+
 

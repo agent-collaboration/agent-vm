@@ -28,13 +28,13 @@
 <tr><td>P3</td><td>deny loses to ask/baseline precedence; or an AND matcher evaluated as OR</td></tr>
 <tr><td>P4</td><td>a directory-only value such as <code>./</code> admitted as a file</td></tr>
 <tr><td>P5</td><td>(a) a group above the ceiling admitted; (b) the consent/exact-scope check skipped. Each is challenged separately.</td></tr>
-<tr><td>P6</td><td>an authored grant unioned with a default in a named projection; or a declared semantic refusal turned into a crash</td></tr>
+<tr><td>P6</td><td>the compiler keeps a catalog alias the config excluded, so <code>descriptors[*].paths</code> exceeds the authored admitted paths; or a declared semantic refusal turned into a crash</td></tr>
 <tr><td>P7</td><td>one real matching or recursion branch of a redactor skipped (for example credential-key recursion into nested objects)</td></tr>
 <tr><td>P8</td><td>pagination off by one at the page boundary, reached with generated multi-page cases; or a committed digest field left out</td></tr>
 <tr><td>P9</td><td>a foreign Origin accepted by the origin guard; or allowlist membership checked by prefix</td></tr>
 <tr><td>M1</td><td>a live replay allowed before pruning; or a token admitted at its exact expiry instant</td></tr>
 <tr><td>M2</td><td>(a) the principal comparison removed from the transaction/completion check; (b) the browser-secret check removed from continuations</td></tr>
-<tr><td>M3</td><td>ambiguous → armed allowed at the current revision; or the coordinator calls the backend twice for one operation</td></tr>
+<tr><td>M3</td><td>ambiguous → armed allowed at the current revision; or <code>backend.invoke</code> from <code>prepareStandaloneBatchDispatch</code> reached twice for one operation (counted at <code>standalone-batch-dispatch.ts:136–155</code>)</td></tr>
 <tr><td>M4</td><td>admission allowed while unlink is pending, or after disable</td></tr>
 <tr><td>M5</td><td>(a) abort keeps the pending entry: filling capacity while the cancelled reply is held fails the released-slot property; (b) the decoder limit raised: the oversized-frame property fails</td></tr>
 </tbody></table></div>
