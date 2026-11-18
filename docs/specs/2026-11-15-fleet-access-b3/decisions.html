@@ -147,6 +147,14 @@ flowchart TB
 <tr><td>The Central decisions merged in #281 are checked and extended, not rewritten</td><td>Lead A's boundary (push 01a1e199-bf63).</td><td>No.</td></tr>
 <tr><td>B3 M4 pinned to Lead A's <code>MachineTokenSource</code> seam (d23724feb). <code>CentralUnavailable</code> is transient and does not count toward needing a new code; <code>DifferentMachine</code> and <code>EnrollmentNotActive</code> stop at once; <code>TokenRejected</code> and <code>DifferentEnrollment</code> refresh once more</td><td>A Central outage must not push machines into asking a person for a new code. An identity mismatch must never auto-heal</td><td>No: a renewal mechanism inside the approved R40 / B3 contract</td></tr>
 </tbody></table></div>
+<h2 id="build-calls-1118">My calls during the build (18 Nov)</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Call</th><th>Why</th><th>Should it have been yours?</th></tr></thead>
+<tbody>
+<tr><td>S1 approval: a fresh second factor is required only when the organization already has an enrolled machine; the first machine is exempt</td><td>That is your OD18. Current Central does exactly this (<code>device_login_decision.rs:50-61</code>). The spec's unconditional S1 wording was my drafting error</td><td>No: it follows your decision</td></tr>
+<tr><td>F11 branch (<code>ef613d0bb</code>, not on main) is a reference only, not a base; the independent pieces are written fresh on Router main</td><td>F11 was built on the two-id machine model now being replaced</td><td>No</td></tr>
+<tr><td>Parts of B3 that depend on machine identity wait for the one-Mac-id rework</td><td>You asked for one id per Mac; Lead A is writing it up</td><td>No: it follows your direction</td></tr>
+</tbody></table></div>
 </ex-document>
 </body>
 </html>
