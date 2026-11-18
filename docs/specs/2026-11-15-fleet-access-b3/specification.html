@@ -45,7 +45,7 @@
 
 <h2 id="rules">Rules</h2>
 <h3 id="S1">S1 · Logging a machine in</h3>
-<p>From M1. <code>codex-router fleet login --organization &lt;id&gt; --label &lt;label&gt;</code> MUST print a code and an address. The owner, signed in with <code>machine:enroll</code>, opens it. A recent second factor is required when the organization already has an enrolled machine; the first machine is exempt (OD18). The owner, sees the code beside the machine's label and organization, picks workspaces, and approves. The Router then gets a machine token and refresh credential and connects.</p>
+<p>From M1. <code>codex-router fleet login --organization &lt;id&gt; --label &lt;label&gt;</code> MUST print a code and an address. The owner, signed in with <code>machine:enroll</code>, opens it. A recent second factor is required when the organization already has an enrolled machine; the first machine is exempt (OD18). The owner sees the code beside the machine's label and organization, picks workspaces, and approves. The Router then gets a machine token and refresh credential and connects.</p>
 <h3 id="S2">S2 · One code, one machine, once</h3>
 <p>From M2, M9. A code MUST be approvable once, redeemable once even when two pollers race, expire at its lifetime, and limit guesses (RFC 8628 §5). Approval logs in only the requesting machine, into only that organization. Someone else opening or denying the code leaves it for the owner. Deny also needs a recent second factor. A repeated approval returns the first one, unchanged. The approval rule is one pure function in the sign-in core.</p>
 <h3 id="S3">S3 · Connect only through sign-in</h3>
