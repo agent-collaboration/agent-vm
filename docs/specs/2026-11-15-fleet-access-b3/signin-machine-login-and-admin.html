@@ -15,167 +15,205 @@
 
 <ex-callout title="What this page is" tone="note" icon="path">
 <p>This is the Sign-in Lead's design input to the central Lead's FleetRuntime slice S5, which re-splits <code>fleet-machine-login</code> and <code>fleet-admin</code> out of central's single crate. It defines what the login tables and the issuer's answers <em>mean</em>. Central owns the checks, the commands and where they are mounted.</p>
-<p><strong>Ground truth:</strong> codex-router main <code>a2bae5ef</code>, crate <code>crates/collaboration-central-core</code> (written as <code>core/</code> below). I read every line cited here myself.</p>
-<p><strong>Labels:</strong> <em>Owner decision</em> quotes the owner exactly, with the date. <em>Sign-in Lead proposal</em> is mine, not yet his. <em>Carried as is</em> goes into the mechanical extraction checkpoint. <em>Changes main</em> needs the approved policy-delta checkpoint, with the named test expectations changed.</p>
+<p><strong>Ground truth:</strong> codex-router main, read at <code>a2bae5ef</code>, crate <code>crates/collaboration-central-core</code> (written as <code>core/</code>; <code>login/</code> means <code>core/src/organization_authority/machine_login</code>). All 15 cited paths have identical blobs at main <code>fdd2e91d2</code>, so every line holds at both. I read every line cited here myself. Revision 2 settles review findings B1–B6 and S1–S3 (<a href="work/s5-meaning-review-report.md">review report</a>).</p>
+<p><strong>Labels:</strong></p>
+<ul>
+<li><em>Owner decision:</em> quotes the owner exactly, with the date.</li>
+<li><em>Sign-in Lead proposal:</em> my call as the owner of what these tables mean.</li>
+<li><em>Carried as is:</em> goes into the mechanical extraction checkpoint.</li>
+<li><em>Changes main:</em> needs the approved policy-delta checkpoint, with the named test expectations changed.</li>
+</ul>
 </ex-callout>
 
-<h2 id="seven">The seven answers against main</h2>
-
-<p>On 20 Nov I gave these answers as the owner of what machine login means. Answer 4 was then settled by the owner himself.</p>
-
+<h2 id="seven">The seven answers, one line each</h2>
 <table>
-<thead><tr><th>#</th><th>Rule</th><th>Main today</th><th>Typed result</th><th>Table and writer</th><th>After a crash or replay</th><th>S5</th></tr></thead>
+<thead><tr><th>#</th><th>Rule</th><th>S5</th><th>Section</th></tr></thead>
 <tbody>
-<tr id="a1"><td>1</td>
-<td><strong>A repeated approval with the same request ID and a different body is a conflict.</strong> A byte-identical repeat returns the first answer. <em>Sign-in Lead proposal.</em></td>
-<td><code>core/src/organization_authority/machine_login/device_login_decision.rs:25–39</code>. Rule "N03": the first snapshot answers every repeat for that machine, and changed labels or workspaces are silently ignored. Tests assert this at <code>device_login_decision_test.rs:153</code> and in the two host <code>machine_login/approval.rs</code> cases.</td>
-<td>Identical body: the first <code>DeviceLoginDecision::Approved</code>, with no new effect. Changed body: a new <code>DeviceLoginRefusal::RequestConflict {}</code>.</td>
-<td><code>login_machine_approvals</code>, written by the approval decision. It needs the original request's digest kept on the row: a new column, <code>request_digest TEXT NOT NULL</code>.</td>
-<td>The unique index on <code>request_id</code> (migration 0001) means one durable approval and one effect. A replay after activation or reopen compares the digest and returns the first answer or the conflict. The decision never writes a second row.</td>
-<td><strong>Changes main</strong></td></tr>
-<tr id="a2"><td>2</td>
-<td><strong>A machine ID belongs to one organization at a time.</strong> <em>Sign-in Lead proposal</em>, from the B3 spec ("Machine: belongs to one organization").</td>
-<td>The enforcement is per store only. <code>core/src/machine_login_plans.rs:23–44</code> reads only <code>self.organization</code>'s store, and <code>login_machines.machine_id</code> is a primary key there (<code>0001_workspace_requests.sql:5</code>). With one Durable Object per organization, a second organization never sees the first's claim.</td>
-<td>See <a href="#claim">the global claim</a>. It is an owner decision because it needs a new authority.</td>
-<td>Depends on the option.</td><td>Depends on the option.</td>
-<td><strong>Changes main</strong> (an owner decision)</td></tr>
-<tr id="a3"><td>3</td>
-<td><strong>Idle expiry bumps the enrollment generation,</strong> as revoke does.</td>
-<td>Already true. <code>machine_token_decision.rs:42–43</code> checks 30 days (<code>decision_support.rs:10</code>, <code>IDLE_EXPIRY_SECONDS</code>). At <code>:177–224</code> it ends the enrollment as <code>Expired</code>, bumps the generation, sets the machine to <code>Revoked</code>, clears its allowances and writes <code>MachineExpired</code> and allowance records.</td>
-<td><code>MachineTokenDecision::Refuse { reason: IdleExpired {} }</code></td>
-<td>Machine-token decision → <code>login_machine_approvals</code>, <code>login_machines</code> and change records, in one decided write.</td>
-<td>The write is all or nothing, and a replay sees <code>Expired</code> and refuses again. The bumped generation fences older approvals and tokens.</td>
-<td><strong>Carried as is</strong> (the live path in <a href="#idle">idle</a> reuses this decision)</td></tr>
-<tr id="a4"><td>4</td>
-<td><strong>Allowed workspaces live in their own table,</strong> one row per machine and workspace.</td>
-<td>A JSON column, <code>login_machines.allowed_workspaces</code> (<code>0001:5</code>), read on every request by <code>core/src/workspace_admission.rs:26–49</code>.</td>
-<td>See <a href="#allowances">allowances</a>.</td><td>See <a href="#allowances">allowances</a>.</td><td>See <a href="#allowances">allowances</a>.</td>
-<td><strong>Changes main</strong>. <em>Owner decision</em>, 20 Nov: "we want allwoance talbes"; earlier 9 Nov, "Approve option A".</td></tr>
-<tr id="a5"><td>5</td>
-<td><strong>The owner role holds <code>machine:enroll</code>, <code>machine:revoke</code> and <code>machine:setTokenLifetime</code>.</strong> Revoke needs a recent second factor. Enroll needs one only once the organization already has a machine (OD18).</td>
-<td>Issuer: <code>organization-access-control.ts</code> (Switchboard) grants all three to owner. Central: <code>person_request/request_admission.rs:134–142</code> checks the route's permission, and every state-changing route needs a fresh factor. <code>device_login_decision.rs:50–60</code> checks the factor only when <code>organization_has_enrollment</code>.</td>
-<td><code>AdmissionRefusal::NotPermitted</code> / <code>SecondFactorRequired</code>; <code>DeviceLoginRefusal::SecondFactorRequired { within_seconds }</code></td>
-<td>No table change.</td><td>No new state.</td>
-<td><strong>Carried as is</strong></td></tr>
-<tr id="a6"><td>6</td>
-<td><strong>A malformed published key set is our fault, not the token's.</strong> Admission refuses (fail closed) but answers <em>retryable</em>. A key still unknown after the single refresh stays a rejection. <em>Sign-in Lead proposal.</em></td>
-<td><code>core/src/machine_token.rs:103–106</code> maps every <code>KeySet(_)</code> to <code>Rejected</code>. That covers <code>MalformedKeySet</code>, <code>UnknownKey</code> and <code>CacheUnavailable</code> (<code>issuer_key_cache.rs:138–145</code>).</td>
-<td><code>KeySet(MalformedKeySet | CacheUnavailable)</code> → <code>MachineTokenRefusal::Unavailable</code> (retryable). <code>KeySet(UnknownKey)</code> → <code>Rejected</code>, unchanged.</td>
-<td>No table change; the verifier's classification only.</td>
-<td>A failed renewal never replaces the attachment. Once the issuer recovers, the next attempt succeeds.</td>
-<td><strong>Changes main</strong></td></tr>
-<tr id="a7"><td>7</td>
-<td><strong>Owner-only machine admin:</strong> list enrollments and revoke first; then allow one workspace and withdraw one. Each is recorded. <em>Sign-in Lead proposal</em>, from B3 S4.</td>
-<td><code>core/src/organization_signin_http.rs:25–61</code> mounts only <code>RevokeMachineEnrollment</code> among machine commands. The typed commands <code>AllowMachine</code> and <code>WithdrawMachineAllowance</code>, and <code>MachineAllowance { state: Active | Withdrawn }</code>, already exist in <code>identity_contract/organization_commands.rs:56–117</code> but have no route.</td>
-<td>See <a href="#admin">admin operations</a>.</td><td>See <a href="#admin">admin operations</a>.</td><td>See <a href="#admin">admin operations</a>.</td>
-<td><strong>Changes main</strong> (new routes)</td></tr>
+<tr><td>1</td><td>A repeated approval with changed bound fields is a conflict; an identical one returns the first answer.</td><td><strong>Changes main</strong></td><td><a href="#replay">Replay</a></td></tr>
+<tr><td>2</td><td>One active claim per machine ID across organizations.</td><td><strong>Owner decision needed</strong></td><td><a href="#claim">Global claim</a></td></tr>
+<tr><td>3</td><td>Idle expiry bumps the generation.</td><td><strong>Carried as is</strong> (mint); the live path changes main</td><td><a href="#idle">Idle</a></td></tr>
+<tr><td>4</td><td>Allowances live in their own table.</td><td><strong>Changes main</strong>. <em>Owner decision</em></td><td><a href="#allowances">Allowances</a></td></tr>
+<tr><td>5</td><td>The owner role holds the machine and workspace-admin statements. Revoke needs a recent factor. Only the first approval in an organization is exempt (OD18).</td><td><strong>Carried as is</strong></td><td><a href="#factor">Permissions and factor</a></td></tr>
+<tr><td>6</td><td>A malformed key set or an unavailable key cache is retryable. A key still unknown after its one refresh is rejected.</td><td><strong>Changes main</strong></td><td><a href="#keys">Keys</a></td></tr>
+<tr><td>7</td><td>Owner-only machine admin: list and revoke first, then allow and withdraw one workspace.</td><td><strong>Changes main</strong> (new routes)</td><td><a href="#admin">Admin</a></td></tr>
 </tbody>
 </table>
 
-<h2 id="claim">The global machine claim: options for the owner</h2>
+<h2 id="replay">1 · Approval replay</h2>
+<p><strong>Main today:</strong> <code>login/device_login_decision.rs:25–39</code>, rule "N03". Once a <code>request_id</code> has an approval, every repeat for the same machine returns the first snapshot, and changed labels or workspaces are silently ignored. A different machine gets <code>NotPermitted</code>. The tests are <code>device_login_decision_test.rs:153–204</code> and both host <code>machine_login/approval.rs:8,48–81,112</code>.</p>
+<p><strong>Meaning</strong> (<em>Sign-in Lead proposal</em>). The comparison is <strong>typed field equality, not raw bytes</strong>. It compares the decoded <code>DecideDeviceLogin</code> with the retained <code>login_machine_approvals</code> row on the fields an approval binds:</p>
+<ul>
+<li><code>machine_id</code>;</li>
+<li><code>label</code>;</li>
+<li><code>allowed_workspaces</code>, compared as a set;</li>
+<li><code>code_expires_at</code>;</li>
+<li>the approver (<code>approved_by_person_id</code>).</li>
+</ul>
+<p>The approver's factor time is not bound: it is admission evidence, not part of what was approved. Every bound field is already a column (<code>0001:6–24</code>), so <strong>no new column is needed</strong>, and existing rows carry over unchanged. JSON spelling cannot change the result.</p>
+<p><strong>Precedence:</strong></p>
+<ol>
+<li>The organization mismatch and the SD8 freshness check, unchanged; both give <code>NotPermitted</code>.</li>
+<li>If an approval exists for this <code>request_id</code>:
+<ul>
+<li>a different machine gives <code>NotPermitted</code>, unchanged;</li>
+<li>bound fields that are equal return the first <code>Approved</code> answer, with no write;</li>
+<li>otherwise, a new <code>DeviceLoginRefusal::RequestConflict {}</code>, with no write.</li>
+</ul></li>
+<li>The new-approval path, unchanged.</li>
+</ol>
+<p><strong>After a crash or replay:</strong> the unique index on <code>request_id</code> (<code>0001:24</code>) and the guarded batch (<code>machine_login_plans.rs:98–131</code>) keep it to one approval and one effect. A replay after activation or reopen reads the same row.</p>
 
-<p>Each organization's central store is its own Durable Object, so no single store sees every organization's machines. "One organization at a time" therefore needs an authority that sees all of them. That is a new storage boundary, and the owner decides storage. <strong>No option below is chosen.</strong></p>
+<h2 id="claim">2 · The global machine claim: options for the owner</h2>
+<p>Each organization's central store is its own Durable Object, and <code>machine_login_plans.rs:23–44</code> reads only <code>self.organization</code>. So no store sees another organization's machines. "One active claim per machine ID" needs a shared authority, which is a new storage boundary, and the owner decides storage. <strong>No option is chosen.</strong> In this section "option A" means the claim option below, not the 9 Nov SQL option A.</p>
+<p>One fact frames them: <code>machineId</code> is the Router install's own UUIDv7, self-asserted (<code>0001:3–5</code>). A shared claim serialises claims made under the same ID. It says nothing about physical identity.</p>
 
-<p>One fact frames them all: <code>machineId</code> is the Router install's own UUIDv7 (migration 0001 comment, owner 18 Nov). It is self-asserted. A modified Router can pick any ID. So a server-side claim gives <em>consistency</em> for honest Routers; it is not a security boundary.</p>
-
-<ex-mermaid id="claim-options" label="Where a cross-organization claim could live" data-width="canvas"><script type="text/plain">
-flowchart LR
-  mac["Mac Router<br/>machineId (self-chosen UUIDv7)"] --> si["Sign-in service<br/>(one per deployment, sees all orgs)"]
-  si --> o1["Org A central DO<br/>login_machines"]
-  si --> o2["Org B central DO<br/>login_machines"]
-  si -. "A: claim table in sign-in DB" .- ca[("login_machine_claims")]
-  o1 -. "B: global registry DO" .- reg[("central claim registry")]
-  o2 -.- reg
-  mac -. "D: the Mac holds one enrollment" .- mac
+<h3 id="claim-lifecycle">The claim's lifecycle (options A and B)</h3>
+<ex-mermaid id="claim-states" label="Claim state machine" data-width="canvas"><script type="text/plain">
+stateDiagram-v2
+  [*] --> Free
+  Free --> Reserved: approval in org X (enrollment E, generation g)
+  Reserved --> Active: first grant of E
+  Reserved --> Free: E lapses / approval refused / release(E)
+  Active --> Free: E revoked / idle-expired / superseded (release(E))
+  Reserved --> Reserved: same org X re-approval (E replaced by E2)
+  Active --> Active: same org X re-login (E -> E2, superseded)
+  Free --> Free: release for a stale E (ignored)
 </script></ex-mermaid>
+<ul>
+<li><strong>Reservation and activation:</strong> a claim is reserved at approval for <code>(machineId, organizationId, enrollmentId)</code> and activated at first grant. A second organization is refused while the claim is Reserved or Active.</li>
+<li><strong>Release must match:</strong> a release names the ending <code>enrollmentId</code>, and one that names an enrollment other than the claim's current one is ignored. That covers a late callback arriving after a newer claim. Within one organization, a re-approval or re-login moves the claim to the new enrollment.</li>
+<li><strong>Recovery:</strong> if the claim and the organization's store disagree after a crash, the next claim attempt asks the owning organization's store whether that enrollment is still Approved or Enrolled. It reclaims only on a definite "ended" or "not found". An unreachable store means the claim stays, and the second organization is told to retry.</li>
+<li><strong>Scope:</strong> one sign-in deployment (one issuer). Deployments don't share claims.</li>
+</ul>
 
 <table>
-<thead><tr><th>Option</th><th>Where the claim lives, and who decides</th><th>What's atomic</th><th>What a second organization is told</th><th>What releases it</th><th>Cost</th></tr></thead>
+<thead><tr><th>Option</th><th>Where the claim lives, and how decisions reach it</th><th>Atomicity</th><th>Second organization is told</th><th>Release path</th><th>Cost</th></tr></thead>
 <tbody>
-<tr><td><strong>A. A claim table in the sign-in database</strong></td><td>A new <code>login_machine_claims(machine_id PK, organization_id, enrollment_id, claimed_at)</code> in sign-in's D1 / SQLite. Sign-in already forwards every device-login decision to central, so it decides before forwarding.</td><td>One insert under the primary key in sign-in's own database.</td><td><code>DeviceLoginRefusal::MachineInAnotherOrganization {}</code> (a new variant), before central is asked.</td><td>Revoke passes through sign-in, so it can release at once. Idle expiry happens in central, so central must tell sign-in (a new callback), or sign-in releases lazily when it sees the next refusal.</td><td>A new sign-in table, plus a release path from central back to sign-in. There are two stores, so the claim and the enrollment can disagree for a moment after a crash.</td></tr>
-<tr><td><strong>B. A global central registry</strong></td><td>One new central Durable Object keyed by <code>machineId</code>. Every organization's DO asks it at approval.</td><td>One write in the registry DO, but a second DO call inside approval, which is not one transaction with the organization's write.</td><td>The same refusal, from central.</td><td>The org DO releases it on revoke or expiry, in its own turn.</td><td>A new global store and a cross-DO hop on every approval. A crash between the two writes needs repair.</td></tr>
-<tr><td><strong>C. No global claim</strong></td><td>Unique per organization only, as main is today.</td><td>The existing local primary key.</td><td>Nothing; the second organization enrolls the same ID.</td><td>Not applicable.</td><td>Nothing to build. It reverses my answer 2: one Router could serve two organizations, and the Mac side must then handle more than one enrollment.</td></tr>
-<tr><td><strong>D. The Mac holds one enrollment</strong></td><td>The Router keeps a single active enrollment. A new login in another organization replaces the old one locally, and the Router tells the old organization (a revoke from the Mac).</td><td>Local to the Mac.</td><td>Nothing server-side; the first organization sees the machine leave.</td><td>The new login.</td><td>Nothing on the server. It relies on honest Routers, which a server claim also does (the ID is self-chosen). It is Mac Lead work.</td></tr>
+<tr><td><strong>A. Sign-in database</strong></td><td>A new <code>login_machine_claims(machine_id PK, organization_id, enrollment_id, state, updated_at)</code> in sign-in's D1 / SQLite. Every device-login decision already passes through sign-in, so sign-in reserves before it forwards.</td><td>The claim write is atomic in sign-in's own database. It is not in the same transaction as central's approval, so reconciliation (above) covers the gap.</td><td>A new <code>DeviceLoginRefusal::MachineClaimedElsewhere {}</code>, distinct from the existing connection refusal <code>MachineConnectionRefusal::MachineInAnotherOrganization {}</code>.</td><td>Revoke passes through sign-in. Lapse, idle expiry and supersede happen in central, so central sends a release(E) callback to sign-in, which is a new interface.</td><td>A new sign-in table, a callback from central to sign-in, and reconciliation.</td></tr>
+<tr><td><strong>B. Central registry DO</strong></td><td>One new global Durable Object keyed by <code>machineId</code>. An organization's DO calls it at approval, and again at first grant.</td><td>Atomic in the registry; a cross-DO call, so the same reconciliation applies.</td><td>The same new refusal, from central.</td><td>The organization DO calls release(E) when E ends, in its own turn.</td><td>A new global store and a cross-DO hop on approval.</td></tr>
+<tr><td><strong>C. No global claim</strong></td><td>Per organization only, as main is today.</td><td>The local primary key.</td><td>Nothing.</td><td>Not applicable.</td><td>Nothing to build. <strong>Changes the invariant:</strong> one Router can be enrolled in two organizations, and the Mac must handle more than one enrollment.</td></tr>
+<tr><td><strong>D. The Mac keeps one</strong></td><td>The Router holds one enrollment and drops the old one locally when it logs in elsewhere.</td><td>Local to the Mac only.</td><td>Nothing.</td><td>The server enrollment in the old organization stays active until it idles out or an owner revokes it. A Mac cannot revoke it itself, because revoke needs an authorised person's recent signed proof (<code>private_machine_revocation.rs:24–69</code>).</td><td>Nothing on the server. <strong>Changes the invariant:</strong> two server enrollments can be active at once even with an honest Router.</td></tr>
 </tbody>
 </table>
+<p>A and B keep the rule "one active server enrollment per machine ID". C and D replace it with a weaker one. The owner decides; the central Lead brings it to him.</p>
 
-<p><em>Sign-in Lead view, not chosen:</em> because the ID is self-asserted, D gives the same guarantee as A or B at a fraction of the cost. A is the cheapest server-side option if the owner wants the server to say "this Mac belongs to another organization". The owner decides.</p>
+<h2 id="idle">3 · Idle expiry: mint (carried) and live (new)</h2>
+<p><strong>Mint, carried as is:</strong> <code>login/machine_token_decision.rs:42–43</code> checks 30 days (<code>decision_support.rs:10</code>). At <code>:177–224</code>, it ends the enrollment as <code>Expired</code>, bumps the machine's generation, sets the machine to <code>Revoked</code>, clears its allowances, and writes <code>MachineExpired</code> plus one allowance record per row. The first answer is <code>MachineTokenRefusal::IdleExpired {}</code>. A replay then sees <code>Expired</code> and answers <code>EnrollmentNotActive {}</code>, with no new write (<code>:57–65</code>). The generation fence is observed through a <em>pending older approval</em>, which can no longer activate. An attachment carries enrollment and client IDs plus a deadline, not a generation.</p>
+<p><strong>Live, which changes main</strong> (<em>Sign-in Lead proposal</em>). Today <code>machine_connection.rs:103–152</code> (<code>validate_live</code>) ignores <code>last_grant_at</code>. Under normal issuance this can't matter: every grant resets <code>last_grant_at</code> and lasts only 600 s (<code>machine_token.rs:170–179</code>), so token expiry always comes before idle expiry. The live check is <strong>defence in depth</strong>, for an attachment whose stored grant is older than 30 days while its token is still valid. That happens only with hand-made or clock-skewed state.</p>
+<ul>
+<li><strong>Decision:</strong> <code>fleet-machine-login</code> exposes the pure <code>idle_expired(last_grant_at, now) → bool</code>.</li>
+<li><strong>Where it runs:</strong> only at the <em>under-turn</em> re-read in core (<code>machine_connection_admission.rs</code>, the re-read after verification). Both hosts reach it, for connect and for renewal. The hosts' pre-restore before verification (<code>workspace_machine_link.rs:491–518</code>, <code>workspace_link.rs:435–454</code>) stays read-only and never writes.</li>
+<li><strong>The write:</strong> when it returns true under the turn, core calls the existing <code>idle_expiry</code> decision (the same guarded batch), then runs the existing post-commit invalidation (<code>private_machine_revocation.rs:73–91</code>), so open sockets close.</li>
+<li><strong>Typed results:</strong>
+<ul>
+<li>connect: the existing <code>MachineConnectionRefusal::EnrollmentNotActive {}</code>;</li>
+<li>renewal: the existing <code>MachineTokenRenewalRefusal::EnrollmentNotActive</code> (<code>machine_connection_admission.rs:236–245</code>). The Mac treats that as "stop, get a new code" (B3 M4).</li>
+</ul>
+No new variants and no wire change.</li>
+<li><strong>When the store is unavailable:</strong> nothing is written, and the answer stays the existing retryable one.</li>
+</ul>
+<p><strong>Enrollment state machine</strong> (<code>StoredEnrollmentState</code>):</p>
+<ul>
+<li><code>Approved → Enrolled</code> at first grant.</li>
+<li><code>Approved → Lapsed</code>: the pending row ends, and the <strong>generation is not bumped</strong>.</li>
+<li><code>Enrolled → Revoked{reason}</code>, and <code>Enrolled → Expired</code>: both bump the generation.</li>
+<li><code>Enrolled → Revoked{Superseded}</code> on a re-login.</li>
+</ul>
+<p>Every ended state is terminal.</p>
 
-<h2 id="allowances">Allowances: the table</h2>
-
-<p><em>Owner decision</em>, 20 Nov: "we want allwoance talbes". 9 Nov, B3 SQL review: "Approve option A".</p>
-
+<h2 id="allowances">4 · Allowances: the table</h2>
+<p><em>Owner decision</em>, 20 Nov: "we want allwoance talbes". Earlier, 9 Nov, B3 SQL review: "Approve option A". The DDL below is a <em>Sign-in Lead proposal</em> for implementing that decision.</p>
 <pre><code class="language-sql">CREATE TABLE login_machine_allowances (
-    allowance_id     TEXT PRIMARY KEY,   -- UUIDv7 from the injected ID source
-    machine_id       TEXT NOT NULL REFERENCES login_machines(machine_id),
-    workspace_id     TEXT NOT NULL,
-    state            TEXT NOT NULL,      -- Rust enum AllowanceState { Active, Withdrawn }
-    enrollment_id    TEXT NOT NULL,      -- the enrollment that last changed it
-    changed_by_person_id TEXT,           -- NULL when the change was automatic (expiry)
-    created_at       TEXT NOT NULL,
-    updated_at       TEXT NOT NULL
+    allowance_id   TEXT PRIMARY KEY,   -- UUIDv7 from the injected ID source
+    machine_id     TEXT NOT NULL REFERENCES login_machines(machine_id),
+    workspace_id   TEXT NOT NULL,
+    state          TEXT NOT NULL,      -- Rust AllowanceState { Active, Withdrawn } (organization_commands.rs:115)
+    changed_by     TEXT NOT NULL,      -- Rust enum: Approval{approval_id} | Person{person_id} | Automatic | Backfill
+    created_at     TEXT NOT NULL,
+    updated_at     TEXT NOT NULL
 );
-CREATE UNIQUE INDEX login_machine_allowances_pair
-    ON login_machine_allowances(machine_id, workspace_id);</code></pre>
+CREATE UNIQUE INDEX login_machine_allowances_pair ON login_machine_allowances(machine_id, workspace_id);</code></pre>
+<p>There are no CHECK constraints. Kinds are Rust enums. <code>changed_by</code> replaces a required enrollment ID: an admin allow can happen while no enrollment is active, and the backfill has no person.</p>
+<p><strong>Migration (backfill):</strong> in one migration, each JSON entry in <code>login_machines.allowed_workspaces</code> becomes an Active row with <code>changed_by = Backfill</code>. Then the column is dropped. <code>login_machine_approvals.allowed_workspaces</code> stays as the immutable record of what each approval asked for.</p>
 
-<p>There are no CHECK constraints; <code>state</code> is the existing <code>AllowanceState</code> enum (<code>organization_commands.rs:115</code>). There is one row per machine and workspace, and its state moves between Active and Withdrawn. <code>login_machines.allowed_workspaces</code> is removed in the same migration, after its values are copied into rows.</p>
-
-<h3 id="allowance-writers">Who writes, who reads</h3>
+<h3 id="allowance-writers">Writers: one guarded batch each, with its audit record</h3>
 <table>
-<thead><tr><th>Event</th><th>Writer (in <code>fleet-machine-login</code>)</th><th>Effect on rows</th><th>Change record</th></tr></thead>
+<thead><tr><th>Event</th><th>Writer</th><th>Effect</th><th>Repeat and stale target</th></tr></thead>
 <tbody>
-<tr><td>Approval</td><td>Device-login decision (<code>device_login_decision.rs:74–85</code>, rule B3/R39)</td><td>The picked workspaces become Active; any other Active row stays as it is ("approval adds; it does not withdraw"). They admit requests only once the machine is <code>Enrolled</code>, after the first grant.</td><td><code>AllowanceChanged</code>, one per newly added workspace (as main writes, <code>:108–121</code>)</td></tr>
-<tr><td>Allow one workspace</td><td>Admin → login: <code>AllowMachine</code></td><td>One row becomes Active (it's inserted if absent)</td><td><code>AllowanceChanged</code></td></tr>
-<tr><td>Withdraw one workspace</td><td>Admin → login: <code>WithdrawMachineAllowance</code></td><td>One row becomes Withdrawn</td><td><code>AllowanceChanged</code></td></tr>
-<tr><td>Revoke</td><td>Revoke decision</td><td>Every Active row of that machine becomes Withdrawn</td><td>One <code>AllowanceChanged</code> per row, plus the revoke record</td></tr>
-<tr><td>Idle expiry</td><td>Machine-token decision (<code>idle_expiry</code>) and the live check</td><td>Every Active row becomes Withdrawn</td><td>As main writes today, per row</td></tr>
+<tr><td>Approval</td><td>Device-login decision (<code>login/device_login_decision.rs:74–85</code>, rule B3/R39: an approval adds and never withdraws)</td><td>The picked workspaces become Active; other rows are unchanged. On a currently enrolled machine they admit requests at once. On a machine with no active enrollment, they admit once the enrollment exists.</td><td>An already-Active row is not rewritten and gets no record.</td></tr>
+<tr><td>Allow one workspace</td><td>Admin → login</td><td>One row becomes Active.</td><td>Already Active: <code>Applied</code>, with no record. An unknown machine: <code>NotFound</code>.</td></tr>
+<tr><td>Withdraw one workspace</td><td>Admin → login</td><td>One row becomes Withdrawn.</td><td>Already Withdrawn or absent: <code>Applied</code>, with no record.</td></tr>
+<tr><td>Revoke</td><td>Revoke decision</td><td>Every Active row of the machine becomes Withdrawn.</td><td>A machine already ended: <code>AlreadyEnded</code>, with no write.</td></tr>
+<tr><td>Idle expiry</td><td><code>idle_expiry</code> (mint or live)</td><td>Every Active row becomes Withdrawn.</td><td>A replay: no write.</td></tr>
 </tbody>
 </table>
-<p><strong>The reader</strong> is <code>workspace_admission</code>, on every request. It admits only if a row (machine, workspace) is <code>Active</code> and the workspace is <code>active</code>. A missing row, a Withdrawn row or an archived workspace is refused with <code>RefusalReason::WorkspaceNotAllowed</code>, which matches today's refusals at <code>workspace_admission.rs:41–48</code>.</p>
-<p><strong>One live authority, one history:</strong> <code>login_machine_allowances</code> is the only live authority. <code>login_machine_approvals.allowed_workspaces</code> stays as an immutable record of what that approval asked for. Admission never reads it. The change records are the history.</p>
-<p><strong>State machine:</strong> an allowance is <code>Active ⇄ Withdrawn</code>. <code>Withdrawn → Active</code> happens only through Allow or a later approval.</p>
+<p><strong>History:</strong> today <code>AllowanceChanged</code> records name only the workspace as target (<code>organization_change_rows.rs:109–117</code>). Each record must also carry <code>machine_id</code> and the resulting state, in the record's detail, so "which machine lost which workspace, when" can be answered from the history alone. That is a change to the record detail, not a new table.</p>
 
-<h2 id="idle">The live idle check at connect and at renewal</h2>
-<p><strong>Today:</strong> idle expiry is decided only when a token is minted (<code>machine_token_decision.rs:42</code>). <code>machine_connection.rs:103–145</code> (<code>validate_live</code>) checks organization, effective deadline, identity, state and client, but it ignores <code>last_grant_at</code> (it matches <code>Enrolled { client_id, .. }</code>). With 600-second tokens the gap is small but real: a connection opened just before the 30-day boundary is admitted after it.</p>
-<p><strong>The decision</strong> (<em>Sign-in Lead proposal</em>, agreed with the central Lead as a central item): <code>fleet-machine-login</code> exposes one pure function, <code>idle_expired(last_grant_at, now) → bool</code>, using <code>IDLE_EXPIRY_SECONDS</code>. Access calls it inside <code>validate_live</code> at connect and at renewal, under the existing central turn, and calls it again after any wait for verification. When it returns true, admission calls the existing <code>idle_expiry</code> decision. That is the same guarded write: <code>Expired</code>, the generation bumped, allowances withdrawn and the record written, exactly once.</p>
-<p><strong>The refusal:</strong> <code>MachineConnectionRefusal::EnrollmentNotActive {}</code> at connect. At renewal it is <code>MachineTokenRefusal::IdleExpired {}</code>, the same answer the mint path gives.</p>
-<p><strong>An already-open connection</strong> is closed at the existing under-turn invalidation point, the same one revoke uses, because the generation changed. A retryable failure (store unavailable) writes nothing.</p>
-<p><strong>State machine</strong> (from <code>StoredEnrollmentState</code>): <code>Approved → Enrolled</code> (first grant); then <code>Enrolled → Revoked{reason}</code>, <code>Enrolled → Expired</code>, or <code>Approved → Lapsed</code>. Every ending state is terminal and bumps the generation on the machine.</p>
+<h3 id="allowance-readers">Readers: one live authority</h3>
+<ul>
+<li><strong>Per-request admission:</strong> <code>workspace_admission.rs:26–49</code>. It admits only when the (machine, workspace) row is Active and the workspace is <code>active</code>. Otherwise it refuses with <code>RefusalReason::WorkspaceNotAllowed</code>, as today.</li>
+<li><strong>The machine's workspace list and search:</strong> <code>workspace_directory_requests.rs:66–76,102–129</code> calls <code>allowed_workspaces(caller)</code> today and then filters before paging. <code>fleet-machine-login</code> provides <code>active_allowances(machine_id) → Vec&lt;WorkspaceId&gt;</code> from the table. The directory (S4) applies that filter together with its own <code>include_archived</code> rule (<code>workspace-rules/src/workspace_directory_rules.rs:67–115</code>). The directory owns the filter; login owns the set.</li>
+<li><strong>The enrollment list</strong> (admin List): it reads Active rows for each machine.</li>
+</ul>
+<p><strong>An external dependency, outside S5:</strong> the sign-in approval page's workspace picker needs the organization's full workspace list, read with the person's authorisation. Main's private admin has only a single-workspace lookup (<code>organization_admin_plans.rs:98–110</code>). That list is a central route still to be specified, a B2 <code>ListWorkspaces</code> item, and it isn't an allowance reader.</p>
+<p><strong>State machine:</strong> an allowance moves <code>Active ⇄ Withdrawn</code>. It becomes Active only through approval or Allow.</p>
 
-<h2 id="admin">Admin operations central mounts</h2>
-<p><em>Sign-in Lead proposal</em>, except revoke's answers, which are Contract 1 (agreed 19 Nov). The permission for each operation follows the issuer's existing statements.</p>
+<h2 id="factor">5 · Permissions and factor (carried as is)</h2>
+<ul>
+<li><strong>The issuer:</strong> Switchboard <code>organization-access-control.ts:5–21</code> grants owner <code>machine: enroll · revoke · setTokenLifetime</code> and <code>workspaceAdmin: allowMachine · withdrawMachine · removeSession</code>.</li>
+<li><strong>Central signed admin:</strong> <code>person_request/request_admission.rs:134–145</code> checks the route's permission. Then every <em>state-changing signed admin route</em> requires a fresh factor.</li>
+<li><strong>Revoke:</strong> answers <code>Refused{FactorNotRecent}</code> on the wire (<code>organization_admin_contract.rs</code>, <code>MachineEnrollmentRevocationRefusal</code>).</li>
+<li><strong>Device approval:</strong> <code>login/device_login_decision.rs:50–60</code> requires a fresh factor when <code>organization_has_enrollment</code>. That is true once <em>any</em> approval row exists, including pending, lapsed or ended ones (<code>machine_login_reads.rs:27–65</code>). The answer is <code>DeviceLoginRefusal::SecondFactorRequired { within_seconds }</code>.</li>
+<li><strong>OD18 meaning</strong> (the owner's decision, "the first machine is exempt"; applied as my call on 18 Nov). Only the organization's <em>very first</em> approval is exempt. Main's stricter predicate is the meaning: it stops a run of factor-free pending approvals. The B3 spec S1 wording "already has an enrolled machine" will be corrected to "has any earlier machine approval".</li>
+<li><strong>Contract 1</strong> line 111 says revoke is for those who "may enroll". The later clarification, my 20 Nov answer 5 and main, is <code>machine:revoke</code>. Downstream client disable on revoke stays an obligation, and session removal waits on central's session list.</li>
+</ul>
+
+<h2 id="keys">6 · Key-set errors</h2>
+<p><strong>Main today:</strong> the verifier <code>machine_token::MachineTokenRefusal</code> maps every <code>KeySet(_)</code> to <code>Rejected</code> (<code>machine_token.rs:103–106</code>). The variants are <code>MalformedKeySet</code>, <code>UnknownKey</code> and <code>CacheUnavailable</code> (<code>issuer_key_cache.rs:138–145</code>).</p>
+<p><strong>Meaning</strong> (<em>Sign-in Lead proposal</em>):</p>
+<ul>
+<li><code>KeySet(MalformedKeySet)</code> → <code>Unavailable</code>, retryable. It's the issuer's fault.</li>
+<li><code>KeySet(CacheUnavailable)</code> → <code>Unavailable</code>, retryable. It's the receiver's own cache.</li>
+<li><code>KeySet(UnknownKey)</code> → <code>Rejected</code>, unchanged. That's the answer after the one fetch on a cold cache, or the one forced refresh on a cached miss (<code>issuer_key_resolution.rs:25–60</code>).</li>
+</ul>
+<p><strong>On the hosts:</strong> connect and renewal give the existing retryable outcome at each host's boundary. A failed renewal never replaces the attachment. With valid keys and a still-valid enrollment and token, the retry succeeds.</p>
+
+<h2 id="admin">7 · Admin operations central mounts</h2>
+<p><em>Sign-in Lead proposal</em>, except revoke's answers, which are Contract 1 (agreed 19 Nov). Every operation is a <strong>sign-in-signed person request bound to the operation</strong>, verified the way main's private admin already does it (<code>organization_admin_plans.rs:22–88</code>). That covers organization scope, the person's floor, permission and factor. The results use main's signed admin family (<code>organization_admin_contract.rs:70–159</code>), not the unmounted <code>OrganizationCommandResult</code>.</p>
 <table>
-<thead><tr><th>Operation</th><th>Permission</th><th>Proof</th><th>Typed result</th><th>Record</th><th>Order</th></tr></thead>
+<thead><tr><th>Operation</th><th>Permission</th><th>Factor</th><th>Typed result</th><th>Audit</th><th>Order</th></tr></thead>
 <tbody>
-<tr><td>List enrollments</td><td><code>organization:view</code> (owner)</td><td>Person token, with no factor needed (it only reads)</td><td>A list of <code>{machineId, label, enrollmentId, state, lastGrantAt, allowances[]}</code></td><td>None</td><td>First</td></tr>
-<tr><td>Revoke</td><td><code>machine:revoke</code></td><td>A person token and a recent factor (<code>secondFactorAt</code>), per Contract 1</td><td><code>revoked | notFound | alreadyEnded | refused{notPermitted|factorNotRecent}</code></td><td>The revoke record, plus <code>AllowanceChanged</code> for each row</td><td>First (mounted today)</td></tr>
-<tr><td>Allow one workspace</td><td><code>machine:enroll</code></td><td>A person token and a recent factor</td><td><code>OrganizationCommandResult::Applied | Refused{NotOwner|NotFound|Conflict|SecondFactorRequired}</code></td><td><code>AllowanceChanged</code></td><td>Second</td></tr>
-<tr><td>Withdraw one workspace</td><td><code>machine:revoke</code></td><td>A person token and a recent factor</td><td>The same result type</td><td><code>AllowanceChanged</code></td><td>Second</td></tr>
+<tr><td>List enrollments</td><td><code>organization:view</code></td><td>Not needed (a read)</td><td>A new <code>OrganizationAdminResult::MachineEnrollments { entries: [{machineId, label, enrollmentId, state, lastGrantAt?, activeAllowances[]}] }</code>, covering Approved and Enrolled enrollments only. Refusals come from the existing <code>AdminRefusal</code>.</td><td>None. Reads aren't recorded; "each recorded" in my answer 7 meant the changes.</td><td>First</td></tr>
+<tr><td>Revoke</td><td><code>machine:revoke</code></td><td>Required</td><td>The existing <code>MachineEnrollmentRevocationResult</code>: <code>Revoked | NotFound | AlreadyEnded | Refused{NotPermitted|FactorNotRecent}</code></td><td>A revoke record, plus one <code>AllowanceChanged</code> per row</td><td>First (mounted today)</td></tr>
+<tr><td>Allow one workspace</td><td><code>workspaceAdmin:allowMachine</code></td><td>Required</td><td><code>OrganizationAdminResult::Applied</code> or <code>Refused{AdminRefusal}</code>; a new <code>NotFound</code> path for an unknown machine or workspace</td><td><code>AllowanceChanged</code> (machine, workspace, Active)</td><td>Second</td></tr>
+<tr><td>Withdraw one workspace</td><td><code>workspaceAdmin:withdrawMachine</code></td><td>Required</td><td>The same as Allow</td><td><code>AllowanceChanged</code> (machine, workspace, Withdrawn)</td><td>Second</td></tr>
 </tbody>
 </table>
-<p>Allow and Withdraw depend on the allowance table above. Sign-in's Machines tab and the CLI call these routes and stay in the sign-in lane.</p>
+<p>Allow and Withdraw use the issuer's existing <code>workspaceAdmin</code> statements. The draft's <code>machine:enroll</code> and <code>machine:revoke</code> were wrong. Allow and Withdraw depend on the allowance table. Sign-in's Machines tab and the CLI call these routes and stay in the sign-in lane.</p>
 
 <h2 id="checks">Planned checks</h2>
-<p>Every row is <strong>Planned</strong>. None has run. Each runs on both hosts (workerd and native), against real stores.</p>
+<p>Every row is <strong>Planned</strong>; none has run. Each runs on both hosts (workerd and native), against real stores. The extraction checkpoint carries main's current cases unchanged. The policy-delta checkpoint changes the named cases.</p>
 <table>
 <thead><tr><th>Item</th><th>What's done</th><th>What's seen</th><th>A wrong build that must fail</th></tr></thead>
 <tbody>
-<tr><td>1</td><td>Approve, then repeat the same request ID: once with the identical body, once with a changed label, before and after activation and reopen</td><td>Identical: the first answer and still one approval row. Changed: <code>RequestConflict</code>, with nothing written</td><td>Main's N03 replay. The changed-body case returns <code>Approved</code>.</td></tr>
-<tr><td>2</td><td>Depends on the owner's option. For A or B: approve the same machine ID in two organizations concurrently</td><td>Exactly one succeeds; the other gets <code>MachineInAnotherOrganization</code>. After a revoke, the second succeeds</td><td>A local-only primary key: both succeed</td></tr>
-<tr><td>3</td><td>Mint at 30 days minus 1 second and at exactly 30 days (injected clock)</td><td>The first is granted. The second gets <code>IdleExpired</code>, a bumped generation and withdrawn rows, written once</td><td>Expiry without the generation bump: an old approval then activates</td></tr>
-<tr><td>4</td><td>Approve {A, B}, withdraw B, then request in A and in B; revoke, then request in A</td><td>A is admitted. B gets <code>WorkspaceNotAllowed</code>. After the revoke, both are refused. The rows and records match</td><td>Admission still reading the JSON column: B is admitted after the withdraw</td></tr>
-<tr><td>5</td><td>Revoke with a stale factor; enroll a second machine with a stale factor; enroll the first machine with none</td><td><code>SecondFactorRequired</code>, <code>SecondFactorRequired</code>, then approved</td><td>A missing factor check on revoke</td></tr>
-<tr><td>6</td><td>Serve a malformed JWKS, then a good one; separately, a token signed with an unknown kid</td><td>Malformed: <code>Unavailable</code>, no socket admitted, no attachment replaced; then success after recovery. Unknown kid: <code>Rejected</code></td><td>Main's mapping: malformed gives <code>Rejected</code></td></tr>
-<tr><td>7</td><td>List, Revoke, Allow and Withdraw over the private route, as owner and as member</td><td>The owner gets typed results and records. The member gets <code>NotPermitted</code>. Allow and Withdraw change exactly one row</td><td>A missing route, or Allow without a permission check</td></tr>
-<tr><td>Idle (live)</td><td>Connect with a still-valid token at the boundary; let the 30 days cross while verification waits; reopen</td><td>Refused, with the expiry written once; a stale generation refused after reopen</td><td><code>validate_live</code> ignoring <code>last_grant_at</code> (main today): the connection is admitted</td></tr>
+<tr><td>1</td><td>Approve. Then repeat the same request ID with the identical body, a changed label, a reordered workspace set and a different machine, each before activation, after activation and after reopen.</td><td>Identical and reordered: the full original reply, and still one approval row and one audit set. Changed label: <code>RequestConflict</code>, with nothing written. Different machine: <code>NotPermitted</code>.</td><td>Main's N03: the changed label returns <code>Approved</code>. The named cases <code>device_login_decision_test.rs:153</code> and both host <code>approval.rs</code> replay cases are rewritten under the delta.</td></tr>
+<tr><td>2</td><td>Only for an A or B decision: concurrent approvals of the same ID in two organizations through the chosen authority. Then a lapse, a revoke, a late stale release, and a crash between the claim and the organization's write.</td><td>Exactly one reservation. The second organization is refused until a matching release. A stale release is ignored. Reconciliation releases only on a definite "ended".</td><td>A local-only primary key: both approve. A release that doesn't match the enrollment: a stale callback frees a newer claim.</td></tr>
+<tr><td>3</td><td>Use independent starting states (one stored grant aged 30 days − 1 s, one aged exactly 30 days), each minted once on an injected clock. Then try the pending older approval.</td><td>The first is granted. The second gives <code>IdleExpired</code>, the generation +1, one <code>AllowanceChanged</code> per row and one <code>MachineExpired</code>. Its replay gives <code>EnrollmentNotActive</code> with no write. The pending approval can't activate.</td><td>Expiry without the generation bump: the pending older approval activates.</td></tr>
+<tr><td>Live idle</td><td>Fixture: an aged stored grant (&gt;30 days) and an independently valid test token and attachment, whose deadlines are both still live. Connect, and renew. Separately, force the verification wait across the idle boundary. Also make the store unavailable.</td><td>Connect: <code>EnrollmentNotActive</code>. Renewal: the renewal refusal <code>EnrollmentNotActive</code>. One expiry write, and open sockets closed. Unavailable: no write, a retryable answer.</td><td><code>validate_live</code> ignoring <code>last_grant_at</code> (main): the same input connects and renews.</td></tr>
+<tr><td>4</td><td>Approve {A, B}, then activate. Withdraw B over a live connection. Request in A and in B, and list workspaces. Revoke, request again, then re-approve. Run the migration over the JSON rows.</td><td>A is admitted. B gets <code>WorkspaceNotAllowed</code> and is gone from List and Search. After the revoke, all are refused. The re-approval adds without withdrawing (V3). The backfilled rows equal the old JSON.</td><td>A reader left on the old authority: B is admitted, or listed, after the withdraw.</td></tr>
+<tr><td>5</td><td>Revoke with a factor that is absent, exactly at the window, and beyond it. Approve a second request after a pending-only first approval. Approve the first-ever request with no factor.</td><td>Absent or beyond the window: <code>Refused{FactorNotRecent}</code>. At the window: <code>Revoked</code>. Pending-first then second: <code>SecondFactorRequired</code>. First-ever: approved.</td><td>Revoke without its factor gate. An "enrolled machine" predicate: the pending-first case is approved without a factor.</td></tr>
+<tr><td>6</td><td>Cold cache with a malformed JWKS, then good keys. Cache unavailable. A token with an unknown kid on a warm cache.</td><td>Malformed or cache unavailable: the host's retryable outcome, no socket admitted, the attachment unchanged and still live, then success after recovery. Unknown kid: exactly one refresh fetch, then <code>Rejected</code>.</td><td>Main's mapping: malformed gives <code>Rejected</code>.</td></tr>
+<tr><td>7</td><td>Signed requests that grant only <code>workspaceAdmin:allowMachine</code>, only <code>machine:enroll</code>, or none. Each of List, Revoke, Allow and Withdraw, with repeats, on both hosts.</td><td>Allow succeeds only with <code>workspaceAdmin:allowMachine</code>. Refusals leave state unchanged. Each successful change writes exactly one row change and one record. Repeats are idempotent.</td><td>Allow gated on <code>machine:enroll</code>: the enroll-only request succeeds.</td></tr>
 </tbody>
 </table>
 
 <h2 id="held">Held outside S5</h2>
 <ul>
-<li>Revoke removing the enrollment's sessions: this waits on central's session list (the central Lead).</li>
+<li>Revoke removing the enrollment's sessions: this waits on central's session list. The downstream client disable on revoke stays.</li>
+<li>The EngineAdmin boundary (health, retired list, retry, discard): it's central's, under B02 of the slice-map review. Those operations don't read machine allowances.</li>
+<li>The organization workspace list for the approval picker: a central route still to be specified (see <a href="#allowance-readers">Readers</a>).</li>
 <li>The Mac token source, credential store and Router checks: the Mac Lead (<code>docs/wip/b3-mac-side-handover.md</code>).</li>
-<li>The two parked B3 branches are history. Nothing is imported from them, and main's one-machine-ID rule stands.</li>
+<li>The two parked B3 branches: history. Nothing is imported from them, and main's one-machine-ID rule stands.</li>
 </ul>
 
 </ex-document>
