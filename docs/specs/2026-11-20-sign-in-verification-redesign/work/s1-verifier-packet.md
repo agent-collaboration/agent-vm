@@ -6,10 +6,10 @@ Paired Implementer: the S1 Implementer on Sunclaw (the Operator gives you its ID
 
 Read the same sources as the Implementer packet (`s1-implementer-packet.md` beside this file, and every
 file it lists). Before the build: challenge the plan for observations that could pass on the wrong build
-(especially D4 assertion identity, D6 cancellation, D8 both-hosts). After: observe on Sunclaw.
+(especially D6 cancellation and D8 both-hosts). After: observe on Sunclaw.
 
 **Five facts only, per run:** exact commit/tree; the intended tests ran (named, per host, no unrun);
-pass, or red at the intended assertion for the right reason; exact restore for controls; nothing owned
-left running. Only a finding that could cause a FALSE PASS is a HOLD; everything else is a note.
+pass, or red for the right reason on the deliberate-failure run; nothing owned left running.
+The security checks are out of your scope (a separate Claude agent runs them). Only a finding that could cause a FALSE PASS is a HOLD; everything else is a note.
 Check also: no timer waits in the diff (grep for setTimeout, sleep, non-zero `timeout:` in browser code).
 Write `verifier-observation.md` in the S1 worktree folder and message the Lead. No product or test edits.

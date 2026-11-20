@@ -26,8 +26,9 @@ Branch `verify/playwright-driver` from main `7e32e00e993af5ecfcdb8ce366c5f0dea47
 - D3/D7: new `verify-auth` skill from PR #9's recipe (branch `verify/sign-in-script`, 1f2f039) minus all
   process-group/late-exit/SIGTERM rules; port runner pieces per D7; keep main's B2 selections
   (`organization`, `revision-fence`) routable; agent journey needs no browser.
-- D4: security checks keep exact assertion identity (AST anchor + stack reader, or simpler only if it still
-  rejects the neighbour at lines 37/38); `pnpm verify:sign-in` = journeys only by default.
+- D4 (scope for you): leave the security-check edits and their decoder as they are on PR #9 except for
+  import-path changes D7 requires; make `pnpm verify:sign-in` run journeys only by default. You do NOT
+  run the security checks; the Lead runs them through a separate Claude agent after your handback.
 - D6: every wait is an event with library timeout 0. No 8 s deadlines, no sleeps, no polling. A missing
   event is cancelled causally (`page.close({ reason })`) and the scenario closes browser, CLI child,
   harness and observers on every exit path. Do not change vitest.config.ts timeouts.
@@ -39,8 +40,7 @@ No wall-clock waits. No SIGKILL. UUIDv7 only. TypeScript only. No new check gate
 Sunclaw is serial: coordinate heavy runs with the Verifier.
 
 ## Done when (your handback)
-Both hosts green on Sunclaw for every moved scenario (named per host); each moved test's control red at
-its intended assertion then green after restore; the 4 journeys + B2 selections run cold from the skill;
+Both hosts green on Sunclaw for every moved scenario (named per host); the 4 journeys + B2 selections run cold from the skill;
 one deliberate failure observed through cleanup; repo checks (lint, typecheck, format, unit, integration)
 pass. Handback with commit, commands, counts, exit codes, and a STRUCTURE section (package ownership,
 seams, invariants, any implicit state). Message the Lead.
