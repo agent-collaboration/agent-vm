@@ -50,4 +50,18 @@ The owner's answer to the explained split (a person-CLI banner that can't be dis
 
 - **"Workspaces" as the fourth tab, rather than "Agents":** proposed by the Lead and shown in the mockups. The owner approved the mockups' look ("yes that looks fine") but never answered this specific question.
 - **A plain member sees only Me:** follows from today's code, where the member role has no permissions. The owner hasn't decided whether members should see more.
-- **Phone navigation:** stock Sidebar → Sheet, or a bottom bar. Open; the Lead asked on 20 Nov.
+- ~~**Phone navigation:**~~ decided later on 20 Nov; see below.
+
+## Navigation UI: phone navigation (added later on 20 Nov)
+
+> "ok ukse stock sidebar a"
+
+This is his answer to "Phone navigation: A (stock Sidebar → Sheet) or B (bottom bar)?". It replaces the "open" entry above.
+
+## Machine claim (20 Nov)
+
+> "a machien cannot move to another organization"
+
+Then, as the final word:
+
+> "you get rid of the mahcine then reregister.  orgnization are silos"
