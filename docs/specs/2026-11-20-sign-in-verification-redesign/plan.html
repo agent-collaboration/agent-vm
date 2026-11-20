@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign-in verification plan</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="content">
+  <nav slot="pages" aria-label="Pages">
+    <a href="design.html">Verification redesign</a>
+    <a href="plan.html">Plan</a>
+  </nav>
+</ex-nav>
+<ex-document id="content">
+
+<h1>Sign-in verification plan</h1>
+
+<ex-callout title="Order" tone="note" icon="path">
+<p>The steps run in this order: spike, then your decision on the driver, then one PR that swaps the driver and replaces the recipe. The staging journey waits for BG. PR #9 closes once the replacement PR is open. Each PR merges only after its proof on Sunclaw, the Verifier's five facts, my acceptance, a fresh review, green CI and telling the central Lead.</p>
+</ex-callout>
+
+<ex-mermaid id="order" label="Plan order" data-width="canvas"><script type="text/plain">
+flowchart LR
+  s0["S0 Spike<br/>running on Sunclaw"] --> d["Owner: pick driver<br/>(A browser mode / B Playwright)"]
+  d --> s1["S1 PR: driver swap +<br/>delete our Chrome machinery<br/>+ verify-auth recipe"]
+  s1 --> close["Close PR #9"]
+  s1 --> s2["S2 Staging sign-in journey<br/>(after BG staging)"]
+  class s0 slot3
+  class d slot2
+</script></ex-mermaid>
+
+<table>
+<thead><tr><th>Step</th><th>Who</th><th>Done when</th></tr></thead>
+<tbody>
+<tr><td><strong>S0 Spike</strong>: build the passkey journey with A and with B</td><td>Sol Implementer <code>01a1f8ab</code> on Sunclaw</td><td>The report has each step's yes/no, its code, how each wait works, 5 runs, lines of code and a recommendation. Per the review addendum it also covers: response hold and release, two ordered replies, the response body and cookie across navigation, trusted click and Enter, the real CLI handoff, cancellation when an event never arrives, and installing Chromium on macOS and Linux CI. I read the code and results myself.</td></tr>
+<tr><td><strong>Driver decision</strong></td><td>Owner, 20 Nov: decided</td><td>Vitest browser mode (Playwright provider) by default; Playwright library only for what browser mode cannot do, per the spike report.</td></tr>
+<tr><td><strong>S1 PR</strong>:
+<ul>
+<li>wrap the chosen driver;</li>
+<li>move the 4 browser test files onto it, keeping their assertions;</li>
+<li>delete our DevTools client and process-group code;</li>
+<li>new <code>verify-auth</code> skill and 4 journey scripts from PR #9's recipe, without the lifecycle rules;</li>
+<li>security checks run on change and keep the exact assertion identity (D4);</li>
+<li>the runner and command cutover, with main's B2 selections kept routable (D7);</li>
+<li>an explicit host matrix and browser project (D8).</li>
+</ul></td><td>Sol Implementer and a separate Sol Verifier</td><td>Each browser scenario is green on both hosts on Sunclaw, each named explicitly. Each moved test's control is red at its intended assertion, then green after restore. The 4 journeys and the B2 selections run cold from the skill. One deliberate failure is observed through cleanup. Any <code>ci.yml</code> change goes to the owner first. Then review, CI, merge.</td></tr>
+<tr><td><strong>Close PR #9</strong></td><td>Me</td><td>S1 is open, and the PR #9 parts it reuses are listed in S1's description.</td></tr>
+<tr><td><strong>S2 Staging row</strong></td><td>BG's proof (SO15, SO16), linked from the recipe</td><td>BG staging exists and SO15 and SO16 have been observed on the deployed build: every journey on each deploy, the four production refusals, and one real Google or GitHub sign-in. Only then does the recipe's staging row stop being open.</td></tr>
+</tbody>
+</table>
+
+<h2 id="not-in-scope">Not in this plan</h2>
+<ul>
+<li>The navigation tabs (People / Machines / Agents / Me): a UI design for BG.</li>
+<li>B3 machine login: its own plan.</li>
+<li>The follow-up sign-in items: the intermittent native hang (likely gone with the driver swap; re-checked in S1), <code>passkeyAuditPending</code> as a closed union with a Hegel test, and the PR #1 finalizer items. Each goes into S1 only if the driver swap touches it; otherwise it gets its own small PR.</li>
+</ul>
+
+</ex-document>
+</body>
+</html>

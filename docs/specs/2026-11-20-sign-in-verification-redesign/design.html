@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign-in verification redesign</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="content">
+  <nav slot="pages" aria-label="Pages">
+    <a href="design.html">Verification redesign</a>
+    <a href="plan.html">Plan</a>
+  </nav>
+</ex-nav>
+<ex-document id="content">
+
+<h1>Sign-in verification redesign</h1>
+
+<ex-callout title="The answer" tone="note" icon="path">
+<p>Keep the verification <em>recipe</em> that PR #9 rewrote: the short <code>verify-auth</code> skill with four journeys and a script for each. Throw away the browser machinery underneath it, which is our hand-written Chrome DevTools client, process groups, abort registry and acquisition state machine. A browser library takes its place, chosen by the running spike. Every claim gets checked at the cheapest place where it can actually break. The deployed app is the one place we have never checked, and it becomes a named journey that stays open until staging exists.</p>
+<p><strong>Supersedes</strong> <code>docs/specs/2026-11-19-sign-in-verification-script/design.html</code>. PR #9 does not merge.</p>
+</ex-callout>
+
+<h2 id="problem">What went wrong</h2>
+<ul>
+<li><strong>A false premise.</strong> The B1-B and B1-C verification designs, which I wrote, chose raw DevTools over Playwright ("No Playwright, no timers"). "No Playwright" was never the owner's rule; the only rule is <em>no wall-clock timers in tests</em>. The owner said so again on 20 Nov ("i dont fuckign say not playwright", "i said no wall clock tiemrs"), and that ruling replaces the CDP choice. So we wrote a DevTools client (3,475 lines with its tests), and owning it meant owning Chrome's start and shutdown. That produced the B1-C Enter-key hang and every PR #9 race fix.</li>
+<li><strong>Verification turned into test-of-tests.</strong> The 14 security checks (break the code on purpose, then expect a named test to go red) became the main event, with an AST anchor and a stack-path decoder. That is a sensitivity check on our tests. It says nothing about whether the product works.</li>
+<li><strong>The deployed boundary has no entry in the recipe.</strong> BG already plans staging proof (SO15, SO16), and main's skill names hosted gaps. But the verify recipe has no staging journey to run or to report as open.</li>
+<li><strong>The recipe on main is hard to run cold.</strong> <code>.agents/skills/verify-auth/SKILL.md</code> on main does have target selection and a cold-run entry, but it sits inside a long block of history. PR #9's 29-line rewrite is easier to follow and is the part worth keeping. Main's B2 selections (organization statements, revision fences) must keep a route (D7).</li>
+</ul>
+
+<h2 id="model">Where each claim is checked</h2>
+<p>Verification means watching the expected result on the real target, at the <strong>cheapest place where the wrong behaviour is still real</strong>. An existing real-path test that drives the exact interaction, and would fail on the wrong behaviour, counts as the observation.</p>
+
+<ex-mermaid id="boundaries" label="Claim boundary to observation" data-width="canvas"><script type="text/plain">
+flowchart LR
+  c1["Pure rule<br/>(role check, expiry, state transition)"] --> o1["Focused unit / Hegel test"]
+  c2["Server + storage<br/>(session row, membership, refusal)"] --> o2["Host test over HTTP<br/>Node + workerd"]
+  c3["Page in a browser<br/>(click before load, keyboard, passkey UI)"] --> o3["Real Chromium via library driver<br/>against the local host"]
+  c4["Deploy / config / CSP / provider<br/>(Google, real passkey, real counters)"] --> o4["Deployed app on staging<br/>person or computer-use agent"]
+  o1 --> ci["CI on every PR"]
+  o2 --> ci
+  o3 --> ci
+  o4 --> rel["Before a release"]
+  class o4 slot2
+</script></ex-mermaid>
+
+<table>
+<thead><tr><th>Journey</th><th>Expected result comes from</th><th>Wrong behaviour it must catch</th><th>Where it is observed</th><th>State</th></tr></thead>
+<tbody>
+<tr><td>Passkey sign-in: storage</td><td>B1-B: a passkey without user verification is refused, with no session or credential row, refusal audited, challenge consumed</td><td>An orphaned session row after a refusal</td><td>The existing public HTTP host test that compares every session and credential row (<code>people-passkey-sign-in.host.e2e.test.ts:179–219</code>), on both hosts</td><td>Exists, unchanged</td></tr>
+<tr><td>Passkey sign-in: browser</td><td>B1-B: click-only Continue with Passkey, native WebAuthn, visible refusal, HttpOnly session cookie, real CLI continuation</td><td>The button needs autofill; the refusal isn't shown; the CLI handoff breaks</td><td>Real Chromium against both local hosts. Reads the real response body and cookie across navigation, and follows the CLI child to completion.</td><td>Exists; its browser driver changes</td></tr>
+<tr><td>Organizations: browser</td><td>B1-C: choose and switch on the account page, trusted Enter, CLI continuation, lost replies, stale People replies not published</td><td>A stale reply overwrites the current page; a lost reply leaves the page stuck; Enter does nothing</td><td>Real Chromium against both hosts: hold and release the real response, order two live replies. The lost-reply missing-reload case stays on its unit test, as B1-C V6 records.</td><td>Exists; its browser driver changes</td></tr>
+<tr><td>Organizations: before the script loads</td><td>B1-C review blocker: Choose buttons are disabled until the island mounts</td><td>A click before mount submits or is lost</td><td>The SSR markup assertion (initial <code>disabled</code>) plus mounted-component tests. A real-browser case only with an intentionally held island load.</td><td>SSR and unit coverage exists; name the exact page and state</td></tr>
+<tr><td>Organizations: data and permissions</td><td>B1-C: no other organization's data; live permission fences</td><td>Another organization's members show up</td><td>Host tests over real HTTP and storage, on both hosts</td><td>Exists, unchanged</td></tr>
+<tr><td>CLI sign-in</td><td>B1-A and B1-B: bootstrap, Continue back to the CLI loopback</td><td>Continue loses the pending CLI sign-in</td><td>The original authorization completes in the real CLI child, with the trusted click or Enter attached to the scenario that exercises it. The two driver-fixture files (<code>native-browser-click</code>, <code>native-cli-keyboard-activation</code>) test our old driver. Their invariants (a trusted click hits the target; Enter activates) are ported where the new adapter owns them, and old-driver-specific assertions are retired by name.</td><td>Exists; reshaped</td></tr>
+<tr><td>Agents</td><td>Agent registration and workspace-bound credentials</td><td>A credential works outside its workspace</td><td>HTTP, the delivered CLI and Gateway/tool effects. The refusal is read back as zero effect in the other workspace. No browser.</td><td>Exists, unchanged</td></tr>
+<tr><td><strong>Staging</strong></td><td>BG SO15 and SO16 (approved)</td><td>Broken deploy configuration or provider settings; a way into production from staging</td><td>As BG specifies: every journey on each staging deploy, the four production refusals, and one real Google or GitHub sign-in per release (D5)</td><td><strong>Open until BG staging</strong></td></tr>
+<tr><td>Machine login</td><td>B3 Contract 1</td><td>A revoked machine keeps working</td><td>A protected operation after revocation is refused with no effect. Designed with B3.</td><td>Not yet</td></tr>
+</tbody>
+</table>
+
+<h2 id="decisions">Decisions</h2>
+
+<h3 id="d1">D1. One browser driver, owned by a library</h3>
+<p>The spike (running on Sunclaw) builds the passkey journey twice and recommends one:</p>
+<ul>
+<li><strong>A: Vitest browser mode</strong> with the Playwright provider on Chromium. One runner. <code>cdp()</code> gives the virtual authenticator. The open question is whether a test can follow full-page navigation and redirects to our host, because test code runs inside Vitest's iframe. A custom <code>BrowserCommand</code> with the Playwright <code>context</code> is the escape hatch.</li>
+<li><strong>B: the Playwright library</strong> driven from our existing Vitest host tests. Still one runner (Vitest). Playwright launches and closes Chromium.</li>
+</ul>
+<p><strong>Pass criteria for the choice:</strong></p>
+<ol>
+<li>it follows full-page redirects;</li>
+<li>it drives the virtual WebAuthn authenticator;</li>
+<li>every wait is an event, with library timeouts at 0;</li>
+<li>Chromium starts and stops through the library;</li>
+<li>it gives the same result 5 out of 5 times on Sunclaw;</li>
+<li>it can observe what our retained tests depend on: hold and release a real response, order two live replies, read a real response body and HttpOnly cookie across navigation, trusted click and Enter, and the real CLI handoff (a small library-owned DevTools session is acceptable);</li>
+<li>a wait whose event never arrives has a defined cancellation that closes the browser, harness and CLI child;</li>
+<li>Chromium installs and is identified the same way on Sunclaw (macOS) and Linux CI;</li>
+<li>it needs the least code of ours.</li>
+</ol>
+<p><strong>Owner decision (20 Nov):</strong> use A, Vitest browser mode with the Playwright provider on Chromium, wherever it meets the criteria. For any interaction it cannot meet, use the Playwright library for that part only. The spike report says which interactions those are. The plan as a whole is approved.</p>
+<p><strong>Spike result (20 Nov, Sunclaw, main <code>7e32e00e</code>, both hosts, 5 runs each): B, the Playwright library from Vitest Node tests.</strong> Browser mode cannot host the journey. Our pages send <code>frame-ancestors 'none'</code>, so navigating Vitest's iframe to the app is blocked (<code>ERR_BLOCKED_BY_RESPONSE</code>), and the CSP stays as it is. Browser mode works only by driving a separate page with Playwright from a Node command, plus extra setup and a 10 s shutdown hang on every run (about 20 s per run, against about 10 s for B). All six interaction probes passed with B. Under the owner's rule, the journeys use the Playwright library. <strong>Wait correction:</strong> the spike used 8 s event deadlines; S1 sets every wait to timeout 0 and catches a missing event with the causal cancellation the spike proved (<code>page.close({ reason })</code>). Report: Sunclaw <code>fleet-access-runner/spike-browser-tools/REPORT.md</code>, SHA-256 <code>5dde7f48</code>. Moving jsdom page tests to real Chromium is a separate decision with its own test list. The choice comes back to the owner with the spike report before anyone builds on it.</p>
+
+<h3 id="d2">D2. Delete our Chrome machinery</h3>
+<p><strong>On main, removed or replaced in S1:</strong> <code>native-browser-protocol.ts</code> and its unit test, and <code>native-browser-page.ts</code> and its unit tests. Their importers are dispositioned one by one (removed, ported or kept): the scenario helpers (<code>native-passkey-browser-scenario.ts</code>, <code>organization-browser-*.ts</code>, <code>native-browser-scenario.ts</code>), <code>native-passkey-registration-observation</code> and <code>native-browser-cleanup.ts</code>. The cleanup behaviour worth keeping is that the first error survives when evidence capture or close fails. <strong>Only in PR #9, never merged:</strong> groups, acquisition, abort worker, test-cleanup and owned-process-group. Test-only browser dependencies belong to the private <code>sign-in-test-support</code> package. If A needs a Node-side <code>BrowserCommand</code>, it is registered in that package's browser project and owned there. The browser tests (<code>native-browser-click</code>, <code>native-cli-keyboard-activation</code>, <code>people-organization-browser</code>, <code>sign-in-native-browser</code>) move onto the chosen driver and keep their assertions. An assertion is never weakened to make the move easier.</p>
+
+<h3 id="d3">D3. Keep PR #9's recipe and drop its lifecycle rules</h3>
+<p>The new <code>verify-auth</code> keeps PR #9's 29-line <code>SKILL.md</code> structure, its journey references and the four journey scripts. It drops the process-group, late-exit and SIGTERM rules, because the library owns Chrome now. It adds the <em>Staging sign-in</em> row, marked as a draft with its gap, and keeps the <em>Machine login</em> row as future. The skill stays honest about what the local fixtures fake.</p>
+
+<h3 id="d4">D4. Security checks: sensitivity on change, with the intended assertion identified</h3>
+<p>Keep the 14 deliberate breaks. A red counts only when it comes from the <strong>intended assertion</strong>, identified unambiguously. Same file, test name and message is not enough: the anchor test shows two neighbouring matchers (lines 37 and 38) with identical text, and only one is right. Keep an exact assertion identity (today the AST anchor plus the stack reader; a simpler mechanism only if it still rejects the neighbour). Also keep the exact case set and failure count, clean setup and teardown, and green on the same selection after exact restore and rebuild.</p>
+<p><strong>When they run:</strong> <code>pnpm verify:sign-in</code> runs the journeys only. The skill names when to run controls: a change to a guarded product path, its test, or the test oracle or driver it uses. The help text and the skill example change with the default. For the driver migration, S1 runs each control whose test moved. A red from an event that never arrived is an incomplete observation, not a catch, unless a deciding failure names the affected behaviour.</p>
+<h3 id="d5">D5. Staging follows BG's approved proof</h3>
+<p>The recipe gets a <em>Staging</em> row that points to BG's approved observations instead of inventing its own:</p>
+<ul>
+<li><strong>SO15:</strong> after each staging deploy, reset, create test identities and drive every journey signed in, using the staging-only <code>testUtils</code> routes.</li>
+<li><strong>SO16:</strong> the four production refusals, plus one real Google or GitHub sign-in on staging per release, by the dedicated test account or by the owner with a Verifier watching.</li>
+</ul>
+<p>Screenshots support a visible sign-in only when they are tied to the deployed build and an observed session. They do not prove CSP or rate limits. Deployed CSP needs the actual response policy observed. A deployed limiter is claimed only from an observed refusal with state unchanged. Passkey sign-in stays proven locally (B1-B R67), and revocation belongs to B3. Until BG's staging exists, the row is open, and no claim says the product is verified on its deployed target.</p>
+<h3 id="d6">D6. Waits</h3>
+<p>Inside tests, every wait is an event: navigation, a response, a DOM-ready signal or a <code>waitForEvent</code>, with library timeouts set to 0. No sleeps and no polling. Vitest's existing project timeouts in <code>vitest.config.ts</code> are a repository setting and stay unchanged (no gate changes). They bound the verdict, but cleanup still needs its own owner: each scenario closes its browser context, harness, CLI child and armed observers on every exit path, including a failed or cancelled wait.</p>
+
+<h3 id="d7">D7. Runner and command cutover</h3>
+<p>PR #9's entry scripts are thin wrappers over shared code. S1 lists each piece and what happens to it:</p>
+<ul>
+<li><strong>Kept:</strong> selection, target checkout and build, and the report with its five facts.</li>
+<li><strong>Removed:</strong> the process adapter (it uses the group helper) and the up-front Chrome requirement. The agent-only journey needs no browser.</li>
+<li><strong>Replaced:</strong> the assertion resolver, as D4 describes.</li>
+</ul>
+<p>The root command and import cut over from main's <code>scripts/verify-auth/verify-auth.ts</code> → <code>auth-verification-cli.ts</code>. Main's B2 selections (<code>organization</code>, <code>revision-fence</code>) and their evidence flags keep a route in the new recipe. Retiring them would need the owner. The cold pass proves that the four entries and the aggregate use the declared source and build, run the exact selected host cases, and report skips and cleanup accurately.</p>
+
+<h3 id="d8">D8. Discovery, host matrix and CI</h3>
+<p>Today CI runs the <code>e2e-host</code> project once, with no <code>SIGN_IN_TEST_HOST</code> matrix. The native sign-in test parameterises both hosts itself, but the organization browser scenarios default to Cloudflare. S1 defines the Vitest project and file suffix for browser tests, makes each browser scenario run on both hosts explicitly (no environment default), and installs and identifies Chromium on Linux CI and on Sunclaw. Changing <code>ci.yml</code> or adding a CI step is a gate change and goes to the owner first. One deliberately failed run is observed through cleanup and private evidence retention.</p>
+
+<h2 id="structure">Structure</h2>
+<ul>
+<li><strong>Package:</strong> the browser adapter lives in <code>packages/sign-in-test-support/src/test-fixtures/</code>. It launches a context, adds a virtual authenticator, opens a page on a harness origin, and exposes the interaction seams in D1: response hold and release, response and cookie reads, trusted input. The scenario fixture owns the journey; the harness owns routes and storage. No other package depends on it.</li>
+<li><strong>Seams:</strong> the harness (<code>startLocalAuthHarness</code>) stays the only way a host starts. The driver only gets an origin.</li>
+<li><strong>State:</strong> no lifecycle state machine of ours. The library's context close is the single browser shutdown. The scenario owns the order of closing browser, CLI child and harness, and the first error survives.</li>
+</ul>
+
+<h2 id="unverified">What stays unverified after this redesign</h2>
+<ul>
+<li>A deployed app, real Google, a physical authenticator, and real Cloudflare counters across locations: open until staging.</li>
+<li>Machine login journeys: they come with B3.</li>
+<li>Chromium install and runtime on Linux CI: not yet run (needs a <code>ci.yml</code> step, owner first).</li>
+<li>Public sign-out: <code>/sign-out</code> answers 404 on main. That is a product gap, handled with the navigation and Me work, not in S1.</li>
+</ul>
+
+</ex-document>
+</body>
+</html>
