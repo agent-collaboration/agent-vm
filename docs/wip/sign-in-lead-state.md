@@ -109,14 +109,12 @@ The central Lead also carries:
 
 **What it means:** each set gets a `design.ts` typed record. The central Lead is preparing a general checker and a worked example. Until then, keep the U, R, D and V IDs and the heading IDs stable.
 
-## Machine claim: final ruling (20 Nov)
+## Machine claim: settled (20 Nov)
 
-**His words:** "a machien cannot move to another organization".
+**His words:** "you get rid of the mahcine then reregister.  orgnization are silos".
 
 **What it means:**
-- A permanent claim in sign-in: `login_machine_claims`, one row per machine ID, written at the first approval and never changed.
-- Any other organization is refused.
-- A Mac joins another organization only with a new machine ID, which is Mac Lead work.
-- Central changes nothing.
-
-**Design:** B3 `machine-claim.html`, revision 4.
+- There is no server-side claim; nothing coordinates organizations.
+- The Router refuses to register while it's already registered (Mac Lead).
+- `machine-claim.html` is superseded and nothing replaces it.
+- He also said: "if htis is blockking you are misusign time".
