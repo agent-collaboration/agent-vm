@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign-in navigation: design</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="nav-design" src="./navigation.json"></ex-nav>
+<ex-document id="nav-design">
+
+<h1>Sign-in navigation: design</h1>
+
+<ex-callout title="The answer" tone="note" icon="path">
+<p><strong>Switchboard's signed-in pages become one shell.</strong></p>
+<ul>
+<li>A shadcn <strong>Sidebar</strong> with four destinations: <strong>Me / People / Machines / Workspaces</strong>. On phones it opens as a <strong>Sheet</strong> from ☰.</li>
+<li>An organization switcher in the header.</li>
+<li>One page per job, in place of today's crowded "Your account" page and the unstyled admin page.</li>
+</ul>
+<p>Everything is stock shadcn and Better Auth UI, as shipped. The only exceptions are listed in the <a href="shadcn-inventory.md">shadcn inventory</a>, each with its documented composition.</p>
+<p><strong>The product gaps this closes:</strong></p>
+<ul>
+<li>there is no public sign-out;</li>
+<li>there is no navigation;</li>
+<li>the "Add passkey" button moves when the list loads.</li>
+</ul>
+</ex-callout>
+
+<h2 id="decisions">Decided by the owner (20 Nov)</h2>
+<ul>
+<li><strong>The groups and the switcher:</strong> "yes is that the righ torganziaiton?  ktehse grokups? what ar ediffrent rekpsobilities?  yes organziaiton is a switcher".</li>
+<li><strong>The look, shadcn only, and the inventory by Sol:</strong> "yes that looks fine mak esrue you kusign shad cn compoenents do not make anyhting snoflake do kyo udnetnad?  make srue your diesng is ivnetored by sol agains shadnc".</li>
+<li><strong>Landing after an organization switch:</strong> "1.  in page taht ykouk allow to see."</li>
+<li><strong>The CLI split:</strong> "yes your split make sense what yko usaid". The person-CLI sign-in is a banner that can't be dismissed, and pending machine logins live in Machines.</li>
+<li><strong>Phone navigation:</strong> "ok ukse stock sidebar a". This means the stock Sidebar, which becomes a Sheet on phones.</li>
+</ul>
+<p><strong>Assumptions, not yet decided by the owner:</strong></p>
+<ul>
+<li>the fourth destination is <strong>Workspaces</strong>, with agents inside each workspace, rather than "Agents";</li>
+<li>a plain member sees only <strong>Me</strong>, because the member role has no permissions today.</li>
+</ul>
+<p>Both are listed on <a href="decisions.html">Decisions</a>.</p>
+
+<h2 id="requirements">Requirements</h2>
+<table>
+<thead><tr><th>ID</th><th>Requirement</th><th>Source</th></tr></thead>
+<tbody>
+<tr id="N1"><td>N1</td><td>Every signed-in page has the same shell: a header with Switchboard and the organization switcher, and a Sidebar with the destinations the person may see. On phones the Sidebar opens from ☰ as a Sheet.</td><td>Owner, groups and phone navigation</td></tr>
+<tr id="N2"><td>N2</td><td>Destinations are shown by permission: Me for everyone; People, Machines and Workspaces for those holding the matching permissions (today, the owner).</td><td>Owner, groups; <code>organization-access-control.ts</code></td></tr>
+<tr id="N3"><td>N3</td><td>After switching organization, the person lands on the first destination they may see.</td><td>Owner, landing</td></tr>
+<tr id="N4"><td>N4</td><td><strong>Me:</strong> passkeys, authenticator app, recovery codes, <strong>my sessions with Sign out</strong>, and my invitations (Accept or Decline).</td><td>Owner, groups; the sign-out gap</td></tr>
+<tr id="N5"><td>N5</td><td>A pending person-CLI sign-in shows as a banner that can't be dismissed, with Continue and Cancel, until the CLI's deadline. Once continued, that login appears under My sessions.</td><td>Owner, CLI split; BG deadline rule</td></tr>
+<tr id="N6"><td>N6</td><td><strong>Machines:</strong> enrolled Macs (label, state, last token grant), Revoke, and pending machine logins as "Waiting for approval" with Approve and Deny.</td><td>Owner, CLI split; B3; S5 #7</td></tr>
+<tr id="N7"><td>N7</td><td><strong>Workspaces:</strong> a list of workspaces. Opening one shows in-page tabs: Agents, Allowed machines (Allow and Withdraw) and Live sessions.</td><td>Assumption (Workspaces); B3 S4</td></tr>
+<tr id="N8"><td>N8</td><td>Loading a list never moves a control the person can click. The Add passkey button sits in the card header, and the list area is reserved.</td><td>The PR #10 hang diagnosis</td></tr>
+<tr id="N9"><td>N9</td><td>Stock shadcn and Better Auth UI as shipped, and nothing hand-made. Every element maps to the inventory.</td><td>Owner, shadcn</td></tr>
+</tbody>
+</table>
+
+<h2 id="shell">The shell</h2>
+<ex-mermaid id="shell-map" label="Pages and what each holds" data-width="canvas"><script type="text/plain">
+flowchart LR
+  shell["Shell: SidebarProvider · Sidebar (Sheet on phone) · header: SidebarTrigger ☰ · Switchboard · Org switcher (DropdownMenu)"]
+  shell --> me["/me<br/>Passkeys · Authenticator · Recovery codes<br/>My sessions + Sign out · My invitations"]
+  shell --> people["/people<br/>Members · Invitations · Lookup"]
+  shell --> machines["/machines<br/>Enrolled Macs · Revoke<br/>Waiting for approval: Approve / Deny"]
+  shell --> ws["/workspaces → /workspaces/:id<br/>Tabs: Agents · Allowed machines · Live sessions"]
+  cli["Alert banner (CLI pending): Continue · Cancel"] -.-> shell
+</script></ex-mermaid>
+<ul>
+<li><strong>Routes:</strong> <code>/me</code>, <code>/people</code>, <code>/machines</code>, <code>/workspaces</code> and <code>/workspaces/:id</code>. Each is a real route, so browser history and links work. The Sidebar uses <code>SidebarMenuButton</code> rendered as a link, with <code>isActive</code> and <code>aria-current="page"</code>.</li>
+<li><strong>The landing:</strong> <code>/owner-ready</code> (today's account page, <code>sign-in-http-handler.ts:162,231–313</code>) redirects to the first permitted destination. The setup flow (<code>/setup</code>, BG) is unchanged.</li>
+<li><strong>The switcher:</strong> a <code>DropdownMenu</code> with a <code>DropdownMenuRadioGroup</code> of memberships (role shown), then Settings, Audit and Delete organization for owners. Delete is <code>variant="destructive"</code> and confirmed in an <code>AlertDialog</code>. Switching uses the existing chooser readback (<code>person-organization-choice.tsx:14–55</code>), then lands per N3.</li>
+<li><strong>The CLI banner:</strong> a shadcn <code>Alert</code> under the header with <code>Button</code> Continue and Cancel, and no close ✕. Cancel tells the CLI the sign-in was refused.</li>
+</ul>
+
+<h2 id="pages">Pages and their parts</h2>
+<p>The full element-by-element map is in the <a href="shadcn-inventory.md">shadcn inventory</a>. This is the summary.</p>
+<table>
+<thead><tr><th>Page</th><th>Parts</th><th>Better Auth UI</th><th>Data</th></tr></thead>
+<tbody>
+<tr><td>Me</td><td><code>Card</code> + <code>CardHeader/CardAction</code> (Add passkey in the header) + <code>Skeleton</code> in a reserved <code>CardContent</code>; <code>Item</code> rows; <code>Badge</code>; <code>AlertDialog</code> for Replace recovery codes</td><td>Copy <code>ActiveSessions</code> (session rows and Sign out) and <code>UserInvitations</code>. Keep the local <code>PasskeyManager</code> hooks and the guarded factor operations.</td><td>The existing passkey and factor routes. <strong>New public routes</strong>: list sessions, sign out, revoke a session, list my invitations, reject an invitation.</td></tr>
+<tr><td>People</td><td>The existing product island, inside a <code>Card</code> and <code>Table</code></td><td>Keep the product island (it owns the checked reads and the lookup)</td><td>The existing <code>/organization/people-list</code>, <code>/people</code> and <code>/person-membership</code></td></tr>
+<tr><td>Machines</td><td><code>Table</code>, <code>Badge</code> for state, <code>AlertDialog</code> for Revoke, Deny and Approve; a "Waiting for approval" section</td><td>None (Switchboard data)</td><td>Through sign-in's private link to central: List and Revoke (S5 #7, first); pending device codes from sign-in's own <code>deviceCode</code> table</td></tr>
+<tr><td>Workspaces</td><td><code>Table</code>; on a workspace page, <code>Tabs</code> with a <code>Table</code> in each tab</td><td>None</td><td>Central: <strong>a workspace list</strong> (a B2 <code>ListWorkspaces</code> item, not on main), Allow and Withdraw (S5 #7, second), and agents</td></tr>
+</tbody>
+</table>
+
+<h2 id="new-routes">New public routes on sign-in</h2>
+<p>Today the public allowlist (<code>response-release/sign-in-request-handler.ts:11–98</code>) admits none of these. Each is a Better Auth route already, added to the allowlist with its tests:</p>
+<ul>
+<li><code>list-sessions</code>, <code>sign-out</code> and <code>revoke-session</code>. "This session" is marked from a safe session ID, never the token, because session reads strip the token (<code>session-read-without-token.ts:1–22</code>).</li>
+<li><code>organization/list-user-invitations</code> and <code>organization/reject-invitation</code>. BG's guarded Decline rule applies: it updates only while the invitation is pending.</li>
+<li><code>organization/update</code> and <code>organization/delete</code>, owner only. Delete needs a fresh second factor.</li>
+</ul>
+
+<h2 id="dependencies">Dependencies outside sign-in</h2>
+<ul>
+<li><strong>Machines List and Revoke:</strong> central's S5 private admin routes. Revoke exists; List is new.</li>
+<li><strong>Workspaces:</strong> central's workspace list, plus Allow and Withdraw (S5 #7, second). Until central mounts them, Workspaces shows an empty state saying it's coming soon, and People, Me and Machines ship first.</li>
+<li><strong>The Router's refusal text:</strong> the Mac Lead.</li>
+</ul>
+
+<h2 id="build-order">Build order</h2>
+<ol>
+<li><strong>The shell and Me:</strong> Sidebar and Sheet, the switcher, the CLI banner, Me with sign-out, sessions and invitations, the layout-shift fix, and the new public routes.</li>
+<li><strong>People</strong> moved into the shell, and the unstyled <code>/organization-admin</code> page retired.</li>
+<li><strong>Machines:</strong> List, Revoke, and Waiting for approval. This waits on central's List.</li>
+<li><strong>Workspaces:</strong> waits on central's workspace list and Allow/Withdraw.</li>
+</ol>
+
+<h2 id="verification">Verification</h2>
+<p>Every check is <strong>Planned</strong>. They use PR #10's Playwright journeys, run in real Chromium on both hosts, and are added to <code>verify-auth</code>.</p>
+<table>
+<thead><tr><th>Check</th><th>What's seen</th><th>A wrong build that must fail</th></tr></thead>
+<tbody>
+<tr><td>N1/N2: an owner, and a plain member</td><td>The owner sees four destinations; the member sees only Me. At 400 px, ☰ opens the Sheet with the same items.</td><td>Destinations not filtered by permission: the member sees People.</td></tr>
+<tr><td>N3: switch to an organization where the person is a member</td><td>Lands on Me.</td><td>Stays on People: refused, or an error page.</td></tr>
+<tr><td>N4: Sign out from My sessions; revoke another session</td><td>The session row is gone from the database. The cookie is cleared. A revoked session's next request goes to <code>/sign-in</code>.</td><td>Sign-out not on the allowlist: 404, as on main today.</td></tr>
+<tr><td>N5: a CLI sign-in pending; Cancel; let the deadline pass</td><td>The banner shows with no ✕. Cancel refuses the CLI. After the deadline it shows "expired".</td><td>A dismissible banner: the CLI is left waiting.</td></tr>
+<tr><td>N8: delay the passkey-list response; measure Add passkey before and after</td><td>The button's bounding box is unchanged.</td><td>The button below the list: it moves by 22 px.</td></tr>
+<tr><td>N9: the delta review checks every new element against the inventory (a review step, not a new CI gate)</td><td>Only components in the inventory are used. There are no new hand-styled navigation elements.</td><td>A hand-built bottom bar.</td></tr>
+</tbody>
+</table>
+
+</ex-document>
+</body>
+</html>

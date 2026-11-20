@@ -8,6 +8,12 @@
       "icon": "book-open"
     },
     {
+      "id": "design",
+      "title": "Design",
+      "href": "design.html",
+      "icon": "path"
+    },
+    {
       "id": "mockups",
       "title": "Mockups",
       "href": "mockups/index.html",
