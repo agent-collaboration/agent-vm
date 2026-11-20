@@ -44,6 +44,12 @@
       "icon": "key"
     },
     {
+      "id": "machine-claim",
+      "title": "Machine claim",
+      "href": "machine-claim.html",
+      "icon": "lock"
+    },
+    {
       "id": "decisions",
       "title": "Decisions",
       "href": "decisions.html",

@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Machine claim: one Mac, one organization</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="machine-claim" src="./navigation.json"></ex-nav>
+<ex-document id="machine-claim">
+
+<h1>Machine claim: one Mac, one organization</h1>
+
+<ex-callout title="The answer" tone="note" icon="path">
+<p><strong>The rule:</strong> a machine ID is enrolled in at most one organization, and the server enforces it.</p>
+<p><strong>How:</strong> sign-in keeps one claim row per machine ID in its own database. Every approval and token request already passes through sign-in, so sign-in is the gate. When a second organization approves a machine that another organization holds, sign-in asks central one new, read-only question over the existing private link: "is this machine's enrollment live in that organization?". Central never calls sign-in, and central writes nothing new.</p>
+<p><strong>What the owner decides:</strong> a new table in sign-in's database (storage is his), plus one read route on central. This page is the Sign-in Lead's half. The central Lead writes central's half in the FleetRuntime set. One independent review reads both together.</p>
+</ex-callout>
+
+<h2 id="ruling">The owner's ruling</h2>
+<p>20 Nov, asked "may one machine be enrolled in two organizations at once?" (his exact words, relayed by the central Lead):</p>
+<ul>
+<li>"no it may not, but how we ensure this /  only by the router righ?"</li>
+<li>"Whats teh best deppoulec solutoin fro this?  enrollment is hwo's repsosnability? is the easy way a private link to singin service like sign in to central areayd exists?"</li>
+<li>"so what happeners here two way itnernal comm?"</li>
+</ul>
+<p><strong>What this means:</strong> option C (no claim) and option D (the Mac keeps one) are out, because the server must refuse. The design below is option A from <a href="signin-machine-login-and-admin.html#claim">the S5 page</a>, kept <strong>one-way</strong>: he asked for the most decoupled answer.</p>
+
+<h2 id="shape">The shape</h2>
+<ex-mermaid id="claim-flow" label="One-way claim: sign-in asks, central answers" data-width="canvas"><script type="text/plain">
+sequenceDiagram
+  participant BO as Org B owner (browser)
+  participant SI as Sign-in (claim row)
+  participant CA as Central, org A store
+  participant CB as Central, org B store
+  BO->>SI: approve machine M for org B
+  SI->>SI: row M = Held(A)  →  conditional write Checking(B)
+  SI->>CA: IsEnrollmentLive(M)  [read only, under A's turn]
+  alt NotLive
+    CA-->>SI: NotLive{reason}
+    SI->>SI: row M = Held(B)
+    SI->>CB: device-login decision (existing route)
+    CB-->>SI: Approved
+    SI-->>BO: approved
+  else Live
+    CA-->>SI: Live{Approved|Enrolled}
+    SI->>SI: row M = Held(A)
+    SI-->>BO: refused: this Mac is in another organization
+  end
+</script></ex-mermaid>
+
+<h2 id="table">Sign-in's claim table</h2>
+<p><em>Sign-in Lead proposal.</em> The table name is the owner's decision. It uses Drizzle, on D1 (Cloudflare) and better-sqlite3 (Node), with the <code>login_</code> prefix like the other machine-login tables.</p>
+<pre><code class="language-sql">CREATE TABLE login_machine_claims (
+    machine_id      TEXT PRIMARY KEY,   -- the Router's own UUIDv7
+    organization_id TEXT NOT NULL,      -- the holder
+    state           TEXT NOT NULL,      -- Rust enum ClaimState { Held, Checking }
+    checking_for    TEXT,               -- the organization asking, while Checking
+    checking_since  INTEGER,            -- injected clock; a stale Checking can be taken over
+    version         INTEGER NOT NULL,   -- incremented on every write; all writes are conditional on it
+    updated_at      INTEGER NOT NULL
+);</code></pre>
+<p>There are no CHECK constraints. <code>ClaimState</code> is a closed Rust or TypeScript union: <code>Held{organization}</code> or <code>Checking{holder, asker, since}</code>.</p>
+<p><strong>Related sign-in change:</strong> the <code>deviceCode</code> table (<code>sign-in-schema.ts:308–332</code>, Switchboard main <code>7e32e00e</code>) still has the old two-ID columns, <code>machineInstallationId</code> and <code>machinePeerId</code>. These become one <code>machineId</code> under the owner's one-ID rule of 18 Nov. That's needed anyway.</p>
+
+<h2 id="question">The question to central (the contract)</h2>
+<p>I accept the central Lead's contract points 1–4 and 7 as stated:</p>
+<ul>
+<li><strong>The route:</strong> <code>IsEnrollmentLive { organizationId, machineId }</code>, read-only, answered under that organization's own turn. It writes nothing and fences nothing. Both hosts mount it: Cloudflare and the self-hosted one.</li>
+<li><strong>The answer is a closed variant:</strong> <code>Live { Approved | Enrolled }</code> or <code>NotLive { reason }</code>. The reason is one of: ended (<code>Lapsed | Expired | Revoked</code>), <code>UnknownMachine</code>, <code>ApprovalPastDeadline</code>, <code>IdleExpired</code> (central applies the 30-day rule on read without writing), or <code>NoSuchOrganization</code>.</li>
+<li><strong>A deleted or never-provisioned organization</strong> gives a definite <code>NotLive{NoSuchOrganization}</code>. Only a transport failure, or a store that exists but didn't answer, means "retry".</li>
+</ul>
+<p><strong>Why no fence in central is needed.</strong> <code>Live</code> covers exactly the enrollments that could still be granted a token. A first grant needs an Approved row before its deadline (<code>machine_token_decision.rs:76–92</code>). A refresh needs an Enrolled row that isn't idle (<code>:42–43</code>). Ended states are terminal (<code>machine_login_writes.rs:333–352</code>). So an enrollment that reads <code>NotLive</code> can never be granted again. The only way back into that organization is a <em>new approval</em>, and every approval passes through sign-in's claim row. As a second safeguard, sign-in also refuses to forward a token decision for an organization that doesn't hold the claim.</p>
+
+<h2 id="rules">Sign-in's rules: what sign-in owns</h2>
+<ol>
+<li><strong>Approval for org X, machine M</strong> (before forwarding to central's existing device-login route). All writes are conditional on <code>version</code>.
+<ul>
+<li>No row: insert <code>Held(X)</code>, then forward.</li>
+<li><code>Held(X)</code>: forward (the same organization re-approving or re-enrolling; the claim stays).</li>
+<li><code>Held(Y)</code>, Y ≠ X: write <code>Checking(holder Y, asker X)</code>, then ask Y <code>IsEnrollmentLive</code>.
+<ul>
+<li><code>NotLive</code>: write <code>Held(X)</code>, then forward.</li>
+<li><code>Live</code>: write <code>Held(Y)</code>, then refuse.</li>
+<li>Retry (transport): write <code>Held(Y)</code>, then answer "try again".</li>
+</ul></li>
+<li><code>Checking</code> by another request: answer "try again". If <code>checking_since</code> is older than the stale bound (one request timeout plus the 5 s SD8 window, on the injected clock), take it over and ask again.</li>
+</ul></li>
+<li><strong>Token decision for org X</strong> (first grant or refresh): forward only if the row is <code>Held(X)</code>. Otherwise refuse with the existing <code>EnrollmentNotActive</code>, which the Router already treats as "get a new code" (B3 M4).</li>
+<li><strong>Revoke, lapse and idle expiry need no release call.</strong> The row stays <code>Held(X)</code> until another organization asks, and the question then finds the ending.</li>
+</ol>
+
+<h2 id="told">What each person and the Router are told</h2>
+<table>
+<thead><tr><th>Case</th><th>Approving owner (browser)</th><th>Router (device-code poll or token)</th><th>What the Router shows the person</th></tr></thead>
+<tbody>
+<tr><td>Live in another organization</td><td>"This Mac is enrolled in another organization. An owner there must remove it first."</td><td>The device code is not approved: <code>access_denied</code>, with the reason <code>machine_claimed_elsewhere</code></td><td>"This Mac is still enrolled in another organization. An owner there must remove it before it can join this one."</td></tr>
+<tr><td>Check in progress, or the holder unreachable</td><td>"Couldn't confirm this Mac's other organization; try again in a moment."</td><td>Still pending (the code stays valid)</td><td>Keeps waiting for approval</td></tr>
+<tr><td>A token for an organization that no longer holds the claim</td><td>Not applicable</td><td><code>EnrollmentNotActive</code> (existing)</td><td>"This Mac's login ended; run <code>codex-router fleet login</code> again." (existing M4 path)</td></tr>
+</tbody>
+</table>
+<p>The Mac Lead's set shows the Router texts. The approving owner's texts are sign-in UI, the Machines/approval page.</p>
+
+<h2 id="cases">The cases a reviewer will push on</h2>
+<table>
+<thead><tr><th>Case</th><th>What happens</th></tr></thead>
+<tbody>
+<tr><td>A token refresh for A is in flight while B is Checking</td><td>The refresh was forwarded under <code>Held(A)</code>. If A's enrollment is Enrolled and not idle, the question answers <code>Live</code> and B is refused. If it's idle, the question answers <code>NotLive</code> and central's mint refuses the refresh by the same 30-day rule. Both read A under A's turn with the same rule, so they agree. No serialization against token traffic is needed.</td></tr>
+<tr><td>Two organizations approve the same ID at the same moment</td><td>Both read the row. Only one conditional write (insert, or <code>Checking</code>) succeeds on <code>version</code>. The other sees the newer row and gets "try again" (or <code>Held(other)</code>, which starts its own question).</td></tr>
+<tr><td>A approves again after the claim moved to B</td><td>The row is <code>Held(B)</code>, so A starts a question to B. B's live enrollment refuses A.</td></tr>
+<tr><td>The claim write succeeds, then the forward to central fails</td><td>The row is <code>Held(X)</code> with no approval in X. X's Router retries with the same request ID, and the forward is idempotent (<code>login_machine_approvals.request_id</code> is unique). If nobody retries, the next organization's question finds <code>UnknownMachine</code> or <code>ApprovalPastDeadline</code> in X, and the claim moves.</td></tr>
+<tr><td>Central approves, then sign-in fails before answering</td><td>The row was already <code>Held(X)</code> before the forward. The replay is forwarded again, and central returns the first answer (the approval-replay rule, S5 #1).</td></tr>
+<tr><td>A crash while Checking</td><td>A stale <code>Checking</code> past the bound is taken over by the next request, which asks again. The holder is unchanged until a definite <code>NotLive</code>.</td></tr>
+<tr><td>A replay of the same approval</td><td><code>Held(X)</code>, so it's forwarded. Central's replay rule answers.</td></tr>
+<tr><td>The same machine re-enrolls inside A</td><td><code>Held(A)</code> is forwarded. The claim stays with A, and central's supersede handles the old enrollment.</td></tr>
+<tr><td>Organization deleted, or a central store reset at the cutover</td><td>The question answers <code>NoSuchOrganization</code> or <code>UnknownMachine</code>, so the claim moves.</td></tr>
+</tbody>
+</table>
+
+<h2 id="state-machine">State machine</h2>
+<ex-mermaid id="claim-states" label="Claim row" data-width="canvas"><script type="text/plain">
+stateDiagram-v2
+  [*] --> Held: first approval (org X)
+  Held --> Held: same-org approval or token (forward)
+  Held --> Checking: approval from another org
+  Checking --> Held: NotLive (holder = asker)
+  Checking --> Held: Live / retry (holder unchanged)
+  Checking --> Checking: stale take-over (asks again)
+</script></ex-mermaid>
+
+<h2 id="checks">Planned checks</h2>
+<p>All are <strong>Planned</strong>. Each runs on both sign-in hosts (workerd with D1, Node with better-sqlite3), against central's real question route. The transitions also get a Hegel property test.</p>
+<table>
+<thead><tr><th>Check</th><th>What's seen</th><th>A wrong build that must fail</th></tr></thead>
+<tbody>
+<tr><td>Approve M in A, then in B while A is Enrolled</td><td>B is refused with <code>machine_claimed_elsewhere</code>. The row stays <code>Held(A)</code>.</td><td>No claim check: B approves.</td></tr>
+<tr><td>Revoke M in A, then approve in B</td><td>The question returns <code>NotLive{Revoked}</code>. The row becomes <code>Held(B)</code> and B is approved.</td><td>A claim never released: B is refused forever.</td></tr>
+<tr><td>A's approval is never used, and its deadline passes; then B approves</td><td>The question returns <code>NotLive{ApprovalPastDeadline}</code>, so B is approved.</td><td>Central treats an Approved row as live regardless of deadline: B is refused.</td></tr>
+<tr><td>A is idle for 30 days with no writes; then B approves</td><td>The question returns <code>NotLive{IdleExpired}</code>, so B is approved. A's later refresh is refused.</td><td>Idle is applied only on write: B is refused.</td></tr>
+<tr><td>Concurrent approvals in A and B (forced interleaving)</td><td>Exactly one wins. The other gets "try again", then resolves.</td><td>An unconditional write: both win.</td></tr>
+<tr><td>A token decision for A after the claim moved to B</td><td><code>EnrollmentNotActive</code>, and it isn't forwarded.</td><td>A missing token fence: it's forwarded.</td></tr>
+<tr><td>Holder unreachable; holder's organization deleted</td><td>Unreachable: "try again", claim kept. Deleted: <code>NoSuchOrganization</code>, and the claim moves.</td><td>Unreachable treated as ended: the claim is stolen.</td></tr>
+<tr><td>Hegel: random sequences of approvals, tokens, revokes, idles and crashes across 3 organizations</td><td>At most one organization ever has a live enrollment for M. The row's holder always equals the organization with the live enrollment, if there is one.</td><td>Any of the wrong builds above.</td></tr>
+</tbody>
+</table>
+
+<h2 id="limits">Limits</h2>
+<ul>
+<li><strong>Scope:</strong> one sign-in deployment (one issuer). Separate deployments don't share claims.</li>
+<li><strong>The machine ID is chosen by the Router install:</strong> the claim keeps honest Routers consistent. It doesn't prove physical identity.</li>
+<li><strong>Endings inside central that sign-in never sees</strong> (a store reset, an organization deletion or a manual repair) leave a stale row. It resolves on the next question, so it can't block forever.</li>
+</ul>
+
+</ex-document>
+</body>
+</html>
