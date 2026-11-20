@@ -108,3 +108,15 @@ The central Lead also carries:
 **His words:** "ok i wante dyou to kuse it for each design to keep track so alter kon accepts we can cross reference or imeplmentals and verficaiers can cross reference eaisly."
 
 **What it means:** each set gets a `design.ts` typed record. The central Lead is preparing a general checker and a worked example. Until then, keep the U, R, D and V IDs and the heading IDs stable.
+
+## Machine claim: final ruling (20 Nov)
+
+**His words:** "a machien cannot move to another organization".
+
+**What it means:**
+- A permanent claim in sign-in: `login_machine_claims`, one row per machine ID, written at the first approval and never changed.
+- Any other organization is refused.
+- A Mac joins another organization only with a new machine ID, which is Mac Lead work.
+- Central changes nothing.
+
+**Design:** B3 `machine-claim.html`, revision 4.

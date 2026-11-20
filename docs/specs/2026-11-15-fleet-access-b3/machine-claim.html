@@ -13,219 +13,104 @@
 
 <h1>Machine claim: one Mac, one organization</h1>
 
-<ex-callout title="The answer (revision 2, after the joint review)" tone="note" icon="path">
-<p><strong>The rule:</strong> a machine ID is enrolled in at most one organization, and the server enforces it.</p>
-<p><strong>How, in four pieces:</strong></p>
-<ol>
-<li><strong>The claim:</strong> sign-in keeps one claim row per machine ID, with a <em>version</em>. Every approval and token request already passes through sign-in, and each forward now carries that version.</li>
-<li><strong>The question:</strong> when a second organization approves a machine another organization holds, sign-in asks the holder's store one question over the existing private link.</li>
-<li><strong>The fence:</strong> that question is a small guarded write. The holder's store raises its <em>fence</em> for that machine to the new version and answers Live or NotLive from the same snapshot.</li>
-<li><strong>The effect:</strong> from then on the holder's store refuses any forward carrying an older version. A delayed or retried old approval or token can never commit after the claim moves, whatever its clock says.</li>
-</ol>
-<p><strong>Still one-way:</strong> sign-in asks, central answers.</p>
-<p><strong>What would reach the owner:</strong></p>
-<ul>
-<li>a claim table in sign-in's database;</li>
-<li>a small fence table in each organization's central store;</li>
-<li>a new <code>claimVersion</code> field on the two existing decision requests;</li>
-<li>a new retryable refusal.</li>
-</ul>
-<p>The central Lead writes central's half and puts option B (one central registry) beside it.</p>
+<ex-callout title="The answer (revision 4, after the owner's ruling)" tone="note" icon="path">
+<p><strong>The rule:</strong> a machine ID belongs to the first organization that enrolls it, permanently.</p>
+<p><strong>How:</strong> sign-in writes one claim row per machine ID at the first approval, and never changes it. Sign-in refuses any other organization's approval of that ID, and any token forward for it. Every approval and token request already passes through sign-in, so central changes nothing.</p>
+<p><strong>Moving organizations:</strong> a Mac that really needs to join another organization does so as a new machine. Its Router takes a new machine ID, which is in the Mac Lead's set.</p>
 </ex-callout>
 
-<h2 id="ruling">The owner's ruling</h2>
-<p>20 Nov, his exact words, relayed by the central Lead:</p>
+<h2 id="ruling">The owner's rulings</h2>
 <ul>
-<li>"no it may not, but how we ensure this /  only by the router righ?"</li>
-<li>"Whats teh best deppoulec solutoin fro this?  enrollment is hwo's repsosnability? is the easy way a private link to singin service like sign in to central areayd exists?"</li>
-<li>"so what happeners here two way itnernal comm?"</li>
+<li><strong>20 Nov,</strong> asked "may one machine be enrolled in two organizations at once?": "no it may not, but how we ensure this /  only by the router righ?"</li>
+<li><strong>20 Nov,</strong> asked "when a machine moves to another organization, is the old enrolment ended or only blocked?": "a machien cannot move to another organization".</li>
 </ul>
-<p>The server must refuse, so options C and D are out. This design is option A, kept one-way.</p>
-<p><strong>Status, revision 3:</strong> the second joint review (CLAIM-2) raised R2-2, R2-3 and R2-4, which are answered here, and R2-1, a question of meaning now with the owner (when a Mac moves, is the old organization's enrollment <em>ended</em> or only blocked?). <a href="#versions">The version table</a> waits for his answer. <strong>Revision 1</strong> (<code>dc2b0d502</code>) failed the joint review on B1, B3 and B5. A one-way design without a fence in central can't stop an approval that sign-in had already cleared and sent from arriving after the claim moved. This revision adds the fence.</p>
-
-<h2 id="shape">The shape</h2>
-<ex-mermaid id="claim-flow" label="Fenced, one-way claim transfer" data-width="canvas"><script type="text/plain">
-sequenceDiagram
-  participant BO as Org B owner (browser)
-  participant SI as Sign-in (claim row v)
-  participant CA as Central, org A store (fence)
-  participant CB as Central, org B store
-  BO->>SI: approve machine M for org B
-  SI->>SI: Held(A, v) → conditional write Checking(A→B, v+1)
-  SI->>CA: FenceAndReport(M, v+1)
-  CA->>CA: one batch under A's turn: fence(M) := v+1; read rows
-  alt NotLive
-    CA-->>SI: NotLive{reason}
-    SI->>SI: Held(B, v+2)
-    SI->>CB: device-login decision (claimVersion v+2)
-    CB-->>SI: Approved
-    SI-->>BO: approved
-  else Live
-    CA-->>SI: Live{Approved|Enrolled}
-    SI->>SI: Held(A, v+2)
-    SI-->>BO: refused: this Mac is in another organization
-  end
-  Note over CA: any later A forward carrying ≤ v is refused ClaimVersionStale (retryable)
-</script></ex-mermaid>
+<p>Both are his exact words, as recorded by the central Lead at <code>codex-router design/central-and-mac ed703c34b, deliverables/04-fleetruntime/decisions.html#claim-no-move</code>. "Belongs to the first organization for good" is the central Lead's reading, labelled as his reading there, and I share it.</p>
+<p><strong>Superseded:</strong> revisions 1–3 of this page (<code>dc2b0d502</code>, <code>e7c059676</code>, <code>34d0bf776</code>) designed a claim <em>transfer</em>. That meant a question to central, a fence, a Checking state and an issuance reservation. The ruling removes transfer, so all of that is gone. Those revisions remain in git history.</p>
 
 <h2 id="table">Sign-in's claim table</h2>
 <p><em>Sign-in Lead proposal; the name is the owner's decision.</em> It uses Drizzle on D1 and better-sqlite3, with the <code>login_</code> prefix.</p>
 <pre><code class="language-sql">CREATE TABLE login_machine_claims (
-    machine_id      TEXT PRIMARY KEY,   -- the Router's own UUIDv7
-    organization_id TEXT NOT NULL,      -- the holder
-    state           TEXT NOT NULL,      -- Rust/TS union ClaimState { Held, Checking }
-    checking_for    TEXT,               -- the organization asking, while Checking
-    checking_since  INTEGER,            -- injected clock; a stale Checking can be taken over
-    busy_until      INTEGER,            -- injected clock: a token issuance (first grant or refresh) is reserved until this time
-    version         INTEGER NOT NULL,   -- incremented on every write; every write is conditional on it
-    updated_at      INTEGER NOT NULL
+    machine_id       TEXT PRIMARY KEY,  -- the Router's own UUIDv7
+    organization_id  TEXT NOT NULL,     -- the first organization to approve it; never changes
+    claimed_at       INTEGER NOT NULL,  -- injected clock
+    first_request_id TEXT NOT NULL      -- the device-login request that created the claim
 );</code></pre>
-<p>There are no CHECK constraints.</p>
-<h3 id="reservation">Issuance reservation (review R2-3)</h3>
-<p>Better Auth 1.7.11 consumes a one-time device code in <code>redeemDeviceCode</code> before <code>issueTokens</code>, and a refresh rotates its refresh token in the same way. So sign-in must never return a "retry" <em>after</em> Better Auth has consumed anything. The order for every token issuance (a device-code poll or a refresh) for machine M at holder X is:</p>
+<p>There are no CHECK constraints. Nothing ever updates or deletes a row.</p>
+
+<h2 id="rules">Sign-in's rules</h2>
 <ol>
-<li><strong>Before Better Auth consumes anything,</strong> a conditional write on <code>Held(X, v)</code> sets <code>busy_until</code> to one request timeout plus SD8 (injected clock).
+<li><strong>Approval of machine M by organization X,</strong> before forwarding to central's existing device-login route:
 <ul>
-<li>If the row is <code>Checking</code>: answer before consuming. A device-code poll gets <code>authorization_pending</code> (RFC 8628: keep polling, the code is untouched). A refresh gets the retryable transient outcome (the refresh token is untouched).</li>
+<li>no row: <code>INSERT</code> <code>(M, X)</code>. The primary key makes it atomic. If two organizations approve at once, one insert wins and the other reads the row.</li>
+<li>a row for X: forward. That covers re-approval and re-enrolling in the same organization.</li>
+<li>a row for another organization: refuse, and forward nothing.</li>
 </ul></li>
-<li>Redeem or rotate, then forward to central with <code>claimVersion = v</code>.</li>
-<li>Clear <code>busy_until</code> when central answers.</li>
+<li><strong>Token forward</strong> (first grant or refresh) for an enrollment of organization X: read M from the OAuth client's metadata (see <a href="#identity">trusted ID</a>). Forward only if the row is <code>(M, X)</code>. Otherwise refuse with the existing <code>EnrollmentNotActive</code>. This can only happen to a pre-cutover or forged credential.</li>
+<li><strong>Revoke, idle expiry and lapse don't touch the claim.</strong> The organization keeps M. Its owner can approve M again later, as a new enrollment.</li>
 </ol>
-<p><strong>No check while a reservation is held:</strong> a write to <code>Checking</code> requires <code>busy_until</code> to be empty or past, otherwise the other organization's approver gets "try again". So a check can never start between the reservation and the forward, and the consumed code or token is always followed by a forward under a version no fence has passed. A crashed reservation runs out by itself, and the Router's retry after a lost response follows Better Auth's own replay rules for that code or token.</p>
+<p><strong>Why this is safe without a fence:</strong> the claim never moves, so no message in flight can be overtaken by a move. Central only ever receives approvals and token forwards for M from M's own organization, because sign-in is the only caller of those routes.</p>
 
-<h3 id="identity">A trusted machine ID at every forward (review B5)</h3>
+<h3 id="identity">A trusted machine ID</h3>
 <ul>
-<li>When an approval binds the OAuth client for an enrollment, sign-in stores the canonical <code>machineId</code> in that client's metadata. Before every token forward, sign-in reads it from the client, not from the request.</li>
-<li>The <code>deviceCode</code> table's two-ID columns (<code>machineInstallationId</code>, <code>machinePeerId</code>; <code>sign-in-schema.ts:308–332</code>) become one <code>machineId</code>, under the owner's one-ID rule of 18 Nov.</li>
-<li><strong>Cutover:</strong> the gate turns on at the central identity cutover. Central's owner record says it starts fresh then, so every central store and this table start empty together, and there's nothing to reconcile.
-<ul>
-<li><strong>A dependency:</strong> if the cutover is not fresh, the gate can't be turned on. Reconciling existing enrollments would need its own design.</li>
-<li><strong>Before the gate:</strong> forwards carry no <code>claimVersion</code>, and central behaves as main.</li>
-<li><strong>Once it's on:</strong> central refuses a forward without one. The central Lead names where that switch lives.</li>
-</ul></li>
-</ul>
-
-<h2 id="versions">The version each forward carries, by state</h2>
-<p>Review condition 4: the row's version is <code>v</code> at the moment of the read.</p>
-<table>
-<thead><tr><th>Row state at the read</th><th>Forward for the holder X</th><th>Forward for another org Y</th></tr></thead>
-<tbody>
-<tr><td>No row (gate on)</td><td>Approval: insert <code>Held(X, 1)</code>, then forward with <code>claimVersion = 1</code>. A token can't exist without a row once the gate is on, so it's refused.</td><td>Not applicable</td></tr>
-<tr><td><code>Held(X, v)</code></td><td>Forward with <code>claimVersion = v</code>. That covers approval, re-approval, first grant and refresh.</td><td>Approval: write <code>Checking(X→Y, v+1)</code>, then <code>FenceAndReport(M, v+1)</code> to X. Token: refused with <code>EnrollmentNotActive</code> (Y holds nothing).</td></tr>
-<tr><td><code>Checking(X→Y, w)</code></td><td>Not forwarded, and answered before anything is consumed (see <a href="#reservation">reservation</a>): <code>authorization_pending</code> for a device-code poll, the retryable transient outcome for a refresh. The client and refresh family are kept (review B3). <strong>Holder recovery</strong> (review R2-2): if <code>checking_since</code> is past the stale bound, the holder's own request writes <code>Held(X, w+1)</code> conditionally on <code>w</code>, and then proceeds. The claim isn't transferred, and the abandoned check's late CAS loses.</td><td>Approval: "try again", unless <code>checking_since</code> is past the stale bound. Then take over: <code>Checking(X→Y, w+1)</code>, and ask again with <code>w+1</code>.</td></tr>
-</tbody>
-</table>
-<p><strong>After the answer to <code>FenceAndReport(M, u)</code>:</strong></p>
-<ul>
-<li><code>NotLive</code> gives <code>Held(Y, u+1)</code>. Y's forwards carry <code>u+1</code>. Y's store has no fence for M, or a lower one.</li>
-<li><code>Live</code> gives <code>Held(X, u+1)</code>. X's forwards carry <code>u+1</code>, which is above X's fence <code>u</code>.</li>
-<li>Unavailable gives <code>Held(X, u+1)</code> as well. The fence may already be set, and the higher version keeps X's later forwards valid.</li>
-<li>A <code>StaleQuestion</code> answer (the carried version is at or below the stored fence) is discarded. Only the request that wrote that version may act on it.</li>
-</ul>
-<p><strong>Every conditional write checks the version it read.</strong> If the version moved underneath it, the write fails and the request reads again.</p>
-
-<h2 id="stale">Handling <code>ClaimVersionStale</code></h2>
-<p>When a forward carrying an old version reaches a store whose fence is higher, central answers the new, retryable <code>ClaimVersionStale</code> (central's contract, condition 3). Sign-in never passes it to the Router. Instead it re-reads the row:</p>
-<ul>
-<li>still <code>Held(X)</code>: re-forward once with the current version. This is the refresh that was in flight during a <code>Live</code> check;</li>
-<li><code>Held(other)</code>: the terminal answer. For a token it's <code>EnrollmentNotActive</code>. For an approval, the approver is told the Mac is in another organization;</li>
-<li><code>Checking</code>: the retryable transient outcome.</li>
-</ul>
-
-<h2 id="activation">Activation and restore (review R2-4)</h2>
-<ul>
-<li><strong>One authority epoch:</strong> at cutover, a new <code>authorityEpoch</code> (UUIDv7) is set once for the issuer and its complete set of central targets. Every forward carries it, beside <code>claimVersion</code>.</li>
-<li><strong>The order:</strong>
-<ol>
-<li>Quiesce old ingress.</li>
-<li>Open fresh central stores and an empty claim table with the epoch.</li>
-<li>Retire old device codes and token families. They carry no epoch, so they fail.</li>
-<li>Open versioned ingress.</li>
-</ol></li>
-<li><strong>Where it's enforced:</strong> central checks the epoch <em>under the owning turn</em>, at the admission and commit boundary. An unknown, missing or mixed epoch fails closed.</li>
-<li><strong>Restore or loss:</strong> if either side's authority store (the claim table, or a central store with fences) is restored from a backup, or lost, that side starts in a <em>suspended</em> state. Machine approvals and first grants fail closed until a reconciliation run (an owner-run operation, designed separately) checks it, or a new epoch is cut. Ordinary reopen of the same intact SQLite isn't a restore.</li>
-<li><strong>Ownership:</strong> the epoch switch lives in central's contract (the central Lead names where). The sign-in side carries it and refuses to forward without it once it is set.</li>
-</ul>
-
-<h2 id="question">Central's contract, as sign-in relies on it</h2>
-<p>Central's half owns this; listed here so the pair can be read together. Agreed 20 Nov.</p>
-<ul>
-<li><code>FenceAndReport { organizationId, machineId, claimVersion }</code>. Under the organization's turn, in <strong>one batch</strong>, the store raises <code>fence(M)</code> to <code>claimVersion</code> and answers <code>Live { Approved | Enrolled }</code> or <code>NotLive { reason }</code> from the same snapshot. The fence lives in <code>login_machine_claim_fences(machine_id PK, fence_version, updated_at)</code>, a working name.</li>
-<li><strong>The fence only goes up.</strong> A question whose version equals the stored fence writes nothing and answers from the rows, so a replay is safe. A version below the fence answers <code>StaleQuestion</code>.</li>
-<li><strong>Both existing decisions</strong> (device login, machine token) read <code>fence(M)</code> under the turn and refuse a forward whose <code>claimVersion</code> is below it, with <code>ClaimVersionStale</code>.</li>
-<li><strong><code>Live</code></strong> is computed from the machine row and every candidate row, with the same predicates the token decision uses, generation included (review correction 1).</li>
-<li><strong>A store that can't give a stamped, valid answer</strong> means unavailable: retry, and the claim is kept.</li>
-<li><strong>Both hosts</strong> mount the route.</li>
+<li>When an approval binds the OAuth client for an enrollment, sign-in stores the canonical <code>machineId</code> in the client's metadata. Token forwards read it from there, never from the request.</li>
+<li>The <code>deviceCode</code> table's two-ID columns (<code>machineInstallationId</code>, <code>machinePeerId</code>; <code>sign-in-schema.ts:308–332</code> at Switchboard main <code>7e32e00e</code>) become one <code>machineId</code>, under the owner's one-ID rule of 18 Nov.</li>
 </ul>
 
 <h2 id="told">What each person and the Router are told</h2>
 <table>
 <thead><tr><th>Case</th><th>Approving owner (browser)</th><th>Router</th><th>What the Router shows the person</th></tr></thead>
 <tbody>
-<tr><td>Live in another organization</td><td>"This Mac is enrolled in another organization. An owner there must remove it first."</td><td>The device code is denied: <code>access_denied</code>, reason <code>machine_claimed_elsewhere</code></td><td>"This Mac is still enrolled in another organization. An owner there must remove it before it can join this one."</td></tr>
-<tr><td>A check in progress, or the holder unavailable</td><td>"Couldn't confirm this Mac's other organization; try again in a moment."</td><td>Still pending (the code stays valid)</td><td>Keeps waiting</td></tr>
-<tr><td>The holder's token while a check is in progress</td><td>Not applicable</td><td>The existing retryable transient outcome</td><td>Nothing (the Router retries)</td></tr>
-<tr><td>A token for an organization the claim has moved away from</td><td>Not applicable</td><td><code>EnrollmentNotActive</code> (existing, terminal)</td><td>"This Mac's login ended; run <code>codex-router fleet login</code> again."</td></tr>
+<tr><td>The machine belongs to another organization</td><td>"This Mac belongs to another organization and can't join this one. To use it here, it must join as a new machine."</td><td>The device code is denied: <code>access_denied</code>, reason <code>machine_claimed_elsewhere</code></td><td>The Mac Lead's text. It must say the Mac belongs to another organization and how to join as a new machine (a new machine ID).</td></tr>
+<tr><td>A token for a machine its organization doesn't own</td><td>Not applicable</td><td><code>EnrollmentNotActive</code> (existing, terminal)</td><td>"This Mac's login ended; run <code>codex-router fleet login</code> again." (existing M4 path)</td></tr>
 </tbody>
 </table>
-<p>The browser texts are kept generic, so B's owner never learns which organization holds the Mac. The Router texts are shown in the Mac Lead's set.</p>
+<p>The browser text is kept generic, so the approving owner never learns which organization holds the Mac.</p>
 
-<h2 id="cases">The cases the review walked</h2>
+<h2 id="cases">Cases</h2>
 <table>
 <thead><tr><th>Case</th><th>What happens</th></tr></thead>
 <tbody>
-<tr><td><strong>B1:</strong> A clears an approval (<code>Held(A,1)</code>) and pauses before sending. B moves the claim (<code>Checking(A→B,2)</code>, fence(A)=2, <code>NotLive{UnknownMachine}</code>, <code>Held(B,3)</code>). Then A's approval arrives.</td><td>A's store sees <code>claimVersion 1 &lt; fence 2</code> and answers <code>ClaimVersionStale</code>, with no write. Sign-in re-reads <code>Held(B)</code> and tells A's approver the Mac is in another organization. Only B has an approval.</td></tr>
-<tr><td>A token refresh for A is in flight while B checks</td><td>Either the refresh commits before the fence (so A is <code>Live</code> and B is refused, <code>Held(A,u+1)</code>), or it arrives after the fence and gets <code>ClaimVersionStale</code>. Sign-in then sees <code>Held(A)</code> and re-forwards with <code>u+1</code>, and it succeeds. The Mac's login is never ended.</td></tr>
-<tr><td><strong>B3:</strong> A's token request arrives while the row is <code>Checking</code></td><td>Not forwarded, retryable, and the client and refresh family are kept. It resumes after <code>Held(A)</code> returns.</td></tr>
-<tr><td>Two organizations approve the same ID at the same moment</td><td>Only one conditional write wins on <code>version</code>. The other reads again and gets "try again", or starts its own check.</td></tr>
-<tr><td>A approves again after the claim moved to B</td><td><code>Held(B)</code>, so A starts a fenced check against B.</td></tr>
-<tr><td>The claim write succeeds, then the forward fails</td><td>The Router retries with the same request ID. The forward carries the current version, and central's request-ID idempotency answers. If nobody retries, the next organization's check finds <code>NotLive</code>.</td></tr>
-<tr><td>Central commits, then sign-in fails before answering</td><td>The replay carries the same or a newer version. Central's approval-replay rule (S5 #1) returns the first answer.</td></tr>
-<tr><td><strong>B2:</strong> A's clock steps backwards after a transfer</td><td>Irrelevant: A refuses every old-version forward by the fence, not by time.</td></tr>
-<tr><td>A crash while <code>Checking</code></td><td>The stale <code>Checking</code> is taken over with a higher version. The old question's late answer, if any, has a version below the new one and is discarded.</td></tr>
-<tr><td>The same machine re-enrolls inside A</td><td><code>Held(A,v)</code>: forward with <code>v</code>. The claim stays, and central's supersede handles the old enrollment.</td></tr>
+<tr><td>Two organizations approve the same ID at the same moment</td><td>One <code>INSERT</code> wins. The other sees the winner's row and is refused.</td></tr>
+<tr><td>The claim insert succeeds, then the forward to central fails</td><td>The Router retries with the same request ID, and central's request-ID idempotency answers. If nobody ever retries, X keeps M with no enrollment. X's owner can approve M again later, and no other organization can take it. That is consistent with the ruling.</td></tr>
+<tr><td>Central approves, then sign-in fails before answering</td><td>The replay finds <code>(M, X)</code> and is forwarded. Central's approval-replay rule returns the first answer.</td></tr>
+<tr><td>A revokes M; B approves M</td><td>Refused. M stays A's.</td></tr>
+<tr><td>M is idle for 30 days in A; B approves</td><td>Refused. A's owner can approve M again.</td></tr>
+<tr><td>M re-enrolls inside A</td><td>Forwarded. Central's supersede handles the old enrollment.</td></tr>
 </tbody>
 </table>
 
-<h2 id="state-machine">State machine</h2>
-<ex-mermaid id="claim-states" label="Claim row" data-width="canvas"><script type="text/plain">
-stateDiagram-v2
-  [*] --> Held: first approval (v=1)
-  Held --> Held: holder's forwards (carry v)
-  Held --> Checking: other org's approval (v+1, FenceAndReport)
-  Checking --> Held: NotLive → new holder (v+1)
-  Checking --> Held: Live / unavailable → same holder (v+1)
-  Checking --> Checking: stale take-over (v+1, ask again)
-</script></ex-mermaid>
-
-<h2 id="not-done">What the fence does not do</h2>
-<p>It doesn't end A's stored row, close A's sockets, or withdraw a token already issued. With a <code>NotLive</code> answer, A has no grantable enrollment, so a still-valid A token can exist only with a skewed clock, and it lasts at most ten minutes. The rule this enforces is about <em>grantability</em>. A's Machines list keeps showing its row as it is stored, with its last token grant.</p>
+<h2 id="cutover">Turning it on</h2>
+<p>The gate turns on at the central identity cutover. Central's owner record says it starts fresh then. The order:</p>
+<ol>
+<li>Drain and stop the old sign-in deployment, so no ungated approval or token forward is still in flight (review R2-4's held-request schedule).</li>
+<li>Open fresh central stores and an empty <code>login_machine_claims</code>.</li>
+<li>Start the gated sign-in.</li>
+</ol>
+<p>Old device codes and token families point at enrollments that don't exist in the fresh stores, so central refuses them. Central needs no epoch and no switch, because sign-in is its only caller for these routes.</p>
+<ul>
+<li><strong>A dependency:</strong> if the cutover is not fresh, existing enrollments would need a seeding design before the gate can turn on.</li>
+<li><strong>Restore:</strong> if <code>login_machine_claims</code> is restored from an older backup, a machine could be approved by a second organization. So a restore of this table suspends approvals until it's reconciled against the central stores, an owner-run operation. Ordinary reopen of the same intact database isn't a restore.</li>
+</ul>
 
 <h2 id="checks">Planned checks</h2>
-<p>All are <strong>Planned</strong>. They run on both sign-in hosts (workerd with D1, Node with better-sqlite3), against central's real route on both central hosts. Ordering cases are deterministic, with a pause point at the claim check, one before central dispatch, and one around central's sample and commit (review correction 4), with the stale actor kept alive.</p>
+<p>All are <strong>Planned</strong>. They run on both sign-in hosts (workerd with D1, Node with better-sqlite3), against central's real device-login route.</p>
 <table>
 <thead><tr><th>Check</th><th>What's seen</th><th>A wrong build that must fail</th></tr></thead>
 <tbody>
-<tr><td>B1 trace: A clears and pauses before sending; B transfers; A then sends</td><td>A gets <code>ClaimVersionStale</code>, so A's approver is told "another organization". Exactly one store has a grantable row (read from both stores).</td><td>No fence, or no <code>claimVersion</code>: both stores hold a grantable approval.</td></tr>
-<tr><td>A refresh in flight across a <code>Live</code> check</td><td>A's refresh succeeds after one re-forward. The client and refresh family are unchanged.</td><td><code>ClaimVersionStale</code> treated as terminal: A's login ends.</td></tr>
-<tr><td>A's token during <code>Checking</code></td><td>A retryable outcome, and the OAuth client is still enabled afterwards.</td><td><code>EnrollmentNotActive</code> during <code>Checking</code>: the client is disabled.</td></tr>
-<tr><td>A revoked, then B approves</td><td><code>NotLive{Revoked}</code>, <code>Held(B)</code>, and B is approved.</td><td>A claim never released: B is refused forever.</td></tr>
-<tr><td>A replayed question, and a stale one</td><td>The same version writes nothing. A lower version gives <code>StaleQuestion</code>, and the claim doesn't move.</td><td>A fence that can go down: an old check moves the claim.</td></tr>
-<tr><td>R2-2: B writes <code>Checking</code> and crashes; A keeps refreshing</td><td>After the stale bound, A's own refresh restores <code>Held(A, w+1)</code> and succeeds. B can retry its approval.</td><td>Only another organization's approval can take over: A retries forever.</td></tr>
-<tr><td>R2-3: A's device-code poll while B is Checking, and B starting Checking between A's reservation and forward (pause points)</td><td>During Checking: <code>authorization_pending</code>, and the code is still redeemable afterwards. With a reservation held: B gets "try again". A's code is consumed exactly once, and its grant succeeds.</td><td>The gate after <code>redeemDeviceCode</code>: the code is consumed and A must be re-approved.</td></tr>
-<tr><td>R2-4: an old ungated A request held across activation; a sign-in claim table restored from a backup</td><td>The old request fails on epoch at A's turn. The restored side is suspended, so approvals fail closed until it's reconciled.</td><td>The epoch checked before the turn, or a restore not detected: two grantable rows.</td></tr>
-<tr><td>A token forward with a spoofed machine ID</td><td>Sign-in uses the ID from the client metadata, so the spoof has no effect.</td><td>The request's machine ID is trusted: the gate is bypassed.</td></tr>
-<tr><td>Hegel property: random approvals, tokens, revokes, idles, crashes, delays and clock steps across 3 organizations</td><td>At any moment at most one store has a grantable enrollment for M, and the claim's holder is that store whenever one exists.</td><td>Any of the wrong builds above.</td></tr>
+<tr><td>A approves M; B approves M</td><td>B is refused, and central B never receives a request (read B's store).</td><td>No claim check: B approves.</td></tr>
+<tr><td>A revokes M; then B approves M</td><td>B is still refused.</td><td>A claim released on revoke: B approves.</td></tr>
+<tr><td>A and B approve M concurrently (pause point after the read)</td><td>Exactly one row, and exactly one store has an approval.</td><td>Read-then-write without an atomic insert: both approve.</td></tr>
+<tr><td>A token forward for B's enrollment of a spoofed M</td><td>Refused, using the machine ID from the client metadata.</td><td>The request's machine ID is trusted: it is forwarded.</td></tr>
+<tr><td>A re-approves M after a revoke</td><td>Forwarded, and approved.</td><td>A claim that refuses its own organization.</td></tr>
+<tr><td>Hegel property: random approvals, revokes, idles and crashes across 3 organizations and several machines</td><td>For every M, every approval or grant that ever reaches central comes from a single organization, the claim row's.</td><td>Any of the above.</td></tr>
 </tbody>
 </table>
 
 <h2 id="limits">Limits</h2>
 <ul>
 <li><strong>Scope:</strong> one sign-in deployment (one issuer).</li>
-<li><strong>The machine ID is chosen by the Router install.</strong> The claim keeps honest Routers consistent; it doesn't prove physical identity.</li>
-<li><strong>Organization deletion:</strong> main has no organization removal. If one is added, releasing that organization's claims is part of that feature. Until then, an organization whose store can't answer keeps its claim.</li>
-<li><strong>The gate requires a fresh cutover.</strong> Without one, existing enrollments would need a reconciliation design.</li>
-<li><strong>Clock assumption:</strong> the stale bounds (<code>checking_since</code>, <code>busy_until</code>) use sign-in's injected clock. A backward step only delays recovery, it doesn't break exclusivity, because exclusivity rests on the version and the fence, not on time.</li>
+<li><strong>The machine ID is chosen by the Router install.</strong> A new machine ID is how a Mac legitimately joins another organization. The claim binds IDs, not hardware.</li>
+<li><strong>The gate requires a fresh cutover.</strong></li>
 </ul>
 
 </ex-document>

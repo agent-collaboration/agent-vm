@@ -64,6 +64,7 @@
 <p><strong>After a crash or replay:</strong> the unique index on <code>request_id</code> (<code>0001:24</code>) and the guarded batch (<code>machine_login_plans.rs:98–131</code>) keep it to one approval and one effect. A replay after activation or reopen reads the same row.</p>
 
 <h2 id="claim">2 · The global machine claim: options for the owner</h2>
+<ex-callout title="Decided, 20 Nov" tone="done" icon="lock"><p>The owner ruled "no it may not, but how we ensure this /  only by the router righ?" and then "a machien cannot move to another organization". The claim is option A, simplified: a <strong>permanent</strong> claim in sign-in, with no transfer and no change to central. The design is on <a href="machine-claim.html">Machine claim</a>. The options below are kept as the record of what was asked.</p></ex-callout>
 <p>Each organization's central store is its own Durable Object, and <code>machine_login_plans.rs:23–44</code> reads only <code>self.organization</code>. So no store sees another organization's machines. "One active claim per machine ID" needs a shared authority, which is a new storage boundary, and the owner decides storage. <strong>No option is chosen.</strong> In this section "option A" means the claim option below, not the 9 Nov SQL option A.</p>
 <p>One fact frames them: <code>machineId</code> is the Router install's own UUIDv7, self-asserted (<code>0001:3–5</code>). A shared claim serialises claims made under the same ID. It says nothing about physical identity.</p>
 
