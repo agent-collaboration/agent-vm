@@ -51,7 +51,6 @@ flowchart LR
 <ex-mermaid id="proposed-flow" label="E2E (host) job with background steps" data-width="canvas"><script type="text/plain">
 flowchart LR
   co["checkout"] --> sys["system packages (apt)<br/>background"]
-  co --> py["Python workspace<br/>background"]
   co --> node["Node: pnpm install<br/>(no build) foreground"]
   node --> cache["restore Chromium cache<br/>key: Playwright 1.61.1"]
   cache --> ws["wait: system-packages<br/>(apt lock)"]
@@ -59,18 +58,17 @@ flowchart LR
   ws --> chr["install Chromium + deps<br/>background"]
   ws --> build["pnpm build<br/>foreground"]
   chr --> wa["wait-all"]
-  py --> wa
   build --> wa
   wa --> ver["print Playwright + Chromium version"]
   ver --> e2e["pnpm test:e2e:host"]
   class sys slot3
-  class py slot3
   class chr slot3
 </script></ex-mermaid>
 
 <p><strong>Why this order:</strong></p>
 <ul>
-<li><strong>Background:</strong> system packages and Python start at once and don't block Node.</li>
+<li><strong>Background:</strong> system packages start at once and don't block Node.</li>
+<li><strong>No Python in this job.</strong> Main sets up the Python workspace here, but no host E2E test or fixture uses <code>uv</code>, <code>python</code> or the Python SDK. That step looks inherited from agent-vm's VM lanes. The Python SDK keeps its setup and tests in the <code>validation</code> job.</li>
 <li><strong>Foreground Node install, no build:</strong> the Chromium install needs the Playwright CLI from <code>node_modules</code>, so the install comes first.</li>
 <li><strong>Wait for system packages before Chromium.</strong> <code>playwright install --with-deps</code> calls <code>apt-get</code>. Two apt runs at once fight over the dpkg lock, so Chromium starts only after the apt step ends. This is the one ordering the job can't avoid.</li>
 <li><strong>Chromium in the background, build in the foreground.</strong> The workspace build is the longest local step, and the browser download overlaps with it.</li>
@@ -98,12 +96,6 @@ flowchart LR
         id: system-packages
         background: true
         uses: ./.github/actions/setup-system-packages
-
-      - name: Set up Python workspace
-        id: python-workspace
-        if: matrix.lane == 'host'
-        background: true
-        uses: ./.github/actions/setup-python-workspace
 
       - name: Set up Node workspace
         uses: ./.github/actions/setup-agent-vm
