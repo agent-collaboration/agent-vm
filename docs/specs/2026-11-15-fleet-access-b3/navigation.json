@@ -38,6 +38,12 @@
       "icon": "path"
     },
     {
+      "id": "s5-meaning",
+      "title": "S5: machine login meaning",
+      "href": "signin-machine-login-and-admin.html",
+      "icon": "key"
+    },
+    {
       "id": "decisions",
       "title": "Decisions",
       "href": "decisions.html",
