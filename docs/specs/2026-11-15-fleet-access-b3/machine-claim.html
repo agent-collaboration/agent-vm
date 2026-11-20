@@ -41,7 +41,7 @@
 <li>"so what happeners here two way itnernal comm?"</li>
 </ul>
 <p>The server must refuse, so options C and D are out. This design is option A, kept one-way.</p>
-<p><strong>Revision 1</strong> (<code>dc2b0d502</code>) failed the joint review on B1, B3 and B5. A one-way design without a fence in central can't stop an approval that sign-in had already cleared and sent from arriving after the claim moved. This revision adds the fence.</p>
+<p><strong>Status, revision 3:</strong> the second joint review (CLAIM-2) raised R2-2, R2-3 and R2-4, which are answered here, and R2-1, a question of meaning now with the owner (when a Mac moves, is the old organization's enrollment <em>ended</em> or only blocked?). <a href="#versions">The version table</a> waits for his answer. <strong>Revision 1</strong> (<code>dc2b0d502</code>) failed the joint review on B1, B3 and B5. A one-way design without a fence in central can't stop an approval that sign-in had already cleared and sent from arriving after the claim moved. This revision adds the fence.</p>
 
 <h2 id="shape">The shape</h2>
 <ex-mermaid id="claim-flow" label="Fenced, one-way claim transfer" data-width="canvas"><script type="text/plain">
@@ -76,10 +76,22 @@ sequenceDiagram
     state           TEXT NOT NULL,      -- Rust/TS union ClaimState { Held, Checking }
     checking_for    TEXT,               -- the organization asking, while Checking
     checking_since  INTEGER,            -- injected clock; a stale Checking can be taken over
+    busy_until      INTEGER,            -- injected clock: a token issuance (first grant or refresh) is reserved until this time
     version         INTEGER NOT NULL,   -- incremented on every write; every write is conditional on it
     updated_at      INTEGER NOT NULL
 );</code></pre>
-<p>There are no CHECK constraints. Revision 1's in-flight lease is gone: the fence makes it unnecessary.</p>
+<p>There are no CHECK constraints.</p>
+<h3 id="reservation">Issuance reservation (review R2-3)</h3>
+<p>Better Auth 1.7.11 consumes a one-time device code in <code>redeemDeviceCode</code> before <code>issueTokens</code>, and a refresh rotates its refresh token in the same way. So sign-in must never return a "retry" <em>after</em> Better Auth has consumed anything. The order for every token issuance (a device-code poll or a refresh) for machine M at holder X is:</p>
+<ol>
+<li><strong>Before Better Auth consumes anything,</strong> a conditional write on <code>Held(X, v)</code> sets <code>busy_until</code> to one request timeout plus SD8 (injected clock).
+<ul>
+<li>If the row is <code>Checking</code>: answer before consuming. A device-code poll gets <code>authorization_pending</code> (RFC 8628: keep polling, the code is untouched). A refresh gets the retryable transient outcome (the refresh token is untouched).</li>
+</ul></li>
+<li>Redeem or rotate, then forward to central with <code>claimVersion = v</code>.</li>
+<li>Clear <code>busy_until</code> when central answers.</li>
+</ol>
+<p><strong>No check while a reservation is held:</strong> a write to <code>Checking</code> requires <code>busy_until</code> to be empty or past, otherwise the other organization's approver gets "try again". So a check can never start between the reservation and the forward, and the consumed code or token is always followed by a forward under a version no fence has passed. A crashed reservation runs out by itself, and the Router's retry after a lost response follows Better Auth's own replay rules for that code or token.</p>
 
 <h3 id="identity">A trusted machine ID at every forward (review B5)</h3>
 <ul>
@@ -100,7 +112,7 @@ sequenceDiagram
 <tbody>
 <tr><td>No row (gate on)</td><td>Approval: insert <code>Held(X, 1)</code>, then forward with <code>claimVersion = 1</code>. A token can't exist without a row once the gate is on, so it's refused.</td><td>Not applicable</td></tr>
 <tr><td><code>Held(X, v)</code></td><td>Forward with <code>claimVersion = v</code>. That covers approval, re-approval, first grant and refresh.</td><td>Approval: write <code>Checking(X→Y, v+1)</code>, then <code>FenceAndReport(M, v+1)</code> to X. Token: refused with <code>EnrollmentNotActive</code> (Y holds nothing).</td></tr>
-<tr><td><code>Checking(X→Y, w)</code></td><td>Not forwarded. The Router gets the existing <em>retryable</em> transient outcome, and its client and refresh family are kept (review B3).</td><td>Approval: "try again", unless <code>checking_since</code> is past the stale bound. Then take over: <code>Checking(X→Y, w+1)</code>, and ask again with <code>w+1</code>.</td></tr>
+<tr><td><code>Checking(X→Y, w)</code></td><td>Not forwarded, and answered before anything is consumed (see <a href="#reservation">reservation</a>): <code>authorization_pending</code> for a device-code poll, the retryable transient outcome for a refresh. The client and refresh family are kept (review B3). <strong>Holder recovery</strong> (review R2-2): if <code>checking_since</code> is past the stale bound, the holder's own request writes <code>Held(X, w+1)</code> conditionally on <code>w</code>, and then proceeds. The claim isn't transferred, and the abandoned check's late CAS loses.</td><td>Approval: "try again", unless <code>checking_since</code> is past the stale bound. Then take over: <code>Checking(X→Y, w+1)</code>, and ask again with <code>w+1</code>.</td></tr>
 </tbody>
 </table>
 <p><strong>After the answer to <code>FenceAndReport(M, u)</code>:</strong></p>
@@ -118,6 +130,21 @@ sequenceDiagram
 <li>still <code>Held(X)</code>: re-forward once with the current version. This is the refresh that was in flight during a <code>Live</code> check;</li>
 <li><code>Held(other)</code>: the terminal answer. For a token it's <code>EnrollmentNotActive</code>. For an approval, the approver is told the Mac is in another organization;</li>
 <li><code>Checking</code>: the retryable transient outcome.</li>
+</ul>
+
+<h2 id="activation">Activation and restore (review R2-4)</h2>
+<ul>
+<li><strong>One authority epoch:</strong> at cutover, a new <code>authorityEpoch</code> (UUIDv7) is set once for the issuer and its complete set of central targets. Every forward carries it, beside <code>claimVersion</code>.</li>
+<li><strong>The order:</strong>
+<ol>
+<li>Quiesce old ingress.</li>
+<li>Open fresh central stores and an empty claim table with the epoch.</li>
+<li>Retire old device codes and token families. They carry no epoch, so they fail.</li>
+<li>Open versioned ingress.</li>
+</ol></li>
+<li><strong>Where it's enforced:</strong> central checks the epoch <em>under the owning turn</em>, at the admission and commit boundary. An unknown, missing or mixed epoch fails closed.</li>
+<li><strong>Restore or loss:</strong> if either side's authority store (the claim table, or a central store with fences) is restored from a backup, or lost, that side starts in a <em>suspended</em> state. Machine approvals and first grants fail closed until a reconciliation run (an owner-run operation, designed separately) checks it, or a new epoch is cut. Ordinary reopen of the same intact SQLite isn't a restore.</li>
+<li><strong>Ownership:</strong> the epoch switch lives in central's contract (the central Lead names where). The sign-in side carries it and refuses to forward without it once it is set.</li>
 </ul>
 
 <h2 id="question">Central's contract, as sign-in relies on it</h2>
@@ -184,6 +211,9 @@ stateDiagram-v2
 <tr><td>A's token during <code>Checking</code></td><td>A retryable outcome, and the OAuth client is still enabled afterwards.</td><td><code>EnrollmentNotActive</code> during <code>Checking</code>: the client is disabled.</td></tr>
 <tr><td>A revoked, then B approves</td><td><code>NotLive{Revoked}</code>, <code>Held(B)</code>, and B is approved.</td><td>A claim never released: B is refused forever.</td></tr>
 <tr><td>A replayed question, and a stale one</td><td>The same version writes nothing. A lower version gives <code>StaleQuestion</code>, and the claim doesn't move.</td><td>A fence that can go down: an old check moves the claim.</td></tr>
+<tr><td>R2-2: B writes <code>Checking</code> and crashes; A keeps refreshing</td><td>After the stale bound, A's own refresh restores <code>Held(A, w+1)</code> and succeeds. B can retry its approval.</td><td>Only another organization's approval can take over: A retries forever.</td></tr>
+<tr><td>R2-3: A's device-code poll while B is Checking, and B starting Checking between A's reservation and forward (pause points)</td><td>During Checking: <code>authorization_pending</code>, and the code is still redeemable afterwards. With a reservation held: B gets "try again". A's code is consumed exactly once, and its grant succeeds.</td><td>The gate after <code>redeemDeviceCode</code>: the code is consumed and A must be re-approved.</td></tr>
+<tr><td>R2-4: an old ungated A request held across activation; a sign-in claim table restored from a backup</td><td>The old request fails on epoch at A's turn. The restored side is suspended, so approvals fail closed until it's reconciled.</td><td>The epoch checked before the turn, or a restore not detected: two grantable rows.</td></tr>
 <tr><td>A token forward with a spoofed machine ID</td><td>Sign-in uses the ID from the client metadata, so the spoof has no effect.</td><td>The request's machine ID is trusted: the gate is bypassed.</td></tr>
 <tr><td>Hegel property: random approvals, tokens, revokes, idles, crashes, delays and clock steps across 3 organizations</td><td>At any moment at most one store has a grantable enrollment for M, and the claim's holder is that store whenever one exists.</td><td>Any of the wrong builds above.</td></tr>
 </tbody>
@@ -195,6 +225,7 @@ stateDiagram-v2
 <li><strong>The machine ID is chosen by the Router install.</strong> The claim keeps honest Routers consistent; it doesn't prove physical identity.</li>
 <li><strong>Organization deletion:</strong> main has no organization removal. If one is added, releasing that organization's claims is part of that feature. Until then, an organization whose store can't answer keeps its claim.</li>
 <li><strong>The gate requires a fresh cutover.</strong> Without one, existing enrollments would need a reconciliation design.</li>
+<li><strong>Clock assumption:</strong> the stale bounds (<code>checking_since</code>, <code>busy_until</code>) use sign-in's injected clock. A backward step only delays recovery, it doesn't break exclusivity, because exclusivity rests on the version and the fence, not on time.</li>
 </ul>
 
 </ex-document>
