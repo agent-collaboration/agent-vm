@@ -59,6 +59,8 @@ sequenceDiagram
     state           TEXT NOT NULL,      -- Rust enum ClaimState { Held, Checking }
     checking_for    TEXT,               -- the organization asking, while Checking
     checking_since  INTEGER,            -- injected clock; a stale Checking can be taken over
+    inflight_count  INTEGER NOT NULL DEFAULT 0, -- forwarded token requests for this machine not yet answered
+    inflight_until  INTEGER,            -- injected clock: the lease ends at request timeout + SD8 after the latest forward
     version         INTEGER NOT NULL,   -- incremented on every write; all writes are conditional on it
     updated_at      INTEGER NOT NULL
 );</code></pre>
@@ -72,7 +74,7 @@ sequenceDiagram
 <li><strong>The answer is a closed variant:</strong> <code>Live { Approved | Enrolled }</code> or <code>NotLive { reason }</code>. The reason is one of: ended (<code>Lapsed | Expired | Revoked</code>), <code>UnknownMachine</code>, <code>ApprovalPastDeadline</code>, <code>IdleExpired</code> (central applies the 30-day rule on read without writing), or <code>NoSuchOrganization</code>.</li>
 <li><strong>A deleted or never-provisioned organization</strong> gives a definite <code>NotLive{NoSuchOrganization}</code>. Only a transport failure, or a store that exists but didn't answer, means "retry".</li>
 </ul>
-<p><strong>Why no fence in central is needed.</strong> <code>Live</code> covers exactly the enrollments that could still be granted a token. A first grant needs an Approved row before its deadline (<code>machine_token_decision.rs:76–92</code>). A refresh needs an Enrolled row that isn't idle (<code>:42–43</code>). Ended states are terminal (<code>machine_login_writes.rs:333–352</code>). So an enrollment that reads <code>NotLive</code> can never be granted again. The only way back into that organization is a <em>new approval</em>, and every approval passes through sign-in's claim row. As a second safeguard, sign-in also refuses to forward a token decision for an organization that doesn't hold the claim.</p>
+<p><strong>Why no fence in central is needed</strong> (given the sign-in lease below). <code>Live</code> covers exactly the enrollments that could still be granted a token. A first grant needs an Approved row before its deadline (<code>machine_token_decision.rs:76–92</code>). A refresh needs an Enrolled row that isn't idle (<code>:42–43</code>). Ended states are terminal (<code>machine_login_writes.rs:333–352</code>). So an enrollment that reads <code>NotLive</code> can never be granted again. The only way back into that organization is a <em>new approval</em>, and every approval passes through sign-in's claim row. As a second safeguard, sign-in also refuses to forward a token decision for an organization that doesn't hold the claim.</p>
 
 <h2 id="rules">Sign-in's rules: what sign-in owns</h2>
 <ol>
@@ -88,7 +90,8 @@ sequenceDiagram
 </ul></li>
 <li><code>Checking</code> by another request: answer "try again". If <code>checking_since</code> is older than the stale bound (one request timeout plus the 5 s SD8 window, on the injected clock), take it over and ask again.</li>
 </ul></li>
-<li><strong>Token decision for org X</strong> (first grant or refresh): forward only if the row is <code>Held(X)</code>. Otherwise refuse with the existing <code>EnrollmentNotActive</code>, which the Router already treats as "get a new code" (B3 M4).</li>
+<li><strong>Token decision for org X</strong> (first grant or refresh): forward only if the row is <code>Held(X)</code>. Before forwarding, take a lease in a conditional write: <code>inflight_count + 1</code> and <code>inflight_until</code> extended. Release it when central answers. Otherwise refuse with the existing <code>EnrollmentNotActive</code>, which the Router already treats as "get a new code" (B3 M4).</li>
+<li><strong>No question while a token request is in flight.</strong> The write to <code>Checking</code> requires <code>inflight_count = 0</code>, or <code>inflight_until</code> in the past (a crashed forward's lease runs out by itself). Otherwise the approver gets "try again". This closes the central page's assumption A1: a request already forwarded when the claim moves, together with a backwards step of A's clock, can no longer revive an ended enrollment, because the claim never moves while that request is out.</li>
 <li><strong>Revoke, lapse and idle expiry need no release call.</strong> The row stays <code>Held(X)</code> until another organization asks, and the question then finds the ending.</li>
 </ol>
 
@@ -107,7 +110,7 @@ sequenceDiagram
 <table>
 <thead><tr><th>Case</th><th>What happens</th></tr></thead>
 <tbody>
-<tr><td>A token refresh for A is in flight while B is Checking</td><td>The refresh was forwarded under <code>Held(A)</code>. If A's enrollment is Enrolled and not idle, the question answers <code>Live</code> and B is refused. If it's idle, the question answers <code>NotLive</code> and central's mint refuses the refresh by the same 30-day rule. Both read A under A's turn with the same rule, so they agree. No serialization against token traffic is needed.</td></tr>
+<tr><td>A token refresh for A is in flight while B is Checking</td><td>The refresh was forwarded under <code>Held(A)</code>, with a lease. B's attempt to start <code>Checking</code> sees <code>inflight_count &gt; 0</code> and gets "try again". It asks only after the refresh returns. So the question always reads A after the refresh, and A1 (a backwards clock step during an in-flight forward) can't revive A.</td></tr>
 <tr><td>Two organizations approve the same ID at the same moment</td><td>Both read the row. Only one conditional write (insert, or <code>Checking</code>) succeeds on <code>version</code>. The other sees the newer row and gets "try again" (or <code>Held(other)</code>, which starts its own question).</td></tr>
 <tr><td>A approves again after the claim moved to B</td><td>The row is <code>Held(B)</code>, so A starts a question to B. B's live enrollment refuses A.</td></tr>
 <tr><td>The claim write succeeds, then the forward to central fails</td><td>The row is <code>Held(X)</code> with no approval in X. X's Router retries with the same request ID, and the forward is idempotent (<code>login_machine_approvals.request_id</code> is unique). If nobody retries, the next organization's question finds <code>UnknownMachine</code> or <code>ApprovalPastDeadline</code> in X, and the claim moves.</td></tr>
@@ -140,7 +143,7 @@ stateDiagram-v2
 <tr><td>A's approval is never used, and its deadline passes; then B approves</td><td>The question returns <code>NotLive{ApprovalPastDeadline}</code>, so B is approved.</td><td>Central treats an Approved row as live regardless of deadline: B is refused.</td></tr>
 <tr><td>A is idle for 30 days with no writes; then B approves</td><td>The question returns <code>NotLive{IdleExpired}</code>, so B is approved. A's later refresh is refused.</td><td>Idle is applied only on write: B is refused.</td></tr>
 <tr><td>Concurrent approvals in A and B (forced interleaving)</td><td>Exactly one wins. The other gets "try again", then resolves.</td><td>An unconditional write: both win.</td></tr>
-<tr><td>A token decision for A after the claim moved to B</td><td><code>EnrollmentNotActive</code>, and it isn't forwarded.</td><td>A missing token fence: it's forwarded.</td></tr>
+<tr><td>A token request for A in flight while B approves; and a token decision for A after the claim moved to B</td><td>In flight: B gets "try again" until the request returns. After the move: <code>EnrollmentNotActive</code>, and it isn't forwarded.</td><td>No lease: B's question overtakes the in-flight request. A missing token fence: the request is forwarded.</td></tr>
 <tr><td>Holder unreachable; holder's organization deleted</td><td>Unreachable: "try again", claim kept. Deleted: <code>NoSuchOrganization</code>, and the claim moves.</td><td>Unreachable treated as ended: the claim is stolen.</td></tr>
 <tr><td>Hegel: random sequences of approvals, tokens, revokes, idles and crashes across 3 organizations</td><td>At most one organization ever has a live enrollment for M. The row's holder always equals the organization with the live enrollment, if there is one.</td><td>Any of the wrong builds above.</td></tr>
 </tbody>
