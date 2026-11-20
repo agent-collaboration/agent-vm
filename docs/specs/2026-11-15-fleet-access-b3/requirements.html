@@ -8,16 +8,7 @@
 <script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
 </head>
 <body>
-<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
-<a href="../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
-<a href="audit.html">B3 · 1 Audit</a>
-<a href="requirements.html">B3 · 2 Requirements</a>
-<a href="specification.html">B3 · 3 Specification</a>
-<a href="program-design.html">B3 · 4 Program Design</a>
-<a href="verification-design.html">B3 · 5 Verification Design</a>
-<a href="plan.html">B3 · 6 Plan</a>
-<a href="decisions.html">B3 · 7 Decisions</a>
-</nav></ex-nav>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
 <ex-document id="doc">
 <h1>B3 · Machine login: Requirements</h1>
 <p><strong>A Router logs in by device code: you approve it on the sign-in page and choose its workspaces. It gets short-lived machine tokens, connects to Central only through the sign-in service, and renews on the open connection with no one acting. Revoking it refuses it at once and closes its connection.</strong></p>

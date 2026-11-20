@@ -8,15 +8,7 @@
 <script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
 </head>
 <body>
-<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
-<a href="../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
-<a href="requirements.html">F1 · 1 Requirements</a>
-<a href="specification.html">F1 · 2 Specification</a>
-<a href="program-design.html">F1 · 3 Program Design</a>
-<a href="verification-design.html">F1 · 4 Verification Design</a>
-<a href="plan.html">F1 · 5 Plan</a>
-<a href="decisions.html">F1 · 6 Decisions</a>
-</nav></ex-nav>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
 <ex-document id="doc">
 <h1>F1 · Fuzz testing for sign-in: Requirements</h1>
 <p><strong>Why:</strong> sign-in is the front door. Hand-written tests check the cases someone thought of. F1 adds machine-generated inputs, action sequences and UI exploration, so the cases nobody thought of get tried too. They run against the real sign-in service on both hosts (workerd and Node), and every failure comes back as a small reproducible case.</p>

@@ -8,16 +8,7 @@
 <script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
 </head>
 <body>
-<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
-  <a href="../../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
-  <a href="audit.html">B1-B · 1 Audit</a>
-  <a href="requirements.html">B1-B · 2 Requirements</a>
-  <a href="specification.html">B1-B · 3 Specification</a>
-  <a href="program-design.html">B1-B · 4 Program Design</a>
-  <a href="verification-design.html">B1-B · 5 Verification Design</a>
-  <a href="plan.html">B1-B · 6 Plan</a>
-  <a href="decisions.html">B1-B · 7 Decisions</a>
-</nav></ex-nav>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
 <ex-document id="doc">
 <h1>B1-B · Passkey sign-in: Program Design</h1>
 <p>How the code changes to meet the <a href="specification.html">Specification</a>: which packages, which types, which call paths. Everything is at switchboard <code>main</code> <code>f3b2b88b</code>, with Better Auth 1.7.11, <code>@better-auth/passkey</code> 1.7.11 and Better Auth UI 1.7.34 as pinned.</p>

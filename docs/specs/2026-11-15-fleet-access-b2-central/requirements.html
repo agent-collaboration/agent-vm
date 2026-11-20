@@ -8,16 +8,7 @@
 <script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
 </head>
 <body>
-<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
-<a href="../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
-<a href="audit.html">B2 · 1 Audit</a>
-<a href="requirements.html">B2 · 2 Requirements</a>
-<a href="specification.html">B2 · 3 Specification</a>
-<a href="program-design.html">B2 · 4 Program Design</a>
-<a href="verification-design.html">B2 · 5 Verification Design</a>
-<a href="plan.html">B2 · 6 Plan</a>
-<a href="decisions.html">B2 · 7 Decisions</a>
-</nav></ex-nav>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
 <ex-document id="doc">
 <h1>B2 · Central organizations: Requirements</h1>
 <p><strong>An owner creates an organization and runs it through sign-in: it is set up in its own Central store with no deploy, the owner creates and finds workspaces and reads the full history, sees when renewal is stuck, and the organization survives a signing-key change even when idle.</strong> Organizations never see each other.</p>

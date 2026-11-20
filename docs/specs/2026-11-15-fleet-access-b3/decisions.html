@@ -8,16 +8,7 @@
 <script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
 </head>
 <body>
-<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
-<a href="../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
-<a href="audit.html">B3 · 1 Audit</a>
-<a href="requirements.html">B3 · 2 Requirements</a>
-<a href="specification.html">B3 · 3 Specification</a>
-<a href="program-design.html">B3 · 4 Program Design</a>
-<a href="verification-design.html">B3 · 5 Verification Design</a>
-<a href="plan.html">B3 · 6 Plan</a>
-<a href="decisions.html">B3 · 7 Decisions</a>
-</nav></ex-nav>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
 <ex-document id="doc">
 <h1>B3 · Machine login: Decisions</h1>
 <p>B3 lets a machine (a Router on a laptop or server) log in to your organization with a device code you approve once. Its token then renews itself while it stays connected, and you can revoke it from the admin page. <strong>Nothing is open for you.</strong> You decided all three storage questions on 9 Nov in the B3 SQL review (option A), and the merge question is mine. Each is explained with background and an example.</p>
@@ -126,6 +117,8 @@ flowchart TB
 </ex-compare>
 <ex-callout title="Decided by you: B, a machine_allowances table" tone="done" icon="code"><p>9 Nov, B3 SQL review, option A: <code>machine_allowances</code>, “which workspaces each machine may serve”, one row per machine and workspace. An earlier version of this page recommended Central's newer column instead; your table stands. B3 retires <code>machines.allowed_workspaces</code> in its migration and moves admission's read to the table, coordinated with Lead A.</p></ex-callout>
 
+<p>On 20 November 2026 the owner reaffirmed this choice: <q>we want allwoance talbes</q>. See the <a href="../2026-11-15-fleet-access-overview/owner-quotes-2026-11-20.md#machine-allowances-b3">owner’s recorded wording</a>.</p>
+
 <h3 id="rekey">4 · The re-key column (decided)</h3>
 <p><strong>Background.</strong> Today a machine is known on Central by an older routing ID. At its first B3 login it takes its permanent ID: the Router's own UUIDv7. To keep its sessions, allowances and queued mail, Central renames the machine in one transaction and records the old ID, so that a retried login with the same mapping is accepted and a different mapping is refused. Recording it needs one new column on Central's <code>machines</code> table (<code>former_installation_id</code>).</p>
 <p><strong>Example.</strong> Your laptop's Router logs in, and the reply is lost. It retries with the same old-to-new mapping: accepted, with nothing duplicated. A different machine claiming the same old ID is refused.</p>
@@ -155,6 +148,16 @@ flowchart TB
 <tr><td>F11 branch (<code>ef613d0bb</code>, not on main) is a reference only, not a base; the independent pieces are written fresh on Router main</td><td>F11 was built on the two-id machine model now being replaced</td><td>No</td></tr>
 <tr><td>Parts of B3 that depend on machine identity wait for the one-Mac-id rework</td><td>You asked for one id per Mac; Lead A is writing it up</td><td>No: it follows your direction</td></tr>
 </tbody></table></div>
+<h2 id="carrier-controlled-peer">Controlled peer for the Sign-in carrier</h2>
+<p>The Sign-in carrier can be exercised while Central's private upgrade routes are being settled. On Node, a test HTTP peer listens on the configured private Unix socket. On workerd, a controlled service binding stands in for Central's private Worker. Both replace the Central receiver at the transport boundary. They assume the agreed organization-scoped path and standard WebSocket upgrade, refusal, and close behavior. The bearer is opaque to Sign-in.</p>
+<p>The stand-ins can check forwarding and connection behavior. Central admission and private routing remain open until the new Central Lead identifies the private target for each host and V2 passes on those real pairings. <a href="verification-design.html#V2">Carrier verification</a> · <a href="router://0ff962c5-7fa3-4c18-a5ca-1bbe8db09e89/push/01a1f3ba-8ef6-7290-bd45-7cb980c3e743">Lead direction, 19 November</a>.</p>
+<h2 id="contract-1">Agreed Central contract</h2>
+<ul>
+  <li>The Node carrier sends the WebSocket upgrade to Central’s TCP listener at a configured private address on <code>/v1/organizations/{organization}/link</code>. The Worker uses the <code>CENTRAL</code> binding. This supersedes the Unix-socket carrier stand-in above. The controlled TCP peer exercises the Node transport while real Central V2 remains open.</li>
+  <li>The Router creates its single UUIDv7 machine ID and stores it in its database. Cutover starts fresh and reads no former or installation identity. B3 drops re-key and former-ID behavior.</li>
+  <li>M4 implements the Router-host <code>MachineTokenSource</code> from <code>origin/feat/link-router-inbox</code>. It publishes <code>Ready</code>, <code>RefreshPending</code>, or <code>NeedsNewCode</code>, wakes the driver on availability changes, and interprets Central renewal reports. Sign-in’s refresh capability is injected while the owner’s refresh-binding choice is open.</li>
+</ul>
+<p><a href="router://0ff962c5-7fa3-4c18-a5ca-1bbe8db09e89/push/01a1f43a-14a2-7e23-8cd7-438f988e62a4">Fleet access Lead’s scope update</a>.</p>
 </ex-document>
 </body>
 </html>

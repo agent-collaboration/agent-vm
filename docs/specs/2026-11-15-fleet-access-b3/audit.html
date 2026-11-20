@@ -8,16 +8,7 @@
 <script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
 </head>
 <body>
-<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
-<a href="../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
-<a href="audit.html">B3 · 1 Audit</a>
-<a href="requirements.html">B3 · 2 Requirements</a>
-<a href="specification.html">B3 · 3 Specification</a>
-<a href="program-design.html">B3 · 4 Program Design</a>
-<a href="verification-design.html">B3 · 5 Verification Design</a>
-<a href="plan.html">B3 · 6 Plan</a>
-<a href="decisions.html">B3 · 7 Decisions</a>
-</nav></ex-nav>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
 <ex-document id="doc">
 <h1>B3 · Machine login and the locked link: Audit</h1>
 <p><strong>Half of B3 is built but frozen.</strong> Switchboard PR #11 (<code>item2/b3a-device-grant</code>, <code>d60372cc</code>) logs a machine in by device code and refreshes its token, and PR #14 (<code>item2/b3a-verify-auth</code>, <code>b521a56c</code>, based on #11) adds its verification; independent runs pass on both hosts against real Central. Missing: revoking a machine, choosing and changing its workspaces, its connection through the sign-in service, renewal on the open connection, the Router's own login and secret store, and the UUIDv7 re-key. #11 also has a defect: Deny needs no recent second factor.</p>

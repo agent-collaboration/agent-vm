@@ -8,12 +8,7 @@
 <script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
 </head>
 <body>
-<ex-nav for="content">
-  <nav slot="pages" aria-label="Pages">
-    <a href="design.html">Verification redesign</a>
-    <a href="plan.html">Plan</a>
-  </nav>
-</ex-nav>
+<ex-nav for="content" src="./navigation.json"></ex-nav>
 <ex-document id="content">
 
 <h1>Sign-in verification plan</h1>
@@ -32,11 +27,12 @@ flowchart LR
   class d slot2
 </script></ex-mermaid>
 
+<h2 id="delivery">Delivery steps and proof</h2>
 <table>
 <thead><tr><th>Step</th><th>Who</th><th>Done when</th></tr></thead>
 <tbody>
 <tr><td><strong>S0 Spike</strong>: build the passkey journey with A and with B</td><td>Sol Implementer <code>01a1f8ab</code> on Sunclaw</td><td>The report has each step's yes/no, its code, how each wait works, 5 runs, lines of code and a recommendation. Per the review addendum it also covers: response hold and release, two ordered replies, the response body and cookie across navigation, trusted click and Enter, the real CLI handoff, cancellation when an event never arrives, and installing Chromium on macOS and Linux CI. I read the code and results myself.</td></tr>
-<tr><td><strong>Driver decision</strong></td><td>Owner, 20 Nov: decided</td><td>Vitest browser mode (Playwright provider) by default; Playwright library only for what browser mode cannot do, per the spike report.</td></tr>
+<tr><td><strong>Driver decision</strong></td><td>Owner, 20 Nov: decided</td><td><a href="decisions.html#d1">Browser-driver ruling and spike result</a>.</td></tr>
 <tr><td><strong>S1 PR</strong>:
 <ul>
 <li>wrap the chosen driver;</li>
@@ -54,7 +50,7 @@ flowchart LR
 
 <h2 id="not-in-scope">Not in this plan</h2>
 <ul>
-<li>The navigation tabs (People / Machines / Agents / Me): a UI design for BG.</li>
+<li><a href="../2026-11-20-sign-in-navigation-ui/index.html">Sign-in navigation UI</a> has its own design set.</li>
 <li>B3 machine login: its own plan.</li>
 <li>The follow-up sign-in items: the intermittent native hang (likely gone with the driver swap; re-checked in S1), <code>passkeyAuditPending</code> as a closed union with a Hegel test, and the PR #1 finalizer items. Each goes into S1 only if the driver swap touches it; otherwise it gets its own small PR.</li>
 </ul>

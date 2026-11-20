@@ -8,19 +8,13 @@
 <script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
 </head>
 <body>
-<ex-nav for="content">
-  <nav slot="pages" aria-label="Pages">
-    <a href="design.html">Verification redesign</a>
-    <a href="plan.html">Plan</a>
-    <a href="ci-workflow.html">CI workflow</a>
-  </nav>
-</ex-nav>
+<ex-nav for="content" src="./navigation.json"></ex-nav>
 <ex-document id="content">
 
 <h1>CI workflow with background steps</h1>
 
 <ex-callout title="Proposal" tone="decision" icon="rocket">
-<p>The <code>E2E (host)</code> job now has to install Chromium for Playwright. Instead of adding one more step to wait through, the job starts the slow independent setup as <strong>background steps</strong> and builds in the foreground. It waits for everything only right before the tests run. The owner approved the CI change on 20 Nov ("you can just do it"). It ships in PR #10.</p>
+<p>The <code>E2E (host)</code> job now has to install Chromium for Playwright. Instead of adding one more step to wait through, the job starts the slow independent setup as <strong>background steps</strong> and builds in the foreground. It waits for everything only right before the tests run. See the <a href="decisions.html#ci-approval">CI approval</a>. It ships in PR #10.</p>
 </ex-callout>
 
 <h2 id="feature">What GitHub Actions gives us</h2>
@@ -131,15 +125,7 @@ flowchart LR
 <p>The <code>validation</code> job and the <code>check</code> aggregator don't change. No unit or integration test launches a browser.</p>
 
 <h2 id="decisions">Calls I made</h2>
-<table>
-<thead><tr><th>Call</th><th>Why</th><th>Cost</th></tr></thead>
-<tbody>
-<tr><td>Headless shell only (<code>--only-shell</code>)</td><td>The tests are headless. The shell is smaller and is what the spike ran.</td><td>A future headed test would need the full browser.</td></tr>
-<tr><td>Cache key pinned to the Playwright version</td><td>The version decides the browser revision. The spike saw revision 1228 for 1.61.1.</td><td>The key's version has to be bumped together with the package pin.</td></tr>
-<tr><td>Wait on the apt step before Chromium</td><td>It avoids a dpkg lock race between two <code>apt-get</code> runs.</td><td>Chromium can't start until apt finishes.</td></tr>
-<tr><td>Build moved out of the Node setup action (<code>build: 'false'</code>, then <code>pnpm build</code>)</td><td>So the browser download overlaps with the build.</td><td>One extra step in the job.</td></tr>
-</tbody>
-</table>
+<p><a href="decisions.html#ci-calls">Read the CI implementation calls and their tradeoffs</a>.</p>
 
 <h2 id="unverified">Not yet observed</h2>
 <ul>

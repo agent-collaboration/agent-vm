@@ -8,16 +8,7 @@
 <script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
 </head>
 <body>
-<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
-<a href="../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
-<a href="audit.html">BG · 1 Audit</a>
-<a href="requirements.html">BG · 2 Requirements</a>
-<a href="specification.html">BG · 3 Specification</a>
-<a href="program-design.html">BG · 4 Program Design</a>
-<a href="verification-design.html">BG · 5 Verification Design</a>
-<a href="plan.html">BG · 6 Plan</a>
-<a href="decisions.html">BG · 7 Decisions</a>
-</nav></ex-nav>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
 <ex-document id="doc">
 <h1>BG · Getting in: Requirements</h1>
 <p><strong>After signing in, a person sees one setup step at a time (authenticator app and recovery codes, then their organization) and then goes back to where they were going: a waiting command line, an invitation, or their account page. Every journey is checked on staging after each deploy with no one signing in by hand, and production refuses the test path.</strong></p>

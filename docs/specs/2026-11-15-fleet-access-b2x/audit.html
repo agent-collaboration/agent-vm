@@ -8,16 +8,7 @@
 <script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
 </head>
 <body>
-<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
-<a href="../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
-<a href="audit.html">B2X · 1 Audit</a>
-<a href="requirements.html">B2X · 2 Requirements</a>
-<a href="specification.html">B2X · 3 Specification</a>
-<a href="program-design.html">B2X · 4 Program Design</a>
-<a href="verification-design.html">B2X · 5 Verification Design</a>
-<a href="plan.html">B2X · 6 Plan</a>
-<a href="decisions.html">B2X · 7 Decisions</a>
-</nav></ex-nav>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
 <ex-document id="doc">
 <h1>B2X · Person tokens and revocation: Audit</h1>
 <p><strong>The token and revocation machinery is mostly built and merged; three things are missing.</strong> A person gets a key-bound Fleet token from one snapshot of their authority, refreshes it with the same key, and every role, membership or session change bumps a revision that is pushed to Central. Missing: the CLI's <code>--device</code> login you chose on 7 Nov (it exits with “not available”), any place where the owner can see whether a revocation has reached Central, and the pure-machine and full-proof treatment the approved design requires.</p>

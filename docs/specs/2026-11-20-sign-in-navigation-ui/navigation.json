@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "pages": [
+    {
+      "id": "home",
+      "title": "Home",
+      "href": "index.html",
+      "icon": "book-open"
+    },
+    {
+      "id": "mockups",
+      "title": "Mockups",
+      "href": "mockups/index.html",
+      "icon": "file"
+    },
+    {
+      "id": "decisions",
+      "title": "Decisions",
+      "href": "decisions.html",
+      "icon": "chat-circle"
+    },
+    {
+      "id": "overview",
+      "title": "Back to the overview",
+      "href": "../2026-11-15-fleet-access-overview/index.html",
+      "icon": "book-open"
+    }
+  ],
+  "map": [
+    {
+      "title": "Signed-in experience",
+      "description": "Find mockups and the choices they illustrate.",
+      "icon": "users",
+      "children": [
+        {
+          "title": "Phone and desktop layouts",
+          "description": "Open the navigation mockups and component notes.",
+          "icon": "file",
+          "target": {
+            "page": "home",
+            "fragment": "mockups"
+          }
+        },
+        {
+          "title": "Organization switch and destinations",
+          "description": "Read the switcher and allowed landing behavior.",
+          "icon": "path",
+          "target": {
+            "page": "decisions",
+            "fragment": "organization-navigation"
+          }
+        },
+        {
+          "title": "Pending sign-ins",
+          "description": "Read the recorded CLI and machine approval states.",
+          "icon": "users",
+          "target": {
+            "page": "decisions",
+            "fragment": "pending-sign-ins"
+          }
+        },
+        {
+          "title": "Open navigation choices",
+          "description": "See the proposed fourth destination, phone navigation options and member landing assumption.",
+          "icon": "chat-circle",
+          "target": {
+            "page": "decisions",
+            "fragment": "open-choices"
+          }
+        }
+      ]
+    }
+  ]
+}

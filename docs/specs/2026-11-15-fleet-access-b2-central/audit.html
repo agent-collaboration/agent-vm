@@ -8,16 +8,7 @@
 <script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
 </head>
 <body>
-<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
-<a href="../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
-<a href="audit.html">B2 · 1 Audit</a>
-<a href="requirements.html">B2 · 2 Requirements</a>
-<a href="specification.html">B2 · 3 Specification</a>
-<a href="program-design.html">B2 · 4 Program Design</a>
-<a href="verification-design.html">B2 · 5 Verification Design</a>
-<a href="plan.html">B2 · 6 Plan</a>
-<a href="decisions.html">B2 · 7 Decisions</a>
-</nav></ex-nav>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
 <ex-document id="doc">
 <h1>B2 · Central organizations: Audit</h1>
 <p><strong>Most of B2 is already merged.</strong> An organization is set up in its own Central store through sign-in, its stamp renews on use, and an owner can create a workspace. Five things keep it from being a finished feature: the workspace list is guessed from the first 100 history records, the history parser rejects four record kinds Central already writes, the browser makes its own operation IDs, the owner can't see renewal trouble, and key retirement has no finished operational path. This page lists what exists, what's missing, and what each piece's evidence really shows.</p>

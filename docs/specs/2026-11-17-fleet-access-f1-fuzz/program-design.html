@@ -8,15 +8,7 @@
 <script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
 </head>
 <body>
-<ex-nav for="doc"><nav slot="pages" aria-label="Pages">
-<a href="../2026-11-15-fleet-access-overview/index.html">Fleet access overview</a>
-<a href="requirements.html">F1 · 1 Requirements</a>
-<a href="specification.html">F1 · 2 Specification</a>
-<a href="program-design.html">F1 · 3 Program Design</a>
-<a href="verification-design.html">F1 · 4 Verification Design</a>
-<a href="plan.html">F1 · 5 Plan</a>
-<a href="decisions.html">F1 · 6 Decisions</a>
-</nav></ex-nav>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
 <ex-document id="doc">
 <h1>F1 · Fuzz testing for sign-in: Program Design</h1>
 <p>How it's built, revision 2, after design review F1–F10. F1 is test code only: no product file changes and no CI gate changes. Pure tests go in the unit lane. Anything that needs a live Miniflare or Node host (the provider inventory, dual-engine storage, host requests) goes in the existing host e2e lane, which CI already requires (<code>ci.yml:43</code>), per Switchboard's <code>AGENTS.md:35</code>. Bombadil runs through an on-demand driver in <code>scripts/</code>.</p>
