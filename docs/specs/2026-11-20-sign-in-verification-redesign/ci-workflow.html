@@ -118,7 +118,7 @@ flowchart LR
       - name: Build workspace
         run: pnpm build
 
-      - wait-all
+      - wait-all:
 
       - name: Record browser version
         run: pnpm --filter ./packages/sign-in-test-support exec playwright --version
