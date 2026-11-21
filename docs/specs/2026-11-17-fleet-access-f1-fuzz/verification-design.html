@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>F1 · Fuzz testing · Verification Design</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>F1 · Fuzz testing for sign-in: Verification Design</h1>
+<p>A fuzz test is proof only if it can fail. Every row needs:</p>
+<ul>
+<li>the clean build to pass;</li>
+<li>a deliberately wrong build, in a scratch copy, to fail with the <em>named</em> property (an exit code alone doesn't count);</li>
+<li>the restored build to pass again.</li>
+</ul>
+<p>Revision 2, after design review F1–F10.</p>
+<ex-mermaid id="vpath" label="How each row is proven" data-width="canvas"><script type="text/plain">
+flowchart TB
+  base["Clean build passes, including the legitimate cases"] --> wrong["One deliberate break in a scratch copy"]
+  wrong --> red["The named property fails, with a minimal case or trace"]
+  red --> restore["Restore exact bytes; the same run passes"]
+</script></ex-mermaid>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Row</th><th>Clean build must pass</th><th>Wrong builds that must fail</th><th>Lane</th></tr></thead>
+<tbody>
+<tr><td>V1 (S1)</td><td>Provider rows plus handler routes equal the classification; reachable rows equal the families</td><td>(a) remove one family; (b) add a real new public branch to the actual outer handler, editing no test list: discovery must fail; (c) add a provider endpoint with no classification row; (d) a handler branch on a non-literal pathname: discovery must fail</td><td>Host e2e (live inventory); table consistency in unit</td></tr>
+<tr><td>V2 (S2)</td><td>
+  <ul>
+  <li>the owner reading their own organization's People returns its emails (allowed);</li>
+  <li>a valid GET query at a pagination boundary;</li>
+  <li>a valid URL-encoded token request, whose success body carries its authorized <code>access_token</code> (allowed);</li>
+  <li>an expired session's refused read with its legitimate cleanup and fence bump;</li>
+  <li>a passkey-confirm with a valid challenge and invalid assertion is refused, consuming the challenge, and its replay is refused.</li>
+  </ul></td><td>
+  <ul>
+  <li>(a) an endpoint throws on an over-long field: a 500, shrunk to that field;</li>
+  <li>(b) an error body echoes the session cookie, or a token refusal includes an <code>access_token</code>: a credential disclosure;</li>
+  <li>(e) a token issued to a caller outside the route's entitlement: a credential disclosure;</li>
+  <li>(c) a member's People request returns rows, or an owner sees another organization's email: an identity disclosure;</li>
+  <li>(d) a refused request writes an unrelated row: an effect violation.</li>
+  </ul></td><td>Host e2e, both hosts</td></tr>
+<tr><td>V3 (S3)</td><td>Long sequences on both engines, with refusals matching the model</td><td>
+  <ul>
+  <li>(a) in the scratch copy, disable <em>both</em> owner-removal guards (the role hook and Better Auth's last-owner check): R-owner fails, with a shrunk create-then-remove sequence;</li>
+  <li>(b) don't clear the stored choice on removal: R-choice fails;</li>
+  <li>(c) a role change that skips its fence bump: R-fence fails;</li>
+  <li>(d) session delete that bumps only one organization pair: R-fence fails on a two-organization person.</li>
+  </ul></td><td>Host e2e, both engines</td></tr>
+<tr><td>V4 (S4)</td><td>All three campaigns on both hosts, including the member's 403 on People</td><td>
+  <ul>
+  <li>(a) mount Better Auth UI's passkey autofill for real, at the island's provider, so a challenge is initiated on load before any click. The named <em>ordering</em> property must fail, including when a later click makes the totals equal and when the challenge response is held until after the click.</li>
+  <li>(b) render the session token into a data attribute: disclosure fails;</li>
+  <li>(c) show People rows to the member: the member property fails;</li>
+  <li>(d) make the owner page answer 500 on one action: the navigation-status property fails.</li>
+  </ul>
+  Each receipt names the property that failed.</td><td>On demand, Sunclaw (Decision F1-1)</td></tr>
+<tr><td>V5 (S5)</td><td>One Hegel finding re-run from its printed seed; one Bombadil finding replayed through driver replay mode after the original harness has closed</td><td>A finding without a recorded case or replay doesn't count; divergence is reported as divergence</td><td>Handback evidence</td></tr>
+<tr><td>V6 (S6)</td><td>A tree scan finds no trace or screenshot committed; reports are redacted</td><td>A trace committed under <code>packages/</code></td><td>Verifier read</td></tr>
+</tbody></table></div>
+<p><strong>Unverified by design:</strong> concurrent interleavings, real providers and authenticators, hosted Cloudflare, and Bombadil determinism (no seed; replay can diverge).</p>
+</ex-document>
+</body>
+</html>

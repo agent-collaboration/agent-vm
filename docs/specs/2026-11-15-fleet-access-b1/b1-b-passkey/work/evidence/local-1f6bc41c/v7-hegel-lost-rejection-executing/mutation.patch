@@ -1,0 +1,11 @@
+--- packages/sign-in-core/src/pages/islands/passkey-sign-in-turnstile-queue.ts baseline
++++ packages/sign-in-core/src/pages/islands/passkey-sign-in-turnstile-queue.ts wrong-build
+@@ -44,7 +44,7 @@
+ 		case 'scriptFailed': {
+ 			if (state.script === 'failed') return { state, effects: [] };
+ 			const pending =
+-				state.executing === null ? state.waiting : [state.executing, ...state.waiting];
++				state.executing === null ? state.waiting : [state.executing];
+ 			return {
+ 				state: { script: 'failed', executing: null, waiting: [] },
+ 				effects: pending.map((id) => ({ kind: 'reject', id, reason: 'verification-unavailable' })),

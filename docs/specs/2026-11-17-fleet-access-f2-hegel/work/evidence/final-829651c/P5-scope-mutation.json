@@ -1,0 +1,10 @@
+{
+  "id": "P5-scope",
+  "source": "packages/oauth-broker/src/google/google-operation-grant-policy.ts",
+  "file": "packages/oauth-broker/src/google/google-operation-grants.hegel.unit.test.ts",
+  "property": "refuses missing, surplus and substituted exact-scope evidence",
+  "before": "if (\n\t\t\tactualScopes.size !== expectedScopes.size ||\n\t\t\t[...expectedScopes].some((scope) => !actualScopes.has(scope))\n\t\t)",
+  "after": "if (false)",
+  "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+  "originalSha256": "d759695a6a1ff0b339d0fe21588470c27ad9b53a9c1c96477653a7fd2b423877"
+}

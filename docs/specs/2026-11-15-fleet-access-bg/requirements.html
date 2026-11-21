@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BG · Getting in · Requirements</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>BG · Getting in: Requirements</h1>
+<p><strong>After signing in, a person sees one setup step at a time (authenticator app and recovery codes, then their organization) and then goes back to where they were going: a waiting command line, an invitation, or their account page. Every journey is checked on staging after each deploy with no one signing in by hand, and production refuses the test path.</strong></p>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What to check" tone="note" icon="shield-check">
+<ul>
+<li>The six journeys below are the ones you approved.</li>
+<li>A command-line sign-in past its deadline goes to the account page with a clear message; it never continues stale.</li>
+<li>Production can't be entered from staging in any way.</li>
+</ul>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p>You agreed with all three 30 Oct assumption lists on 15 Nov (<a href="decisions.html#assumptions">Decisions</a>).</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>Your 6 Nov answer in review <code>58647d30</code> (<a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl">Fleet transcript 86867</a>) selected getting in, all six journeys, the account page as the landing, staging helpers and the real release sign-in; the approved R57–R67 hold the rules.</p>
+</ex-callout>
+
+<h2 id="journeys">The six journeys</h2>
+<ex-mermaid id="journeys-picture" label="The six journeys" data-width="canvas"><script type="text/plain">
+flowchart TB
+  j1["1 · First-time owner: app, recovery codes, create organization, account page"]
+  j2["2 · Returning person: second factor only on a change"]
+  j3["3 · Command line: back to it after pending steps, no approve screen"]
+  j4["4 · Invited member: Join org as role, Accept or Decline"]
+  j5["5 · Add a passkey, then sign in with it"]
+  j6["6 · Lost factor: recover with a code or another factor"]
+  class j1,j2,j3,j4,j5,j6 slot3
+</script></ex-mermaid>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Need</th><th>Your words or approved row</th><th>Existing proof</th><th>Missing</th></tr></thead>
+<tbody>
+<tr><td><strong>G1 · One step at a time, in order</strong></td><td>R57 (<a href="../2026-11-02-fleet-access/specification.source.html#specification--getting-in">Specification</a>); approved BG: <em>“a person sees one setup step at a time: first the authenticator app and its recovery codes, then the organization”</em>.</td><td>None; today's page stacks tasks.</td><td>The page decision and step pages.</td></tr>
+<tr><td><strong>G2 · Recovery codes until Finish</strong></td><td>R59; approved BG.</td><td>Enrol and verify tests.</td><td>Stay on codes until Finish.</td></tr>
+<tr><td><strong>G3 · Back to the command line, within its deadline</strong></td><td>R58; approved BG: <em>“the command line's own wait end, fixed once”</em>.</td><td>Real-CLI continuation (untimed).</td><td>Deadline carried and checked; expired message.</td></tr>
+<tr><td><strong>G4 · Invitation page, Accept or Decline</strong></td><td>R60/R61; approved BG.</td><td>Native accept tests.</td><td>Page and guarded Decline; wrong account learns nothing.</td></tr>
+<tr><td><strong>G5 · Account page as the landing</strong></td><td>Your 6 Nov choice: <em>“Your account page: your second factors, your organizations (choose one), and a clear ‘done’”</em>; R62.</td><td>None.</td><td>The page, with B1-C's choice surface.</td></tr>
+<tr><td><strong>G6 · Returning person, step-up only for changes</strong></td><td>Your 6 Nov answer: <em>“returning sign-in (step-up only for changes)”</em>; R53.</td><td>Factor checks on changes.</td><td>Readiness separated from step-up.</td></tr>
+<tr><td><strong>G7 · Passkey and recovery journeys</strong></td><td>R54; journeys 5 and 6.</td><td>B1-B (passkey), recovery-code verify.</td><td>Combined journeys.</td></tr>
+<tr><td><strong>G8 · Staging without you, production refuses the test path</strong></td><td>R65/R66; approved BG: <em>“every journey is checked on staging after each deploy, with no one signing in by hand, and production refuses the test path”</em>.</td><td>None.</td><td>Staging entrypoint, identities, reset, journeys, production checks.</td></tr>
+<tr><td><strong>G9 · One real sign-in per release, on staging</strong></td><td>R67; your 6 Nov answer.</td><td>None.</td><td>The release check, by a dedicated test account or by you with a Verifier.</td></tr>
+<tr><td><strong>G10 · Switchboard name, one heading, shared design</strong></td><td>Approved BG; R64.</td><td>—</td><td>Every page.</td></tr>
+</tbody></table></div>
+
+<h2 id="rules">Standing rules</h2>
+<ul>
+<li><em>“righ ok let smake srue we use hegel then an dpure transiton fucitons with exatsutiveness in enukms or helpers and make good plans on hegel then”</em> (Fleet transcript 142100).</li>
+<li>No wall clock in tests; UUIDv7; injected Drizzle; Better Auth as shipped; no new CI gate; production steps are yours.</li>
+</ul>
+
+<h2 id="elsewhere">Not in BG</h2>
+<ul>
+<li>Machine approval pages (B3); admin pages beyond B2's; the authenticated CLI (B5); second-factor rules themselves (B1).</li>
+</ul>
+</ex-document>
+</body>
+</html>

@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B1 People, roles and sign-in</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-presentation id="path-b1" title="B1, start to finish" description="What B1 delivers, the parts it touches, its data, its flows, how it's proven, and how it's built.">
+  <ex-step to="b1-see" icon="rocket">What you'll see working.</ex-step>
+  <ex-step to="b1-scope" icon="shield-check">In and out of B1.</ex-step>
+  <ex-step to="b1-parts" icon="git-branch">The parts it touches.</ex-step>
+  <ex-step to="b1-data" icon="stack">Its data.</ex-step>
+  <ex-step to="b1-flows" icon="plug">Its flows.</ex-step>
+  <ex-step to="b1-proof" icon="shield-check">How it's proven.</ex-step>
+  <ex-step to="b1-plan" icon="rocket">How it's built: what exists, tickets, the PR.</ex-step>
+  <ex-step to="b1-unknowns" icon="users">Not fully known, and your decisions.</ex-step>
+</ex-presentation>
+<ex-nav for="content"><nav slot="pages" aria-label="Pages">
+<a href="../index.html">Overview</a>
+<a href="../requirements.html">Requirements</a>
+<a href="../specification.html">Specification</a>
+<a href="../program-design.html">Program Design</a>
+<a href="../verification-design.html">Verification Design</a>
+<a href="b1-people-roles-sign-in.html">B1 People, roles and sign-in</a>
+<a href="b2-central-organizations.html">B2 Central's organizations</a>
+<a href="b3-machine-login.html">B3 Machine login and the locked link</a>
+<a href="bg-getting-in.html">BG Getting in</a>
+<a href="b2-additions.html">B2 additions: tokens and revocation</a>
+</nav></ex-nav>
+<ex-document id="content" document-id="fleet-access-b1" revision="2026-11-02.1">
+
+<h1>B1 People, roles and sign-in</h1>
+
+<ex-callout id="b1-answer" title="B1 in one paragraph" tone="tldr">
+<ex-markdown id="b1-answer-text"><script type="text/markdown">
+- **What it is:** the first deliverable of [Fleet access](../index.html), entirely in the sign-in service (the `agent-collaboration/switchboard` repository).
+- **What it gives you:** you sign in with a second factor, your organization exists with you as its owner, and you can invite, accept, cancel and remove members, each change leaving its record. Members can do nothing, the owner can't be removed, and sign-in can't be flooded.
+- **Why it's first:** everything after it needs people and permissions to exist.
+- **What it doesn't do:** it touches nothing in Fleet central.
+- **The rules** it follows live in the overall design and are linked here, not restated.
+- **Status:** a draft for review. Nothing is built from it until you approve it.
+</script></ex-markdown>
+</ex-callout>
+
+<h2 id="b1-see">What you'll see working</h2>
+
+<ex-markdown id="b1-see-text"><script type="text/markdown">
+1. You sign in with Google or GitHub. If you have no second factor yet, you set up an authenticator app and get your recovery codes, then can add a passkey.
+2. After your first sign-in, you create your organization from the sign-in page (only you can), and you're its owner. At central it shows **"setting up"** until B2, because central's side isn't built yet.
+3. You invite `alice@…` as a member. That needs a second factor from the last 15 minutes. A change record is written first; if it can't be written, the invite is refused.
+4. Alice signs in with that email, accepts, and is a member. She can see nothing and do nothing yet.
+5. You cancel a pending invitation, or remove Alice. Each leaves its record.
+6. **Refused, with nothing changed:**
+   - Alice trying to invite anyone;
+   - removing you, the owner;
+   - re-sending an invitation;
+   - changing anything without a fresh second factor.
+7. Hammering the sign-in page from one address is slowed and changes nothing.
+8. **All of it works the same on both builds:** Cloudflare (Worker with D1) and Node (with SQLite).
+</script></ex-markdown>
+
+<h2 id="b1-scope">In and out of B1</h2>
+
+<ex-markdown id="b1-scope-text"><script type="text/markdown">
+| In B1 | Rule home in the overall design | Not in B1 |
+|---|---|---|
+| sign-in with Google, GitHub, or a user-verified passkey | [U20](../requirements.html), [second factors](../program-design.html#program-design--second-factors-step-up-and-recovery-r53-r54) | machine login and device codes (B3) |
+| step-up: a second factor within 15 minutes for every change; app first, recovery codes, passkey after; self-serve recovery with two factors | U43, U44 | forwarding anything to central; the link and the admin forwarding for workspaces (B2), for machines (B3), for projects (B5) |
+| flood limits at sign-in (Turnstile is already merged) | U42, [flood limits](../program-design.html#program-design--flood-limits-at-sign-in-r42-r52) | the who-is-logged-in page (B7) |
+| Better Auth's organization plugin: your organization, owner and member roles, invitations | U46, [people, roles and permissions](../program-design.html#program-design--people-roles-and-permissions) | the CLI (B5) |
+| invite, accept, cancel, remove, each with its change record; re-send refused; owner unremovable | OD26, [people, roles and permissions](../program-design.html#program-design--people-roles-and-permissions) | central itself (B2 onward) |
+| the live permission check, and the confirmation it attaches, ready for later deliverables | OD25 | |
+| your first organization, created by you after your first sign-in (no deploy-time seed); the "set up at central" call made to a stand-in | [provisioning](../program-design.html#program-design--people-roles-and-permissions) | |
+| the approved tables, migrated on both builds; today's local admission removed | OD4 | |
+| today's agent path kept working until step 3 | [the sign-in service storage](../program-design.html#program-design--the-sign-in-service-storage-core-and-hosts) | |
+</script></ex-markdown>
+
+<h2 id="b1-parts">The parts it touches</h2>
+
+<ex-markdown id="b1-parts-text"><script type="text/markdown">
+**One repository, switchboard.** All the work is in `sign-in-core`; the hosts only wire it.
+
+```mermaid
+flowchart TB
+  CFH["sign-in-host-cloudflare<br/>(wiring: D1, rate-limit binding)"]
+  NH["sign-in-host-node<br/>(wiring: SQLite)"]
+  CORE["sign-in-core<br/>B1's rules"]
+  TS["sign-in-test-support<br/>central stand-in · controlled clock"]
+  CFH --> CORE
+  NH --> CORE
+  TS -.->|tests only| CORE
+```
+
+```text
+packages/sign-in-core/
+├── src/organizations/      NEW      roles and resources (Better Auth's statements + Fleet's);
+│                                    the hooks: role limits, owner unremovable, re-send refused;
+│                                    people-change records (intent before, outcome after);
+│                                    the live permission check; provisioning (to a stand-in in B1)
+├── src/better-auth/        CHANGED  organization plugin turned on; fleetState field;
+│                                    active-organization hook; public route list +6 plugin routes
+├── src/second-factors/     NEW      app first, recovery codes, passkey, step-up stamp, recovery
+├── src/request-limits/     NEW      per-route limits on top of Better Auth's own
+├── src/storage/            CHANGED  organization tables; sign_in_audit.organization_id;
+│                                    allowed_email, deployment_owner, person-admission-store,
+│                                    admission-claim-store REMOVED
+├── src/central-link/       NEW      only the confirmation producer and the provisioning client
+│                                    (no forwarding yet)
+└── drizzle/                CHANGED  the approved migration (sha256 7aab7380…), plus the
+                                     second-factor migration (tables approved 4 November)
+```
+</script></ex-markdown>
+
+<h2 id="b1-data">Its data</h2>
+
+<ex-markdown id="b1-data-text"><script type="text/markdown">
+All in the sign-in database. Nothing at central.
+
+| Table | Change | Status |
+|---|---|---|
+| `organization`, `member`, `invitation` | new, Better Auth's organization plugin; `organization.fleetState` (`settingUp` until central confirms) | **approved** (sha256 `7aab7380…`) |
+| `session.activeOrganizationId` | new column | **approved** |
+| `sign_in_audit.organization_id` | new column; people-change records use it | **approved** |
+| `allowed_email`, `deployment_owner`, `organization_admission_claim`, `admitted_person_guard` | removed | **approved** |
+| `twoFactor`, `user.twoFactorEnabled`, `user.secondFactorSetAt`, `session.secondFactorAt`, `session.secondFactorMethod` | new, for second factors | **approved 4 November**; the generated SQL (7 statements, sha256 `755982dd…`) was checked against these tables by the Lead and matches |
+| everything else (users, accounts, OAuth, device codes) | unchanged | — |
+</script></ex-markdown>
+
+<h2 id="b1-flows">Its flows</h2>
+
+<ex-markdown id="b1-flows-text"><script type="text/markdown">
+**Sign in, and the first second factor:**
+
+```mermaid
+sequenceDiagram
+  participant You
+  participant SI as Sign-in service
+  participant DB as Sign-in database
+  You->>SI: sign in with Google or GitHub (Turnstile first)
+  SI->>DB: session; active organization = your one organization
+  alt no second factor yet
+    SI-->>You: set up an authenticator app
+    You->>SI: app code
+    SI->>DB: two-factor on; recovery codes issued once; secondFactorSetAt stamped
+  end
+  You->>SI: any change later → passkey or app code
+  SI->>DB: session's secondFactorAt stamped (valid 15 minutes)
+```
+
+**Invite, accept, remove, each with its record:**
+
+```mermaid
+sequenceDiagram
+  participant You
+  participant SI as Sign-in service
+  participant BA as Better Auth plugin
+  participant DB as Sign-in database
+  You->>SI: invite alice@… (no "resend")
+  SI->>SI: fresh member read; hasPermission(invitation:create); second factor ≤ 15 min
+  SI->>BA: create invitation
+  BA->>DB: beforeCreateInvitation: intent record (refuse if it can't be written)
+  BA->>DB: invitation row
+  BA->>DB: afterCreateInvitation: outcome record
+  Note over You,DB: Alice signs in with that email and accepts → beforeAcceptInvitation / afterAcceptInvitation records → member
+  You->>SI: remove Alice
+  SI->>BA: remove member (actor = you, from your session)
+  BA->>DB: beforeRemoveMember: refuse if target is an owner; intent record
+  BA->>DB: member row deleted; afterRemoveMember: outcome record
+```
+
+**Refusals (nothing changes):**
+- a member invites;
+- anyone removes the owner;
+- an invite carrying `resend: true`;
+- any change without a fresh second factor;
+- a raw plugin route that isn't on the public list (leave, update role, delete organization, list, get).
+
+**Your first organization, and "setting up":**
+
+```mermaid
+sequenceDiagram
+  participant Deploy
+  participant SI as Sign-in service
+  participant ST as Central stand-in (tests only in B1)
+  Deploy->>SI: create your organization in Better Auth (you as owner)
+  SI->>SI: organization.fleetState = settingUp
+  SI->>ST: ProvisionOrganization
+  ST-->>SI: Provisioned (stand-in)
+  SI->>SI: fleetState = ready (in tests only; in a real deploy it stays settingUp until B2)
+```
+</script></ex-markdown>
+
+<h2 id="b1-proof">How it's proven</h2>
+
+<ex-markdown id="b1-proof-text"><script type="text/markdown">
+**The B1 journey** runs on **both builds**: local workerd with D1, and Node with SQLite. No real clock. The paired Verifier's `people` journey observes it.
+
+**Known limits:**
+- cases that depend on expiries Better Auth computes on its own clock run under controlled time on Node only; workerd asserts nothing that depends on that clock;
+- resetting the rate-limit binding is checked on the private stack, not locally.
+
+| Case | What is seen |
+|---|---|
+| sign in and first factor | Google or GitHub sign-in; app set up; recovery codes issued once; a change without a fresh factor is refused |
+| recovery | losing a factor and replacing it needs two factors; Google alone can't |
+| never zero factors | removing the app and the last passkey at the same moment leaves at least one; a replacement interrupted across a restart leaves the person with a working factor; an app that was never verified doesn't count as the spare (the conditional store steps, on D1 **and** `better-sqlite3`) |
+| recovery codes are single-use | a spent recovery code is refused on reuse, including two uses at once |
+| invite → accept → member | the plugin's own `invitation:create` check passes for the owner; the member exists; both records are written |
+| cancel, remove | each with intent and outcome records; the actor is you, not the target |
+| record unwritable | with `sign_in_audit` unavailable, invite and remove are refused and nothing changes |
+| outcome lost | the intent stays "unconfirmed"; nothing guesses it from membership |
+| refusals | member invites; owner removal (also two at once); `resend: true` (pending invitation, audit unavailable: expiry and status unchanged); unlisted plugin routes answer not-found |
+| permission check | owner holds every permission; member none; the confirmation names exactly the checked permission |
+| provisioning | `fleetState` starts `settingUp` from the plugin's own insert; a caller can't set it; only `Provisioned` sets `ready` (via the stand-in; no integration credit) |
+| flood limits | repeated attempts from one address are slowed and change nothing |
+| agent path | today's agent client still gets its token and one allowed Switchboard call, unchanged |
+
+**Before the PR:**
+- the repository's gates pass, and CI is green;
+- the Verifier has observed it;
+- the independent reviewer has checked it.
+</script></ex-markdown>
+
+<h2 id="b1-plan">How it's built: what exists, tickets, the PR</h2>
+
+<ex-markdown id="b1-plan-text"><script type="text/markdown">
+**What already exists:**
+
+| Work | Where | Use in B1 |
+|---|---|---|
+| sign-in split into core and hosts on Drizzle; Node host; Turnstile; social-login audit fixes | switchboard `main` (PRs #3–#7, merged) | the base |
+| roles, permission check, provisioning core, records groundwork, re-send refusal, 83 unit tests | branch `item2/b4a-issuer-core` at `d4ffed8c` | carried into B1 |
+| the approved migration | B4a's working tree (sha256 `7aab7380…`) | committed in B1 |
+
+**Tickets.** Each is reviewed as its own PR into the branch `item2/b1-people-sign-in`. The whole goes to `main` as one PR once the B1 journey passes on both builds:
+
+```mermaid
+flowchart LR
+  T1["B1a organizations, roles, records<br/>(from the B4a branch) + approved migration"] --> T4["B1d the B1 journey<br/>on both builds"]
+  T2["B1b second factors<br/>(tables approved)"] --> T4
+  T3["B1c flood limits"] --> T4
+  T4 --> PR(["one PR: B1 → main"])
+```
+
+- **Who builds it:** the sign-in lane's Implementer (paused, resumes from `d4ffed8c`), with the retained sign-in Verifier.
+- **Merging:** only after I've verified the proof and the running system myself, as you decided on 31 October.
+</script></ex-markdown>
+
+<h2 id="b1-unknowns">Not fully known, and your decisions</h2>
+
+<ex-markdown id="b1-unknowns-text"><script type="text/markdown">
+| Not fully known | Settled by |
+|---|---|
+| the second-factor tables' exact SQL | tables approved 4 November; the generated SQL is checked against them before B1b uses it |
+| whether Better Auth 1.7.11's passkey hook can require user verification at sign-in; until proven, passkey *sign-in* stays off, and passkeys still work as a second factor | B1b's proof |
+| Better Auth's plugin and rate limits under D1's latency | B1's proof on D1 |
+
+**What waits on you:**
+1. Approve the overall design and this document.
+2. Then approve the second-factor SQL when it's generated.
+</script></ex-markdown>
+
+<ex-choice id="approve-b1" title="Approve B1 People, roles and sign-in?">
+<ex-option id="b1-approve" title="**Approve**">
+<template slot="summary">The sign-in lane resumes from its checkpoint and builds B1; the second-factor SQL comes to you before B1b uses it.</template>
+</ex-option>
+<ex-option id="b1-change" title="Change something first">
+<template slot="summary">Comment on the section; nothing is built until it's right.</template>
+</ex-option>
+</ex-choice>
+</ex-document>
+</body>
+</html>

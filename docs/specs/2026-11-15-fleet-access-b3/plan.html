@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B3 · Machine login · Plan</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>B3 · Machine login: Plan</h1>
+<p>Four packets across two repositories. <strong>Starts when B2X is merged, Lead A's 4a is merged with <code>RenewMachineToken</code>, codex-router's repo split and Design 3 PR A are on main, and you give the go-ahead (the storage questions are decided: <a href="decisions.html#open">Decisions</a>).</strong></p>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What to check" tone="note" icon="shield-check">
+<p>Two PRs: Switchboard (sign-in) and codex-router (Central commands, Router host, secret store), built by one Implementer pair with one Verifier.</p>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p>B3 is built on #11 and merged whole (my call). Your two storage answers set packet 1's Central steps.</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>The Reviewer judges against approved B3 and your words.</p>
+</ex-callout>
+
+<h2 id="order">Order</h2>
+<ex-mermaid id="order-picture" label="B3 delivery" data-width="canvas"><script type="text/plain">
+flowchart TB
+  pre["B2X merged · Lead A 4a merged · repo split, Design 3 PR A · go-ahead"] --> build["Implementer: Switchboard PR + codex-router PR"]
+  build --> verify["Verifier: both pairings; macOS real journey"]
+  verify --> review["Reviewer"]
+  review --> accept["Lead acceptance"]
+  class pre slot1
+  class build slot2
+  class verify,review slot4
+  class accept slot6
+</script></ex-mermaid>
+<p><strong>Code:</strong> Agent Studio worktrees of Switchboard and codex-router from their <code>main</code>. <strong>Hand-back:</strong> <code>docs/specs/2026-11-15-fleet-access-b3/work/</code>.</p>
+
+<h2 id="implementer">Packet 1 · Implementer</h2>
+<p><strong>Read the whole design first.</strong> All seven pages: Audit, Requirements, Specification, Program Design, Verification Design, this Plan and Decisions. Also approved B3 (revision 2026-11-07.1), Lead A's 4a contract, and Switchboard's and codex-router's <code>AGENTS.md</code>. The design pages are the authority. The steps below are a checklist pointing into them. Where a step and the design differ, the design wins: stop and ask me.</p>
+<ol>
+<li><strong>Sign-in:</strong> merge <code>item2/b3a-device-grant</code> and <code>item2/b3a-verify-auth</code> forward; add the pure approval rule and Deny's factor check; workspace picker; admin Machines section; the link carrier on both hosts.</li>
+<li><strong>Central:</strong> check DecideDeviceLogin, DecideMachineToken and <code>machine_enrollment.rs</code> on main against approved B3 (idle expiry, BA1); fix what differs; add <code>machine_commands.rs</code>.</li>
+<li><strong>Router:</strong> <code>FleetLogin</code>, the device flow, <code>fleet_login</code> and <code>fleet_machine</code>, ordered publication, renewal on the connection, re-key, R10/R10a with the link client's re-enrolled entry.</li>
+<li><strong>Secret store:</strong> traits, envelope, memory, <code>MacKeychain</code>, composition root; remove the <code>cfg</code>-selected access.</li>
+<li><strong>Tests:</strong> V1–V6, including the <code>hegeltest</code> families for M2, M3 and M4 (a dev-dependency of the crates that hold them, at Lead A's exact pin, native engine, no Python, offline build); wrong builds to red and back.</li>
+<li><strong>Gates and two PRs.</strong></li>
+</ol>
+<p><strong>May not change:</strong> Lead A's 4a files, Better Auth, existing migrations' meaning without your storage answer, CI. <strong>Stop</strong> if Central's decisions on main differ from approved B3 in a way that changes behaviour you approved.</p>
+
+<h2 id="verifier">Packet 2 · Verifier</h2>
+<p>Read all seven design pages first. Observe V1–V6, the real macOS journey included. Expected results come from the Specification and Verification Design, never from the Implementer's summary. 4a's rows: observe what Lead A delivers; anything missing is open. <strong>Return</strong> <code>work/verifier-observation.md</code>.</p>
+
+<h2 id="reviewer">Packet 3 · Reviewer</h2>
+<p>Fresh. Inputs are the whole design except this Plan: <code>audit.html</code>, <code>requirements.html</code>, <code>specification.html</code>, <code>program-design.html</code>, <code>verification-design.html</code> and <code>decisions.html</code>. Also approved B3, Lead A's 4a contract, both PRs and evidence. First question: what does this drop? Then: can a code be used twice; can a stale login win; can a revoked machine keep working; is any credential written in plaintext. <strong>Return</strong> <code>work/reviewer-report.html</code>.</p>
+
+<h2 id="acceptance">Packet 4 · Lead acceptance</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Rule</th><th>Evidence</th><th>State</th></tr></thead>
+<tbody>
+<tr><td>S1, S2</td><td>V1</td><td>Not started</td></tr>
+<tr><td>S3, S6</td><td>V2</td><td>Not started</td></tr>
+<tr><td>S4, S5</td><td>V3; <code>machine_allowances</code> (decided 9 Nov)</td><td>Decided</td></tr>
+<tr><td>S7, S9</td><td>V4; one row per login (decided 9 Nov)</td><td>Decided</td></tr>
+<tr><td>S8</td><td>V5</td><td>Not started</td></tr>
+<tr><td>S10, S11</td><td>V6</td><td>Not started</td></tr>
+</tbody></table></div>
+
+<h2 id="gates">Gates</h2>
+<ex-code lang="sh" title="Sunclaw; macOS journey on a Mac you approve"><script type="text/plain">
+# switchboard
+pnpm install --frozen-lockfile && pnpm build && pnpm check
+pnpm test:unit && pnpm test:integration
+pnpm test:e2e:host && SIGN_IN_TEST_HOST=node pnpm test:e2e:host
+# codex-router
+cargo fmt --check && cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace
+</script></ex-code>
+</ex-document>
+</body>
+</html>

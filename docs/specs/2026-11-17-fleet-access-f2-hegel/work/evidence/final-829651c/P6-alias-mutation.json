@@ -1,0 +1,10 @@
+{
+  "id": "P6-alias",
+  "source": "packages/config-contracts/src/oauth-tool-portal-config.ts",
+  "file": "packages/config-contracts/src/oauth-policy-compiler.hegel.unit.test.ts",
+  "property": "intersects authored command paths with the independent catalog and preserves local help",
+  "before": "descriptor.paths.filter((candidate) =>\n\t\t\t\t\tadmittedPaths.some((admitted) => samePath(admitted, candidate)),\n\t\t\t\t)",
+  "after": "descriptor.paths",
+  "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+  "originalSha256": "8bf5fb2b96a9b462d34ff307e2f4d36618bed1c4f1ee00426133307c8971ac1d"
+}

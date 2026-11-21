@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B1-C · Organizations finished · Decisions</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>B1-C · Organizations finished: Decisions</h1>
+<p>What you have decided, the calls I made with whether they should have been yours, what was there before, and the one choice still yours to make.</p>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What to check" tone="note" icon="shield-check">
+<p>Your four 15 Nov picks are recorded below, and the design follows them. The People page is built from shadcn and Better Auth UI's parts and layout, properly, as you asked (first <a href="#calls">call</a>).</p>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p>None open. After a refused switch: Better Auth's behaviour, then the page re-renders so you pick again (<a href="#foreign-switch">below</a>).</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>Every decided card quotes you. The list read you picked is newly designed, so it goes back through independent review before it comes to you for approval. Nothing on this page has been built.</p>
+</ex-callout>
+
+<h2 id="decided">Already decided by you</h2>
+<ex-card title="Your organizations, with one to choose, on your account page" tone="done" icon="users" tag="6 Nov · review 58647d30" pick>
+<p><em>“Your account page: your second factors, your organizations (choose one), and a clear ‘done’”</em> (<a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl">Fleet transcript 86867</a>). B1-C builds the choice; BG builds the account page around it.</p>
+</ex-card>
+<ex-card title="A second factor only for changes" tone="done" icon="shield-check" tag="6 Nov · same review" pick>
+<p><em>“returning sign-in (step-up only for changes)”</em> (Fleet transcript 86867). Reading, switching and looking up need no fresh factor.</p>
+</ex-card>
+<ex-card title="Owner only; organizations kept apart" tone="done" icon="lock" tag="Approved Requirements" pick>
+<p><em>“yes lets keep it all owner only”</em>; <em>“i dont want cross organization any sharing stuff or comm”</em> (<a href="../../2026-11-02-fleet-access/requirements.source.html#requirements--needs">Requirements lines 98, 103</a>).</p>
+</ex-card>
+<ex-card title="Pure transitions, exhaustive checks, Hegel" tone="done" icon="code" tag="15 Nov" pick>
+<p><em>“righ ok let smake srue we use hegel then an dpure transiton fucitons with exatsutiveness in enukms or helpers and make good plans on hegel then”</em> (Fleet transcript 142100), with no state-machine library.</p>
+</ex-card>
+<ex-card title="Overall design and B1 approved" tone="done" icon="book-open" tag="4 Nov" pick>
+<p><em>“yes you need anytnhign?”</em>, answering the request to approve the overall design, B1 and B2 (Fleet transcript 71226, 71230).</p>
+</ex-card>
+<ex-card title="Use shadcn and Better Auth UI properly, never slapped together" tone="done" icon="code" tag="15 Nov" pick>
+<p>Asked whether the 4 Nov “yes” approved the overall design, B1 and B2: <em>“designs are easy to irmpve asl ong as you acutally use shadcn proerly or beter auth ui proeprly. nto slop thign sto geter”</em>. Every screen here uses <code>tool-access-ui</code>'s shadcn parts and Better Auth UI's patterns as they're meant to be used: no hand-rolled controls and no one-off styling.</p>
+</ex-card>
+<ex-card title="The lookup has its own page, built in shadcn like Better Auth UI" tone="done" icon="path" tag="15 Nov · review 02e54dfb" pick>
+<p>You picked A, its own page linked from admin: <em>“shokuld be shadcn, thyis is 2 way door bu yes good deisgn and shadcn like auth better ui”</em>.</p>
+</ex-card>
+<ex-card title="Pick from this organization's list, with email as fallback" tone="done" icon="users" tag="15 Nov · review 02e54dfb" pick>
+<p>You picked B. The owner-only list read this needs is designed on <a href="specification.html#S8">Specification S8</a> and <a href="program-design.html#people-list">Program Design</a>.</p>
+</ex-card>
+<ex-card title="Today's Switchboard card as the chooser" tone="done" icon="code" tag="15 Nov · review 02e54dfb" pick>
+<p>You picked A. No Better Auth organization read is opened to the browser. The shipped switcher, its copied files, Pacer and the cut-down native reads are gone from this design.</p>
+</ex-card>
+<ex-card title="No state machine for the session's current organization" tone="done" icon="code" tag="15 Nov · review 02e54dfb" pick>
+<p><em>“yes this sis fine”</em>. One pure function checks it against fresh memberships.</p>
+</ex-card>
+
+<h2 id="calls">My calls, and should they have been yours?</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Call</th><th>Why</th><th>Should it have been yours?</th></tr></thead>
+<tbody>
+<tr><td>“shadcn like Better Auth UI” read as: build our page from the same shadcn parts Better Auth UI's people tables use (Card, Table, Badge, InputGroup, Field, Button, Empty, Skeleton; all already in <code>tool-access-ui</code>) and follow their layout. Don't install Better Auth UI's own <code>OrganizationPeople</code> component.</td><td>That component reads Better Auth's <code>list-members</code> and <code>list-invitations</code> straight from the browser. Both let <em>any member</em> read the roster (<code>crud-members.mjs:437–478</code>, <code>crud-invites.mjs:525–542</code>), against “owner only”. It also carries invite, remove and change-role actions, which already exist with their step-up. Your card pick also keeps native organization reads closed.</td><td><strong>Yes.</strong> If you meant the component itself, say so. That needs both native reads opened behind an owner-only gate, and its actions reconciled with our people flows.</td></tr>
+<tr><td>The list is read from Better Auth's tables directly, through our injected Drizzle store, after our owner check, and returns only name, email and role</td><td>My engineering choice. It matches how the codebase already reads Better Auth's tables (<code>membershipsForPerson</code>, and the lookup's read), and it gives typed failures with hold and fault seams on both hosts. The alternative is Better Auth's server API (<code>auth.api.listMembers</code> and <code>listInvitations</code>, <code>organization.mjs:283–290,396–401</code>). That would work without opening the public routes, but it brings its own session middleware and error mapping into a read our checks already guard.</td><td>No: an implementation choice inside your Drizzle-injected and owner-only rules. Say so if you'd rather it call Better Auth's server API.</td></tr>
+<tr><td>No tests of Better Auth's own races (two switches at once; accept against cancel)</td><td>Those test the library's writes, which we neither own nor wrap. We test our reads of their results.</td><td>Possibly, for the same reason.</td></tr>
+<tr><td>Read the session through Better Auth's own <code>getSession</code> endpoint, not the helper that hides failures</td><td>The helper turns a database failure into “signed out” (<code>session.mjs:261</code>). The endpoint is Better Auth's own export.</td><td>No: a correctness fix inside the agreed scope.</td></tr>
+<tr><td>Lookup and list check permission twice, before and after the read</td><td>A removal during the read can't leak an answer or a roster.</td><td>No: follows R13.</td></tr>
+<tr><td>The lookup says “invited” only when expiry is strictly after now; Better Auth's own accept refuses only when expiry is before now</td><td>The two disagree only at the exact millisecond. We don't change Better Auth.</td><td>No.</td></tr>
+<tr><td>Byte-identical answers for “elsewhere” and “nowhere”, but not equal timing</td><td>C4 asks for the same answer. Equal timing would need deliberate delays.</td><td>Possibly, if you want timing equality too.</td></tr>
+</tbody></table></div>
+
+<h2 id="before">What was there before</h2>
+<ul>
+<li>The chooser card appeared only while a choice was missing (<code>sign-in-http-handler.ts:239–248</code>). It becomes an always-available choice surface, driven by the <code>selectionRequired</code> fact.</li>
+<li>Selection was posted by an inline script (<code>owner-page-script.ts:47–52</code>); it is replaced by the island.</li>
+<li>Native member and invitation listing stay closed to the browser, as before.</li>
+</ul>
+
+<h2 id="open">Decided last: after a refused switch</h2>
+<ex-card title="Keep Better Auth's behaviour; redirect so you pick again" tone="done" icon="package" tag="15 Nov · review 64a95514" pick>
+<p>You picked A: <em>“or redirect if thats easy”</em>. It is: the card calls <code>location.replace</code> after every switch ending, so a refusal re-renders the page from the stored session. With two or more memberships it leads with “Choose your organization”. With one left, BG's page decision selects it for a waiting CLI. No wrapper of ours.</p>
+</ex-card>
+<h3 id="foreign-switch">What happens, for the record</h3>
+<p><strong>When it happens.</strong> A switch names an organization you aren't a member of. The card lists only your memberships, so a normal click can't send that. It happens from a stale page (you were removed from O2 after the page loaded, then clicked O2), or from a hand-made request.</p>
+<p><strong>What Better Auth does</strong> (<code>dist/plugins/organization/routes/crud-org.mjs:419–425</code>, version 1.7.11): <code>checkMembership</code> fails, so it writes <code>activeOrganizationId = null</code> to the session, then answers 403. Your memberships and roles don't change.</p>
+<ex-mermaid id="foreign-now" label="Today: Better Auth clears the current choice" data-width="canvas"><script type="text/plain">
+sequenceDiagram
+  participant P as Your page (stale: lists O1, O2)
+  participant BA as Better Auth set-active
+  participant S as Your session
+  Note over S: current = O1
+  P->>BA: switch to O2 (you were removed from O2)
+  BA->>BA: checkMembership(O2) = false
+  BA->>S: current := none
+  BA-->>P: 403
+  P->>P: card calls location.replace; server re-renders
+  Note over P: two or more left: Choose your organization. One left: no switch in B1-C; BG selects it for a waiting CLI
+</script></ex-mermaid>
+<p>The option you didn't pick, keeping O1 current, would have needed our own wrapper around Better Auth's write, and a removal between the two checks would still have cleared it.</p>
+<h2 id="build-calls">My calls during the build (17 Nov), each brought to you</h2>
+<p>Corrections to my own design, or rulings inside it, made while the Implementer and Verifier worked. None changes what you decided; each is listed so you can overturn it.</p>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Call</th><th>Why</th><th>Should it have been yours?</th></tr></thead>
+<tbody>
+<tr><td>Endpoints read <code>ctx.context.session</code> directly, never <code>getSessionFromCtx</code></td><td>The helper re-reads a signed-out session with refresh on and hides failures (<code>session.mjs:248</code>); my design was wrong</td><td>No: keeps the one-read rule</td></tr>
+<tr><td>Refusal tests name agent and Fleet-session tokens; “bot” removed</td><td>Switchboard has no bot credential; the rule still refuses any bearer</td><td>No</td></tr>
+<tr><td>Expired-session cleanup also bumps the person fence</td><td>That&#39;s existing B1-A security behaviour my design missed</td><td>No: no behaviour change</td></tr>
+<tr><td>verify-auth skill updates are the Implementer&#39;s, checked by the Verifier</td><td>One branch, one writer, as in B1-B</td><td>No</td></tr>
+<tr><td>Built on the public repo, from a fresh clone at <code>switchboard-public</code></td><td>Switchboard went public 17 Nov; the old checkout is private history</td><td>No: follows your go-public picks</td></tr>
+<tr><td>V8 “answer kept after refusal” is proven by the component test, not Hegel</td><td>The pure machine's refusal carries no answer; the stale answer can only appear where it's rendered</td><td>No: same rule, proven where it can fail</td></tr>
+<tr><td>The hook assigns <code>ctx.context.session</code> directly (<code>null</code> included), and the read endpoints carry the hook's <code>set-cookie</code></td><td>Real bug, reproduced: <code>defu</code> ignored the <code>null</code> session and endpoint headers dropped the cookie clearing, so an expired session got 200. My design line caused it</td><td>No: a bug fix that restores the agreed behaviour</td></tr>
+<tr><td>The owner-ready page reads the server <code>getSession</code> result through a token-less view (<code>storedSessionSchema.omit(token)</code>); the stored-row parser stays strict</td><td>Real CI bug at e806 (18 fails): our <code>/get-session</code> after-hook strips <code>session.token</code>, and server <code>auth.api.getSession</code> runs that hook, so the strict parser read “unavailable” and the page returned 503. The context reader uses only the person id and current organization</td><td>No: a bug fix that restores the agreed page</td></tr>
+<tr><td>The management-boundaries test now lists the four organization reads as exact public routes. Any bearer is refused on lookup and list, the page redirects to sign-in, and every other row stays 404</td><td>The old test expected every route to return 404, which was stale once B1-C added these four reads. The new rows follow the Specification: “any bearer credential MUST be refused”</td><td>No: the test follows the agreed contract</td></tr>
+<tr><td>Started with paid credits</td><td>Your Decision 7, 17 Nov</td><td>Yes: you chose it</td></tr>
+<tr><td>Packet 5be647ee replaced before it ran, by a packet on the head that merges main b0198164 (PR 6)</td><td>PR 6 changed sign-in-http-handler.ts, which B1-C also changes, and branch protection needs PR 1 current with main. Proof must cover the head that merges. I read the merged owner-ready block myself: PR 6's refusal still runs before any session read, and B1-C's context reads follow it</td><td>No: sequencing is mine</td></tr>
+<tr><td>Deliberate-break restore check: a restored build counts when source and all non-declaration outputs match the baseline exactly. Declaration-file (<code>.d.ts</code>, <code>.d.ts.map</code>) differences are recorded and don&#39;t block (the same rule as B1-B, commit 9e8532cb5)</td><td>The tests load JS bundles that are hash-checked against the manifest, never declaration files. A B1-B control showed declaration-only differences after an otherwise exact restore</td><td>No: verification evidence is mine</td></tr>
+<tr><td>The canonical sign-in check script (<code>verify-auth</code>) finishes and passes but doesn't exit. Each finished run's own process group gets one stop signal after an identity check. The test result and target comparison carry the proof, recorded apart from the forced stop. The fix is its own small PR after B1-C</td><td>The script's files are byte-identical to the first public cut with B1-A (b03d35ff), so this predates B1-C. Reading the source alone couldn't find the open handle: esbuild's idle services are unref'd, and no open server or watcher could be traced. The follow-up starts with bounded instrumentation on Sunclaw to find the handle, then closes it through its owner</td><td>No: test tooling and sequencing are mine</td></tr>
+</tbody></table></div>
+</ex-document>
+</body>
+</html>

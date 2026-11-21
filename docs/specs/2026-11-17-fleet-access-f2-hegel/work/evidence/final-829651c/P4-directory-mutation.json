@@ -1,0 +1,10 @@
+{
+  "id": "P4-directory",
+  "source": "packages/oauth-broker-contracts/src/gog-file-paths.ts",
+  "file": "packages/oauth-broker-contracts/src/gog-file-arguments.hegel.unit.test.ts",
+  "property": "refuses directory-only values as files and refuses input-directory descriptors",
+  "before": "if (kind === 'directory' && (value === '.' || value === './')) return '';",
+  "after": "if (value === '.' || value === './') return '';",
+  "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+  "originalSha256": "abd86a5bfe12f6b9d863c2ad229bb85d22957927a969dc5d20799071c647d05c"
+}

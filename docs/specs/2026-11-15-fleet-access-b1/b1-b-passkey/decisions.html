@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B1-B · Passkey sign-in · Decisions</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>B1-B · Passkey sign-in: Decisions</h1>
+<p>Every decision and assumption B1-B rests on: yours, quoted with where you said them; mine, each marked with whether it should have been yours. Nothing is open for you.</p>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What you should check" tone="note" icon="shield-check">
+<ul>
+<li><strong><a href="#mine">My calls</a>:</strong> each says whether it should have been yours.</li>
+<li><strong><a href="#assumptions">The assumptions</a>:</strong> if one is wrong, part of the design is wrong.</li>
+</ul>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p><strong>Nothing is open for you.</strong> On 15 Nov you chose <strong>A, click only</strong>, for the "Continue with Passkey" button (review <code>6ab23fa3</code>; <a href="#open">kept below</a>).</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
+<p>Your decisions below are quoted from the <a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/requirements.source.html">approved Requirements</a> and your transcripts, with line numbers. The design rests on your 4 Nov approval of the overall design, B1 and B2 (<em>"yes you need anytnhign?"</em>, Fleet transcript lines 71226 and 71230).</p>
+</ex-callout>
+
+<ex-mermaid id="decisions-pic" label="Where B1-B's decisions come from" data-width="canvas"><script type="text/plain">
+flowchart TB
+  words["Your decisions<br/>OD21, U20, U50 journey 5"] --> design["Your approved design<br/>R5, R52, R53, R63, R67"]
+  design --> b1b["B1-B design"]
+  mine["My calls<br/>each marked: should it have been yours?"] --> b1b
+  assume["Assumptions<br/>each with: if it's wrong"] --> b1b
+  b1b --> open["Open for you: nothing"]
+  class words,design slot1
+  class mine slot2
+  class assume slot3
+  class b1b slot6
+  class open slot4
+</script></ex-mermaid>
+<p><strong>Key:</strong> blue is yours, amber is mine, teal the assumptions, green the design, violet what's open.</p>
+
+<h2 id="owner">Your decisions</h2>
+<ex-grid cols="2" data-width="canvas">
+<ex-card title="A passkey signs you in, as both factors (OD21)" tone="done" icon="key" tag="Requirements line 270 · 31 Oct" pick>
+<p><em>"A passkey with fingerprint, face or PIN signs you in and counts as both factors; Google or GitHub stays for the first sign-in and for anyone without a passkey."</em></p>
+<p><strong>Decides here:</strong> S3, S4 and the button.</p>
+</ex-card>
+<ex-card title="People sign in with Google, GitHub or a passkey (U20)" tone="done" icon="users" tag="Requirements line 97" pick>
+<p><em>"People sign in with Google, GitHub or a passkey."</em></p>
+<p><strong>Decides here:</strong> S1, S5 and S7.</p>
+</ex-card>
+<ex-card title="Journey 5, before release (U50)" tone="done" icon="path" tag="Requirements line 157" pick>
+<p><em>"Adding a passkey and signing in with it."</em> Your rule R67 puts the sign-in part on local runs.</p>
+<p><strong>Decides here:</strong> V8 in real Chrome on both hosts.</p>
+</ex-card>
+<ex-card title="The session token stays out of scripts" tone="done" icon="lock" tag="12 Nov, in the code comment" pick>
+<p><em>"Cookie-bound reads for the sign-in pages' browser components (owner, 12 Nov). The session token is stripped from get-session before it reaches scripts."</em> (<code>sign-in-request-handler.ts:10–11</code>)</p>
+<p><strong>Decides here:</strong> S6, the verify answer's body stripped the same way.</p>
+</ex-card>
+<ex-card title="Use Better Auth UI as shipped" tone="done" icon="package" tag="13 Nov" pick>
+<p>Use Better Auth UI's own components and helpers, adjust our side, and diverge only for a named reason brought to you.</p>
+<p><strong>Decides here:</strong> the button is Better Auth UI's, unchanged. The open choice below is one of its own settings, brought to you because it changes what the page does on load.</p>
+</ex-card>
+<ex-card title="No wall clock in tests" tone="done" icon="clock" tag="P 143821" pick>
+<p><em>"i dont allow wall clock time ever in tests"</em>.</p>
+<p><strong>Decides here:</strong> the 15-minute window is tested by moving the controlled clock; every browser wait is on an event.</p>
+</ex-card>
+</ex-grid>
+
+<h2 id="mine">My calls, and whether they should have been yours</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>My call</th><th>Why</th><th>Should it have been yours?</th></tr></thead>
+<tbody>
+<tr><td>Write both factors into the session's own insert, through the existing session-create hook, instead of the approved design's after-hook stamp</td><td>The hook gets the endpoint context and its data goes into the insert (<code>with-hooks.mjs:7–30</code>). On this path it runs after user verification and the counter update (<code>dist/index.mjs:487–500</code>). So the session is confirmed "from that moment", literally. A later stamp could fail or be interrupted, and Better Auth turns an after-hook error into its own answer while keeping the cookie (<code>dispatch.mjs:119–130</code>). The first draft put the stamp in the handler; the Sol review showed the insert is the right place (<a href="program-design.html#mark">Program Design</a>).</td><td>No. It's the outcome you approved, with no window. It's how, not what.</td></tr>
+<tr><td>A failed sign-in after the session exists deletes it best effort, and the person stays signed out</td><td>That's how every failed sign-in is cleaned up today (<code>sign-in-http-handler.ts:392–402</code>). If storage is down for the deletion too, the row can remain until it expires, but it is already marked both factors and no browser holds its cookie.</td><td>No. A guaranteed deletion would need a new recovery mechanism, which nothing you approved asks for.</td></tr>
+<tr><td>Record each passkey sign-in in <code>sign_in_audit</code>, like Google and GitHub (S12)</td><td>Today every social sign-in callback writes a row. A passkey sign-in without one would be the only sign-in with no record.</td><td>No. It follows the existing behaviour.</td></tr>
+<tr><td>Strip the token from the verify answer (S6)</td><td>Your 12 Nov rule for <code>/get-session</code>; the same helper fits the same <code>{ session, user }</code> shape.</td><td>No. It follows your rule.</td></tr>
+<tr><td>Attach the Turnstile token through Better Auth's client request hook</td><td>The passkey client gives its challenge request no options of its own, so the shipped button can't add a header. The client-wide <code>onRequest</code> is Better Auth's own seam (<code>config.mjs:31–37</code>). Your approved design says the page sends the token itself.</td><td>No. It keeps the button as shipped.</td></tr>
+<tr><td>A second, mostly invisible Turnstile widget for passkey sign-in</td><td>Turnstile fixes a widget's action at render, and the service checks the action. It appears only if Cloudflare needs the person to interact.</td><td>No. A person may see a second Turnstile box only when Cloudflare asks for interaction.</td></tr>
+<tr><td>Load the browser components on the sign-in page</td><td>The button is a Better Auth UI component, so it needs the island. Today the sign-in page has no island.</td><td>No. Same policy, own script, no new third party.</td></tr>
+<tr><td>No no-script fallback for passkey sign-in</td><td>WebAuthn needs script. Google and GitHub still work without it.</td><td>No.</td></tr>
+<tr><td>Test a failure after the session insert with a new harness control, <code>failNextPasskeyUserRead()</code>, and read the insert itself with <code>lastSessionInsert()</code></td><td>Nothing in normal use fails Better Auth between the insert and its answer. The control follows the existing <code>makeLimiterUnavailable()</code> on both hosts, using the statement watchers the harness already has.</td><td>No. It's test support.</td></tr>
+<tr><td>Serve the real-browser test from <code>localhost</code>, not <code>127.0.0.1</code></td><td>Browsers refuse passkeys on an IP-address origin (WebAuthn Level 3; Chromium's origin check). Only the test harness changes; production origins are untouched.</td><td>No. It's test support.</td></tr>
+<tr><td>Turnstile's script failing to load is a defined state: each click shows "Sign-in verification is unavailable. Reload the page to try again."</td><td>Otherwise a click would wait forever on a script that never arrives.</td><td>No. It's the failure the approved design already says must be refused, given an ending.</td></tr>
+<tr><td>Replace only Cloudflare's Turnstile script in the real-browser test</td><td>The test can't reach Cloudflare. Everything else, the page's widget code and the service's siteverify check against the harness, runs as written.</td><td>No. Real Turnstile stays unverified locally, as your design already says.</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="assumptions">Every assumption this design makes</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Assumption</th><th>Basis</th><th>If it's wrong</th></tr></thead>
+<tbody>
+<tr><td>Better Auth's verify answer is <code>{ session, user }</code>, as <code>/get-session</code>'s is</td><td>Pinned <code>dist/index.mjs:504–510</code></td><td>The strip helper returns "unchanged", and V4's token check fails. Fix the helper.</td></tr>
+<tr><td>The client-wide <code>onRequest</code> runs for the passkey client's challenge request</td><td><code>config.mjs:31–37</code> wires it into every <code>$fetch</code>; the passkey client uses that <code>$fetch</code> (<code>client.mjs:8</code>)</td><td>The token isn't sent, and V2 and V8 fail. Then the page would call the endpoints itself, which is a divergence to bring to you.</td></tr>
+<tr><td>Turnstile's <code>execute</code> mode gives a new token after each <code>reset</code></td><td>Cloudflare's documented widget API</td><td>A second sign-in attempt on the same page fails until reload. V7's two-token case catches it in the stand-in; real Turnstile stays unverified.</td></tr>
+<tr><td>The session-create hook runs for the plugin's <code>createSession</code>, with the verify request as its context</td><td>The plugin uses <code>internalAdapter.createSession</code> (<code>dist/index.mjs:500</code>); database hooks get the current endpoint context (<code>with-hooks.mjs:8–16</code>)</td><td>A removed person could sign in, or the session wouldn't be marked. V4's insert check and V5 catch both.</td></tr>
+<tr><td><code>passkeyPlugin({ autoFill: false })</code> stops Better Auth UI's autofill hook</td><td>The hook's <code>active</code> needs the plugin's <code>autoFill</code> (Better Auth UI <code>use-passkey-auto-fill.ts</code> at <code>2b028ec5</code>)</td><td>Loading the page sends a challenge. V7 counts it.</td></tr>
+<tr><td>Chrome's virtual authenticator reports user verification as set</td><td>CDP's <code>WebAuthn.setResponseOverrideBits</code> (<code>isBadUV</code>)</td><td>V8's refusal run can't be made. The software authenticator in V3 still proves the refusal on both hosts.</td></tr>
+<tr><td>A person with a passkey has already set up the app</td><td>Adding a passkey needs a recent app or recovery-code confirmation (the passkey page's "Confirm with your app or a recovery code first")</td><td>None for sign-in. The page after sign-in decides the next step as today.</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="was-there">What was there before, and what each change replaces or keeps</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Before (<code>f3b2b88b</code>)</th><th>After B1-B</th><th>Replaced or kept</th></tr></thead>
+<tbody>
+<tr><td>Passkey sign-in routes answer 404</td><td>Both public, behind Turnstile and the flood limit</td><td>Replaced</td></tr>
+<tr><td>A test asserting that 404</td><td>A no-UV sign-in refused with 401</td><td>Replaced</td></tr>
+<tr><td>The user-verification hooks</td><td>Unchanged, now reachable</td><td>Kept</td></tr>
+<tr><td>Token stripped from <code>/get-session</code> only</td><td>Also from the verify answer</td><td>Kept and extended</td></tr>
+<tr><td>Sign-in page: Google and GitHub</td><td>Plus Continue with Passkey</td><td>Kept and extended</td></tr>
+<tr><td>Social sign-ins recorded</td><td>Passkey sign-ins recorded too</td><td>Kept and extended</td></tr>
+<tr><td>Guidance: passkeys only confirm</td><td>Passkeys sign in</td><td>Replaced</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="open">Decided by you on 15 Nov: click only, no autofill</h2>
+<p><strong>Your answer:</strong> "A. Click only (recommended)", in your review of this page (review <code>6ab23fa3</code>, document revision <code>465b72ae</code>). The choice and what each option would have cost are kept below.</p>
+<p><strong>What the question was. In Better Auth UI,</strong> its <code>PasskeyButton</code> signs in on click. When its passkey plugin's <code>autoFill</code> setting is on (the default), loading the page also asks the browser to list passkeys in its autofill dropdown, in browsers that support it (current Chrome, Edge and Safari). That list appears under a username or email field marked for passkeys. Our sign-in page has no such field: people only choose Google, GitHub or now a passkey.</p>
+<p><strong>Every answer keeps Better Auth UI's button unchanged.</strong> The choice is one setting on its own plugin: <code>passkeyPlugin({ autoFill: false })</code> or <code>true</code>. With click only, there's no background request at all. The Turnstile helper still serves overlapping token requests one at a time, so two quick clicks can't share a token (<a href="verification-design.html#V7">V7</a>).</p>
+<ex-mermaid id="open-now" label="What the shipped button does on page load" data-width="canvas"><script type="text/plain">
+flowchart TB
+  load["Sign-in page loads"] --> auto["With autoFill on, the button asks<br/>for a challenge for autofill"]
+  auto --> cost["One Turnstile run, one stored challenge,<br/>one of the 10 sign-in requests a minute"]
+  auto --> field{"A username field<br/>for the list?"}
+  field -->|"our page: no"| none["Nothing appears"]
+  click["Person clicks the button"] --> signin["Challenge, passkey prompt, signed in"]
+  class load,click slot1
+  class auto,cost slot5
+  class field,none slot4
+  class signin slot6
+</script></ex-mermaid>
+<p><strong>Key:</strong> blue are the starts; rose the autofill cost; violet the missing field; green the click path.</p>
+
+<ex-compare label="Autofill on the passkey button" data-width="canvas">
+  <section id="opt-click" label="A · Click only (autoFill off)" icon="key">
+    <section data-compare-row="sees"><p><strong>What a person sees</strong></p><p>The Continue with Passkey button. No autofill list.</p></section>
+    <section data-compare-row="changes"><p><strong>What changes in the code</strong></p><p>Better Auth UI's button as shipped, with its plugin set to <code>passkeyPlugin({ autoFill: false })</code>.</p></section>
+    <section data-compare-row="improves"><p><strong>What it improves</strong></p><p>Loading the sign-in page costs nothing: no Turnstile run, no challenge, no sign-in request counted.</p></section>
+    <section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Nothing in code. A person with a passkey clicks the button rather than picking from a list, which our page couldn't show anyway.</p></section>
+    <section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="opt-click-pic" label="Option A"><script type="text/plain">
+flowchart TB
+  a1["Page loads: nothing sent"] --> a2["Click: challenge, prompt, signed in"]
+  class a1 slot6
+  class a2 slot2
+</script></ex-mermaid></section>
+  </section>
+  <section id="opt-shipped" label="B · Autofill on (the plugin's default)" icon="package">
+    <section data-compare-row="sees"><p><strong>What a person sees</strong></p><p>The same button. No autofill list either, because the page has no field to show it under.</p></section>
+    <section data-compare-row="changes"><p><strong>What changes in the code</strong></p><p>Better Auth UI's button as shipped, with <code>passkeyPlugin()</code> at its default.</p></section>
+    <section data-compare-row="improves"><p><strong>What it improves</strong></p><p>Nothing visible on our page.</p></section>
+    <section data-compare-row="costs"><p><strong>What it costs</strong></p><p>In browsers that support autofill, each sign-in page load runs Turnstile (which may ask the person to interact before they click anything), stores a challenge, and uses one of their 10 sign-in requests a minute. Ten reloads in a minute would hit the flood limit.</p></section>
+    <section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="opt-shipped-pic" label="Option B"><script type="text/plain">
+flowchart TB
+  b1["Page loads: Turnstile, challenge, one request counted"] --> b2["Nothing appears"]
+  b3["Click: challenge, prompt, signed in"]
+  class b1 slot5
+  class b2 slot4
+  class b3 slot2
+</script></ex-mermaid></section>
+  </section>
+  <section id="opt-field" label="C · Autofill with an email field" icon="envelope">
+    <section data-compare-row="sees"><p><strong>What a person sees</strong></p><p>A new email field on the sign-in page. Focusing it lists their passkeys; the field does nothing else.</p></section>
+    <section data-compare-row="changes"><p><strong>What changes in the code</strong></p><p>The shipped button with autoFill on, plus a field marked <code>autocomplete="username webauthn"</code>.</p></section>
+    <section data-compare-row="improves"><p><strong>What it improves</strong></p><p>Passkeys appear in the browser's list.</p></section>
+    <section data-compare-row="costs"><p><strong>What it costs</strong></p><p>All of B's load costs, plus a field that looks like email sign-in but isn't one.</p></section>
+    <section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="opt-field-pic" label="Option C"><script type="text/plain">
+flowchart TB
+  c1["Page loads: Turnstile, challenge, one request counted"] --> c2["Focus the email field: passkeys listed"]
+  class c1 slot5
+  class c2 slot3
+</script></ex-mermaid></section>
+  </section>
+</ex-compare>
+<ex-grid cols="3" data-width="canvas">
+<ex-card title="A · Click only" tone="done" icon="key" tag="Your choice, 15 Nov" pick>
+<p><strong>Cost:</strong> none in code; one setting on Better Auth UI's plugin.</p>
+</ex-card>
+<ex-card title="B · Autofill on" tone="planned" icon="package" tag="Load costs, no benefit here">
+<p><strong>Cost:</strong> a Turnstile run, a challenge and a counted request on each page load, in browsers that support autofill.</p>
+</ex-card>
+<ex-card title="C · With an email field" tone="planned" icon="envelope" tag="New field">
+<p><strong>Cost:</strong> B's costs and a field that isn't email sign-in.</p>
+</ex-card>
+</ex-grid>
+<ex-callout title="Decided: A, click only" tone="done" icon="key">
+<p>Your choice on 15 Nov. Better Auth UI's button ships unchanged with <code>passkeyPlugin({ autoFill: false })</code>. Loading the sign-in page sends no challenge request, and V7 checks that.</p>
+</ex-callout>
+<h2 id="build-calls">My calls during the build (17 Nov), each brought to you</h2>
+<p>Corrections to my own design, or rulings inside it, made while the Implementer and Verifier worked. None changes what you decided; each is listed so you can overturn it.</p>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Call</th><th>Why</th><th>Should it have been yours?</th></tr></thead>
+<tbody>
+<tr><td>V8 invite is posted from the signed-in page, not clicked</td><td>No invite button exists until B1-C (my design assumed one)</td><td>No: the outcome is unchanged; the B1-C journey clicks it later</td></tr>
+<tr><td>V8 refusal uses <code>setResponseOverrideBits(isBadUV)</code></td><td><code>setUserVerified(false)</code> never reached our server (pinned Chrome source)</td><td>No: a stronger test of your rule</td></tr>
+<tr><td>V4 completion test lives beside its module in sign-in-core</td><td>The function is internal; no test-only export</td><td>No</td></tr>
+<tr><td>Turnstile failure message uses Better Auth&#39;s <code>BetterFetchError</code>; adds <code>@better-fetch/fetch</code> 1.3.2</td><td>Better Auth UI ignores plain errors; same version Better Auth already uses; no UI patch</td><td>No: follows Better Auth&#39;s way</td></tr>
+<tr><td>Stale “passkey closed” tests and README lines updated to click-only</td><td>They described the state before B1-B</td><td>No: your 15 Nov click-only pick</td></tr>
+<tr><td>Passkey browser runs split into <code>native-passkey-browser-scenario.ts</code>, each on a fresh setup</td><td>File size limit; the rate limiter correctly refused a shared setup</td><td>No</td></tr>
+<tr><td>Five extra Node runs required before acceptance</td><td>An earlier stall had no known cause (0 of 5 since)</td><td>No</td></tr>
+<tr><td>Fragile B1-A rate-limit test split into an exact check with a test-controlled limiter window plus a real-Miniflare wiring check (by request 601)</td><td>Miniflare's limiter windows follow the real clock (<code>floor(Date.now()/60000)</code>), so a run crossing a minute boundary read 552, not 301; no wall clock in tests</td><td>No: test design, which you made the Lead's</td></tr>
+<tr><td>Didn&#39;t send the Verifier&#39;s blocked packet until you chose</td><td>No getting around a safety check</td><td>Yes: you chose Decision 6 on 17 Nov; Decision 8 is open</td></tr>
+<tr><td>Short temp folder for every 288 gate run, author and independent</td><td>Four Unix sockets failed to bind (<code>listen EINVAL</code>) because the long private temp path pushed socket addresses over the length limit. With the short folder, integration went 314/0</td><td>No: test environment, no code change</td></tr>
+<tr><td>The independent A/B runs aren't repeated. The missing before/after build inventory is rebuilt from the hashes of the modules that actually ran, checked against a fresh inventory taken before C; a host is rerun once only if anything differs</td><td>The loaded-module maps already tie every executed module to the manifest, and the strict audit passed. Repeating clean runs adds cost without adding proof. The gap is named as "reconstructed", not "captured at the time"</td><td>No: verification evidence is mine. Undo: rerun A/B</td></tr>
+<tr><td>Superseded the A/B reconstruction above: the stall fix changes <code>native-cli-proof.ts</code>, which A/B load, so A, B, C, full gates and controls all run fresh at the fix head, with full before/after retention</td><td>Root cause of the author stall: the test's click missed the button (one click, <code>expectedControl:false</code>, no submit; Chrome still on <code>/owner-ready</code>; the CLI still listening). The test-only fix touches a file A/B execute (B1-B Verifier: <code>management-boundaries:71</code>, <code>passkey-confirmation:66</code>)</td><td>No: verification sequencing is mine</td></tr>
+<tr><td>Independent 1d52 run: receipts labelled <code>ready:false / none</code> don't hold the full gates. They qualify at suite level, with every <code>none</code> kept as is and no bootstrap credit. The count must equal the number of selected test cases that never bootstrap, from source: 13 on A (12 Turnstile sign-in cases and the public passkey challenge). Any other count holds the gates. Extended the same evening to the full sweeps: the full Cloudflare sweep had 32 <code>none</code> receipts, and the Verifier enumerates from source the selected full-suite cases that never sign in. The unit counted is the auth-harness instance, since each instance writes one receipt; a case may create several or none. The sweep qualifies only if the counts match. The Node full sweep runs meanwhile; the deliberate-break checks wait for the match. Result: the Verifier's source census found 32 non-bootstrapping root instances per host (12 Turnstile sign-in, 18 Turnstile provider, 1 passkey challenge, 1 stylesheet), equal to the 32 recorded on each host. The C stage's 10 child records are compared separately. The deliberate-break checks run alongside the Verifier's audit of the full-run archive and count only if it is clean</td><td><code>none</code> is the harness's starting label (<code>local-auth-harness.ts:700</code>). Only a usable JWKS, a verified session row or a person token changes it (<code>:707-732</code>, <code>:828</code>), and those 13 cases do none of the three. The earlier independent 288d run showed the same 13 on both hosts. Forcing a session into a public refusal test only to change its label would weaken that test</td><td>No: verification evidence is mine. Undo: require a per-case receipt join before the gates</td></tr>
+<tr><td>Deliberate-break restore check: a restored build counts as restored when all source and all non-declaration outputs (JS, CSS, assets, ordinary source maps) match the baseline byte for byte. Differences in TypeScript declaration files (<code>.d.ts</code>, <code>.d.ts.map</code>) are recorded separately and don&#39;t block. Any other difference still holds</td><td>In V2 the restored build matched everywhere except 12 declaration rows (2 added, 2 removed, 8 changed). The tests run the JS bundles, whose hashes the harness checks against the manifest, and never load declaration files</td><td>No: verification evidence is mine. Undo: require full output equality, which means a clean rebuild per restore</td></tr>
+<tr><td>Deliberate-break check V5 (person-active guard forced off) counts: both hosts failed at the named 403 check, with 503. Named limit: it proves the guard owns the clean 403, not that it is the only barrier</td><td>Setup and readiness were clean, and the failure was at the named assertion. A deeper layer refused instead of letting the removed person in</td><td>No: verification evidence is mine</td></tr>
+<tr><td>Found from V5, fixed when B1-B moves to the public repo, not in the private proof: a sign-in that the release layer refuses becomes a 503 instead of a 403</td><td>When a person is no longer active at release time, <code>releaseSignInResponse</code> deletes the session and answers 403 (<code>sign-in-response-release.ts:60-80</code>). <code>completePasskeySignIn</code> then still sees an issued session next to a non-OK answer and throws (<code>passkey-sign-in-completion.ts:18-20</code>), so the outer handler answers 503. This happens in the race where someone is removed during sign-in. It fails closed: the session is deleted and nothing is signed in. It's a wrong status, not a security gap</td><td>No: a confirmed bug against intended behaviour; fixed with a unit test and a targeted host red/green in the public port PR</td></tr>
+<tr><td>The CLI Continue step in the browser test uses the keyboard: focus the button by identity, check it is the connected, enabled, active element, then one real Space key press. It replaces a mouse click at measured coordinates. A new permanent regression forces a layout change after measurement and before input</td><td>V8's restored run on Cloudflare clicked the page background. The test measures the point in one step and presses the mouse in separate steps, and the passkey list below Continue can still change height in between (<code>native-browser-page.ts:85-116</code>, <code>owner-page.tsx:344-359</code>, <code>passkey-manager.tsx</code>). Continue itself never moves in the DOM. A keyboard press can't be redirected by layout, and the browser still sends a trusted click and submit to the button. Mouse hit-testing stays covered by the generic native-click tests. The B1-C chooser already uses the keyboard (Enter)</td><td>No: test design is mine. Cost: this step proves keyboard activation, not mouse geometry</td></tr>
+<tr><td>B1-B moves to the public repo now, and the remaining proof runs on the public PR head: the keyboard fix, the refusal-503 fix, fresh full gates, stage C, V8 red and restored green, the remaining browser checks, and a re-run of every host check whose files changed in the move</td><td>The public head is what merges. 11 of 14 deliberate-break checks and all private gates are already qualified at 1d52 and stay on record. Re-proving the private branch first would be thrown away</td><td>No: sequencing is mine</td></tr>
+</tbody></table></div>
+</ex-document>
+</body>
+</html>

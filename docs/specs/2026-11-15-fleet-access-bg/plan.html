@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BG · Getting in · Plan</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>BG · Getting in: Plan</h1>
+<p>Four packets. <strong>Starts when B1-C and B2 are merged, you have approved BG, and you give the go-ahead.</strong> You agreed all three assumption groups on 15 Nov. Staging deploys and the release sign-in are your steps or done with your yes.</p>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What to check" tone="note" icon="shield-check">
+<p>The prototype step comes first (as approved): continuation with skip-consent, and guarded Decline.</p>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p>The steps follow the assumptions you agreed on 15 Nov.</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>The Reviewer judges against your words and approved BG.</p>
+</ex-callout>
+
+<h2 id="order">Order</h2>
+<ex-mermaid id="order-picture" label="BG delivery" data-width="canvas"><script type="text/plain">
+flowchart TB
+  pre["B1-C, B2 merged · BG approved · go-ahead"] --> proto["Prototype: continuation, Decline (both hosts)"]
+  proto --> build["Implementer: decision, pages, deadline, staging"]
+  build --> verify["Verifier: local both hosts; staging after deploy"]
+  verify --> review["Reviewer"]
+  review --> accept["Lead acceptance"]
+  class pre slot1
+  class proto,build slot2
+  class verify,review slot4
+  class accept slot6
+</script></ex-mermaid>
+<p><strong>Code:</strong> a new Agent Studio worktree of Switchboard from <code>main</code>. <strong>Hand-back:</strong> <code>docs/specs/2026-11-15-fleet-access-bg/work/</code>.</p>
+
+<h2 id="implementer">Packet 1 · Implementer</h2>
+<p><strong>Read the whole design first.</strong> All seven pages: Audit, Requirements, Specification, Program Design, Verification Design, this Plan and Decisions. Also the approved BG deliverable, B1-C's merged context contract and Switchboard's <code>AGENTS.md</code>. The design pages are the authority. The steps below are a checklist pointing into them. Where a step and the design differ, the design wins: stop and ask me.</p>
+<ol>
+<li><strong>Prototype</strong> on both hosts: skip-consent continuation for a clean owner, an incomplete bootstrap, a member who skips bootstrap, a bootstrap held across the deadline; guarded Decline against native Accept (expired, wrong recipient, competing). Keep it only if it becomes the real code.</li>
+<li><strong>Decision and router.</strong> <code>setup-flow/</code> files (facts with pending invitations and the closed invitation view); the four routes plus <code>/account/confirm</code> in the handler; allowlist changes; move the confirmation callers (<code>fleet-cli-commands.ts:154–155</code>, <code>factor-page.tsx:27–28</code>, <code>factor-enrollment-page.ts:57</code>) to <code>/account/confirm</code> and the admin page's no-membership redirect (<code>sign-in-http-handler.ts:152–156</code>) to <code>/setup</code>; remove <code>/owner-ready</code>, <code>owner-page.tsx</code> and <code>owner-page-script.ts</code>.</li>
+<li><strong>Pages.</strong> One component per page kind on the shared shell; recovery-code Finish; account page with B1-C's choice surface; invitation page.</li>
+<li><strong>Decline.</strong> <code>better-auth/invitation-decline-plugin.ts</code> with its conditional write and records.</li>
+<li><strong>Deadline.</strong> <code>owner-cli-login.ts</code> and <code>loopback-authorization.ts</code>; continuation island (M3).</li>
+<li><strong>Staging.</strong> Entrypoint, two routes, reset of the sign-in side returning the test organization IDs (Central store removal is an open dependency on Lead A); <code>scripts/verify-auth/staging-journeys.mts</code> with the staging refusals and the production checks, including the build metafile module check.</li>
+<li><strong>Tests.</strong> V1–V5; wrong builds to red and back. Retarget the owner-page and short-name tests.</li>
+<li><strong>Gates and PR</strong> on Sunclaw.</li>
+</ol>
+<p><strong>May not change:</strong> second-factor rules, Better Auth, migrations, CI. <strong>Stop</strong> if the prototype shows skip-consent or Decline can't work as designed. <strong>Return</strong> <code>work/implementer-handback.md</code>.</p>
+
+<h2 id="verifier">Packet 2 · Verifier</h2>
+<p>Read all seven design pages first. Observe V1–V3 locally on both hosts, and V4 on staging after the deploy you approve. Expected results come from the Specification and Verification Design, never from the Implementer's summary. <strong>Return</strong> <code>work/verifier-observation.md</code>.</p>
+
+<h2 id="reviewer">Packet 3 · Reviewer</h2>
+<p>Fresh. Inputs are the whole design except this Plan: <code>audit.html</code>, <code>requirements.html</code>, <code>specification.html</code>, <code>program-design.html</code>, <code>verification-design.html</code> and <code>decisions.html</code>. Also approved BG, R57–R67, the PR and evidence. First question: what does this drop? Then: can a stale command line continue; can Decline overwrite Accept; can anything from staging enter production. <strong>Return</strong> <code>work/reviewer-report.html</code>.</p>
+
+<h2 id="acceptance">Packet 4 · Lead acceptance</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Rule</th><th>Evidence</th><th>State</th></tr></thead>
+<tbody>
+<tr><td>S1</td><td>V1</td><td>Not started</td></tr>
+<tr><td>S2–S6, S10</td><td>V2 journeys, both hosts</td><td>Not started</td></tr>
+<tr><td>S6</td><td>V3 races</td><td>Not started</td></tr>
+<tr><td>S7–S9</td><td>V4 staging and production</td><td>Not started</td></tr>
+<tr><td>S11</td><td>V5</td><td>Not started</td></tr>
+</tbody></table></div>
+
+<h2 id="gates">Gates</h2>
+<ex-code lang="sh" title="Sunclaw (local) and staging"><script type="text/plain">
+pnpm install --frozen-lockfile && pnpm build && pnpm check
+pnpm test:unit && pnpm test:integration
+pnpm test:e2e:host && SIGN_IN_TEST_HOST=node pnpm test:e2e:host
+# after the staging deploy you approve:
+pnpm exec tsx scripts/verify-auth/staging-journeys.mts --target staging
+pnpm exec tsx scripts/verify-auth/staging-journeys.mts --target production --negative-only
+</script></ex-code>
+</ex-document>
+</body>
+</html>

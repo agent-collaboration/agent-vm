@@ -1,0 +1,633 @@
+{
+  "kind": "B1-A independent partial baseline raw receipt extraction",
+  "source": "27d393240b5c31bd1cf7da522de300c0522dd222",
+  "root": "/private/tmp/2026-11-b1a-verifier-27d39324",
+  "host": "Sunclaw.local",
+  "stage": [
+    {
+      "step": "14-check",
+      "command": "mise exec node@24.7.0 pnpm@10.33.0 -- pnpm check",
+      "exit": 0,
+      "started": "2026-11-15T23:02:52.926Z",
+      "ended": "2026-11-15T23:04:11.961Z",
+      "elapsedMs": 79035,
+      "rawFinalBlock": [
+        "PASS build: workspace build 11.47s",
+        "PASS cli-architecture: Optique CLI architecture audit 0.95s",
+        "PASS package-versions: package version sync 0.46s",
+        "PASS zod-version: zod version guard 0.45s",
+        "PASS test-taxonomy: test taxonomy audit 1.31s",
+        "PASS portal-architecture: portal architecture audit 3.06s",
+        "PASS portal-exports: portal package export audit and packed portable closures 33.11s",
+        "PASS portal-contracts: generated portal contract freshness 2.13s",
+        "PASS lint: lint 1.93s",
+        "PASS format: format check 1.20s",
+        "PASS type-aware-lint: type-aware lint 7.97s",
+        "PASS typecheck: typecheck 33.63s"
+      ],
+      "rawFiles": [
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/14-check.stdout",
+          "bytes": 168284,
+          "sha256": "07f3a4ad9d9ab809cfc24fb9a64e71afd550d5bfa5e8eb1bc7f23e903999a06a"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/14-check.stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/14-check.log",
+          "bytes": 168591,
+          "sha256": "535d301f62776bba0fca304dacc0c92fbcd5d20b23d833e7262fa964989b6a0c"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/14-check.process.json",
+          "bytes": 1271,
+          "sha256": "918f1e04d0b35c1933dcd65508e9f240e18959f002a6dec492685973cd11fcba"
+        }
+      ],
+      "cleanup": null
+    },
+    {
+      "step": "15-unit",
+      "command": "mise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:unit --reporter=default --reporter=json --outputFile='/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/unit.vitest.json'",
+      "exit": 0,
+      "started": "2026-11-15T23:04:54.995Z",
+      "ended": "2026-11-15T23:05:09.572Z",
+      "elapsedMs": 14789,
+      "rawFinalBlock": [
+        " Test Files  240 passed (240)",
+        "      Tests  2630 passed (2630)",
+        "   Start at  18:04:56",
+        "   Duration  12.87s (transform 7.42s, setup 0ms, import 52.29s, tests 23.80s, environment 2.95s)",
+        "JSON report written to /private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/unit.vitest.json"
+      ],
+      "rawFiles": [
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/15-unit.stdout",
+          "bytes": 27789,
+          "sha256": "5b6e074236f06137eae9606500216e8de17bf1c935ce9fb728977d55a78424f4"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/15-unit.stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/15-unit.log",
+          "bytes": 28223,
+          "sha256": "4ec30d223c56b65f26d15e0de9ac2913b8d78f9d399a9fc3f58c2b1f6930e1d0"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/15-unit.process.json",
+          "bytes": 3279,
+          "sha256": "3557bed818b489e98f9b7ea3e4e2ce9e5b2e7095677163f62ba4387922d75ebf"
+        }
+      ],
+      "cleanup": {
+        "sampling": "bounded 1s group snapshots, maximum1800, not an exhaustive process-birth ledger",
+        "identities": 7,
+        "groupEmpty": true,
+        "observedPIDsAbsent": true,
+        "noSignalsSent": true
+      }
+    },
+    {
+      "step": "16-integration",
+      "command": "mise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:integration --reporter=default --reporter=json --outputFile='/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/integration.vitest.json'",
+      "exit": 0,
+      "started": "2026-11-15T23:06:10.331Z",
+      "ended": "2026-11-15T23:06:18.659Z",
+      "elapsedMs": 8535,
+      "rawFinalBlock": [
+        " Test Files  62 passed (62)",
+        "      Tests  314 passed (314)",
+        "   Start at  18:06:10",
+        "   Duration  7.87s (transform 2.12s, setup 0ms, import 22.00s, tests 12.61s, environment 4ms)",
+        "JSON report written to /private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/integration.vitest.json"
+      ],
+      "rawFiles": [
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/16-integration.stdout",
+          "bytes": 23997,
+          "sha256": "29f6f2f41d86d738de7b88c5eb028145dab582c41b56cbe1b7fca6320ebb40b1"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/16-integration.stderr",
+          "bytes": 554,
+          "sha256": "82280d78d7425c30b7ba0a2e9250fd503dc41cbaef6c863e01fb8dbd1ee2bc44"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/16-integration.log",
+          "bytes": 24999,
+          "sha256": "8ea71072e7c43675654d101683db26f49a643b1a25b82890384a9b033d34d0a5"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/16-integration.process.json",
+          "bytes": 2835,
+          "sha256": "cd76684861559ea2a3b2b6a8fd8e1b148c83f0d8f1f420d507778ca312563931"
+        }
+      ],
+      "cleanup": {
+        "sampling": "bounded 1s group snapshots, maximum1800, not an exhaustive process-birth ledger",
+        "identities": 4,
+        "groupEmpty": true,
+        "observedPIDsAbsent": true,
+        "noSignalsSent": true
+      }
+    },
+    {
+      "step": "19-host-cloudflare",
+      "command": "unset SIGN_IN_TEST_HOST\nmise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:e2e:host --exclude '**/macos-keychain-proof-key-store.host.e2e.test.ts' --reporter=default --reporter=json --outputFile='/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/host-cloudflare.vitest.json'",
+      "exit": 0,
+      "started": "2026-11-15T23:07:50.810Z",
+      "ended": "2026-11-15T23:12:32.998Z",
+      "elapsedMs": 282399,
+      "rawFinalBlock": [
+        " Test Files  79 passed | 3 skipped (82)",
+        "      Tests  476 passed | 19 skipped (495)",
+        "   Start at  18:07:51",
+        "   Duration  281.71s (transform 5.23s, setup 0ms, import 97.51s, tests 1258.44s, environment 4ms)",
+        "JSON report written to /private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/host-cloudflare.vitest.json"
+      ],
+      "rawFiles": [
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/19-host-cloudflare.stdout",
+          "bytes": 74521,
+          "sha256": "889077d689ed8f4fb7bc54fd27f83d45ed1e51ef16473fedcc696e3379df4b60"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/19-host-cloudflare.stderr",
+          "bytes": 3613841,
+          "sha256": "54a51f832ab76dea9603e99314fe0484a80e798e36c71641e7676214a817f939"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/19-host-cloudflare.log",
+          "bytes": 3688898,
+          "sha256": "7213352636ae27d2a41ef5714e6b725e5b806d641995768d76845df2da8d5c86"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/19-host-cloudflare.process.json",
+          "bytes": 386600,
+          "sha256": "929920e65a2d33cc02c1feda8bae36ae303c46c5c5656da0d25f453b208da5a5"
+        }
+      ],
+      "cleanup": {
+        "sampling": "bounded 1s group snapshots, maximum1800, not an exhaustive process-birth ledger",
+        "identities": 1398,
+        "groupEmpty": true,
+        "observedPIDsAbsent": true,
+        "noSignalsSent": true
+      }
+    }
+  ],
+  "reports": [
+    {
+      "file": {
+        "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/unit.vitest.json",
+        "bytes": 945352,
+        "sha256": "6e4699fc6f24ce8d1f4334deceb80a86e155bd119ccfd2b4e13ba7c60b181d1a"
+      },
+      "passed": 2630,
+      "failed": 0,
+      "skipped": 0,
+      "rows": [
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/scripts/workspace-mcp-boundary.unit.test.ts",
+          "name": "allows membership reads and approval replay consumption through a distinct port",
+          "status": "passed"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/oauth-broker-contracts/src/oauth-broker-contracts.unit.test.ts",
+          "name": "OAuth broker portable contracts rejects malformed nested application and service identifiers",
+          "status": "passed"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/agent-portal-sdk/src/artifact-surface/artifact-read-resource-uri.unit.test.ts",
+          "name": "Portal artifact MCP resource request rejects 'duplicate URI identifier'",
+          "status": "passed"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/agent-portal-sdk/src/contracts/portable-contracts.unit.test.ts",
+          "name": "canonical Agent Portal contracts accepts namespace names beyond the generic opaque identifier bound",
+          "status": "passed"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/agent-portal-sdk/src/gateway-runtime-client/gateway-runtime-sandbox-operations.unit.test.ts",
+          "name": "GatewayRuntimeClient sandbox projection looks up one retained result without replaying execution",
+          "status": "passed"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/tool-access-ui/src/panel-demo/panel-fixture.unit.test.ts",
+          "name": "in-memory stand-in contract does not replay a denied proposal",
+          "status": "passed"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/tool-host-core/src/workspace-authority/approval-token-use-rules.unit.test.ts",
+          "name": "approval token use transitions refuses a replay without changing or pruning the stored state",
+          "status": "passed"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/tool-host-core/src/workspace-authority/signed-approval-expiry.unit.test.ts",
+          "name": "rejects expired signed approvals after replay pruning while an unexpired approval succeeds exactly once",
+          "status": "passed"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/tool-host-node/src/standalone-tool-portal/standalone-batch-approval.unit.test.ts",
+          "name": "standalone Tool Portal ordered-batch HMAC approval reports consumed-without-dispatch when a reserved token is replayed before arming",
+          "status": "passed"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/tool-host-node/src/standalone-tool-portal/standalone-batch-approval.unit.test.ts",
+          "name": "standalone Tool Portal ordered-batch HMAC approval reports ambiguous when an armed token is replayed",
+          "status": "passed"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/tool-engine/src/mcp-gateway/call-approvals/approval-carriers.unit.test.ts",
+          "name": "mixed approval batches keep independent unprotected work keeps the unprotected sibling when the protected token is replayed",
+          "status": "passed"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/tool-engine/src/mcp-gateway/call-approvals/approval-token-use.unit.test.ts",
+          "name": "machine approval replay authority atomically permits one overlapping first use and refuses the other",
+          "status": "passed"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/tool-engine/src/mcp-gateway/call-approvals/approval-token-use.unit.test.ts",
+          "name": "machine approval replay authority keeps live records at capacity and frees only expired records",
+          "status": "passed"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/tool-engine/src/mcp-gateway/portal-tools/portal-call-execution.unit.test.ts",
+          "name": "indirect refused approval item errors preserves the exact 08f9e426 'replayed' error and prevents another effect",
+          "status": "passed"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/tool-engine/src/mcp-gateway/portal-tools/portal-call-execution.unit.test.ts",
+          "name": "direct refused approval item errors preserves the exact 08f9e426 'replayed' error and prevents another effect",
+          "status": "passed"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/tool-host-cloudflare/src/deployed-checks/deployed-check-suites/authorization-observations.unit.test.ts",
+          "name": "authorization proof sensitivity accepts replay keeping exactly one effect and rejects a second effect",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": {
+        "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/integration.vitest.json",
+        "bytes": 129576,
+        "sha256": "6f1076bcfab47268efd85f73f928ec7df2ceb5606d9871d8608f7065c1deb3fa"
+      },
+      "passed": 314,
+      "failed": 0,
+      "skipped": 0,
+      "rows": [
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/agent-portal-sdk/src/clients/agent-portal-clients.integration.test.ts",
+          "name": "GatewayRuntimeClient attachment lifecycle rejects a replayed connection id instead of resuming it on reconnect",
+          "status": "passed"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/oauth-broker/src/google/google-oauth-broker-lifecycle.integration.test.ts",
+          "name": "Google OAuth broker lifecycle and policy lists exact catalog group identifiers and rejects unsupported suggestions",
+          "status": "passed"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/tool-host-core/src/hosted-mcp-proxy/hosted-mcp-proxy.integration.test.ts",
+          "name": "authenticates a real Node MCP request, invokes the controlled HTTP upstream, and commits approval before refusing replay",
+          "status": "passed"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/tool-host-node/src/mcp-proxy-server/proxy-result-parity.integration.test.ts",
+          "name": "indirect: matches whole missing, replayed and forged approval items from the real 08f9e426 proxy",
+          "status": "passed"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/tool-host-node/src/mcp-proxy-server/proxy-result-parity.integration.test.ts",
+          "name": "direct: matches whole missing, replayed and forged approval items from the real 08f9e426 proxy",
+          "status": "passed"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/tool-host-node/src/standalone-tool-portal/standalone-sdk.integration.test.ts",
+          "name": "Portal SDK through the real standalone Node route HTTP provisional A preserves the old grace-expired error identity with one effect and no replay",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": {
+        "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/host-cloudflare.vitest.json",
+        "bytes": 207416,
+        "sha256": "f3a08072bfe6d64abee9ca45d580583d5eaa2cd13e092a900dea731a24aabfa7"
+      },
+      "passed": 476,
+      "failed": 0,
+      "skipped": 19,
+      "rows": [
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+          "name": "B2e joint journey, workerd sign-in + workerd central at ea030e5135 (under test) provisioning: the owner's new organization is stamped through the real link and central records it once",
+          "status": "skipped"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+          "name": "B2e joint journey, workerd sign-in + workerd central at ea030e5135 (under test) renewal on use: in the 60-day window two concurrent Fleet calls leave one stamp in doubt; both send its exact bytes, central applies it once and answers the replay",
+          "status": "skipped"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+          "name": "B2e joint journey, workerd sign-in + workerd central at ea030e5135 (under test) renewal: two distinct signed proposals name the same digest; central applies the first released and refuses the other as stale, its stamp and records unchanged",
+          "status": "skipped"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+          "name": "B2e joint journey, workerd sign-in + workerd central at ea030e5135 (under test) revision push: removing a member reaches central as an inactive floor, its ACK is recorded, and the pair reads synced",
+          "status": "skipped"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+          "name": "B2e joint journey, workerd sign-in + workerd central at ea030e5135 (under test) lost ACK: central applies the removal but its reply is dropped; the pair stays pending until the next drain at +60 s resends the same bytes",
+          "status": "skipped"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+          "name": "B2e joint journey, workerd sign-in + workerd central at ea030e5135 (under test) admin page: the owner's create, lookup and records apply in central; a member's are refused notPermitted with no effect",
+          "status": "skipped"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+          "name": "B2e joint journey, workerd sign-in + workerd central at ea030e5135 (under test) owner CLI through the relay: create, then a same-key refresh, then lookup, all applied by real central",
+          "status": "skipped"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+          "name": "B2e joint journey, workerd sign-in + workerd central at ea030e5135 (under test) duplicate name from the admin page: central answers nameInUse, the page's one lookup at its own operation finds nothing, and it shows the nameInUse words; workspaces and records are unchanged",
+          "status": "skipped"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+          "name": "B2e joint journey, workerd sign-in + workerd central at ea030e5135 (under test) replay within 24 hours: the same create sent again gets byte-identical bytes back, and central holds one workspace and one workspaceCreated record",
+          "status": "skipped"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+          "name": "B2e joint journey, workerd sign-in + workerd central at ea030e5135 (under test) late retry from the admin page: the first create applies but its reply is lost; past 24 hours the same operation meets nameInUse, one lookup finds its own workspace, and the page reports it created",
+          "status": "skipped"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+          "name": "B2e joint journey, workerd sign-in + workerd central at ea030e5135 (under test) late retry from the owner CLI: the first create applies but its reply is lost; past 24 hours the repeated command meets nameInUse, one lookup finds its own workspace, and the CLI prints \"Workspace created.\"",
+          "status": "skipped"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+          "name": "B2e joint journey, workerd sign-in + workerd central at ea030e5135 (under test) conflict on the admin page: a lost reply keeps the operation; a changed name under it is a conflict with its own words, and the next try applies under a fresh operation",
+          "status": "skipped"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+          "name": "B2e joint journey, workerd sign-in + workerd central at ea030e5135 (under test) drifted and expired stamp (R29, R-adopt): central's digest read answers its expired facts; sign-in adopts them on the stale refusal and releases no push, then its next call replaces central's digest and its push goes out",
+          "status": "skipped"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+          "name": "B2e joint journey, workerd sign-in + workerd central at ea030e5135 (under test) revoked token (native fence, real drain, Rust refusal): after the owner's native sign-out, with the hint's push held, the old token's next relay first delivers the revocation through its own guard, so central refuses it refreshRequired with no effect",
+          "status": "skipped"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+          "name": "B2e joint journey, workerd sign-in + workerd central at ea030e5135 (under test) central restarts empty (WS7 R-notdue, R-floors): the owner's next admin call meets central's 503, sign-in probes none, sets the organization up again, pushes its floors again and the retried call is answered",
+          "status": "skipped"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+          "name": "B2e joint journey, workerd sign-in + workerd central at ea030e5135 (under test) central restarts empty (WS7 R-push503): a member removed after the restart leaves a pending revision; the owner's next call meets central's 503 on that push, recovers and then goes out, with the removal applied",
+          "status": "skipped"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-launcher-teardown.host.e2e.test.ts",
+          "name": "B2e Tokio launcher teardown a suite whose case never calls close() starts a real launcher through the fixture and leaves it running",
+          "status": "skipped"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-launcher-teardown.host.e2e.test.ts",
+          "name": "B2e Tokio launcher teardown that suite's registered teardown ended exactly its launcher before this case ran",
+          "status": "skipped"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts",
+          "name": "admin forwarding (Node host): the verifier, proof key, signatures and intent digest all go through the host crypto",
+          "status": "skipped"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts",
+          "name": "people journey on cloudflare: every stored UUID is v7 before the member's removal and after it, and no secret is a UUID",
+          "status": "passed"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/sign-in-native-browser.host.e2e.test.ts",
+          "name": "F native Better Auth browser journey on node",
+          "status": "passed"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/sign-in-native-browser.host.e2e.test.ts",
+          "name": "F native Better Auth browser journey on cloudflare",
+          "status": "passed"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/sign-in-storage.host.e2e.test.ts",
+          "name": "sign-in storage on d1-workerd the real provider keeps the assertion jti digest key and refuses the same assertion replay",
+          "status": "passed"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/sign-in-storage.host.e2e.test.ts",
+          "name": "sign-in storage on better-sqlite3 the real provider keeps the assertion jti digest key and refuses the same assertion replay",
+          "status": "passed"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/turnstile-provider.host.e2e.test.ts",
+          "name": "turnstile: accepted private passkey options store a real challenge and replay changes nothing",
+          "status": "passed"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/turnstile-sign-in.host.e2e.test.ts",
+          "name": "turnstile: accepts distinct tokens once each and refuses replay without a write",
+          "status": "passed"
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/tool-host-cloudflare/src/worker-mcp-serving/worker-approval.host.e2e.test.ts",
+          "name": "Worker awaits its organization approval authority in local workerd runs exactly one concurrent use and refuses replay",
+          "status": "passed"
+        }
+      ]
+    }
+  ],
+  "skipped": [
+    {
+      "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+      "name": "B2e joint journey, workerd sign-in + workerd central at ea030e5135 (under test) provisioning: the owner's new organization is stamped through the real link and central records it once",
+      "status": "skipped",
+      "reason": "No B2E central artifacts directory supplied; describe.runIf(artifactsDirectory !== null) false. Separate joint journey, not assigned by this B1-A baseline."
+    },
+    {
+      "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+      "name": "B2e joint journey, workerd sign-in + workerd central at ea030e5135 (under test) renewal on use: in the 60-day window two concurrent Fleet calls leave one stamp in doubt; both send its exact bytes, central applies it once and answers the replay",
+      "status": "skipped",
+      "reason": "No B2E central artifacts directory supplied; describe.runIf(artifactsDirectory !== null) false. Separate joint journey, not assigned by this B1-A baseline."
+    },
+    {
+      "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+      "name": "B2e joint journey, workerd sign-in + workerd central at ea030e5135 (under test) renewal: two distinct signed proposals name the same digest; central applies the first released and refuses the other as stale, its stamp and records unchanged",
+      "status": "skipped",
+      "reason": "No B2E central artifacts directory supplied; describe.runIf(artifactsDirectory !== null) false. Separate joint journey, not assigned by this B1-A baseline."
+    },
+    {
+      "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+      "name": "B2e joint journey, workerd sign-in + workerd central at ea030e5135 (under test) revision push: removing a member reaches central as an inactive floor, its ACK is recorded, and the pair reads synced",
+      "status": "skipped",
+      "reason": "No B2E central artifacts directory supplied; describe.runIf(artifactsDirectory !== null) false. Separate joint journey, not assigned by this B1-A baseline."
+    },
+    {
+      "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+      "name": "B2e joint journey, workerd sign-in + workerd central at ea030e5135 (under test) lost ACK: central applies the removal but its reply is dropped; the pair stays pending until the next drain at +60 s resends the same bytes",
+      "status": "skipped",
+      "reason": "No B2E central artifacts directory supplied; describe.runIf(artifactsDirectory !== null) false. Separate joint journey, not assigned by this B1-A baseline."
+    },
+    {
+      "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+      "name": "B2e joint journey, workerd sign-in + workerd central at ea030e5135 (under test) admin page: the owner's create, lookup and records apply in central; a member's are refused notPermitted with no effect",
+      "status": "skipped",
+      "reason": "No B2E central artifacts directory supplied; describe.runIf(artifactsDirectory !== null) false. Separate joint journey, not assigned by this B1-A baseline."
+    },
+    {
+      "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+      "name": "B2e joint journey, workerd sign-in + workerd central at ea030e5135 (under test) owner CLI through the relay: create, then a same-key refresh, then lookup, all applied by real central",
+      "status": "skipped",
+      "reason": "No B2E central artifacts directory supplied; describe.runIf(artifactsDirectory !== null) false. Separate joint journey, not assigned by this B1-A baseline."
+    },
+    {
+      "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+      "name": "B2e joint journey, workerd sign-in + workerd central at ea030e5135 (under test) duplicate name from the admin page: central answers nameInUse, the page's one lookup at its own operation finds nothing, and it shows the nameInUse words; workspaces and records are unchanged",
+      "status": "skipped",
+      "reason": "No B2E central artifacts directory supplied; describe.runIf(artifactsDirectory !== null) false. Separate joint journey, not assigned by this B1-A baseline."
+    },
+    {
+      "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+      "name": "B2e joint journey, workerd sign-in + workerd central at ea030e5135 (under test) replay within 24 hours: the same create sent again gets byte-identical bytes back, and central holds one workspace and one workspaceCreated record",
+      "status": "skipped",
+      "reason": "No B2E central artifacts directory supplied; describe.runIf(artifactsDirectory !== null) false. Separate joint journey, not assigned by this B1-A baseline."
+    },
+    {
+      "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+      "name": "B2e joint journey, workerd sign-in + workerd central at ea030e5135 (under test) late retry from the admin page: the first create applies but its reply is lost; past 24 hours the same operation meets nameInUse, one lookup finds its own workspace, and the page reports it created",
+      "status": "skipped",
+      "reason": "No B2E central artifacts directory supplied; describe.runIf(artifactsDirectory !== null) false. Separate joint journey, not assigned by this B1-A baseline."
+    },
+    {
+      "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+      "name": "B2e joint journey, workerd sign-in + workerd central at ea030e5135 (under test) late retry from the owner CLI: the first create applies but its reply is lost; past 24 hours the repeated command meets nameInUse, one lookup finds its own workspace, and the CLI prints \"Workspace created.\"",
+      "status": "skipped",
+      "reason": "No B2E central artifacts directory supplied; describe.runIf(artifactsDirectory !== null) false. Separate joint journey, not assigned by this B1-A baseline."
+    },
+    {
+      "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+      "name": "B2e joint journey, workerd sign-in + workerd central at ea030e5135 (under test) conflict on the admin page: a lost reply keeps the operation; a changed name under it is a conflict with its own words, and the next try applies under a fresh operation",
+      "status": "skipped",
+      "reason": "No B2E central artifacts directory supplied; describe.runIf(artifactsDirectory !== null) false. Separate joint journey, not assigned by this B1-A baseline."
+    },
+    {
+      "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+      "name": "B2e joint journey, workerd sign-in + workerd central at ea030e5135 (under test) drifted and expired stamp (R29, R-adopt): central's digest read answers its expired facts; sign-in adopts them on the stale refusal and releases no push, then its next call replaces central's digest and its push goes out",
+      "status": "skipped",
+      "reason": "No B2E central artifacts directory supplied; describe.runIf(artifactsDirectory !== null) false. Separate joint journey, not assigned by this B1-A baseline."
+    },
+    {
+      "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+      "name": "B2e joint journey, workerd sign-in + workerd central at ea030e5135 (under test) revoked token (native fence, real drain, Rust refusal): after the owner's native sign-out, with the hint's push held, the old token's next relay first delivers the revocation through its own guard, so central refuses it refreshRequired with no effect",
+      "status": "skipped",
+      "reason": "No B2E central artifacts directory supplied; describe.runIf(artifactsDirectory !== null) false. Separate joint journey, not assigned by this B1-A baseline."
+    },
+    {
+      "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+      "name": "B2e joint journey, workerd sign-in + workerd central at ea030e5135 (under test) central restarts empty (WS7 R-notdue, R-floors): the owner's next admin call meets central's 503, sign-in probes none, sets the organization up again, pushes its floors again and the retried call is answered",
+      "status": "skipped",
+      "reason": "No B2E central artifacts directory supplied; describe.runIf(artifactsDirectory !== null) false. Separate joint journey, not assigned by this B1-A baseline."
+    },
+    {
+      "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+      "name": "B2e joint journey, workerd sign-in + workerd central at ea030e5135 (under test) central restarts empty (WS7 R-push503): a member removed after the restart leaves a pending revision; the owner's next call meets central's 503 on that push, recovers and then goes out, with the removal applied",
+      "status": "skipped",
+      "reason": "No B2E central artifacts directory supplied; describe.runIf(artifactsDirectory !== null) false. Separate joint journey, not assigned by this B1-A baseline."
+    },
+    {
+      "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-launcher-teardown.host.e2e.test.ts",
+      "name": "B2e Tokio launcher teardown a suite whose case never calls close() starts a real launcher through the fixture and leaves it running",
+      "status": "skipped",
+      "reason": "No B2E central artifacts directory supplied; describe.runIf(artifactsDirectory !== null) false. Separate joint journey, not assigned by this B1-A baseline."
+    },
+    {
+      "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-launcher-teardown.host.e2e.test.ts",
+      "name": "B2e Tokio launcher teardown that suite's registered teardown ended exactly its launcher before this case ran",
+      "status": "skipped",
+      "reason": "No B2E central artifacts directory supplied; describe.runIf(artifactsDirectory !== null) false. Separate joint journey, not assigned by this B1-A baseline."
+    },
+    {
+      "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts",
+      "name": "admin forwarding (Node host): the verifier, proof key, signatures and intent digest all go through the host crypto",
+      "status": "skipped",
+      "reason": "Node-only capability-recording case; SIGN_IN_TEST_HOST unset/default Cloudflare."
+    }
+  ],
+  "scope": {
+    "keychain": "One named Mac Keychain host file explicitly excluded for owner Mac assignment; not a test skip inside report.",
+    "journeys": "Pending; no compared-target/readiness/invocation result claimed from general host baseline.",
+    "sourceAdmission": {
+      "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/source-admission.json",
+      "bytes": 1397,
+      "sha256": "216d03e7fdd003c1d1641c742a1a8749f1df6d3d035640077b853dfacc9c2f4e"
+    }
+  },
+  "sourceAdmission": {
+    "head": "27d393240b5c31bd1cf7da522de300c0522dd222",
+    "tree": "ba93f1eca6a80f847f5a90da0b82151481ff4b1d",
+    "status": "",
+    "host": "Sunclaw.local",
+    "source": "/private/tmp/2026-11-b1a-verifier-27d39324/source",
+    "evidence": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+    "references": [
+      {
+        "file": "AGENTS.md",
+        "bytes": 27954,
+        "sha256": "27a8b5e1acffa9657a30bc4e6d0955da5821c17978531932f211c54c520a6d8c",
+        "sameAsEarlierFullRead": true
+      },
+      {
+        "file": ".agents/skills/verify-auth/SKILL.md",
+        "bytes": 11771,
+        "sha256": "c242d3ad0360e1a6e1a1f8499022a29e166a360070ce06c311f1051946301eb4",
+        "sameAsEarlierFullRead": true
+      },
+      {
+        "file": ".agents/skills/verify-auth/references/native-browser.md",
+        "bytes": 5132,
+        "sha256": "044473bbb3e56a4d87647d8547192657e53ac659150b910789163dd232407a88",
+        "sameAsEarlierFullRead": true
+      },
+      {
+        "file": ".agents/skills/verify-auth/references/organization-statements.md",
+        "bytes": 19549,
+        "sha256": "38271ad6de33698d5e0195e3b10c5a215b6b8785c0c2e0a0daae639abd0e9e55",
+        "sameAsEarlierFullRead": true
+      },
+      {
+        "file": ".agents/skills/verify-auth/references/agent-bootstrap.md",
+        "bytes": 32596,
+        "sha256": "9c722611b138b6e825ee646a3bbc5f4174bcfe8948ce80a9c6e4a172f33604ac",
+        "sameAsEarlierFullRead": true
+      }
+    ]
+  }
+}

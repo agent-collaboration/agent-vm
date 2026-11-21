@@ -1,0 +1,11 @@
+{
+  "id": "M3-effect",
+  "project": "integration",
+  "source": "packages/tool-host-node/src/standalone-tool-portal/standalone-batch-dispatch.ts",
+  "file": "packages/tool-host-node/src/standalone-tool-portal/standalone-batch-dispatch.hegel.integration.test.ts",
+  "property": "models repeated backend admission while the selected resource runs at most once",
+  "before": "dispatched.has(plan.operationId)",
+  "after": "false",
+  "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+  "originalSha256": "80228946461c1ffd804ff6ddd6a83f8e1aeeb07a17f72d8346101112408f2365"
+}

@@ -1,0 +1,11 @@
+{
+  "id": "M4-admission-core",
+  "project": "integration",
+  "source": "packages/tool-host-core/src/workspace-authority/workspace-authority.ts",
+  "file": "packages/tool-host-core/src/workspace-authority/agent-removal.hegel.integration.test.ts",
+  "property": "M4 models admission, pending and completed unlink/disable, idempotency and intent conflicts",
+  "before": "if (removal.kind === 'pending' || removal.operation === 'disable')",
+  "after": "if (false && (removal.kind === 'pending' || removal.operation === 'disable'))",
+  "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+  "originalSha256": "7cb38c4305d256791a499681260eb7de3465339486f21139fa7bff2863e42e58"
+}

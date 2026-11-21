@@ -1,0 +1,35 @@
+{
+  "head": "e2a91f5502944e456c3920ce3ab951b29d8742a9",
+  "status": "",
+  "changedSinceRuntimePin": [
+    ".agents/skills/verify-auth/references/agent-bootstrap.md",
+    "scripts/audit-portal-architecture.ts",
+    "scripts/audit-portal-architecture.unit.test.ts"
+  ],
+  "scannerSha256": "5d5626f9ba585a8ea0af95a98f5c350fc3a5dcf0c0e2672fa987582bca80be7a",
+  "commands": {
+    "build": {
+      "command": "mise exec node@24.7.0 pnpm@10.33.0 -- pnpm build",
+      "source": "81e150f14b5b544538e0ec72da912d7759f30baa",
+      "exit": 0
+    },
+    "auditTests": {
+      "command": "mise exec node@24.7.0 pnpm@10.33.0 -- pnpm exec vitest run --project unit scripts/audit-portal-architecture.unit.test.ts",
+      "source": "e2a91f5502944e456c3920ce3ab951b29d8742a9",
+      "passed": 79,
+      "failed": 0,
+      "exit": 0
+    },
+    "scan": {
+      "command": "mise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:portal-architecture",
+      "source": "e2a91f5502944e456c3920ce3ab951b29d8742a9",
+      "exit": 0
+    },
+    "copiedBaseScan": {
+      "base": "f3b2b88b74225359970b0580a290cd34fe1e557b",
+      "scannerSource": "e2a91f5502944e456c3920ce3ab951b29d8742a9",
+      "exit": 1,
+      "expectedFindings": 26
+    }
+  }
+}

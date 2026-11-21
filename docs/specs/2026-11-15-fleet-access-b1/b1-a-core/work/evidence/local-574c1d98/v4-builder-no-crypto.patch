@@ -1,0 +1,10 @@
+--- packages/sign-in-platform-web/src/index.ts
++++ packages/sign-in-platform-web/src/index.ts
+@@ -34,7 +34,6 @@
+ ): Pick<SignInPlatform, 'clock' | 'crypto' | 'deadlines' | 'ids'> {
+ 	return {
+ 		clock,
+-		crypto,
+ 		deadlines,
+ 		ids: { nextId: () => uuid7Schema.parse(uuid7({ msecs: clock.now() })) },
+ 	};

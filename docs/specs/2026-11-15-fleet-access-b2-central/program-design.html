@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B2 · Central organizations · Program Design</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>B2 · Central organizations: Program Design</h1>
+<p>How B2 is built in Switchboard's sign-in core (<code>packages/sign-in-core/src/</code> unless stated), against Central's private link. Most parts exist; this design adds the directory and status reads, moves the page onto the shell, makes operation IDs server-side, formalizes the four lifecycles as pure machines, adds the trusted maintenance entry, and rolls out the engine permission.</p>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What to check" tone="note" icon="shield-check">
+<p><a href="#m2">M2</a>: the answer to a send is settled by one pure function whatever the clock says, so a late answer is never dropped. <a href="#m3">M3</a>: retirement finishes only when every organization names the new key. <a href="#policy">The policy rollout</a> is one conditional write per organization.</p>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p>Your 16 Nov pick: maintenance runs through a hidden owner-only page on sign-in. Decided by me (sequencing): the engine console is its own later feature. Your pick: key rotation with no pause. The 24-hour lost-reply recovery waits for your confirmation; <a href="#branches">branch notes</a> say what the alternative changes.</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>Built on <a href="specification.html">S1–S16</a>; source at Switchboard <code>f3b2b88b</code> and codex-router <code>e7b709f6a</code>; Lead A's engine P8 at <code>066ea560</code>.</p>
+</ex-callout>
+
+<h2 id="parts">Parts</h2>
+<ex-mermaid id="parts-picture" label="B2 parts in sign-in" data-width="canvas"><script type="text/plain">
+flowchart TB
+  page["Admin page on shared shell + island: M4"] --> fwd["fleet-admin-forwarding: server-made operation IDs"]
+  page --> status["Status endpoint: sanitized snapshot"]
+  fwd --> client["fleet-admin-client: ListWorkspaces, all record kinds"]
+  client --> link["Private link to Central"]
+  guard["Fleet-call guard"] --> m2["Renewal M2 + runner"]
+  setup["Setup M1 + runner"] --> link
+  m2 --> link
+  maint["Maintenance entry: M3 key retirement, policy digest roll"] --> m2
+  maint --> fence["Organization fence: conditional digest write"]
+  class page slot1
+  class fwd,status,client,maint slot2
+  class guard,setup,m2,fence slot3
+  class link slot4
+</script></ex-mermaid>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>File</th><th>New / changed</th><th>Job</th></tr></thead>
+<tbody>
+<tr><td><code>central-link/fleet-admin-client.ts</code></td><td>Changed</td><td>Adds <code>ListWorkspaces</code> and its corruption body; record parser gains the four kinds and <code>automatic</code>.</td></tr>
+<tr><td><code>better-auth/fleet-admin-forwarding.ts</code></td><td>Changed</td><td>Adds <code>ListWorkspaces</code> forwarding; on a definite refusal attaches a server-made <code>nextOperationId</code>.</td></tr>
+<tr><td><code>better-auth/organization-status.ts</code></td><td>New</td><td><code>GET /api/auth/organization-admin/status</code>: setup state and stamp facts, no statement bytes.</td></tr>
+<tr><td><code>better-auth/organization-admin-page.ts</code> → <code>pages/organization-admin-page.tsx</code>, <code>pages/islands/organization-admin.tsx</code></td><td>Replaced</td><td>The page on the shared shell; the island runs M4, paging and status.</td></tr>
+<tr><td><code>organizations/organization-setup-transitions.ts</code></td><td>New</td><td>M1, used by <code>organization-provisioning.ts</code>.</td></tr>
+<tr><td><code>organizations/organization-stamp-transitions.ts</code></td><td>New</td><td>M2: <code>decideOrganizationStampStep</code> moved here plus <code>settleStampAnswer</code>.</td></tr>
+<tr><td><code>organizations/organization-stamp-renewal.ts</code></td><td>Changed</td><td>Becomes the M2 runner: performs effects, writes conditionally.</td></tr>
+<tr><td><code>organizations/key-retirement-transitions.ts</code>, <code>organizations/organization-key-change.ts</code></td><td>New / changed</td><td>M3 and its runner.</td></tr>
+<tr><td><code>organizations/policy-digest-roll.ts</code>, <code>storage/authorization-fence-mutations.ts</code></td><td>New / changed</td><td>Per-organization conditional digest write.</td></tr>
+<tr><td><code>better-auth/sign-in-maintenance.ts</code>; <code>better-auth/maintenance-plugin.ts</code> and <code>pages/maintenance-page.tsx</code>; the stamp store and <code>authorization-fence-mutations.ts</code></td><td>New / changed</td><td>The maintenance operations and their hidden owner-only invocation; the current-key condition on statement-carrying writes.</td></tr>
+<tr><td><code>organizations/fleet-permission.ts</code>, <code>better-auth/fleet-permission-policy.ts</code>, <code>organizations/fleet-permission-policy-digest.ts</code></td><td>Changed</td><td>Adds <code>organization:repairWork</code> to the owner; new digest.</td></tr>
+</tbody></table></div>
+
+<h2 id="directory">Directory and history client</h2>
+<p>In <code>fleet-admin-client.ts</code> add <code>ListWorkspaces</code> to <code>fleetAdminResultSchemas</code>: <code>{ result: 'workspaces', workspaces: WorkspaceView[], next: Uuid7 | null }</code> or the existing refused shape. A 503 whose body parses as the closed <code>DirectoryCorruption</code> union becomes <code>{ kind: 'corrupt', row, column }</code>; an empty 503 body stays unavailable; any other body is malformed. After parsing, a page is checked: strictly ascending, no duplicates, at most <code>limit</code>, every ID after <code>after</code>, and <code>next</code> equal to the last ID or null. The change-record schema (:45–60) widens <code>kind</code> to the seven literals and <code>origin</code> to <code>signInProvisioning | automatic | person</code>; still strict, so anything else is malformed. Forwarding adds <code>ListWorkspaces</code> to <code>fleetAdminForwardingRoutes</code> with <code>organization:view</code>.</p>
+
+<h2 id="status">Status snapshot</h2>
+<p><code>better-auth/organization-status.ts</code>: <code>GET /api/auth/organization-admin/status?organizationId=…</code>. Checks the person's current organization and <code>organization:view</code> with <code>checkOrganizationPermission</code>. Reads <code>readFleetState</code> and <code>readStampRecord</code> once, and maps to:</p>
+<ex-code lang="typescript" title="Status reply (strict)"><script type="text/plain">
+type OrganizationStatus =
+  | { kind: 'setting-up' }
+  | { kind: 'ready';
+      confirmed: { expiresAt: number; signingKeyId: string } | null;
+      pending: { expiresAt: number | null; expired: boolean } | null;
+      renewedAt: number | null;
+      unansweredTries: number;
+      refusedTries: number;
+      lastTry: { at: number; outcome: OrganizationStampTryOutcome } | null };
+</script></ex-code>
+<p><code>pending.expiresAt</code> is read from the stored statement's claims; <code>expired</code> is computed with the injected clock. The statement itself is never serialized. No renewal or provisioning runs. 401, 403 and 503 as elsewhere; no-store.</p>
+
+<h2 id="ids">Server-made operation IDs</h2>
+<p>The page is served with an initial <code>operationId</code> from <code>configuration.platform.ids.nextId()</code>, as today (<code>sign-in-http-handler.ts:160</code>). When forwarding gets a definite <code>nameInUse</code> or <code>conflict</code> for <code>CreateWorkspace</code>, it adds <code>nextOperationId: platform.ids.nextId()</code> to its reply, beside Central's answer and not inside it. M4 adopts it only after a definite refusal. The browser's <code>freshOperationId</code> is deleted.</p>
+
+<h2 id="page">The page</h2>
+<p><code>pages/organization-admin-page.tsx</code> renders through <code>pageDocument</code> with <code>mintPageNonce(platform.crypto)</code>: a heading with the organization name; a status card; a create form (Field, Input, Textarea, Button); a workspaces list with “Load more”; a history list with “Load more”. The island <code>pages/islands/organization-admin.tsx</code> runs M4 for create, keeps a cursor per list, and on <code>secondFactorRequired</code> mounts Better Auth UI's shipped <code>ConfirmSecondFactorStep</code> from <code>auth-ui</code>. Records render as text with kind, target, time and, for person origin, person and permission. The old route stays at the same path.</p>
+
+<h2 id="machines">The four machines</h2>
+<p>Common shape: closed Zod unions for state, event and effect; <code>transition(state, event, context) → { kind: 'next'; state; effects: readonly Effect[] } | { kind: 'refused'; reason }</code>; an inline <code>x satisfies never</code> as the default branch of every switch over state, event and effect. Runners are injected, perform effects only after the state write that proposed them committed, and turn results into events. A conditional write that loses runs none of its effects.</p>
+
+<h3 id="m1">M1 · Organization setup</h3>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>From</th><th>Event</th><th>Next and effects</th></tr></thead>
+<tbody>
+<tr><td>settingUp</td><td><code>attempt</code> (create or Try again)</td><td>settingUp; effects [sign-setup-statement]</td></tr>
+<tr><td>settingUp</td><td><code>signed(statement)</code></td><td>settingUp; [send-provision(statement)]</td></tr>
+<tr><td>settingUp</td><td><code>sign-failed</code> / <code>answer(unknown)</code> / <code>answer(refused)</code></td><td>settingUp; none (reported to the caller)</td></tr>
+<tr><td>settingUp</td><td><code>answer(provisioned)</code></td><td>ready (conditional write <code>fleetState settingUp → ready</code>); [read-central-facts]</td></tr>
+<tr><td>ready</td><td><code>facts(current)</code></td><td>ready; [seed-confirmed(facts)]</td></tr>
+<tr><td>ready</td><td><code>facts(none | unavailable)</code></td><td>ready; none (first guarded use seeds, as today)</td></tr>
+<tr><td>ready</td><td><code>attempt</code></td><td>ready; none</td></tr>
+<tr><td>other pairs</td><td>—</td><td>refused (<code>unexpected-event</code>)</td></tr>
+</tbody></table></div>
+
+<h3 id="m2">M2 · Stamp renewal</h3>
+<p>State is the stored <code>OrganizationStampRecord</code> (<code>organization-stamp-renewal.ts</code>), parsed strictly. Two pure functions:</p>
+<ul>
+<li><code>decideOrganizationStampStep(record, sentExpiresAt, now, currentKeyId)</code>, unchanged in meaning: <code>not-ready | seed | current | resend(statement) | sent-expired | sign(replaces)</code>. Each maps to one effect: none, read-central-facts, none, send(statement), none, sign(replaces) then claim-sent.</li>
+<li><code>settleStampAnswer(record, sentStatement, answer, centralFacts?)</code> → the conditional write to make: <code>confirm(stamp)</code> for provisioned; <code>record-try(outcome, keep-sent)</code> for unknown; <code>record-try(refused-…, clear-sent)</code> for a non-stale refusal; for stale, needs <code>centralFacts</code>: same digest → confirm; different → <code>record-try(refused-stale, adopt-central)</code>; none → <code>record-try(refused-stale, forget-central)</code> then reprovision; timeout → keep-sent.</li>
+</ul>
+<p><strong>The clock never enters <code>settleStampAnswer</code>.</strong> It depends only on the bytes that were sent, the answer and Central's facts. Every write it returns is conditional on the record still holding those bytes, so a late answer for replaced bytes simply loses. Expiry only affects <code>decideOrganizationStampStep</code>, which won't start a new send for an expired statement. A ready organization with no confirmed facts decides <code>seed</code>, which reads Central and seeds; that is how key retirement reaches ready-but-unseeded organizations.</p>
+
+<h3 id="m3">M3 · Key retirement run</h3>
+<p>Not stored. Reconstructed on each invocation from the native keys, <code>readyOrganizationIds</code>, the setting-up organizations and each stamp record.</p>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>From</th><th>Event</th><th>Next and effects</th></tr></thead>
+<tbody>
+<tr><td>inventory</td><td><code>listed(settingUp[], ready[])</code></td><td>resigning(ready) or blocked(settingUp) if any setting up; effects [renew(id)] per ready</td></tr>
+<tr><td>resigning</td><td><code>renewed(id, record)</code></td><td>drop id when <code>record.sent === null</code> and confirmed key is new; else keep it with its reason; when none remain → verifying; [read-central-facts(id)] each</td></tr>
+<tr><td>verifying</td><td><code>central(id, facts)</code></td><td>all agree on the new key → ready-to-withdraw; any disagreement → blocked(id)</td></tr>
+<tr><td>ready-to-withdraw</td><td><code>withdraw-invoked</code></td><td>unpublishing; [mark-unpublished(oldKeyId)]: conditional write of the sentinel cutoff, only while the key is published</td></tr>
+<tr><td>unpublishing (row holds the sentinel)</td><td><code>unpublish-acknowledged(now)</code>, with <code>now</code> read after the write's acknowledgement, or after reading the sentinel on a re-invocation</td><td>withdrawn; [record-withdrawn-at(oldKeyId, now)]: conditional write, only while the row holds the sentinel. The report carries <code>withdrawnAt = now</code> and the earliest check time <code>now + 310 s</code></td></tr>
+<tr><td>withdrawn</td><td><code>check-invoked(now)</code></td><td><code>now &lt; withdrawnAt + 310 s</code> → refused (<code>central-key-cache-window</code>, with the earliest time); otherwise checking; [read-central-facts(id)] for every organization</td></tr>
+<tr><td>checking</td><td><code>checked(ok | failed)</code></td><td>done / failed (no rollback claimed)</td></tr>
+<tr><td>blocked, failed</td><td>any</td><td>refused (<code>blocked</code>)</td></tr>
+</tbody></table></div>
+<p><strong>Key binding.</strong> An invocation takes <code>{ oldKeyId, newKeyId }</code>. Before any work it refuses <code>same-key</code> if they're equal, <code>unknown-key</code> if either isn't in Better Auth's JWKS, and <code>new-key-unusable</code> if the new key is expired or its algorithm differs. For the whole invocation the runner passes <code>signingKeyId: newKeyId</code> to Better Auth's native <code>signJWT</code> (supported in 1.7.11, <code>dist/plugins/jwt/sign.mjs:17–33</code>), through <code>signOrganizationStatement</code> (<code>organization-statement-signing.ts</code>, which today passes no key override), and uses <code>newKeyId</code> as the <code>currentSigningKeyId</code> for M2's decision. So the replacement statement names the requested key even when Better Auth's default is a third key.</p>
+<p><strong>Two key facts, kept apart.</strong> Better Auth keeps every key as a row in its <code>jwks</code> table (read by ID through its adapter, <code>dist/plugins/jwt/adapter.mjs:5–8,24–32</code>) and publishes only the rows not past their expiry and grace (<code>dist/plugins/jwt/index.mjs:118–140</code>). <em>Retained</em> means the row exists; <em>published</em> means it appears in the public key set. Withdrawal means making the old key unpublished (its row expires) while its row stays; republishing is therefore possible if the check fails. Validation is per phase: <code>prepare</code> needs both keys retained, the old key published and the new key usable; <code>check-after-withdrawal</code> needs the old key retained but not published.</p>
+<p><strong>Phases and reconstruction.</strong> Closed phases: <code>prepare</code> (re-sign and verify; ends in ready-to-withdraw or blocked), <code>withdraw</code> (re-verifies read-only and ends publication; ends in withdrawn, or refused <code>not-ready</code> with no re-signing), and <code>check-after-withdrawal</code> (ends in done or failed). Nothing about a run is stored. Each invocation rebuilds its state from facts: the two key facts above, every organization's fleet state and stamp record, and Central's facts read for each. <code>prepare</code> with the old key already unpublished is refused (<code>already-withdrawn</code>); <code>check-after-withdrawal</code> with the old key still published is refused (<code>not-withdrawn</code>). The check re-enumerates every organization, including any created since <code>prepare</code>; any organization not confirmed on the new key fails the check, and the owner republishes the old key, runs <code>prepare</code> again, and withdraws again. A crash at any point is handled by invoking the same phase again: re-signing repeats safely through M2's conditional writes, and the check repeats its reads.</p>
+<p><strong>Withdrawal time is never earlier than the truth.</strong> Publication stops when the write that unpublishes the key <em>commits</em>, not when a clock was read before it. So <code>withdraw</code> makes two writes to the old row, both through Better Auth's database adapter (<code>update</code> on the <code>jwks</code> model), and the row stays retained throughout.</p>
+<ol>
+<li><strong>Unpublish.</strong> Set <code>expiresAt</code> to a fixed sentinel far in the past (the Unix epoch). The write is conditional on the key still being published. The publication filter (<code>jwt/index.mjs:118–140</code>) drops the key from the commit moment C onward.</li>
+<li><strong>Record.</strong> Only after the adapter acknowledges the first write, read <code>now</code> from the injected clock. Because the acknowledgement comes after the commit, <code>now ≥ C</code>. Then set <code>expiresAt</code> to <code>now − grace</code>, conditional on the row still holding the sentinel. That cutoff is already in the past, so the key stays unpublished.</li>
+</ol>
+<p>After step 2, the row's <code>expiresAt + grace</code> is <code>withdrawnAt</code>, a clock reading taken after C: an upper bound on the real end of publication. Reconstruction from the row:</p>
+<ul>
+<li><strong>Sentinel present:</strong> step 1 committed and step 2 didn't. <code>check-after-withdrawal</code> refuses <code>withdraw-incomplete</code>. Invoking <code>withdraw</code> again sees the sentinel, which proves the commit already happened, and performs step 2 with a fresh <code>now</code> (still ≥ C).</li>
+<li><strong>Past cutoff, not the sentinel:</strong> the row holds step 2's reading, or the key's own natural expiry, where publication really did end at that cutoff. <code>withdrawnAt</code> is that cutoff. <code>withdraw</code> is refused <code>already-withdrawn</code>.</li>
+<li><strong>Still published:</strong> <code>check-after-withdrawal</code> is refused <code>not-withdrawn</code>.</li>
+</ul>
+<p>No step ever writes a cutoff from a clock read before the unpublishing commit.</p>
+<p><strong>When Central can no longer trust the old key.</strong> Central holds sign-in's keys only in memory (<code>IssuerKeyCache</code>, a <code>Mutex&lt;Option&lt;…&gt;&gt;</code>, <code>issuer_key_cache.rs:148–157</code> at Central <code>e7b709f6a</code>). Each response is kept for its max-age, capped at <code>MAXIMUM_KEY_AGE_SECONDS = 300</code>, counted from when the response <em>arrives</em> (<code>issuer_key_cache.rs:9,174–203</code>; <code>issuer_key_resolution.rs:49–59</code>; test <code>cache_lifetime_is_measured_from_the_key_response_receipt</code>). A statement signed with the new key uses a fresh cached set without refetching (<code>issuer_key_resolution.rs:31–34</code>). So a response requested just before W and delivered late can keep the old key trusted past W + 300 s, and a successful read proves nothing. The fetch itself is bounded at 10 seconds, covering both the send and the body: natively today (<code>collaboration-central-tokio/src/sign_in_trust.rs:28–31</code>); on Cloudflare by <strong>Lead A's central slice: bounded Cloudflare key fetch (10 s)</strong>, where today's <code>collaboration-central-cloudflare/src/sign_in_trust.rs:84–109</code> is unbounded. A fetch past the bound fails as <code>Unreachable</code> and caches nothing. Any response containing the old key was requested before W, arrives by W + 10 s and expires by W + 310 s. <code>check-after-withdrawal</code> refuses <code>central-key-cache-window</code> before <code>withdrawnAt + 310 s</code>. Every value involved is a duration after the same real moment, so a clock offset between sign-in and Central doesn't matter. Both inputs are facts already present, so nothing about the run is stored. The window makes the check correct without depending on a restart. Approved rule 6 still requires each Central to pass a cold restart, so the procedure restarts each Central after the window and before the check: Tokio by a process restart, Cloudflare by a Central deploy. That is your step. The report records that the check ran after it. The runner reuses <code>renewOrganizationStampForUse</code> for each <code>renew(id)</code>, with the key override. In production, the owner invokes <code>withdraw</code> between the other two phases.</p>
+
+<h3 id="m4">M4 · The page's create operation</h3>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>From</th><th>Event</th><th>Next and effects</th></tr></thead>
+<tbody>
+<tr><td>idle(op)</td><td><code>submit(content)</code></td><td>sending(op, content); [forward(op, content)]</td></tr>
+<tr><td>sending, retrying</td><td><code>reply(applied)</code></td><td>created; [reload-lists]</td></tr>
+<tr><td>sending</td><td><code>reply(secondFactorRequired)</code></td><td>confirming(op, content); [show-confirmation]</td></tr>
+<tr><td>confirming</td><td><code>confirmed</code></td><td>retrying(op, content); [forward(op, content)]</td></tr>
+<tr><td>confirming</td><td><code>cancelled</code> / <code>confirmation-failed</code></td><td>idle(op), content kept, nothing sent</td></tr>
+<tr><td>retrying</td><td><code>reply(secondFactorRequired)</code></td><td>failed(<code>step-up-again</code>); no loop</td></tr>
+<tr><td>sending, retrying</td><td><code>reply(nameInUse, nextOperationId)</code></td><td>reconciling(op, content, next); [lookup(workspaceId = op)]</td></tr>
+<tr><td>reconciling</td><td><code>lookup(found, same name)</code></td><td>created; [reload-lists]</td></tr>
+<tr><td>reconciling</td><td><code>lookup(not found or different)</code></td><td>refused(<code>nameInUse</code>); then idle(next)</td></tr>
+<tr><td>reconciling</td><td><code>lookup(unavailable)</code></td><td>unknown(op, content); op kept (no rotation on an uncertain lookup)</td></tr>
+<tr><td>sending, retrying</td><td><code>reply(conflict, nextOperationId)</code></td><td>refused(<code>conflict</code>); then idle(next)</td></tr>
+<tr><td>sending, retrying</td><td><code>reply(refused: other closed reason)</code></td><td>refused(reason); op kept (no new ID: not a definite name or content clash)</td></tr>
+<tr><td>sending, retrying</td><td><code>reply(unknown)</code> or network failure</td><td>unknown(op, content)</td></tr>
+<tr><td>unknown</td><td><code>submit(same content)</code></td><td>sending(op, content); [forward(op, content)]</td></tr>
+<tr><td>unknown</td><td><code>submit(changed content)</code></td><td>refused(<code>finish-or-reload</code>): an uncertain operation can't change content</td></tr>
+<tr><td>any settled state</td><td>late or duplicate reply</td><td>refused (<code>stale</code>), nothing assigned</td></tr>
+</tbody></table></div>
+
+<h2 id="policy">The engine permission rollout</h2>
+<p>Add <code>'organization:repairWork'</code> to <code>fleetPermissionSchema</code> and to the owner's native role and permission maps; the member role gets nothing. Accept Central's five new closed refusals in <code>fleetAdminRefusalReasonSchema</code>: <code>notFound</code>, <code>notRetired</code>, <code>discardUnsupported</code>, <code>stale</code>, <code>subjectUnreadable</code>. Recompute the version-1 digest from the actual map with injected crypto; the expected value with only this addition is <code>aa2fc571158408fdcdcf1d8d0319f0a0886f5570bc60cc52f85a45005fc75f91</code> (from <code>2d31b5d72716e64e255d8858c231f593155289fb03ed354c4b762890667a3c22</code>), checked by a test.</p>
+<p><code>organizations/policy-digest-roll.ts</code>, run from the maintenance entry right after deploy: for each organization, one Drizzle update on <code>organization_authorization_revisions</code> setting <code>permission_policy_digest = new</code> and <code>revision = revision + 1</code>, conditional on <code>permission_policy_digest = old</code> and the state being active or stopped (deleted untouched). The existing delivery path pushes the new revision. Between deploy and the run, issuance refuses with <code>policy-mismatch</code> (<code>person-fleet-issuance.ts:76–78</code>). After the run, a new token names revision N+1 while Central's floor is still N, so Central answers <strong>AuthorizationSyncRequired</strong> (token above the floor, <code>request_admission.rs:182–196</code>) until the floor push is acknowledged; then it admits. Old tokens at N get RefreshRequired once the floor is N+1. Nothing is admitted on a mismatch.</p>
+<h3 id="m5">M5 · The digest roll, per organization</h3>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>From</th><th>Event</th><th>Next and effects</th></tr></thead>
+<tbody>
+<tr><td>old-digest(N)</td><td><code>roll</code></td><td>writing; [conditional-write(digest old→new, N→N+1)]</td></tr>
+<tr><td>writing</td><td><code>write-won</code></td><td>pending(N+1); [push(fence at N+1)] (through M1-style delivery)</td></tr>
+<tr><td>writing</td><td><code>write-lost</code></td><td>re-read: new-digest → pending or acknowledged as the facts say; deleted → skipped</td></tr>
+<tr><td>pending(N+1)</td><td><code>ack(N+1)</code></td><td>acknowledged</td></tr>
+<tr><td>pending(N+1)</td><td><code>conflict</code> / <code>unknown</code> / <code>refused</code></td><td>pending (deferred with reason; never counted as done)</td></tr>
+<tr><td>deleted</td><td>any</td><td>skipped</td></tr>
+</tbody></table></div>
+<p>State is rebuilt from the fence row (digest, revision, state) and its delivery ACK; nothing new is stored. A crash after the write is recovered by the next invocation or the next Fleet call's drain, which push the pending revision. The roll's report counts acknowledged, pending (with reasons) and skipped per organization; it finishes only when every non-deleted organization is acknowledged.</p>
+
+<h2 id="maintenance">The maintenance entry</h2>
+<p><code>better-auth/sign-in-maintenance.ts</code> defines two operations over the injected configuration: <code>retireSigningKey({ oldKeyId, newKeyId, phase: 'prepare' | 'withdraw' | 'check-after-withdrawal' })</code> (M3) and <code>rollPolicyDigest()</code> (M5), each returning a closed nonsecret report.</p>
+<p><strong>Invocation: a hidden owner-only endpoint and page on sign-in.</strong> This is your 16 Nov pick: <em>“A · An owner-only page on the sign-in site hidden and non expoased as psobile is the righ twya i think”</em>. It is one project Better Auth plugin, <code>better-auth/maintenance-plugin.ts</code>, with <code>POST /api/auth/maintenance/{operation}</code> and a small page, <code>pages/maintenance-page.tsx</code>, the same code on both hosts. To keep it as hidden as possible:</p>
+<ul>
+<li>it is linked from no page, menu, sitemap or error message;</li>
+<li>the gateway's management binding has no path to it.</li>
+</ul>
+<p><strong>Paths.</strong> The page is <code>GET /api/auth/maintenance</code>. The operations are <code>POST /api/auth/maintenance/{prepare | withdraw | check-after-withdrawal | roll-digest}</code>, whose JSON body carries the key IDs where the operation needs them.</p>
+<p><strong>The concealment gate runs before Better Auth ever sees the request.</strong> Better Call parses the body, runs middleware and validates input before an endpoint callback (<code>better-call</code> 1.4.2 <code>router.mjs:60–82</code>, <code>endpoint.mjs:14–29</code>). A malformed body would therefore get a 400 that an unknown path never gets. So the gate lives in the outer handler, <code>handleSignInRequest</code> (<code>sign-in-http-handler.ts:169–177</code>), right after request admission and before <code>isPublicSignInRoute</code>. For any request whose path is <code>/api/auth/maintenance</code> or under it, it checks, in order and touching neither the body nor the query:</p>
+<ol>
+<li>a live session, read uncached with refresh off, as <code>acquireReadSession</code> does;</li>
+<li>a verified email equal to <code>configuration.ownerEmail</code>;</li>
+<li>a fresh stored person-session read (<code>readPersonSession</code>);</li>
+<li>a second-factor confirmation within the last 15 minutes.</li>
+</ol>
+<p>Any failure, including a store failure, returns exactly the outer handler's unknown-path response: <code>Response.json({ error: 'not-found' }, { status: 404 })</code>, the same status, body and headers. Only a request that passes the gate is dispatched to the Better Auth endpoint. There the normal method, origin and CSRF checks and strict body validation apply, and the endpoint repeats the same owner, live-session and factor checks against its own context. A passing owner who sends a query parameter, an unknown operation or a malformed body gets the endpoint's ordinary 400. Request admission and rate limiting run first for every path alike, so they reveal nothing about this one.</p>
+<p><strong>Recording each run</strong> uses the existing <code>sign_in_audit</code> table (<code>storage/sign-in-schema.ts:521–537</code>) through a new narrow typed owner, <code>storage/maintenance-audit.ts</code>. Each invocation gets a run ID from the injected UUIDv7 source. Rows use <code>kind = 'maintenance'</code>, <code>organizationId</code> null, <code>actorUserId</code> = the owner, <code>requestId</code> = the run ID, <code>changeKind</code> = the operation and phase (for example <code>retireSigningKey.prepare</code>), and <code>targetId</code> = the new key ID (or <code>permission-digest</code>).</p>
+<ul>
+<li><strong>Intent first.</strong> An intent row (<code>phase = 'intent'</code>) is written before any effect. If it fails, nothing runs and the page reports “unavailable, nothing changed”.</li>
+<li><strong>Outcome after.</strong> An outcome row follows, with <code>phase</code> one of <code>done | refused | failed</code>; refusal reasons stay in the nonsecret report only. If the outcome write fails after effects ran, the page reports “applied, outcome not recorded”, and the run counts as unconfirmed: invoking the same phase again rebuilds the state from facts and records a new run.</li>
+</ul>
+<p>No schema change: every column already exists.</p>
+<p><strong>Rotation with no pause (S12, your pick).</strong> No pause setting and no pause table. Better Auth signs with its newest live key (<code>dist/plugins/jwt/adapter.mjs:9–13</code>: live keys sorted by <code>createdAt</code>, newest first). So the rotation first creates B through Better Auth, and from that moment every ordinary signer uses B. <code>prepare</code> refuses <code>new-key-not-current</code> unless <code>newKeyId</code> is that newest live key, so the operation and ordinary signers always agree on the key.</p>
+<p><strong>The current-key condition.</strong> A writer that signed with A just before B was created may still try to save afterwards. An example is one held between signing and claiming the sent slot (<code>organization-stamp-renewal.ts:236–253</code>). So exactly one write gets one extra condition: <code>claimSentStamp</code> in <code>storage/organization-stamp-store.ts</code>, the write that commits to sending a new statement. Its existing conditional Drizzle update adds, in the same statement, that the claimed statement's key ID is Better Auth's newest live key: <code>EXISTS (SELECT 1 FROM jwks WHERE id = :statementKeyId AND id = (newest live jwks row))</code>. A failed claim saves nothing. Its runner treats that as a lost conditional write, so no send runs, and the next use signs again with B.</p>
+<p>The writes that record what Central already holds stay unconditional: <code>confirmSentStamp</code>, <code>seedConfirmedStamp</code> and <code>recordStampTry</code>. M2 must be able to settle an A statement sent before B existed, and seed from Central's A facts, before it can sign the B replacement; conditioning those writes would trap the record. A settled A statement is then re-signed by the loop, and withdrawal still requires every confirmed statement to name B with nothing awaiting an answer.</p>
+<p>New organizations need no condition on the create batch, which signs nothing (<code>authorization-fence-mutations.ts:303–325</code>). Their setup statement is signed afterwards in after-create provisioning (M1):</p>
+<ul>
+<li>if it was signed with A and is confirmed, the loop moves it to B;</li>
+<li>if Central refuses it after A is withdrawn, the organization stays setting up until Try again signs with B.</li>
+</ul>
+<p>While any organization is setting up, <code>prepare</code> reports blocked; invoking it again after setup finishes continues. The rotation's own writes satisfy the condition, because they sign with B. Central is unchanged. No migration: <code>jwks</code> is Better Auth's existing table, read through the injected store as the key checks already do.</p>
+
+<h2 id="branches">What changes for each alternative</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>If you choose</th><th>Change</th></tr></thead>
+<tbody>
+<tr><td>S5 B: original answer forever</td><td>Lead A extends Central's request-ledger retention first; M4's 24-hour reconciliation lookup is removed.</td></tr>
+<tr><td>Not in B2: the engine console, its own later feature (my sequencing call)</td><td>Carried here for that feature's design: forward EngineHealth, EngineListRetired, EngineRetry and EngineDiscard, with typed results, a console section on the page and CLI commands. Per Lead A's P8 table (push <code>01a1e2be-26af</code>), EngineRetry and EngineDiscard bodies are <code>{ organizationId, operationId, attemptId }</code>, with a server-made UUIDv7 <code>operationId</code> in the body and the signed intent, exactly like CreateWorkspace. Central keys the stored answer by it, so a replay returns the original. <code>kind</code> is the closed enum <code>wake_timer | automation_timer | legacy_notice_windows | legacy_workspace_drains | engine_source</code>.</td></tr>
+</tbody></table></div>
+
+<h2 id="trace">Rule homes and proof seams</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Rule</th><th>Home</th><th>Proof seam</th></tr></thead>
+<tbody>
+<tr><td>S1</td><td>M1, provisioning runner</td><td>Controlled and real Central answers</td></tr>
+<tr><td>S2, S3</td><td>Forwarding, Central</td><td>Real pairings; insert-failure control</td></tr>
+<tr><td>S4, S5</td><td>Forwarding <code>nextOperationId</code>, M4</td><td>Page in real Chrome; dropped replies</td></tr>
+<tr><td>S6, S7</td><td>Admin client, island paging</td><td>More than 100 workspaces and records; corruption control</td></tr>
+<tr><td>S8, S9</td><td>Page, status endpoint</td><td>Real Chrome; status body</td></tr>
+<tr><td>S10</td><td>M2 and runner</td><td>Clock moved during a held send</td></tr>
+<tr><td>S11, S12</td><td>M3, maintenance entry</td><td>Real keys, withdrawal, Central key-cache window, cold restart</td></tr>
+<tr><td>S15</td><td>Permission maps, digest roll</td><td>Digest value; fence rows; Central admission</td></tr>
+<tr><td>S16</td><td>M1–M5</td><td>Hegel; runner tests; real races</td></tr>
+</tbody></table></div>
+</ex-document>
+</body>
+</html>

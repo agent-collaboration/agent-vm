@@ -1,0 +1,11 @@
+--- packages/sign-in-core/src/response-release/sign-in-response-release.ts
++++ packages/sign-in-core/src/response-release/sign-in-response-release.ts
+@@ -61,7 +61,7 @@
+ 		error: 'invalid_client' | 'invalid_target' | 'invalid_grant' | 'not-allowed',
+ 	): Promise<Response> {
+ 		await Promise.all(
+-			props.issuedSessions.map((session) => props.ports.deleteSession(session.sessionId)),
++			[].map((session: never) => props.ports.deleteSession(session)),
+ 		);
+ 		await Promise.all(
+ 			props.createdUserIds.map((personId) => props.ports.cleanupUnboundPerson(personId)),

@@ -1,0 +1,93 @@
+{
+  "version": 1,
+  "pages": [
+    {
+      "id": "home",
+      "title": "Home",
+      "href": "index.html",
+      "icon": "book-open"
+    },
+    {
+      "id": "design",
+      "title": "Design",
+      "href": "design.html",
+      "icon": "book-open"
+    },
+    {
+      "id": "ci-workflow",
+      "title": "CI workflow",
+      "href": "ci-workflow.html",
+      "icon": "gear"
+    },
+    {
+      "id": "plan",
+      "title": "Plan",
+      "href": "plan.html",
+      "icon": "path"
+    },
+    {
+      "id": "decisions",
+      "title": "Decisions",
+      "href": "decisions.html",
+      "icon": "chat-circle"
+    },
+    {
+      "id": "overview",
+      "title": "Back to the overview",
+      "href": "../2026-11-15-fleet-access-overview/index.html",
+      "icon": "book-open"
+    }
+  ],
+  "map": [
+    {
+      "title": "Verification boundaries",
+      "description": "Find where the sign-in proof runs.",
+      "icon": "shield-check",
+      "children": [
+        {
+          "title": "Local and deployed journeys",
+          "description": "Compare the test boundaries and the staging gap.",
+          "icon": "path",
+          "target": {
+            "page": "design",
+            "fragment": "model"
+          }
+        },
+        {
+          "title": "Driver choice and spike",
+          "description": "Find the ruling, criteria and observed spike result.",
+          "icon": "chat-circle",
+          "target": {
+            "page": "decisions",
+            "fragment": "d1"
+          }
+        }
+      ]
+    },
+    {
+      "title": "Delivery and CI",
+      "description": "Find the work breakdown and the CI change.",
+      "icon": "gear",
+      "children": [
+        {
+          "title": "Implementation and proof sequence",
+          "description": "Read the plan and each step’s completion check.",
+          "icon": "path",
+          "target": {
+            "page": "plan",
+            "fragment": "delivery"
+          }
+        },
+        {
+          "title": "Chromium setup",
+          "description": "See when the host job installs Chromium and starts the tests.",
+          "icon": "gear",
+          "target": {
+            "page": "ci-workflow",
+            "fragment": "proposed"
+          }
+        }
+      ]
+    }
+  ]
+}

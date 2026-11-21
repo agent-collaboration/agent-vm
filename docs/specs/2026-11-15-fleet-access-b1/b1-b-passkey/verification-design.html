@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B1-B · Passkey sign-in · Verification Design</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>B1-B · Passkey sign-in: Verification Design</h1>
+<p>How each rule will be shown to hold. Nothing here has been run yet.</p>
+<ul>
+<li><strong>Who runs it:</strong> the paired Verifier, on the pinned PR commit.</li>
+<li><strong>Where:</strong> heavy runs (both hosts, real Chrome) on Sunclaw, as you decided.</li>
+<li><strong>No wall clock:</strong> every time-dependent check moves the harness's controlled clock. Waits are on events only, as B1-A delivers.</li>
+</ul>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What you should check" tone="note" icon="shield-check">
+<ul>
+<li><strong><a href="#V8">V8</a>, journey 5 in real Chrome on both hosts:</strong> add a passkey, sign out, sign in with it, invite someone with no confirmation step. Run again with user verification off: refused.</li>
+<li><strong><a href="#V3">V3</a> and <a href="#V4">V4</a>:</strong> no session without user verification. With it, a session that counts as both factors, and no token in the answer.</li>
+<li><strong>Every check must fail on today's build or on a deliberate break,</strong> so a green run can't hide a gap the way the old 404 test did.</li>
+</ul>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p><strong>None here.</strong> <a href="#V7">V7</a> checks the button as your 15 Nov choice sets it: click only, no autofill (<a href="decisions.html#open">Decisions</a>).</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
+<p>Your approved Verification Design names the driver: "a real-browser driver … over the Chrome DevTools Protocol (headless Chrome; not Playwright). It uses CDP's virtual WebAuthn authenticator for passkeys" (journey SO14). Your rule R67 puts passkey sign-in's proof on local runs. V8 is that, for journey 5.</p>
+</ex-callout>
+
+<h2 id="map">How the checks fit together</h2>
+<ex-mermaid id="map-pic" label="Which check proves which rule" data-width="canvas"><script type="text/plain">
+flowchart TB
+  unit["Unit lane<br/>V1 routes, V4 completion, V7 page pieces"] --> host["Host e2e lane, both hosts<br/>V2 Turnstile, V3 no UV, V4 both factors,<br/>V5 who may, V6 flood"]
+  host --> browser["Real Chrome, both hosts<br/>V8 journey 5"]
+  browser --> gone["V9 old fallback gone"]
+  class unit slot1
+  class host slot3
+  class browser slot2
+  class gone slot6
+</script></ex-mermaid>
+<p><strong>Key:</strong> blue is the unit lane, teal the host lane, amber real Chrome, green the clean-up check.</p>
+
+<h2 id="shared">What the host checks share</h2>
+<p>V2 to V6 are cases in one new host test, <code>packages/sign-in-test-support/src/people-passkey-sign-in.host.e2e.test.ts</code>. It reuses what the existing passkey tests use:</p>
+<ul>
+<li><code>startLocalAuthHarness()</code>, with the controlled clock and the Turnstile stand-in (<code>harness.turnstile.issueToken({ action, hostname, verdict })</code>);</li>
+<li>a person signed in with Google and confirmed with their app (<code>signInConfirmedPeopleBrowser</code>);</li>
+<li>a passkey registered with user verification by the software authenticator (<code>createSoftwarePasskeyAuthenticator</code>, <code>registerBrowserPasskey</code>);</li>
+<li>then sign out, so the browser has no session before the passkey sign-in.</li>
+</ul>
+<p><strong>Both hosts:</strong> the harness picks Cloudflare (local workerd with D1) by default and Node with better-sqlite3 when <code>SIGN_IN_TEST_HOST=node</code> (<code>local-auth-harness.ts:219–221</code>). Every host check runs twice: <code>pnpm test:e2e:host &lt;file&gt;</code> and <code>SIGN_IN_TEST_HOST=node pnpm test:e2e:host &lt;file&gt;</code>.</p>
+<p><strong>On today's build,</strong> every case in this file fails at its first passkey sign-in request, which answers 404.</p>
+
+<h2 id="checks">The checks</h2>
+
+<h3 id="V1">V1 · The two routes are public; nothing else opens (S1)</h3>
+<ul>
+<li><strong>Test:</strong> unit cases for <code>isPublicSignInRoute</code>:
+  <ul>
+  <li><code>GET /api/auth/passkey/generate-authenticate-options</code> and <code>POST /api/auth/passkey/verify-authentication</code> are public;</li>
+  <li>the same paths with the other method aren't;</li>
+  <li><code>/api/auth/passkey/delete-passkey</code> isn't, by either method.</li>
+  </ul></li>
+<li><strong>Fails on:</strong> today's code (the first two aren't public), and a deliberate break that adds <code>delete-passkey</code>.</li>
+</ul>
+
+<h3 id="V2">V2 · The challenge request needs a Turnstile pass, through the public service (S2)</h3>
+<ul>
+<li><strong>Test:</strong> host cases, one per check: no token; a token Turnstile rejects; a token for <code>sign_in_social</code>; a token already used; siteverify unreachable. Each challenge request through the public service:
+  <ul>
+  <li>is refused;</li>
+  <li>leaves the <code>verification</code> table unchanged;</li>
+  <li>sets no challenge cookie;</li>
+  <li>logs <code>captcha-refused</code> with action <code>passkey_sign_in</code> and its reason.</li>
+  </ul>
+  An accepted token gets 200, one new <code>verification</code> row and the cookie.</li>
+<li><strong>Reference:</strong> R52 and V44; today's private-provider cases (<code>turnstile-provider.host.e2e.test.ts:76–167</code>) give the expected reasons.</li>
+<li><strong>Fails on:</strong> a deliberate break that removes <code>/passkey/generate-authenticate-options</code> from the captcha plugin's endpoints (<code>turnstile-captcha.ts:136</code>): the no-token case gets a challenge.</li>
+</ul>
+
+<h3 id="V3">V3 · Without user verification, no session (S3, S12)</h3>
+<ul>
+<li><strong>Test:</strong> host case. With an accepted Turnstile token, a challenge, then the software authenticator's answer with <code>userVerified: false</code>.</li>
+<li><strong>Passes when:</strong>
+  <ul>
+  <li>the verify request gets 401 with code <code>USER_VERIFICATION_REQUIRED</code>;</li>
+  <li>the answer has no <code>set-cookie</code> for the session;</li>
+  <li>the <code>session</code> table is unchanged, and so is the passkey's <code>counter</code>;</li>
+  <li>sending the same answer again gets 400, challenge not found;</li>
+  <li>one new <code>sign_in_audit</code> row: kind <code>sign-in</code>, actor <code>anonymous</code>, outcome <code>failed</code>, method <code>passkey</code>.</li>
+  </ul></li>
+<li><strong>Fails on:</strong> a deliberate break that removes the user-verification check from <code>authentication.afterVerification</code> (<code>provider-configuration.ts:445–451</code>): a session appears.</li>
+</ul>
+
+<h3 id="V4">V4 · With user verification, both factors from the insert; no token in the body; a failure leaves the person signed out (S4, S6, S9, S12)</h3>
+<ul>
+<li><strong>Test:</strong> host cases, and unit cases for <code>completePasskeySignIn</code>.</li>
+<li><strong>Passes when, on a user-verified answer:</strong>
+  <ul>
+  <li>200, with a session cookie;</li>
+  <li><strong>no token in the body:</strong> the cookie's session token doesn't appear anywhere in the response body's text;</li>
+  <li><strong>both factors:</strong> the new <code>session</code> row has <code>secondFactorMethod = 'passkey'</code> and <code>secondFactorAt</code> equal to the controlled clock's time at the request;</li>
+  <li><strong>in the same write:</strong> the recorded <code>insert into "session"</code> statement for that row already binds both values. The workerd harness records every D1 statement (<code>recording-d1-database.ts</code>); on Node the database's query logger sees each statement with its parameters (<code>node-auth-proof-host.ts:112–125</code>). The harness exposes the last passkey session insert as <code>harness.lastSessionInsert()</code>. A build that stamps with a later <code>update</code> fails here, even though the row looks right afterwards;</li>
+  <li><strong>a protected change goes through:</strong> with that cookie, inviting a person (<code>POST /api/auth/organization/invite-member</code>) succeeds with no confirmation step;</li>
+  <li><strong>the window still closes:</strong> after the controlled clock moves 15 minutes and 1 millisecond, the same invite is refused with "a second factor is needed";</li>
+  <li><strong>the record:</strong> one new <code>sign_in_audit</code> row with the person, <code>succeeded</code> and <code>passkey</code>.</li>
+  </ul></li>
+<li><strong>Passes when Better Auth fails after creating the session (S9):</strong> <code>harness.failNextPasskeyUserRead()</code> (<a href="program-design.html#harness-faults">Program Design</a>) makes Better Auth's user read right after the session insert fail once, while later reads and the deletion succeed.
+  <ul>
+  <li>The verify request gets <code>503 {"error":"sign-in-unavailable"}</code>, with no session cookie.</li>
+  <li>The recorded session insert carried both factors.</li>
+  <li>That session's row is gone afterwards, deleted by the handler's clean-up.</li>
+  <li><code>/api/auth/get-session</code> from that browser returns no session.</li>
+  <li>One <code>sign_in_audit</code> row records <code>anonymous</code>, <code>failed</code>, <code>passkey</code>.</li>
+  </ul></li>
+<li><strong>Unit cases</strong> (<code>sign-in-core/src/better-auth/passkey-sign-in-completion.unit.test.ts</code>, beside the module because <code>completePasskeySignIn</code> is internal to sign-in-core (Lead ruling 17 Nov; same reason as V7)):
+  <ul>
+  <li>a 200 with one session records <code>succeeded</code> for that person;</li>
+  <li>a 401 with no session records <code>failed</code> and doesn't throw;</li>
+  <li>an error answer with an issued session records <code>failed</code>, then throws;</li>
+  <li>a 200 with no session, or with two, throws;</li>
+  <li>a throwing record throws.</li>
+  </ul></li>
+<li><strong>Unit cases for the hook:</strong> the provider's <code>session.create.before</code>, called with an endpoint context whose <code>path</code> is <code>/passkey/verify-authentication</code>, returns data with <code>secondFactorAt</code> equal to the injected clock and <code>secondFactorMethod: 'passkey'</code>. With the social callback path, or no context, it returns neither.</li>
+<li><strong>Fails on:</strong> today's build (the routes are closed; with them open, the invite would ask for a factor). Also four deliberate breaks, each run on its own:
+  <ul>
+  <li>skipping the <code>/passkey/verify-authentication</code> path in the token-stripping condition: the token appears in the body;</li>
+  <li>moving the marking to a <code>stampSession</code> call after Better Auth answers: the recorded insert lacks both factors;</li>
+  <li>dropping the marking: the invite is refused;</li>
+  <li>treating every error answer as a plain refusal (no throw): the session row remains after the fault case.</li>
+  </ul></li>
+</ul>
+
+<h3 id="V5">V5 · Only a person who may sign in today (S5)</h3>
+<ul>
+<li><strong>Test:</strong> host cases.
+  <ul>
+  <li>A member registers a passkey, then the owner removes them, so they have no membership left. Their user-verified passkey sign-in is refused, with no session.</li>
+  <li>An answer from a credential the service doesn't know gets 401, with no session.</li>
+  <li>A person with one membership signs in with a passkey and their session's <code>activeOrganizationId</code> is that organization.</li>
+  </ul></li>
+<li><strong>Reference:</strong> today's Google and GitHub admission (<code>ensurePersonActive</code>), the same cases on the social path.</li>
+<li><strong>Fails on:</strong> a deliberate break that skips <code>ensurePersonActive</code> in the session-create hook: the removed member gets a session.</li>
+</ul>
+
+<h3 id="V6">V6 · The flood limit covers it (S8)</h3>
+<ul>
+<li><strong>Test:</strong> a host case in <code>people-request-limits.host.e2e.test.ts</code>, on the real binding as B1-A leaves it. From one browser address, eleven challenge requests within the window, each with a fresh accepted token.
+  <ul>
+  <li>The eleventh gets 429 with <code>Retry-After</code>, and no new <code>verification</code> row.</li>
+  <li>A request from a second browser address gets 200.</li>
+  </ul></li>
+<li><strong>Fails on:</strong> a deliberate break that moves <code>/api/auth/passkey/</code> to the <code>other</code> class (300 per minute): no 429.</li>
+</ul>
+
+<h3 id="V7">V7 · The sign-in page's pieces (S7)</h3>
+<ul>
+<li><strong>Host test:</strong> the served <code>/sign-in</code> page has:
+  <ul>
+  <li>an island root with state <code>{ kind: 'passkey-sign-in', continueLocation: '/owner-ready' }</code>, or with <code>?authorize=…</code> when the page was opened from the CLI;</li>
+  <li>the <code>#sign-in-passkey-captcha</code> container with <code>data-action="passkey_sign_in"</code>;</li>
+  <li>the island script, carrying the page's nonce.</li>
+  </ul>
+  The page's security policy is unchanged (<code>served-page-csp.host.e2e.test.ts</code> passes as it is).</li>
+<li><strong>Unit tests</strong>, in the unit lane with Vitest's DOM environment as the existing island tests use:
+  <ul>
+  <li><code>attachPasskeySignInTurnstile</code> leaves other requests unchanged;</li>
+  <li>for the challenge request, it calls <code>reset</code> then <code>execute</code> on a fake <code>window.turnstile</code>, and sets <code>x-captcha-response</code> to the token the fake's callback gives;</li>
+  <li>two challenge requests get two different tokens;</li>
+  <li><strong>overlap:</strong> two token requests started together, with the fake's first callback held. The second doesn't call <code>execute</code> until the first settles. Releasing the callbacks in order settles each request with its own token. When the first gets <code>error-callback</code>, it rejects and the second still gets a token. A helper that overwrites the first resolver, or gives both requests one token, fails this case;</li>
+  <li>each of <code>error-callback</code>, <code>expired-callback</code> and <code>timeout-callback</code> rejects the pending attempt, and the next call starts a new one;</li>
+  <li><code>onSignInTurnstileReady</code> sets <code>ready</code> and dispatches <code>sign-in-turnstile-ready</code>;</li>
+  <li><strong>a script load failure:</strong> an <code>error</code> event on <code>#sign-in-turnstile-script</code> sets <code>failed</code> and dispatches <code>sign-in-turnstile-failed</code>. A token request pending at that moment rejects, and so does every later one, at once.</li>
+  </ul></li>
+<li><strong>Hegel family for the token queue</strong> (owner rule, 15 Nov):
+  <ul>
+  <li><strong>The test:</strong> <code>packages/sign-in-core/src/pages/islands/passkey-sign-in-turnstile-queue.hegel.unit.test.ts</code>, in the unit lane. <code>@hegeldev/hegel</code> 0.4.10, the version <code>sign-in-test-support</code> already pins, is added as a dev dependency of <code>sign-in-core</code>, because the island module isn't exported and there are no test-only exports. Settings: <code>derandomize: true</code>, <code>hegel.Database.disabled</code>.</li>
+  <li><strong>Starting state and protocol:</strong> exactly as the <a href="program-design.html#turnstile-machine">Program Design</a> defines them. Every run starts at <code>{ script: 'loading', executing: null, waiting: [] }</code>. Every event is valid in every state, with the defined no-op where it applies, so nothing is filtered out.</li>
+  <li><strong>Generators:</strong> sequences of 0 to 40 events drawn from all five kinds, in any order and any state. Request ids are fresh and increasing. Tokens are distinct strings. <code>scriptReady</code> and <code>scriptFailed</code> may appear any number of times, including after each other, to exercise the no-ops and terminal failure. Stray widget events with nothing executing are generated too.</li>
+  <li><strong>Drain:</strong> after the generated prefix, the test appends a deterministic tail that brings the run to a drained end. That's <code>scriptReady</code> if still loading, then one <code>widgetToken</code> per remaining started or waiting request. In a second variant, the tail is a single <code>scriptFailed</code>. Completion is asserted only after the drain, so a run that never ends can't count as proof.</li>
+  <li><strong>The model:</strong> written in the test from the protocol, independently of the code, as three plain values: a script flag, an executing id or null, and a waiting array. After each event, the transition's next state and effect list equal the model's.</li>
+  <li><strong>Checks:</strong> the safety invariants after every step, and the completion property at the drained end (both listed on the Program Design).</li>
+  <li><strong>The execution effect pair:</strong> every execution the model starts emits <code>ensureWidget</code>, then <code>resetAndExecute</code>, from idle, from <code>scriptReady</code> or in a handoff. The model holds no "rendered" fact, so <code>scriptReady</code> on its own and <code>scriptReady</code>, request, token reach the same state and give the same effects for the next request.</li>
+  <li><strong>Render-once is the runner's, checked separately:</strong> a unit test drives the DOM runner with a fake <code>window.turnstile</code> through two executions. <code>render</code> is called once, and <code>reset</code> and <code>execute</code> once per execution.</li>
+  <li><strong>Every branch is reached.</strong> The family records which protocol branch each step took, and fails if any of these was never hit:
+    <ul>
+    <li>a request while loading;</li>
+    <li><code>scriptReady</code> with and without waiting work;</li>
+    <li>a request while ready and idle, and while ready and busy;</li>
+    <li>a token or failure with and without a waiting head;</li>
+    <li><code>scriptFailed</code> while loading, while idle, and while executing with waiters;</li>
+    <li>a request after failure;</li>
+    <li>each no-op.</li>
+    </ul></li>
+  <li><strong>Wrong builds the family must catch,</strong> each run by the Verifier on its own, then reverted. Each one is defined by what it changes. The pass condition is that Hegel reports a counterexample of that class; the actual shrunk trace and the first state or effect that differs from the model are recorded in the evidence, with no particular exact shrink required.
+    <ul>
+    <li><strong>Premature start:</strong> <code>tokenRequested</code> while busy executes at once instead of queueing. The class is ready, then a request, then a second request: the second request's effects differ from the model at once, and the safety rule "a new execution never starts while another is live" fails.</li>
+    <li><strong>Lost rejection:</strong> <code>scriptFailed</code> rejects the executing request but not the waiting ones. The class is two or more requests, then <code>scriptFailed</code>: the effect list differs, and completion fails after the drain.</li>
+    <li><strong>LIFO:</strong> the next execution starts from the back of <code>waiting</code>. The class is ready, then three requests, then a token: the handoff starts the wrong id, and arrival order fails.</li>
+    </ul></li>
+  </ul></li>
+<li><strong>Click only, your 15 Nov choice:</strong> V8 counts the browser's network events while the sign-in page loads, on Chrome, which supports autofill. With <code>passkeyPlugin({ autoFill: false })</code>, loading sends no challenge request. This runs through the real island and Better Auth UI's own hook, not a fake.
+  <ul>
+  <li><strong>Fails on:</strong> a deliberate break that leaves the plugin at its default (<code>passkeyPlugin()</code>): loading sends one challenge request.</li>
+  </ul></li>
+<li><strong>Fails on:</strong> today's page (no root, no container); a deliberate break that sets the same token twice; and one that ignores the script's load error. The DOM case starts a token request, dispatches the error event, lets pending promise callbacks run, then asserts the request is settled as rejected. On the broken build it's still pending, so the assertion fails at once; nothing waits.</li>
+</ul>
+
+<h3 id="V8">V8 · Journey 5 in real Chrome, on both hosts (S3, S4, S7, S10)</h3>
+<p><strong>Proven by:</strong> the existing real-browser test driving journey 5 with Chrome's virtual authenticator, on both hosts, and failing on today's build.</p>
+<ul>
+<li><strong>Where:</strong> <code>sign-in-native-browser.host.e2e.test.ts</code>, which already runs <code>observeNativeSignInBrowser(host)</code> for <code>'node'</code> and <code>'cloudflare'</code>. A new scenario step list, <code>passkey-journey</code>, in <code>test-fixtures/native-browser-scenario.ts</code>.</li>
+<li><strong>A <code>localhost</code> address:</strong> Chrome refuses WebAuthn on an IP-address origin, and today's harness serves <code>http://127.0.0.1:&lt;port&gt;</code>. The scenario starts the harness with <code>issuerHostname: 'localhost'</code>, and Chrome is launched with <code>--host-resolver-rules=MAP localhost 127.0.0.1</code> (<a href="program-design.html#harness-origin">Program Design</a>). The evidence records the Chrome version and the origin. On the unchanged harness, step 2 fails in the browser before any request reaches the service.</li>
+<li><strong>The virtual authenticator:</strong> new calls through <code>native-browser-protocol.ts</code>'s existing <code>call</code>:
+  <ul>
+  <li><code>WebAuthn.enable</code>;</li>
+  <li><code>WebAuthn.addVirtualAuthenticator</code> with <code>protocol: 'ctap2'</code>, <code>transport: 'internal'</code>, <code>hasResidentKey: true</code>, <code>hasUserVerification: true</code>, <code>isUserVerified: true</code>, <code>automaticPresenceSimulation: true</code>;</li>
+  <li><code>WebAuthn.setResponseOverrideBits({authenticatorId, isBadUV: true})</code> for the refusal run: the authenticator still signs a real assertion with its credential key, but with the user-verified bit cleared, so the server, not the browser, must refuse it. (<code>setUserVerified(false)</code> was wrong: Chrome's virtual device then refuses before any assertion is sent, so the server is never asked; pinned Chrome source <code>virtual_ctap2_device.cc:1046–1050</code> versus <code>:1750–1772</code>.)</li>
+  </ul>
+  Each is a DevTools command whose reply ends the wait.</li>
+<li><strong>Turnstile in the browser:</strong> the page loads Turnstile's script from Cloudflare, which the test doesn't reach. The scenario intercepts that one script URL with <code>Fetch.enable</code> and answers it with <code>Fetch.fulfillRequest</code>. The answer is a stand-in that:
+  <ul>
+  <li>defines <code>window.turnstile</code> with <code>render</code>, <code>reset</code> and <code>execute</code>;</li>
+  <li>hands each <code>execute</code> a token the harness issued for <code>passkey_sign_in</code> (<code>harness.turnstile.issueToken</code>);</li>
+  <li>then calls <code>onSignInTurnstileReady</code>.</li>
+  </ul>
+  The page's own widget code and the service's siteverify check run as written. Only Cloudflare's script is replaced.</li>
+<li><strong>The steps:</strong>
+  <ol>
+  <li>sign in with Google over the controlled provider, as the test does today, and confirm with the app (codes computed at the controlled time);</li>
+  <li>on the passkey page, click Add passkey; the virtual authenticator answers;</li>
+  <li>sign out: clear the browser's cookies (the native sign-out route is closed by B1-A, <code>session-read-public-routes.unit.test.ts</code>), so the browser has no session;</li>
+  <li>on <code>/sign-in</code>, click Continue with Passkey;</li>
+  <li>the page lands on <code>/owner-ready</code> and then the account page;</li>
+  <li>invite a person from the signed-in page: the page's own context posts <code>POST /api/auth/organization/invite-member</code> with its cookie (no invite button exists until B1-C's People page, whose journey will click it). The invitation is created with no confirmation step, checked in the stored invitations;</li>
+  <li><code>document.cookie</code> has no session token readable by script, and no response body seen by the page contains it.</li>
+  </ol></li>
+<li><strong>The refusal run:</strong> the same steps 1 to 3, then <code>WebAuthn.setResponseOverrideBits({isBadUV: true})</code>, then step 4. The verify request reaches the service and is refused with 401 and its error code. The page shows Better Auth UI's error notice and stays on <code>/sign-in</code>, and <code>/api/auth/get-session</code> returns no session. The override is then reset (<code>isBadUV: false</code>) before any positive or CLI step.</li>
+<li><strong>The command-line run:</strong> after steps 1 to 3, the scenario starts the real owner CLI with <code>loginThroughNativeOwnerCli({ target, repositoryRoot, browser })</code> (<code>native-cli-proof.ts:92</code>). Its <code>browser</code> callback navigates Chrome to the CLI's own <code>sign-in?authorize=…</code> address and clicks Continue with Passkey.
+  <ul>
+  <li><strong>Passes when:</strong> Chrome follows the real continuation through <code>/owner-ready?authorize=…</code>; the CLI's loopback receives its code; the CLI exits 0 with the person's token in its private cache.</li>
+  <li><strong>Fails on:</strong> a deliberate break where the button navigates to <code>/owner-ready</code> without its query. The plain run still passes, but this one fails: the CLI never gets its code.</li>
+  </ul></li>
+<li><strong>The Turnstile-failure run:</strong> the scenario answers Turnstile's script URL with a failed load (<code>Fetch.failRequest</code>), then clicks Continue with Passkey.
+  <ul>
+  <li>The error notice "Sign-in verification is unavailable. Reload the page to try again." appears.</li>
+  <li>The button is enabled again.</li>
+  <li>No challenge request is sent, and no session exists.</li>
+  </ul></li>
+<li><strong>Also read:</strong> at 400 px, the passkey button's left edge matches the Google and GitHub buttons'.</li>
+<li><strong>Fails on:</strong> today's build: there's no button at step 4, and both routes answer 404. Every run is on both hosts.</li>
+<li><strong>Unverified:</strong>
+  <ul>
+  <li>physical authenticators;</li>
+  <li>real Turnstile;</li>
+  <li>staging, which covers journey 5 from adding the passkey onward, in BG's run (R65).</li>
+  </ul></li>
+</ul>
+
+<h3 id="V9">V9 · The old fallback is gone (S11)</h3>
+<ul>
+<li><strong>Check:</strong> the Verifier and the Reviewer read the diff and search the tree.
+  <ul>
+  <li>No test asserts 404 for either passkey sign-in route.</li>
+  <li><code>people-passkey-confirmation.host.e2e.test.ts</code>'s case at line 92 no longer says "remains unoffered".</li>
+  <li>The verify-auth skill's passkey passages say passkeys sign in.</li>
+  </ul></li>
+<li><strong>Passes when:</strong> <code>git grep -n "remains unoffered\|passkey sign-in stays off"</code> under <code>packages/sign-in-*</code> and <code>.agents/skills/verify-auth</code> finds nothing.</li>
+</ul>
+
+<h2 id="coverage">Coverage, for the Verifier and the reviewer</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Need</th><th>Rules</th><th>Checks</th><th>Target</th><th>Unverified</th></tr></thead>
+<tbody>
+<tr><td><strong>U20</strong> sign in with a passkey</td><td><a href="specification.html#S1">S1</a>, <a href="specification.html#S5">S5</a>, <a href="specification.html#S7">S7</a></td><td>V1, V5, V7, V8</td><td>Unit; host on both hosts; real Chrome on both hosts</td><td>Physical authenticators</td></tr>
+<tr><td><strong>OD21</strong> both factors</td><td><a href="specification.html#S3">S3</a>, <a href="specification.html#S4">S4</a>, <a href="specification.html#S6">S6</a>, <a href="specification.html#S9">S9</a>, <a href="specification.html#S12">S12</a></td><td>V3, V4, V8</td><td>Host on both hosts; real Chrome on both hosts</td><td>none</td></tr>
+<tr><td><strong>R52</strong> Turnstile and flood</td><td><a href="specification.html#S2">S2</a>, <a href="specification.html#S8">S8</a></td><td>V2, V6, V7</td><td>Host on both hosts; unit</td><td>Real Turnstile; Cloudflare's hosted counter</td></tr>
+<tr><td><strong>U50 journey 5</strong></td><td><a href="specification.html#S10">S10</a>, <a href="specification.html#S11">S11</a></td><td>V8, V9</td><td>Real Chrome on both hosts</td><td>Staging (BG, from adding onward)</td></tr>
+</tbody>
+</table></div>
+<p><strong>Journeys:</strong> no new <code>verify-auth</code> journey; journey 5 lives in the real-browser test, as R67 places it. <strong>New permanent tests:</strong> <code>people-passkey-sign-in.host.e2e.test.ts</code>, <code>passkey-sign-in-completion.unit.test.ts</code>, the turnstile-hook unit tests, and the <code>passkey-journey</code> scenario.</p>
+</ex-document>
+</body>
+</html>

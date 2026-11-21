@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Switchboard signed-in navigation mockups</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #191b1f;
+      color: #eaeaea;
+      font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    }
+    main { width: min(100% - 2rem, 94rem); margin: 0 auto; padding: 3rem 0; }
+    h1, h2, h3 { line-height: 1.18; }
+    h1 { margin: 0 0 .65rem; font-size: clamp(2rem, 5vw, 3rem); letter-spacing: -.035em; }
+    h2 { margin: 0 0 .35rem; font-size: 1.6rem; }
+    h3 { margin: 0 0 .65rem; font-size: 1rem; }
+    p { margin: 0; }
+    a { color: #89bfff; text-underline-offset: .2em; }
+    a:focus-visible { outline: 2px solid #89bfff; outline-offset: 4px; }
+    header > p, .section-summary, figcaption { color: #c5c8ce; }
+    nav { display: flex; flex-wrap: wrap; gap: .4rem 1.25rem; margin-top: 1.25rem; }
+    section { padding: 1.6rem 0 2rem; border-top: 1px solid #434b57; }
+    header { margin-bottom: 1.7rem; }
+    .section-summary { margin-bottom: 1.35rem; }
+    .comparison { display: grid; grid-template-columns: minmax(13rem, .35fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+    .comparison.states { grid-template-columns: minmax(0, 1fr) repeat(2, minmax(12rem, .42fr)); }
+    figure { margin: 0; min-width: 0; }
+    .image-link, img { display: block; width: 100%; }
+    .image-link { border: 1px solid #434b57; border-radius: 8px; overflow: hidden; background: #282c34; }
+    img { height: auto; }
+    figcaption { margin-top: .7rem; font-size: .93rem; max-width: 68ch; }
+    @media (max-width: 48rem) {
+      main { padding-top: 1.75rem; }
+      .comparison, .comparison.states { grid-template-columns: minmax(0, 1fr); gap: 1.75rem; }
+      .image-link:has(img[src$="-phone.png"]) { max-width: 25rem; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Switchboard signed-in navigation</h1>
+      <p>Generated mockups of the proposed phone and desktop layouts. Select an image to inspect it at full size.</p>
+      <nav aria-label="Contact sheet sections">
+        <a href="#me">Me</a>
+        <a href="#people">People</a>
+        <a href="#machines">Machines</a>
+        <a href="#workspaces">Workspaces</a>
+        <a href="#workspace">Opened workspace</a>
+        <a href="#states">Navigation states</a>
+        <a href="NOTES.md">Component map and source notes</a>
+      </nav>
+    </header>
+
+    <section id="me" aria-labelledby="me-heading">
+      <h2 id="me-heading">Me</h2>
+      <p class="section-summary">Personal security, sessions, and invitations stay in Me when the organization changes.</p>
+      <div class="comparison">
+        <figure>
+          <h3>Phone mockup</h3>
+          <a class="image-link" href="me-phone.png" aria-label="Open Me Phone mockup at full size">
+            <img src="me-phone.png" width="400" height="850" alt="Me selected in the bottom navigation. An empty passkey row sits below Add passkey. Recovery codes, authenticator app, current session, sign-out, and a personal invitation follow." loading="lazy" decoding="async">
+          </a>
+          <figcaption>The bottom bar uses route links styled with the shadcn Button recipe. A CardHeader holds Add passkey above the reserved empty row of Switchboard’s PasskeyManager. The existing factor cards handle recovery and the authenticator. Embed Better Auth UI’s ActiveSessions and UserInvitations for viewing sessions and accepting or declining invites. Keep a separate current-session Sign out.</figcaption>
+        </figure>
+        <figure>
+          <h3>Desktop mockup</h3>
+          <a class="image-link" href="me-desktop.png" aria-label="Open Me Desktop mockup at full size">
+            <img src="me-desktop.png" width="1280" height="800" alt="Me selected in the sidebar. The Passkeys header button sits above a populated MacBook Pro row with Rename and Remove." loading="lazy" decoding="async">
+          </a>
+          <figcaption>The shadcn Sidebar holds the top-level links. The PasskeyManager list can grow downward from CardContent while Add passkey stays in the CardHeader. The existing factor cards retain their guarded actions. ActiveSessions and UserInvitations sit below them, with Sign out beside the current session.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section id="people" aria-labelledby="people-heading">
+      <h2 id="people-heading">People</h2>
+      <p class="section-summary">Owners can browse Acme’s membership and invitations and look up a person by email.</p>
+      <div class="comparison">
+        <figure>
+          <h3>Phone mockup</h3>
+          <a class="image-link" href="people-phone.png" aria-label="Open People Phone mockup at full size">
+            <img src="people-phone.png" width="400" height="850" alt="People selected in the bottom navigation. Member names and emails share the first column with roles alongside. An invitation and email lookup follow." loading="lazy" decoding="async">
+          </a>
+          <figcaption>The four-link bottom bar opens the owner’s People page. Switchboard’s OrganizationPeople keeps the shadcn Card, Table and Badge pattern. Stack name and email in the same cell and keep the role in its own cell. A Field, InputGroupInput and Button submit the membership lookup.</figcaption>
+        </figure>
+        <figure>
+          <h3>Desktop mockup</h3>
+          <a class="image-link" href="people-desktop.png" aria-label="Open People Desktop mockup at full size">
+            <img src="people-desktop.png" width="1280" height="800" alt="People selected in the sidebar. Separate Name, Email and Role columns appear above the Invitations table and membership lookup form." loading="lazy" decoding="async">
+          </a>
+          <figcaption>A SidebarMenuButton marks People current. Keep the shipped member and invitation tables and their pagination using Table, Badge and Button. The lookup uses the existing Field and InputGroup. Better Auth UI’s OrganizationPeople offers a table pattern for later member actions.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section id="machines" aria-labelledby="machines-heading">
+      <h2 id="machines-heading">Machines</h2>
+      <p class="section-summary">The organization’s Mac inventory is where owners enroll and revoke machines and configure token lifetime.</p>
+      <div class="comparison">
+        <figure>
+          <h3>Phone mockup</h3>
+          <a class="image-link" href="machines-phone.png" aria-label="Open Machines Phone mockup at full size">
+            <img src="machines-phone.png" width="400" height="664" alt="Machines selected in the bottom navigation. Enroll Mac and Token lifetime appear above a compact inventory with last-seen times and Revoke actions." loading="lazy" decoding="async">
+          </a>
+          <figcaption>A bottom route link opens Machines. Use shadcn Button for Enroll Mac and Token lifetime. The compact Table keeps each Mac’s last-seen time next to its Revoke action. Revoke should open a confirmation with the Mac’s name. These are Switchboard controls.</figcaption>
+        </figure>
+        <figure>
+          <h3>Desktop mockup</h3>
+          <a class="image-link" href="machines-desktop.png" aria-label="Open Machines Desktop mockup at full size">
+            <img src="machines-desktop.png" width="1280" height="800" alt="Machines selected in the sidebar. Two Macs appear in an org-wide table with last-seen times and Revoke actions." loading="lazy" decoding="async">
+          </a>
+          <figcaption>Sidebar keeps Machines active. Use Table for Mac, Last seen and Actions. Button opens enrollment or token lifetime settings. AlertDialog can confirm revocation. Better Auth UI has no Switchboard fleet view.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section id="workspaces" aria-labelledby="workspaces-heading">
+      <h2 id="workspaces-heading">Workspaces</h2>
+      <p class="section-summary">Start from the organization’s workspace directory and open a workspace to see what runs there.</p>
+      <div class="comparison">
+        <figure>
+          <h3>Phone mockup</h3>
+          <a class="image-link" href="workspaces-phone.png" aria-label="Open Workspaces Phone mockup at full size">
+            <img src="workspaces-phone.png" width="400" height="850" alt="Workspaces selected in the bottom navigation. Create workspace sits above a two-row directory with chevrons." loading="lazy" decoding="async">
+          </a>
+          <figcaption>Use a bottom route link for Workspaces, a primary Button for Create workspace, and full-width workspace links with Separators inside a Card. Tap Release tooling or Design systems to open its detail.</figcaption>
+        </figure>
+        <figure>
+          <h3>Desktop mockup</h3>
+          <a class="image-link" href="workspaces-desktop.png" aria-label="Open Workspaces Desktop mockup at full size">
+            <img src="workspaces-desktop.png" width="1280" height="800" alt="Workspaces selected in the sidebar. Two workspace links sit beneath Create workspace." loading="lazy" decoding="async">
+          </a>
+          <figcaption>SidebarMenuButton highlights Workspaces. The primary Button opens workspace creation and the bordered Card lists each workspace as a route link. The directory is a Switchboard view.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section id="workspace" aria-labelledby="workspace-heading">
+      <h2 id="workspace-heading">Opened workspace</h2>
+      <p class="section-summary">Release tooling shows the machines allowed into this workspace. Its other local tabs lead to the workspace’s agents and live sessions.</p>
+      <div class="comparison">
+        <figure>
+          <h3>Phone mockup</h3>
+          <a class="image-link" href="workspace-phone.png" aria-label="Open Opened workspace Phone mockup at full size">
+            <img src="workspace-phone.png" width="400" height="850" alt="Workspaces stays selected in the bottom bar. Release tooling shows Allowed machines selected, with Agents and Live sessions alongside." loading="lazy" decoding="async">
+          </a>
+          <figcaption>A back link returns to the directory. A shadcn TabsList in its line variant switches the three workspace panels. Buttons in Allowed machines let an owner allow a Mac or withdraw its access to Release tooling.</figcaption>
+        </figure>
+        <figure>
+          <h3>Desktop mockup</h3>
+          <a class="image-link" href="workspace-desktop.png" aria-label="Open Opened workspace Desktop mockup at full size">
+            <img src="workspace-desktop.png" width="1280" height="800" alt="Workspaces stays selected in the sidebar. The Release tooling detail has three local tabs above an Allow Mac button and two Withdraw actions." loading="lazy" decoding="async">
+          </a>
+          <figcaption>Sidebar keeps Workspaces current while Tabs, TabsTrigger and TabsContent select a panel inside Release tooling. The shown panel lists allowed Macs. The Agents panel lists workspace agents and Live sessions lists workspace sessions with the permitted removal action.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section id="states" aria-labelledby="states-heading">
+      <h2 id="states-heading">Organization and sign-in states</h2>
+      <p class="section-summary">The same header provides organization context, the CLI prompt appears while a sign-in is pending, and a plain member has one destination.</p>
+      <div class="comparison states">
+        <figure>
+          <h3>Desktop · switcher open mockup</h3>
+          <a class="image-link" href="switcher-desktop.png" aria-label="Open Organization and sign-in states Desktop · switcher open mockup at full size">
+            <img src="switcher-desktop.png" width="1280" height="800" alt="The Acme switcher menu is open on People. Acme is checked as Owner. Birch Labs is a Member organization. Organization settings, Audit and Delete organization appear below the membership choices." loading="lazy" decoding="async">
+          </a>
+          <figcaption>The trigger is an outlined Button. DropdownMenu groups organization choices separately from current-Acme owner actions. Better Auth UI’s OrganizationSwitcher supplies the menu pattern. Use the Switchboard chooser’s set-active and readback behavior. Delete opens a confirmation.</figcaption>
+        </figure>
+        <figure>
+          <h3>Phone · CLI pending mockup</h3>
+          <a class="image-link" href="cli-phone.png" aria-label="Open Organization and sign-in states Phone · CLI pending mockup at full size">
+            <img src="cli-phone.png" width="400" height="850" alt="A dismissible CLI sign-in alert appears below the header on Me. The bottom navigation still has four destinations." loading="lazy" decoding="async">
+          </a>
+          <figcaption>A shadcn Alert and AlertTitle sit under the header. The primary Button continues the pending CLI sign-in. The icon Button dismisses the banner. The account controls remain available below it.</figcaption>
+        </figure>
+        <figure>
+          <h3>Phone · plain member mockup</h3>
+          <a class="image-link" href="member-phone.png" aria-label="Open Organization and sign-in states Phone · plain member mockup at full size">
+            <img src="member-phone.png" width="400" height="850" alt="A plain Acme member sees the organization switcher, personal settings, sessions, invitations, and only Me in the bottom bar." loading="lazy" decoding="async">
+          </a>
+          <figcaption>The one-link bottom navigation shows Me. The Acme DropdownMenu still offers memberships. The same Me controls stay available, including Sign out and Accept or Decline. Organization administration follows the selected membership’s permissions.</figcaption>
+        </figure>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

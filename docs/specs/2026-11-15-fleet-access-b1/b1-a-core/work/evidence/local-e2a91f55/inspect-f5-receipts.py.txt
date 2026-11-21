@@ -1,0 +1,134 @@
+"""Validate retained receipt relationships, without rerunning product journeys."""
+import collections
+import hashlib
+import json
+from pathlib import Path
+
+ROOT = Path(__file__).parent
+EVIDENCE = ROOT.parents[1] / 'docs/specs/2026-11-15-fleet-access-b1/b1-a-core/work/evidence'
+PIN = '27d393240b5c31bd1cf7da522de300c0522dd222'
+source = ROOT / 'f5-journeys-final.json'
+assert hashlib.sha256(source.read_bytes()).hexdigest() == '78b9b5980dec1dedeaa686b8c8930222483f5cf997e83478edd7337c781de650'
+data = json.loads(source.read_text())
+assert data['sourceFinal'] == {'head': PIN, 'status': ''}
+lock_hash = hashlib.sha256((ROOT / 'candidate-27d39324/pnpm-lock.yaml').read_bytes()).hexdigest()
+results = []
+for report in data['reports']:
+    value = report['extraction']['value']
+    compared = value['compared']['value']
+    summary = value['summary']
+    assert compared['sourceRevision'] == PIN
+    assert compared['lockfile'] == lock_hash
+    assert compared['executionHost'] == 'Sunclaw.local'
+    assert compared['node'] == 'v24.7.0' and compared['pnpm'] == '10.33.0'
+    assert compared['comparison'] == summary['targetComparison'] == 'matched'
+    assert summary['failed'] == 0 and summary['passed'] == summary['selected']
+    assert summary['offered'] - summary['selected'] == summary['unselected']
+    selected = {(r['file'], r['name']) for r in compared['selections'][summary['journey']]}
+    literal = [
+        (row['file'], ' > '.join([*a['ancestorTitles'], a['title']]), a['status'])
+        for row in report['literalVitestAssertionRows'] for a in row['assertions']
+    ]
+    passed = {(file, name) for file, name, status in literal if status == 'passed'}
+    assert len(selected) == len(passed) == summary['selected']
+    assert selected == passed
+    assert not any(status == 'failed' for _, _, status in literal)
+    assert sum(status in ('pending', 'skipped') for _, _, status in literal) == summary['reporterSkippedWithinFiles']
+    assert value['child']['value']['ending'] == {'kind': 'exited', 'code': 0, 'signal': None}
+    assert value['child']['value']['cleanup'] == {'initialMembers': [], 'remainingMembers': [], 'signals': []}
+    assert value['child']['groupReadback']['exit'] == 1 and not value['child']['groupReadback']['stdout']
+    assert value['bundle']['value'] == compared['artifacts']
+    for artifact in value['artifacts']:
+        assert artifact['declaredSha256'] == artifact['actualSha256']
+    expected_counter = 'node-fixed-window' if report['step'].endswith('-node') else 'cloudflare-real-binding'
+    failures = collections.Counter()
+    limited = collections.Counter()
+    unavailable = 0
+    harness_ids = set()
+    for harness in value['harnesses']:
+        harness_ids.add(harness['receiptId'])
+        assert harness['ready'] and harness['readinessEvent'] in ('jwks', 'signInSession', 'personToken', 'deferredWork')
+        assert harness['identity'] == value['bundle']['value']
+        assert harness['requestLimits']['outerCounter'] == expected_counter
+        failures[harness['requestLimits']['backingFailure']] += 1
+        for observation in harness['requestLimits']['observations']:
+            # Layer counters are additionally checked from the compared receipt below.
+            if observation.get('kind') == 'request-limited':
+                limited[observation['layer']] += 1
+            if observation.get('kind') == 'request-limit-unavailable':
+                unavailable += 1
+        identity = harness['identity']
+        for side, production in [('auth', 'productionAuth'), ('gateway', 'productionGateway')]:
+            expected = {
+                'worker.mjs': identity['startup']['sha256'],
+                'controlled-date.mjs': identity['clock']['sha256'],
+                'application.mjs': identity[side]['sha256'],
+                'production-auth.mjs' if side == 'auth' else 'production-gateway.mjs': identity[production]['sha256'],
+                'native-signature-observer.mjs': identity['signingObserver']['sha256'],
+            }
+            assert harness['actualModuleHashes'][side] == expected
+    assert len(harness_ids) == len(value['harnesses']) == len(compared['receipts'])
+    assert dict(failures) == summary['requestLimits']['backingFailures']
+    assert summary['requestLimits']['outerCounters'] == {expected_counter: len(harness_ids)}
+    assert summary['requestLimits'] == compared['requestLimits']
+    assert dict(limited) == {k: count for k, count in summary['requestLimits']['limitedByLayer'].items() if count}
+    assert unavailable == summary['requestLimits']['unavailable']
+    matched_invocations = 0
+    for receipt in value['nodeReceipts']:
+        assert receipt['receiptId'] in harness_ids
+        assert receipt['identity'] == value['nodeManifest'] == compared['nodeArtifacts']
+        expected = {r['invocationId']: r for r in receipt['expected']}
+        actual = {r['invocationId']: r for r in receipt['actual']}
+        assert len(expected) == len(receipt['expected']) and len(actual) == len(receipt['actual'])
+        assert expected == actual
+        assert receipt['mismatched'] == receipt['unexpected'] == 0
+        matched_invocations += len(expected)
+    assert matched_invocations == compared.get('nodeInvocations', 0)
+    for organization in value['organizationEvidence']:
+        assert organization['receiptId'] in harness_ids
+        assert organization['organizationCount'] > 0 and organization['publicKeyCount'] > 0
+        assert organization['exchangeCount'] > 0 and organization['standIn'] == 'recording-central-peer'
+    if summary['journey'] == 'organization':
+        storage = compared['storageComponentProof']
+        assert storage['expectedModules'] == compared['organizationStorageModules']
+        assert storage['observedModules'] and all(m == storage['expectedModules'] for m in storage['observedModules'])
+    outer = report['outerProcess']['value']
+    readback = report['terminationReadback']['value']
+    assert outer['exit'] is None and outer['signal'] == 'SIGTERM'
+    assert readback['outerExit'] is None and readback['outerSignal'] == 'SIGTERM'
+    assert readback['group']['exit'] == 1 and not readback['group']['stdout']
+    pids = readback.get('observedPids', readback.get('termPids'))
+    assert pids['exit'] == 1 and not pids['stdout']
+    assert report['terminationIdentity']['value']['action'] == 'one SIGTERM to exact idle outer group only'
+    results.append({
+        'step': report['step'], 'summary': summary, 'selectedEqualsLiteralPassed': True,
+        'runtimeExit': 0, 'readyHarnesses': len(harness_ids), 'actualModulesMatch': True,
+        'artifactRehashesMatch': len(value['artifacts']), 'pairedNodeInvocations': matched_invocations,
+        'organizationExports': len(value['organizationEvidence']), 'outerExit': None,
+        'outerSignal': 'SIGTERM', 'laterOwnedGroupAndSampledPidsAbsent': True,
+    })
+
+redacted_count = 0
+def redact(value):
+    global redacted_count
+    if isinstance(value, dict):
+        result = {}
+        for key, child in value.items():
+            if key == 'tokenCachePath':
+                result[key] = '[redacted fixture credential-cache path]'
+                redacted_count += 1
+            else:
+                result[key] = redact(child)
+        return result
+    if isinstance(value, list):
+        return [redact(child) for child in value]
+    return value
+
+safe = json.dumps(redact(data), ensure_ascii=False, indent=2) + '\n'
+(EVIDENCE / 'remote-f5-journeys-redacted.json').write_text(safe)
+result = {'sourceSha256': hashlib.sha256(source.read_bytes()).hexdigest(),
+          'redactedSha256': hashlib.sha256(safe.encode()).hexdigest(),
+          'redactedCredentialPaths': redacted_count, 'reports': results,
+          'limits': 'Operator-collected extraction inspected locally; original private raw logs and organization signed bodies were not transferred. No outer CLI success exit is inferred.'}
+(EVIDENCE / 'remote-f5-inspection.json').write_text(json.dumps(result, indent=2) + '\n')
+print(json.dumps(result, indent=2))

@@ -1,0 +1,10 @@
+{
+  "id": "P2-trust",
+  "source": "packages/tool-access/src/authorization/mcp-approval-policy.ts",
+  "file": "packages/tool-access/src/authorization/portal-access-policy.hegel.unit.test.ts",
+  "property": "uses the independent MCP annotation and selector decision table",
+  "before": "profile.approval.trustedAnnotationNamespaces.includes(call.namespace) &&",
+  "after": "true &&",
+  "sourceRevision": "78c0a98ef3709d4bbd55108944a97d8f3d57f825",
+  "originalSha256": "e41f3b423afe67332bb08bc35cd48c4b9f1e4da0ad56f0b063469dea63469d8d"
+}

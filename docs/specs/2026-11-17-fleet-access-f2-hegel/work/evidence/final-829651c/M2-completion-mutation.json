@@ -1,0 +1,11 @@
+{
+  "id": "M2-completion",
+  "project": "integration",
+  "source": "packages/oauth-broker/src/oauth-transaction-store.ts",
+  "file": "packages/oauth-broker/src/oauth-transaction-store.hegel.integration.test.ts",
+  "property": "M2 transaction and completion principals, first use, cancellation, caps and expiry follow the sequential model",
+  "before": "if (current.identity === undefined || !sameOAuthBrowserSession(current.identity, identity))",
+  "after": "if (current.identity === undefined)",
+  "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+  "originalSha256": "b17cc6f5288c1e3eb6b4a9784b9dfe93b85283d69e976f7a3b32d834e5e96268"
+}

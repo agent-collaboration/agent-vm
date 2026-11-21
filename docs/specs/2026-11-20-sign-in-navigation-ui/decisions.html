@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign-in navigation UI decisions</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="decisions" src="./navigation.json"></ex-nav>
+<ex-document id="decisions">
+<h1>Sign-in navigation UI decisions</h1>
+<p>The Sign-in Lead recorded these choices on 20 November 2026. See the <a href="../2026-11-15-fleet-access-overview/owner-quotes-2026-11-20.md#navigation-ui">owner’s exact words</a> and <a href="../../wip/sign-in-lead-state.md#navigation-ui-decisions-owner-20-nov">Lead’s notes</a>.</p>
+
+<h2 id="organization-navigation">Organization switch and landing page</h2>
+<p>The organization is a header switcher with settings, audit and delete in its menu. On 20 November the owner said <q>yes is that the righ torganziaiton?  ktehse grokups? what ar ediffrent rekpsobilities?  yes organziaiton is a switcher</q>.</p>
+<p>After switching organizations, land on a page the person may see. On 20 November the owner said <q>1.  in page taht ykouk allow to see.</q>.</p>
+
+<h2 id="components">Mockups and component library</h2>
+<p>On 20 November the owner reviewed the <a href="mockups/index.html">mockups</a> and said <q>yes that looks fine mak esrue you kusign shad cn compoenents do not make anyhting snoflake do kyo udnetnad?  make srue your diesng is ivnetored by sol agains shadnc</q>.</p>
+<p>The <a href="shadcn-inventory.md">shadcn inventory</a> records which existing components fit each screen.</p>
+
+<h2 id="pending-sign-ins">Pending sign-ins</h2>
+<p>The owner asked where the CLI sign-in should appear: <q>2.  for cli, we shokud store it somewehre? in machiens?  explain more</q>. On 20 November, after the Lead explained the split, the owner said <q>yes your split make sense what yko usaid</q>.</p>
+<ul>
+<li>A person’s CLI sign-in appears in a banner with Continue and Cancel. The banner cannot be dismissed, expires at the CLI deadline and, after sign-in, the resulting session appears under Me → My sessions.</li>
+<li>Pending machine logins appear in Machines as “Waiting for approval” with Approve and Deny.</li>
+</ul>
+
+<h2 id="open-choices">Open choices and current assumption</h2>
+<ul>
+<li><strong>Fourth destination.</strong> Choose Workspaces or Agents. The mockups show the Lead’s Workspaces proposal.</li>
+<li><strong>Phone navigation: decided 20 Nov.</strong> "ok ukse stock sidebar a". The stock shadcn Sidebar, which becomes a Sheet from ☰ on phones.</li>
+<li><strong>Plain member landing.</strong> The current design assumes a plain member lands on Me because that role has no permissions today. Whether members should see more is open.</li>
+</ul>
+</ex-document>
+</body>
+</html>

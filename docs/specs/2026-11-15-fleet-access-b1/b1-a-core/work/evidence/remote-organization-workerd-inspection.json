@@ -1,0 +1,36 @@
+{
+  "source": "27d393240b5c31bd1cf7da522de300c0522dd222",
+  "summary": {
+    "journey": "organization",
+    "supportingUnitPassed": 0,
+    "layer": "host-e2e",
+    "passed": 98,
+    "failed": 0,
+    "offered": 394,
+    "selected": 98,
+    "unselected": 296,
+    "reporterSkippedWithinFiles": 93,
+    "targetComparison": "matched",
+    "requestLimits": {
+      "outerCounters": {
+        "cloudflare-real-binding": 20
+      },
+      "limitedByLayer": {
+        "outer": 0,
+        "provider": 0
+      },
+      "unavailable": 0,
+      "backingFailures": {
+        "none": 20
+      },
+      "cloudflareVendorCredit": false
+    },
+    "evidence": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/2026-10-verify-auth-cIcjge"
+  },
+  "selectedMatches98Passed": true,
+  "runtimeExit": 0,
+  "readyRealBindingReceipts": 20,
+  "actualModulesMatch": true,
+  "organizationExports": 20,
+  "outerGap": "Original outer exit receipt missing; no exit0 inferred; bounded cleanup later confirmed absence."
+}

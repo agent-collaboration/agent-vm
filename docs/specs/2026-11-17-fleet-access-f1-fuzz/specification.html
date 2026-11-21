@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>F1 · Fuzz testing · Specification</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>F1 · Fuzz testing for sign-in: Specification</h1>
+<p>What must be true. Each obligation (S) traces to a need (U) on <a href="requirements.html">Requirements</a>.</p>
+<ul>
+<li><strong>Tool facts:</strong> from source, in <code>tmp/2026-11-17-fuzz-research/report.md</code>.</li>
+<li><strong>Revision 2 (17 Nov):</strong> corrected after the Sol design review (<code>tmp/2026-11-17-f1-review/report.md</code>, findings F1–F10).</li>
+</ul>
+
+<h2 id="entities">Entities</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Id</th><th>Entity</th><th>Identity</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td>E1</td><td>Route</td><td>Method plus path</td><td>A request the sign-in service answers at its outer entry. The routes come from two sources: Better Auth's installed provider API (<code>installedProviderEndpointInventory</code>), and the routes the outer handlers own themselves (<code>sign-in-request-handler.ts</code>, <code>sign-in-http-handler.ts</code>: for example owner bootstrap, organization-admin forwarding and issuer metadata).</td></tr>
+<tr><td>E2</td><td>Route classification</td><td>One row per route, in an independently written table</td><td>Exposure (signed out, member, owner, CLI, server-only, blocked), request parts (query, form or JSON body), documented answers, and permitted effects of each refusal. It's written from the specs and tests, never derived from the product's own allowlist.</td></tr>
+<tr><td>E3</td><td>Request family</td><td>One per non-blocked, non-server-only route</td><td>Generator for that route's actual request parts and encoding</td></tr>
+<tr><td>E4</td><td>Disclosure rule</td><td>Per route, caller and organization</td><td>What the answer may contain (for example an owner's own organization's member and invitee emails), and what it must never contain</td></tr>
+<tr><td>E5</td><td>Authorization fence pair</td><td>(organization, person), with active/inactive state (<code>sign-in-schema.ts:566</code>)</td><td>The revision that invalidates authorization when membership, role or sessions change</td></tr>
+<tr><td>E6</td><td>UI property</td><td>Exported name in a Bombadil spec</td><td>A rule about what a person can see or cause on a page</td></tr>
+<tr><td>E7</td><td>Finding</td><td>Tool, property and minimal case</td><td>A violation with its shrunk case (Hegel) or its trace plus replayable campaign (Bombadil)</td></tr>
+</tbody></table></div>
+
+<h2 id="obligations">Obligations</h2>
+<h3 id="s1">S1 · Every reachable route has a request family (U1)</h3>
+<p>Every route in E1 MUST have one classification row. Handler-owned routes are discovered from the real handler source, not only from a hand-written list. Every row that isn't blocked or server-only MUST have exactly one request family. A coverage check MUST fail when:</p>
+<ul>
+<li>a provider endpoint or a handler-owned route has no classification row;</li>
+<li>a reachable row has no family;</li>
+<li>a family names a route that doesn't exist.</li>
+</ul>
+<p>The check covers a new handler-owned route as well as a new provider endpoint.</p>
+
+<h3 id="s2">S2 · Generated requests get only documented answers (U1)</h3>
+<p>Each family MUST generate its route's real request parts:</p>
+<ul>
+<li>query parameters for GET routes (no GET body);</li>
+<li>URL-encoded form for the token route;</li>
+<li>JSON for body routes, including malformed JSON and the wrong content type where the transport allows it;</li>
+<li>valid, near-valid and boundary values of each part.</li>
+</ul>
+<p>Sent through the real host entry on each host, as each caller in its classification row, every answer MUST:</p>
+<ul>
+<li>be the documented success, or a documented refusal with its generic body;</li>
+<li>never be 5xx (F1 injects no storage faults);</li>
+<li><strong>respect the route's disclosure rule:</strong> no credential of any class in body or headers (browser session tokens, access, refresh and ID tokens, client secrets, cookie values). The exceptions are each route's <em>authorized success credential outputs</em>, checked against its existing issuance and release contract: the session <code>Set-Cookie</code> on sign-in success, the token route's <code>access_token</code>, and a refresh credential only for the configured fleet CLI under <code>sign-in-response-release.ts</code>'s release checks. Legitimate cookie deletion is also allowed. A credential in any error response, or issued outside the route and caller's entitlement, fails. No person's email or ID beyond what the caller is entitled to see. The owner may see their own organization's members and invitees; a member may not; nobody sees another organization's. The existing refusal-field list in <code>credential-free-refusal.ts</code> is the floor.</li>
+<li><strong>respect the route's permitted refusal effects:</strong> a refusal changes only what its row permits. Examples are consuming a passkey-confirm challenge before validation, recording a factor-change intent, clearing a cookie, and expired-session cleanup with its fence bump. Every other stored row stays unchanged, and a replay of a consumed challenge is refused.</li>
+</ul>
+
+<h3 id="s3">S3 · Organization rules hold over any sequence (U2)</h3>
+<p>Over Hegel-generated sequences, run on each storage engine, each operation MUST go through its real entry, then be read back from storage. The operations are create organization, invite, accept, cancel, remove member, change role, choose current organization, create session, expire session and delete person. They run through the Better Auth provider routes and service operations the product uses; raw store writes would bypass the guards. Two kinds of rule MUST hold after every step, checked every step.</p>
+<p><strong>Provider policy:</strong></p>
+<ul>
+<li>removing an owner is refused (both enforcing guards: <code>organization-role-hooks.ts:35</code> and Better Auth's last-owner check);</li>
+<li>a refused operation changes nothing except its permitted effects.</li>
+</ul>
+<p><strong>Stored invariants:</strong></p>
+<ul>
+<li><strong>R-owner:</strong> every organization has at least one owner.</li>
+<li><strong>R-choice:</strong> a stored current-organization choice is null or an organization the person belongs to.</li>
+<li><strong>R-removed:</strong> a removed member has no live session scoped to that organization.</li>
+<li><strong>R-fence, keyed on the (organization, person) pair:</strong>
+  <ul>
+  <li>role change bumps the affected pair;</li>
+  <li>member removal bumps the pair and marks it inactive;</li>
+  <li>rejoining bumps the retained pair, never resets it;</li>
+  <li>session deletion bumps every retained pair of that person;</li>
+  <li>person cleanup bumps and marks inactive every retained pair;</li>
+  <li>fence changes follow what the operation actually committed, not whether its HTTP answer was success or refusal. An operation that commits no authorized change bumps nothing. A refused read that legitimately cleans up an expired session bumps that person's retained pairs, as the existing expiry cleanup does (<code>expired-session-cleanup-proof.ts:60</code>).</li>
+  <li>a revision never decreases.</li>
+  </ul></li>
+<li><strong>R-invite:</strong> invitation states move only along the documented lifecycle.</li>
+</ul>
+
+<h3 id="s4">S4 · UI properties hold under exploration (U3)</h3>
+<p>Bombadil campaigns, each on both hosts:</p>
+<ul>
+<li>the sign-in page signed out;</li>
+<li>the owner and People pages signed in as an owner;</li>
+<li>the People URL signed in as a plain member.</li>
+</ul>
+<p>Every reachable state MUST satisfy:</p>
+<ul>
+<li>no uncaught exceptions and no unhandled rejections;</li>
+<li>no console errors outside an explicit allowlist (each entry with its reason);</li>
+<li>no navigation failure except the route's documented refusal. On the member's People URL the expected answer is the 403 refusal with its generic content, and any other status ≥400 still fails.</li>
+<li>the S2 disclosure rule applied to page text and attributes: the owner's People page may show its own organization's emails, the member's page shows none.</li>
+<li>passkey click-only: in each document, every passkey-challenge request is <em>initiated</em> after a passkey-button click in that document, judged on one ordered witness of both events (see the Program Design). A click with no request is allowed, for example after navigation, cancel or a transport failure.</li>
+</ul>
+
+<h3 id="s5">S5 · Findings are reproducible (U4)</h3>
+<p><strong>Hegel:</strong> a finding records its printed values and seed.</p>
+<p><strong>Bombadil:</strong> a finding records its private trace plus a replay through the same driver. The replay recreates the host, fixtures, controlled clock and signed-in state, then runs Bombadil's reproduce with the live issuer, the spec and the cookies. It omits the time-limit and stop-on-violation options, which conflict with reproduce. Divergence on replay is reported as divergence.</p>
+<p>A fixed finding MUST become an ordinary permanent regression test. Hegel runs derandomized in CI.</p>
+
+<h3 id="s6">S6 · Limits are stated (all)</h3>
+<p>Results hold for:</p>
+<ul>
+<li>the local hosts;</li>
+<li>the software authenticator;</li>
+<li>controlled providers;</li>
+<li>the injected clock;</li>
+<li>sequential operations only, not concurrent interleavings.</li>
+</ul>
+<p>Bombadil traces may hold sensitive values; they stay private and are never committed or reported unredacted.</p>
+</ex-document>
+</body>
+</html>

@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B1-A · One sign-in core, injected and honestly tested · Verification Design</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>B1-A · One sign-in core, injected and honestly tested: Verification Design</h1>
+<p>How each rule on the <a href="specification.html">Specification</a> will be shown to hold, and what stays unproven. <strong>This is a plan: nothing here has been run.</strong></p>
+<ul>
+<li><strong>Who runs it:</strong> the paired Verifier, on the pinned PR commit.</li>
+<li><strong>Must fail on a named wrong build:</strong> V1–V4, V6–V9 and V11.</li>
+<li><strong>Regression checks:</strong> V5 and V10, on the hosts and targets they name.</li>
+</ul>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What you should check" tone="note" icon="shield-check">
+<p><strong><a href="#V2">V2</a>, the recording run</strong>, does what your proof row U23 asks. It drives each of the six crypto sites with known inputs and checks that each one's exact operation and input appears in the record. So any one site left on the runtime's crypto fails it. The same run also records clock, ID and central calls.</p>
+<p><strong><a href="#V4">V4</a> and <a href="#V6">V6</a>:</strong> planted slips must fail the architecture check. They include one inside a <code>.tsx</code> page, one hidden in a <code>${…}</code> template expression, and a real timer in a test helper.</p>
+<p><strong><a href="#V8">V8</a>:</strong> removing Miniflare's counter from the Worker must make the "limited" case fail. <strong><a href="#V9">V9</a>:</strong> a planted version-4 ID must fail the readback.</p>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p><strong>None for people.</strong> <a href="#V3">V3</a> checks against fixed known values, including central's own shared vectors, that nothing anyone sees has changed.</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
+<p>Every check traces to your rule R30 and your proof row U23 (<a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/verification-design.source.html">approved Verification Design</a>, line 278): <em>"Run SO2 on both hosts; run the core with recording capabilities and a pinned process clock … every clock, identifier, crypto and central call is recorded; no platform global in the core outside the Better Auth boundary module, and a Node or Worker import placed in a sign-in-core source file makes the audit fail; the device-code approval rule is in the core."</em></p>
+<p>What this deliverable proves of that row, and what it leaves to others, is in <a href="#u23">the U23 split</a> at the end.</p>
+<p>The other checks trace to your proof rows in the same file:</p>
+<ul>
+<li><strong>U25</strong> (line 280): <em>"A scan finds no real-clock read, real-time wait or real timer in the sign-in tests, helpers or harness"</em>.</li>
+<li><strong>U24</strong> (line 279).</li>
+<li><strong>U42</strong> and journey SO2's flood paragraph: <em>"Miniflare's binding keeps its own clock: locally it proves 'limited', the window reset is proven through the core's limiter on a controlled clock"</em>.</li>
+<li><strong>SO2's</strong> "today's agent path still works".</li>
+</ul>
+<p>Behind those rows are your words in the <a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/requirements.source.html">approved Requirements</a>: <em>"you inject stukff not pkul out engines"</em> (line 174), <em>"i dont allow wall clock time ever in tests"</em> and <em>"use hegal"</em> (line 176), and <em>"we ony use uuidv7"</em> (line 175).</p>
+</ex-callout>
+
+<h2 id="paths">Where each check looks</h2>
+<ex-mermaid id="obs-paths" label="What each check drives and where it looks" data-width="canvas"><script type="text/plain">
+flowchart TB
+  v1["V1 render pages with fixed or counting random bytes"] --> n["The nonce in the header and on every script tag"]
+  v2["V2 drive the six sites with known inputs<br/>on recording capabilities, pinned process clock"] --> r["Each site's exact operation and input in the record"]
+  v3["V3 fixed inputs"] --> k["Known values: published SHA-256,<br/>central's vectors, RFC 7638, jose verify"]
+  v4["V4 planted slips, the base tree, a type mutation"] --> a["Architecture check and type-check results"]
+  v5["V5 real Chrome, relay, CLI, organization journey"] --> h["Pages run, proofs accepted, per host"]
+  class v1,v2,v3,v4,v5 slot2
+  class n,r,k,a,h slot6
+</script></ex-mermaid>
+<p><strong>Key:</strong> amber is what the check does, green is what it reads to decide.</p>
+
+<h2 id="checks">The checks</h2>
+
+<h3 id="V1">V1 · The page nonce is the host's bytes, and only rendered pages ask (S1)</h3>
+<p><strong>Proven by:</strong> rendering pages with a crypto that returns known bytes, and seeing exactly those bytes as the nonce. A reply that isn't a rendered page must ask for none.</p>
+<ul>
+<li><strong>Tests:</strong>
+  <ul>
+  <li>new <code>packages/sign-in-core/src/contracts/page-nonce.unit.test.ts</code>;</li>
+  <li>new cases in <code>better-auth/served-page-appearance.unit.test.ts</code> (owner page) and <code>better-auth/factor-enrollment-page.unit.test.ts</code> (factor page and pass-through).</li>
+  </ul>
+  All run in the unit lane (<code>pnpm test:unit</code>).</li>
+<li><strong>Passes when:</strong>
+  <ul>
+  <li>with bytes 00…0f, the security header contains <code>'nonce-000102030405060708090a0b0c0d0e0f'</code>, and every <code>&lt;script nonce&gt;</code> equals it;</li>
+  <li>with a counting crypto, each rendered page asks exactly once, and its nonce equals that call's bytes;</li>
+  <li>a factor POST that returns JSON, a 303 redirect, or a pass-through makes zero <code>getRandomValues</code> calls.</li>
+  </ul></li>
+<li><strong>Fails on:</strong>
+  <ul>
+  <li>today's <code>page-document.tsx</code>, whose nonce isn't the fixed bytes;</li>
+  <li>a build that mints in the handler before it knows HTML is needed, which makes a call on the JSON path.</li>
+  </ul></li>
+<li><strong>Reference:</strong> S1 (16 bytes as 32 lowercase hex; a draw only for a rendered page).</li>
+</ul>
+
+<h3 id="V2">V2 · Every crypto call goes through the capability (S1, S2), and so do clock, IDs and central (U23)</h3>
+<p><strong>Proven by:</strong> driving each of the six sites with known inputs on recording capabilities, and finding each site's own operation <em>and input</em> in the record. Several calls are SHA-256, so the check matches the input digested, not just the operation name.</p>
+<ul>
+<li><strong>Tests:</strong> two files, both using the new <code>recording-sign-in-capabilities.ts</code> fixture.
+  <ul>
+  <li><strong>Integration lane:</strong> <code>packages/sign-in-test-support/src/host-crypto-recording.integration.test.ts</code> (<code>pnpm test:integration</code>) covers the page nonce, statement digest, private key export and import, and canonical-JSON rows.</li>
+  <li><strong>Node host-e2e lane:</strong> the forwarding rows (admin verifier, proof key and signature, intent digest) are in <code>packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts</code>, run with <code>SIGN_IN_TEST_HOST=node pnpm test:e2e:host &lt;file&gt;</code>. Forwarding isn't exported from the core and needs a signed-in owner, an organization, the bootstrap's clients and a central link, which only the real harness provides.
+    <ul>
+    <li>The test starts that harness with a new test-only option. The option wraps the in-process Node platform's <code>crypto</code>, <code>clock</code>, <code>ids</code> and <code>centralClient</code> with the recording fixture. It's added in <code>test-fixtures/local-auth-harness.ts</code> and <code>test-fixtures/node-auth-proof-host.ts</code>, where the Node handler already runs in the test process (<code>node-auth-proof-host.ts:168–191</code>).</li>
+    <li>The option is refused on the Cloudflare host.</li>
+    <li>It drives the real self-call, Better Auth's PKCE and the controlled central admin.</li>
+    <li><strong>The clock check in this file:</strong> a bounded offset rather than a far one. On the Node harness the process clock is pinned to the injected host time on purpose, because Better Auth reads the process clock and stays as shipped (<code>node-auth-proof-host.ts:114, 120</code>). A far process clock can't run real forwarding: the release fences compare Better Auth's token times with the core clock, and central accepts a proof <code>iat</code> only within (now − 65 s, now + 5 s] (<code>controlled-central-admin.ts:179–181</code>).
+      <ul>
+      <li>The option's <code>clockOffsetMilliseconds</code> runs the recorded core clock 30 s behind the process clock.</li>
+      <li>The test asserts that central's proof <code>iat</code> equals <code>floor((controlled time − 30 s) / 1000)</code>, not the process clock's second.</li>
+      <li>A <code>Date.now()</code> bypass is 30 s off and fails.</li>
+      </ul>
+      The integration file keeps the far pinned clock as designed. This is the Lead's ruling on 15 Nov, from the Verifier's finding.</li>
+    </ul></li>
+  </ul>
+  No new public export is added for a test: the Lead's call on 15 Nov, from the Implementer's three options.</li>
+<li><strong>Pinned process clock:</strong> the whole file runs with the process clock pinned (Vitest fake timers with a fixed system time, far from the injected clock's time). Any output carrying the pinned process time shows a real-clock read. Your proof row U23 asks for this "pinned process clock".</li>
+</ul>
+<table>
+<thead><tr><th>Site</th><th>How it's driven</th><th>Expected in the record (operation and input)</th></tr></thead>
+<tbody>
+<tr><td>Page nonce</td><td>An owner page request through the sign-in handler</td><td><code>getRandomValues(16)</code>; the returned bytes equal the page's nonce (as V1)</td></tr>
+<tr><td>Admin verifier</td><td>An admin operation forwarded against the controlled central admin fixture (<code>test-fixtures/controlled-central-admin.ts</code>), with fixed 32 bytes</td><td><code>getRandomValues(32)</code>. The <code>code_verifier</code> in the token request equals base64url(those 32 bytes). The <code>code_challenge</code> in the authorization request equals base64url(SHA-256(that verifier)). The test observes both through the forwarding's self-call (<code>signIn</code>). A build that discards the bytes fails the verifier match.</td></tr>
+<tr><td>Proof key and signature</td><td>The same forwarding</td><td><code>generateKey(ECDSA P-256)</code>; <code>exportKey(jwk)</code> of the public key; <code>digest</code> of the canonical JWK (thumbprint); <code>digest</code> of the access token (<code>ath</code>); <code>sign(ECDSA SHA-256)</code> of the exact signing input</td></tr>
+<tr><td>Intent digest</td><td>The same forwarding</td><td><code>digest</code> of the canonical intent text</td></tr>
+<tr><td>Statement digest</td><td>Stamp renewal reading a signed statement</td><td><code>digest</code> of the statement text</td></tr>
+<tr><td>Private key export and import</td><td>The CLI's Keychain store logic driven with an in-memory item store, or the core functions called directly</td><td><code>exportKey(jwk)</code> of the private key; <code>importKey(jwk, ECDSA P-256)</code></td></tr>
+<tr><td>Canonical-JSON digest</td><td>Called directly, in <code>packages/sign-in-core/src/contracts/canonical-json.unit.test.ts</code> (unit lane), with an inline recording crypto. <code>canonicalJsonSha256Hex</code> isn't exported from the core and has no production caller, so this row lives beside it rather than adding a test-only export (Lead's call, 15 Nov). Its deliberate break runs under <code>pnpm test:unit</code>.</td><td><code>digest</code> of exactly the canonical text</td></tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Also recorded (U23):</strong> every clock read, ID mint and central call made along these paths goes through its capability, and none is missing from the record.</li>
+<li><strong>Failure cases:</strong>
+  <ul>
+  <li>a crypto that throws on the owner page path gives <code>503 {"error":"sign-in-unavailable"}</code>, and the handler attempts its cleanup;</li>
+  <li>on the forwarding path, the steps after the throw don't happen.</li>
+  </ul></li>
+<li><strong>Fails on, one per site:</strong> leaving any one site on the runtime global removes that site's specific operation-and-input entry from the record. Each site has its own assertion, so the failure names it.</li>
+<li><strong>Reference:</strong> R30 and proof row U23's recording run.</li>
+<li><strong>Unverified:</strong> this runs on Node in the test process. It proves which code calls the capability; how each runtime behaves is V5's job.</li>
+</ul>
+
+<h3 id="V3">V3 · Nothing anyone sees changes (S5)</h3>
+<p><strong>Proven by:</strong> the existing tests with known answers, updated only to hand in a crypto, producing exactly the same values. Plus one new check that the page security policy text is unchanged.</p>
+<table>
+<thead><tr><th>Check</th><th>Known answer</th><th>Where</th></tr></thead>
+<tbody>
+<tr><td>Canonical-JSON digest</td><td>SHA-256 of <code>{}</code> is the published constant <code>44136fa3…aff8a</code></td><td><code>contracts/canonical-json.unit.test.ts:23–27</code></td></tr>
+<tr><td>Admin intent digest</td><td>Central's shared producer vectors (<code>vector.intentDigest</code>)</td><td><code>organizations/fleet-admin-operation.unit.test.ts:62–75</code></td></tr>
+<tr><td>Key thumbprint</td><td>RFC 7638</td><td><code>central-link/fleet-admin-proof.unit.test.ts:58–69</code></td></tr>
+<tr><td>DPoP proof</td><td>The header is exactly <code>{ typ, alg: ES256, jwk }</code>, the claims are exact, and it verifies with <code>jose</code> against the public key</td><td><code>central-link/fleet-admin-proof.unit.test.ts:17–43</code></td></tr>
+<tr><td>Page security policy</td><td>The policy text from <code>pageContentSecurityPolicy</code> on <code>main</code> <code>f3b2b88b</code>, with the nonce substituted</td><td>new case beside V1</td></tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Passes when:</strong> every value is identical.</li>
+<li><strong>Fails on:</strong> a changed algorithm, encoding, curve, claim or policy directive.</li>
+<li><strong>Unverified:</strong> central itself doesn't run here. Its vectors are the reference.</li>
+</ul>
+
+<h3 id="V4">V4 · The check catches a slip, and the capability is required (S3, S6)</h3>
+<p><strong>Proven by:</strong> planting slips in test sources and seeing the architecture check reject each one and accept the allowed look-alikes. Then running the new check over today's core source, and a deliberate type mutation.</p>
+<ul>
+<li><strong>Tests:</strong> new cases in <code>scripts/audit-portal-architecture.unit.test.ts</code> (unit lane):
+  <ul>
+  <li><strong>Rejected:</strong>
+    <ul>
+    <li>a <code>.tsx</code> core file using <code>crypto.randomUUID()</code>;</li>
+    <li>a <code>.ts</code> core file using <code>globalThis.crypto.subtle.digest</code>;</li>
+    <li><code>`${crypto.randomUUID()}`</code> inside a template;</li>
+    <li>each of <code>Date.now()</code>, <code>new Date()</code>, <code>performance.now()</code>, <code>setTimeout</code>, <code>setInterval</code> and <code>Math.random()</code>;</li>
+    <li><code>globalThis['crypto']</code>;</li>
+    <li>names not on the allowed list, each in a core file: <code>fetch(url)</code>, <code>console.log(x)</code>, <code>navigator.userAgent</code>, <code>queueMicrotask(f)</code>, <code>new WebSocket(u)</code>;</li>
+    <li>the compiler's own <code>globalThis</code>, in each form: <code>globalThis.crypto</code>, <code>globalThis['fetch']</code>, and <code>const g = globalThis</code>;</li>
+    <li>an unresolved runtime-only name under the core's <code>types: []</code>: <code>process.env.X</code>;</li>
+    <li>a Node import (<code>import 'node:fs'</code>) in a core file, the mutant your proof row U23 names.</li>
+    </ul></li>
+  <li><strong>Accepted:</strong>
+    <ul>
+    <li><code>platform.crypto.getRandomValues(…)</code>;</li>
+    <li>a parameter or local named <code>crypto</code>, <code>fetch</code>, <code>globalThis</code> or <code>process</code>, and an imported name;</li>
+    <li>the language value <code>undefined</code>, as in <code>value === undefined</code>;</li>
+    <li>the same calls as literal text inside a browser-script template;</li>
+    <li><code>new Date(now)</code>;</li>
+    <li>each allowed global in use, for example <code>new URL(x)</code>, <code>new Response(body)</code>, <code>JSON.stringify(v)</code>, <code>Math.floor(n)</code>, <code>btoa(s)</code>;</li>
+    <li><code>typeof fetch</code> in a type position;</li>
+    <li>a file under <code>src/pages/islands/</code> using <code>location</code>;</li>
+    <li>a <code>*.unit.test.ts</code> file.</li>
+    </ul></li>
+  </ul></li>
+<li><strong>The base tree:</strong> the PR's checker, run over the base commit's <code>packages/sign-in-core/src/</code>, reports exactly the six sites: <code>crypto</code> at <code>page-document.tsx:181</code>, and <code>globalThis</code> at the nine lines in the other five files. Any other name it reports means the allowed list is wrong, and the run fails V4. Run over the PR's tree, it reports none. (Today's checker on <code>main</code> doesn't have the rule, so it reports nothing either way.)
+  <ul>
+  <li><strong>How to run it on the base:</strong> the script scans the tree it sits in (<code>audit-portal-architecture.ts:1298–1309, 1332–1340</code> fix the root from the script's own location), and it has no root argument. So the Verifier, in order:
+    <ol>
+    <li>makes a scratch worktree at the base commit: <code>git worktree add &lt;scratch&gt; f3b2b88b</code>;</li>
+    <li>installs its dependencies from its own lockfile: <code>pnpm install --frozen-lockfile</code> in the scratch worktree;</li>
+    <li>copies the PR's <code>scripts/audit-portal-architecture.ts</code> into it and records the copied file's SHA-256 next to the PR file's, which must match;</li>
+    <li>runs <code>pnpm test:portal-architecture</code> there and keeps its output.</li>
+    </ol></li>
+  <li><strong>Clean-up:</strong> the scratch worktree is removed afterwards. Nothing in the PR changes for this.</li>
+  </ul></li>
+<li><strong>Capability required (S3):</strong> two deliberate mutations, run by the Verifier and then reverted:
+  <ul>
+  <li>removing <code>crypto</code> from <code>createWebSignInCapabilities</code>' return must make <code>pnpm typecheck</code> fail in the hosts;</li>
+  <li>making <code>SignInPlatform.crypto</code> optional must make the core's call sites fail to type-check.</li>
+  </ul>
+  The core's test files aren't type-checked by <code>pnpm typecheck</code> (the package excludes <code>src/**/*.test.ts</code>), so this proof is a mutation, not a test file.</li>
+<li><strong>Fails on:</strong> today's checker, which passes the planted slips.</li>
+<li><strong>Unverified:</strong> exotic aliasing (for example <code>const g = globalThis; g[name]</code> built at run time) can evade a syntax check. The Verifier's and the reviewer's source reads cover it.</li>
+</ul>
+
+<h3 id="V5">V5 · Both hosts still work (S4, S5): a regression check</h3>
+<p><strong>Proven by:</strong> the existing real-path journeys passing on the hosts they actually cover.</p>
+<table>
+<thead><tr><th>Journey</th><th>Command</th><th>Hosts it covers</th></tr></thead>
+<tbody>
+<tr><td>Served sign-in pages in real Chrome</td><td><code>pnpm test:e2e:host</code> (<code>sign-in-native-browser.host.e2e.test.ts</code>)</td><td>Both: local workerd with D1, and Node with better-sqlite3 (the test is parameterized over both)</td></tr>
+<tr><td>Admin relay; the owner CLI</td><td><code>pnpm test:e2e:host</code> (<code>fleet-admin-relay.host.e2e.test.ts</code>, <code>fleet-cli.host.e2e.test.ts</code>)</td><td>One: the local auth harness that <code>setupFleetCli()</code> starts</td></tr>
+<tr><td><code>verify-auth</code> <code>organization</code> journey (lasting; read in <code>.agents/skills/verify-auth/references/organization-statements.md</code>)</td><td><code>pnpm exec tsx scripts/verify-auth/verify-auth.ts organization --target-file "$AUTH_VERIFY_TARGET_FILE"</code>, run once with a <code>local-workerd</code> target and once with a <code>local-node</code> target</td><td>Each run covers its own target</td></tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Passes when:</strong> every case passes on the hosts in the table.</li>
+<li><strong>What it can and can't catch:</strong> V5 catches a host or capability that breaks pages or proofs outright, for example a crypto that throws or returns the wrong length. It doesn't, by itself, prove a host "adds no rule".</li>
+<li><strong>How S4 is decided:</strong> the Verifier reads the host diffs. The Cloudflare and Node hosts must have no crypto edits of their own, and <code>sign-in-platform-web</code> must only hand in <code>globalThis.crypto</code>.</li>
+<li><strong>How S5's formats are decided:</strong> by V3.</li>
+<li><strong>Unverified:</strong>
+  <ul>
+  <li>deployed Cloudflare and Node hosts;</li>
+  <li>the real central (the controlled central stands in, as today);</li>
+  <li>the macOS Keychain CLI test, which runs only on a Mac;</li>
+  <li>the relay and CLI journeys on the second host.</li>
+  </ul>
+  On the PR, the browser test runs with the event-only protocol helper that this same feature delivers (<a href="#V6">V6</a>).</li>
+</ul>
+
+<h3 id="V6">V6 · No sign-in test reads the real clock or waits on real time (S7)</h3>
+<p><strong>Proven by:</strong> planting real-time calls in test sources and seeing the scan reject them, then running the scan over the real tree, plus the browser journey passing with event waits only.</p>
+<ul>
+<li><strong>Tests:</strong> new cases in <code>scripts/audit-portal-architecture.unit.test.ts</code>:
+  <ul>
+  <li><strong>Rejected:</strong> <code>setTimeout</code> in a file under <code>packages/sign-in-test-support/src/</code>; <code>Date.now()</code> in a <code>*.host.e2e.test.ts</code>; <code>new Date()</code> in <code>scripts/verify-auth/</code>; <code>setTimeout</code> in a <code>packages/sign-in-host-node/src/*.unit.spec.ts</code>; <code>performance.now()</code>; <code>new Date(performance.timeOrigin)</code> in a test fixture; <code>process.hrtime()</code>; <code>setInterval</code>; <code>typeof setTimeout</code> in a type.</li>
+  <li><strong>Accepted:</strong> <code>vi.useFakeTimers()</code>, <code>vi.setSystemTime(…)</code>, <code>vi.spyOn(globalThis, 'setInterval')</code>, <code>toFake: ['setTimeout']</code>, <code>new Date(controlledSignInClock.now())</code>.</li>
+  </ul></li>
+<li><strong>The real tree:</strong> the PR's checker, run over the base commit's sign-in tests, reports the five <code>native-browser-protocol.ts</code> bounds (lines 84, 115, 148, 218, 274), plus the pending-call record's <code>readonly timeout: ReturnType&lt;typeof setTimeout&gt;</code> at line 29 (S7's "<code>typeof setTimeout</code> in a type"; the design removes that field), the <code>authorization-fence.host.e2e.test.ts</code> rows (lines 538, 548, 549, 560, 567, 678), and the evidence folder's date in <code>native-browser-scenario.ts:43</code>. Run over the PR's tree, it reports nothing. It's run on the base the same way as <a href="#V4">V4</a>: the PR's script copied into a scratch worktree at <code>f3b2b88b</code>.</li>
+<li><strong>Behaviour:</strong> <code>sign-in-native-browser.host.e2e.test.ts</code> passes on both storage hosts with the event-only protocol helper.</li>
+<li><strong>The fixture's validity:</strong> <code>authorization-fence.host.e2e.test.ts</code> passes with its invitation's expiry taken from the controlled clock.</li>
+<li><strong>Fails on:</strong> a test helper that keeps a <code>setTimeout</code> bound, or a fixture built with <code>Date.now()</code>.</li>
+<li><strong>Reference:</strong> R33 and proof row U25.</li>
+<li><strong>Unverified:</strong> how a genuinely hung Chrome is ended. That's the test runner's job limit, configuration outside test code, and it isn't exercised here.</li>
+</ul>
+
+<h3 id="V7">V7 · The Hegel families (S8)</h3>
+<p><strong>Proven by:</strong> the new token-kind dispatch family agreeing with its model on every generated case, and failing when the code admits a combination the model refuses.</p>
+<ul>
+<li><strong>Test:</strong> new <code>packages/sign-in-test-support/src/core-tests/sign-in-response-release.hegel.unit.test.ts</code> (unit lane), with Hegel <code>derandomize: true</code> and no stored example database. The existing focused tests in <code>core-tests/sign-in-response-release.unit.test.ts</code>, which check response contents and real session removal, keep passing.</li>
+<li><strong>Passes when:</strong> for every generated case, the outcome equals the model's:
+  <ul>
+  <li>whether the release resolved or rejected;</li>
+  <li>for a response, the status, the error code or body, and which sessions were deleted and which people were cleaned up;</li>
+  <li>for a rejection, which cleanups were attempted.</li>
+  </ul>
+  The model is the 20-step decision table and its two rules on the <a href="program-design.html#hegel">Program Design</a>. It covers:
+  <ul>
+  <li>introspection: passed through, <code>{"active": false}</code> including for a malformed body, or the body with <code>checkedAt</code>;</li>
+  <li><code>client_credentials</code>;</li>
+  <li>person tokens for central's admin audience and for the management audience;</li>
+  <li>refresh credentials;</li>
+  <li>a missing or non-string <code>access_token</code>;</li>
+  <li>a thrown read, which decides ahead of later steps;</li>
+  <li>a rejected cleanup, which makes the release itself reject, as today's code does.</li>
+  </ul></li>
+<li><strong>Fails on:</strong> three deliberate mutations, each run by the Verifier on its own and then reverted:
+  <ul>
+  <li>removing the owner-fleet-CLI check on refresh credentials (<code>sign-in-response-release.ts</code>, the <code>ownerFleetCliClientId</code> comparison): Hegel must find a refresh credential released to another client;</li>
+  <li>skipping the introspection check (step 3): Hegel must find an active result that should have become <code>{"active": false}</code>;</li>
+  <li>skipping the cleanup on refusal: Hegel must find a refusal that leaves its issued session behind.</li>
+  </ul>
+  For each, the Verifier keeps the failing run's output, with Hegel's shrunk case, and a passing run after the revert.</li>
+<li><strong>The existing family</strong> (claims round trip, <code>person-identity-contracts.unit.test.ts:118</code>) keeps passing.</li>
+<li><strong>Reference:</strong> R33 and journey SO2's dispatch rows.</li>
+<li><strong>Unverified:</strong> the device-code family (B3).</li>
+</ul>
+
+<h3 id="V8">V8 · "Limited" on Miniflare's real counter; reset on the controlled clock (S9)</h3>
+<p><strong>Proven by:</strong> the over-limit cases passing on Miniflare's real binding, and failing when the binding is taken out.</p>
+<ul>
+<li><strong>Tests:</strong> <code>people-request-limits.host.e2e.test.ts</code>, the cases at lines 96 and 149, now on the real binding, with a second-address check, in <code>pnpm test:e2e:host</code>. The reset is proven on the layers that run on a controlled clock: Better Auth's provider-layer limit (the recovery-code case, lines 173–232, moving the harness clock), and the Node host's fixed-window counter (<code>fixed-window-request-limiter.unit.test.ts</code>).</li>
+<li><strong>Passes when:</strong> from one address, past the limit, the next request gets 429 with <code>Retry-After</code>, and every sign-in row fingerprint reads back unchanged. Another address still passes. A forged <code>x-forwarded-for</code> is ignored.</li>
+<li><strong>Fails on:</strong> two deliberate mutations, each run by the Verifier on its own and then reverted:
+  <ul>
+  <li>the Worker's limiter built without the binding (<code>createBindingRequestLimiter</code> answering allowed): the "limited" case must fail;</li>
+  <li>the binding's key built without the address (<code>key: request.requestClass</code> instead of <code>`${request.requestClass}:${request.address}`</code>, <code>binding-request-limiter.ts</code>): every address then shares one count, so the second-address request must be limited and its assertion must fail.</li>
+  </ul></li>
+<li><strong>The journey still accepts its own run:</strong> the <code>verify-auth</code> <code>people</code> journey runs with a <code>local-workerd</code> target and with a <code>local-node</code> target (<code>pnpm exec tsx scripts/verify-auth/verify-auth.ts people --target-file "$AUTH_VERIFY_TARGET_FILE"</code>). It must be admitted with zero stand-in receipts, and a stand-in receipt must be refused. This proves the driver cutover didn't break it.</li>
+<li><strong>Reference:</strong> R52 and journey SO2's flood paragraph.</li>
+<li><strong>Unverified:</strong>
+  <ul>
+  <li>the binding's own reset, and counting across Cloudflare locations, which are checked on the private stack;</li>
+  <li>the rare case of a burst crossing Miniflare's real-clock window (<a href="decisions.html#flood-clock">Decisions</a>).</li>
+  </ul></li>
+</ul>
+
+<h3 id="V9">V9 · Every stored ID is a UUIDv7 (S10)</h3>
+<p><strong>Proven by:</strong> running the existing all-table, all-text UUID inventory over the people journey, which it doesn't cover today, before and after the member's removal, on both databases. The existing inventory checks keep passing.</p>
+<ul>
+<li><strong>Tests:</strong>
+  <ul>
+  <li>new <code>packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts</code> (host e2e lane), calling <code>readStoredUuidInventory</code> and the per-value non-UUID assertions. It runs twice, because the harness picks one host per run:
+    <ul>
+    <li><code>pnpm test:e2e:host packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts</code> for local workerd with D1 (the default);</li>
+    <li><code>SIGN_IN_TEST_HOST=node pnpm test:e2e:host packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts</code> for Node with better-sqlite3.</li>
+    </ul>
+    The existing <code>sign-in-identifiers.host.e2e.test.ts</code> is run the same two ways.</li>
+  <li>existing: <code>sign-in-identifiers.host.e2e.test.ts</code> (owner and agent), the planted-v4 storage case (<code>storage-case-registry.ts:118–140</code>), and <code>provider-identifier-cases.ts:56–130</code> (the derived key, and replay refused).</li>
+  </ul></li>
+<li><strong>Passes when:</strong>
+  <ul>
+  <li>the eight tables the journey fills (<a href="specification.html#S10">S10</a>) each hold a row before the first inventory;</li>
+  <li>both inventories report no non-v7 UUID;</li>
+  <li>none of these is a UUID of any version: each recovery code the enrolment returns; the stored <code>twoFactor.secret</code> and <code>twoFactor.backupCodes</code>; the stored <code>jwks.privateKey</code>; every <code>session.token</code> (<a href="program-design.html#ids">Program Design</a>);</li>
+  <li>the existing checks still pass;</li>
+  <li>each of the above holds in both runs, and each run's output names its host (<code>cloudflare</code> or <code>node</code>).</li>
+  </ul></li>
+<li><strong>Fails on:</strong> two deliberate mutations, each run by the Verifier on its own and then reverted:
+  <ul>
+  <li>writing a version-4 UUID into a people-journey row's JSON, for example <code>organization.metadata</code>: the inventory must name its table and column;</li>
+  <li>making recovery codes v7 UUIDs, through Better Auth's own option: <code>twoFactor({ allowPasswordless: true, backupCodeOptions: { customBackupCodesGenerate: () => … } })</code> at <code>provider-configuration.ts:461</code>, returning ten v7 UUIDs from the injected ID source. The inventory still passes, because they're v7. The per-value recovery-code assertion must fail.</li>
+  </ul></li>
+<li><strong>Reference:</strong> R32 and proof row U24.</li>
+<li><strong>Unverified:</strong> IDs stored only by flows this journey doesn't reach. Machine login is B3's.</li>
+</ul>
+
+<h3 id="V10">V10 · Today's agents still work; people get no tool credential (S11): a regression check</h3>
+<p><strong>Proven by:</strong> the existing <code>verify-auth</code> <code>agent</code> journey passing on the final build of this feature.</p>
+<ul>
+<li><strong>Command:</strong> <code>pnpm exec tsx scripts/verify-auth/verify-auth.ts agent --target-file "$AUTH_VERIFY_TARGET_FILE"</code>, with a <code>local-workerd</code> target, as the skill describes.</li>
+<li><strong>Passes when:</strong> the agent gets its token, makes one allowed tool call, and a live person is refused a tool credential, with the journey's own storage assertions passing.</li>
+<li><strong>Reference:</strong> R38 and journey SO2.</li>
+<li><strong>Unverified:</strong> the agent path on the Node host, which the journey reaches only through its Node bridge, as today.</li>
+</ul>
+
+<h3 id="V11">V11 · No UUID other than v7 is made, anywhere in the sign-in packages (S12)</h3>
+<p><strong>Proven by:</strong> planting non-v7 UUID mints, in product and test files, and seeing the check reject each one; then running it over the base tree and seeing today's two v4s reported.</p>
+<ul>
+<li><strong>Tests:</strong> new cases in <code>scripts/audit-portal-architecture.unit.test.ts</code>:
+  <ul>
+  <li><strong>Rejected:</strong> <code>crypto.randomUUID()</code> in a <code>*.host.e2e.test.ts</code>; <code>import { randomUUID } from 'node:crypto'</code> in a <code>sign-in-owner-cli</code> test; <code>import { v4 } from 'uuid'</code> in <code>sign-in-test-support</code>; <code>import { v1 as uuid } from 'uuid'</code> in <code>scripts/verify-auth/</code>; an import of another UUID package.</li>
+  <li><strong>Accepted:</strong> <code>import { v7 as uuid7 } from 'uuid'</code> in <code>sign-in-platform-web</code>; <code>platform.ids.nextId()</code>; the text <code>randomUUID</code> inside a string.</li>
+  </ul></li>
+<li><strong>The base tree:</strong> the PR's checker, run over the base commit the same way as <a href="#V4">V4</a>, reports exactly <code>page-document.tsx:181</code> and <code>macos-keychain-proof-key-store.host.e2e.test.ts:1, 17</code>. Over the PR's tree, it reports nothing.</li>
+<li><strong>The keychain test still runs, without the real clock:</strong> on a Mac, <code>macos-keychain-proof-key-store.host.e2e.test.ts</code> passes with its v7 service name. That name comes from <code>createWebSignInCapabilities(keychainTestClock)</code> with the fixed clock. The reviewer reads the test and confirms the builder is never called without a clock, so <code>webClock</code>'s <code>Date.now()</code> is never reached.</li>
+<li><strong>Fails on:</strong> today's checker, which has no UUID rule.</li>
+<li><strong>Reference:</strong> R32 and U24; your 15 Nov restatement.</li>
+<li><strong>Unverified:</strong> the macOS keychain test runs only on a Mac, as today.</li>
+</ul>
+
+<h2 id="u23">The U23 split: what this deliverable proves, and what it leaves</h2>
+<table>
+<thead><tr><th>Part of proof row U23</th><th>Here?</th></tr></thead>
+<tbody>
+<tr><td>Crypto calls recorded; no runtime crypto in the core</td><td>Yes: V2, V4</td></tr>
+<tr><td>Clock, ID and central calls recorded on the same paths; a pinned process clock</td><td>Yes: V2, for the paths it drives</td></tr>
+<tr><td>A Node or Worker import in a core file fails the check</td><td>Yes: V4 (the existing rule, now planted as a case)</td></tr>
+<tr><td>SO2 on both hosts</td><td>Partly: V5 covers the served pages on both hosts, and the organization journey per target. The full SO2 journey set on both hosts belongs with each journey's own deliverable.</td></tr>
+<tr><td>"The device-code approval rule is in the core"</td><td><strong>Not here.</strong> It's about machine login and belongs to B3.</td></tr>
+</tbody>
+</table>
+
+<h2 id="coverage">Coverage, for the Verifier and the reviewer</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Need</th><th>Rules</th><th>Seam (Program Design)</th><th>Checks</th><th>Target</th><th>Passes when</th><th>Unverified</th></tr></thead>
+<tbody>
+<tr><td><strong>U23</strong> one runtime-free core, injected</td><td><a href="specification.html#S1">S1</a>, <a href="specification.html#S2">S2</a>, <a href="specification.html#S3">S3</a>, <a href="specification.html#S5">S5</a>, <a href="specification.html#S6">S6</a></td><td><code>SignInPlatform.crypto</code>, <code>mintPageNonce</code>, the changed functions and props, <code>collectAuthCoreViolations</code></td><td>V1, V2, V3, V4, V5</td><td>switchboard PR head; Node 24.7.0; <code>better-auth</code> 1.7.11; hosts per V5's table; Chrome version recorded</td><td>V1–V4 each failing on their wrong build; V5 passing on its hosts</td><td>Deployed hosts; real central; the parts of U23 named in <a href="#u23">the split</a>; exotic aliasing beyond source reads</td></tr>
+<tr><td><strong>U16</strong> one design on any host</td><td><a href="specification.html#S4">S4</a></td><td><code>createWebSignInCapabilities</code></td><td>V5, the source read, V4's type mutation</td><td>As V5</td><td>The hosts pass with the capability handed in by the shared builder, and add no crypto code</td><td>Deployed hosts</td></tr>
+<tr><td><strong>U25</strong> no wall clock; Hegel</td><td><a href="specification.html#S7">S7</a>, <a href="specification.html#S8">S8</a></td><td>event waits in <code>native-browser-protocol.ts</code>; controlled-clock rows; the test-time rule; the dispatch family</td><td>V6, V7</td><td>Unit lane; host e2e on both storage hosts</td><td>The scan is clean on the PR tree and catches the planted calls; the family matches its model and catches the mutation</td><td>How a hung Chrome is ended (runner configuration); the device-code family (B3)</td></tr>
+<tr><td><strong>U42</strong> flood limits</td><td><a href="specification.html#S9">S9</a></td><td><code>startLocalAuthHarness</code> real binding; <code>createBindingRequestLimiter</code></td><td>V8</td><td>"Limited": local workerd with Miniflare's binding. Reset: Better Auth's provider-layer limit in the host e2e lane, and the Node host's counter in the unit lane</td><td>"Limited" with nothing changed; failing without the binding</td><td>The binding's reset and cross-location counting (private stack); the window-boundary risk</td></tr>
+<tr><td><strong>U24</strong> UUIDv7 only</td><td><a href="specification.html#S10">S10</a>, <a href="specification.html#S12">S12</a></td><td>the existing <code>readStoredUuidInventory</code>, over the people journey; the UUID check in <code>audit-portal-architecture.ts</code></td><td>V9, V11</td><td>Two runs: D1 (default host) and better-sqlite3 (<code>SIGN_IN_TEST_HOST=node</code>)</td><td>Only v7 UUIDs before and after the removal; the expected tables are filled; each named secret is not a UUID; the planted v4 and the v7 recovery code are caught</td><td>Flows the journey doesn't reach (B3)</td></tr>
+<tr><td><strong>R38</strong> agents unchanged</td><td><a href="specification.html#S11">S11</a></td><td>the existing agent path</td><td>V10</td><td><code>local-workerd</code> target</td><td>The agent journey passes on the final build</td><td>The Node bridge path</td></tr>
+</tbody>
+</table></div>
+<p><strong>Journeys needed:</strong> none new. New permanent tests: the recording run (V2), the dispatch family (V7), the ID readback (V9), and the allowed-globals and UUID check cases (V4, V11).</p>
+</ex-document>
+</body>
+</html>

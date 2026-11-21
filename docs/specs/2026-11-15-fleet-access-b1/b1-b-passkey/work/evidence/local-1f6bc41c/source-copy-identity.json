@@ -1,0 +1,34 @@
+{
+  "target": "1f6bc41c75b8d297a2bac87a3b44ff87bfbfdc0e",
+  "sourceRoot": "/Users/shravansunder/code/projects/switchboard.b1b-passkey-sign-in",
+  "scratchRoot": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-b1-b-verifier/target-1f6bc41c",
+  "trackedFilesCompared": 1931,
+  "differences": [],
+  "artifacts": [
+    {
+      "file": "packages/sign-in-core/__generated__/islands/sign-in-pages-island.js",
+      "matching": true,
+      "sha256": "a93f929e02afd0dd3802ee21ffa8dfa03f229a376590678a6ca507a7d1bc0411"
+    },
+    {
+      "file": "packages/sign-in-core/__generated__/sign-in-page-assets.js",
+      "matching": true,
+      "sha256": "a3745d16fe8eab2606f97d6ea4df4711e55f8808b37a4f63f269cd7f68d380a3"
+    },
+    {
+      "file": "packages/sign-in-core/dist/index.js",
+      "matching": true,
+      "sha256": "e74657122792c39d2c15db2ed31ecfc36f31b5e2617216686ca2a0072d039602"
+    },
+    {
+      "file": "packages/auth-ui/dist/index.js",
+      "matching": true,
+      "sha256": "a3895252a8af1b5b5ef05f6b4f18f9c74a54fbab382d6431c9ec66c3e1ed3dcc"
+    },
+    {
+      "file": "pnpm-lock.yaml",
+      "matching": true,
+      "sha256": "0ebdd6ad5300f908b6e266feb699d01f269d6386c5726df9dffc75960f2b7152"
+    }
+  ]
+}

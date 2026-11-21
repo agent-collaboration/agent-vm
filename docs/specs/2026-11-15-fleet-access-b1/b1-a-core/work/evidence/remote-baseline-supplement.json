@@ -1,0 +1,1392 @@
+{
+  "kind": "B1-A final retained general-host baseline supplement",
+  "source": "27d393240b5c31bd1cf7da522de300c0522dd222",
+  "command20": {
+    "command": "mise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:e2e:host --exclude '**/macos-keychain-proof-key-store.host.e2e.test.ts' --reporter=default --reporter=json --outputFile='/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/host-node.vitest.json'",
+    "SIGN_IN_TEST_HOST": "node",
+    "environmentAdmission": {
+      "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+      "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "SIGN_IN_TEST_HOST": "node"
+    },
+    "processReceipt": {
+      "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/20-host-node.process.json",
+      "bytes": 387706,
+      "sha256": "c03268924d8e7a9262591c2fc0cfecbd487826e683232b8206b53544b96e3865"
+    },
+    "exit": 0
+  },
+  "reports": [
+    {
+      "report": {
+        "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/host-cloudflare.vitest.json",
+        "bytes": 207416,
+        "sha256": "f3a08072bfe6d64abee9ca45d580583d5eaa2cd13e092a900dea731a24aabfa7"
+      },
+      "selectedFileRows": [
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/authorization-fence.host.e2e.test.ts",
+          "assertions": [
+            {
+              "name": "authorization fence: native member add, role update, remove, rejoin and leave retain one subject and pending revisions",
+              "status": "passed"
+            },
+            {
+              "name": "authorization fence: public bulk member delete and native organization delete retain inactive pairs and terminal org fences",
+              "status": "passed"
+            },
+            {
+              "name": "authorization fence: single and bulk native session deletion fan out across every retained pair without changing membership state",
+              "status": "passed"
+            },
+            {
+              "name": "authorization fence: zero rows, equal roles and concurrent guarded role predicates produce no invented revisions",
+              "status": "passed"
+            },
+            {
+              "name": "authorization fence: missing retained rows and forced revision overflow roll back native rows and every other fence",
+              "status": "passed"
+            },
+            {
+              "name": "authorization backfill: rows that predate the fence tables are backfilled for their own organization on first use; sign-out and member removal then move exactly their fences",
+              "status": "passed"
+            },
+            {
+              "name": "authorization backfill: a rerun adds nothing and never resets an advanced, inactive, stopped or deleted fence",
+              "status": "passed"
+            },
+            {
+              "name": "authorization backfill: two runs held after reading the same candidates converge on one row per pair",
+              "status": "passed"
+            },
+            {
+              "name": "authorization fence: the production organization routes create and move fences in the batches that write the native rows",
+              "status": "passed"
+            },
+            {
+              "name": "authorization backfill: the workerd deploy step is a server-only management method and idempotent",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/fleet-admin-relay.host.e2e.test.ts",
+          "assertions": [
+            {
+              "name": "relay: non-canonical JSON reaches central byte for byte on all three routes, and each verifies",
+              "status": "passed"
+            },
+            {
+              "name": "relay: a body changed after signing is refused on intent while the original passes; a proof for the relay URL is refused on htu",
+              "status": "passed"
+            },
+            {
+              "name": "relay: a cookie, a Bearer scheme or a missing DPoP proof is refused at the relay with valid inputs, and nothing reaches central",
+              "status": "passed"
+            },
+            {
+              "name": "relay: over an expired stamp renewal cannot replace, the relay answers 503 and reaches no central admin route; once the re-sent stamp lands the same request is relayed",
+              "status": "passed"
+            },
+            {
+              "name": "relay: a renewal central never answers ends at its deadline; with nothing pending the relay over a valid stamp still goes out and over an expired one is withheld (D7)",
+              "status": "passed"
+            },
+            {
+              "name": "central forgot (WS7 R-notdue, R-floors): after central restarts empty, a ready organization that is not due recovers on its next relayed call; one 503, one fresh setup, its floors pushed again, and the retry is answered",
+              "status": "passed"
+            },
+            {
+              "name": "R-retrysignal (relay): after an emptied central recovers, the relayed retry carries the run deadline to the link and is aborted there; the first send carries none",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/fleet-cli.host.e2e.test.ts",
+          "assertions": [
+            {
+              "name": "fleet CLI: loopback sign-in binds the token and refresh credential to the CLI key; commands go through the relay; refresh needs no browser",
+              "status": "passed"
+            },
+            {
+              "name": "fleet CLI: with Keychain custody each fresh store instance (a later CLI run's store over one shared stand-in keychain) refreshes from the credential the previous one rotated, same key, no fallback",
+              "status": "passed"
+            },
+            {
+              "name": "fleet CLI: a refresh with another key is invalid_dpop_proof and leaves the credential usable; after native sign-out the refresh is invalid_grant with no credential",
+              "status": "passed"
+            },
+            {
+              "name": "fleet CLI snapshot probe: once the session row is gone the refresh is invalid_grant with no credential, and the CLI clears its store",
+              "status": "passed"
+            },
+            {
+              "name": "fleet CLI: after a stale factor, a real app confirmation, a same-key refresh and one retry apply once; a cancelled confirmation refreshes and retries nothing",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+          "assertions": [
+            {
+              "name": "people: an unavailable outer backing call returns 503 before native captcha or state effects",
+              "status": "passed"
+            },
+            {
+              "name": "people: changing spoofed XFF leaves native counting on the trusted host address",
+              "status": "passed"
+            },
+            {
+              "name": "people: social starts hit the native limit and the real outer counter (Miniflare binding, Node counter) without more stored effects, and another address still passes",
+              "status": "passed"
+            },
+            {
+              "name": "people: the service own page reaches the real outer counter (Miniflare binding, Node counter) without a write, and another address still passes",
+              "status": "passed"
+            },
+            {
+              "name": "people: five failed recovery codes reach native verification and the sixth is limited without another intent or stamp",
+              "status": "passed"
+            },
+            {
+              "name": "people: the token endpoint counts refused clients and limits the thirty-first request without minting or storing anything",
+              "status": "passed"
+            }
+          ]
+        }
+      ],
+      "skips": []
+    },
+    {
+      "report": {
+        "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/host-node.vitest.json",
+        "bytes": 207336,
+        "sha256": "1ff4ee52b1337a1d15ca1e6680d29ac1df0c54e02fecec9ac995fd1029681e5a"
+      },
+      "selectedFileRows": [
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/authorization-fence.host.e2e.test.ts",
+          "assertions": [
+            {
+              "name": "authorization fence: native member add, role update, remove, rejoin and leave retain one subject and pending revisions",
+              "status": "passed"
+            },
+            {
+              "name": "authorization fence: public bulk member delete and native organization delete retain inactive pairs and terminal org fences",
+              "status": "passed"
+            },
+            {
+              "name": "authorization fence: single and bulk native session deletion fan out across every retained pair without changing membership state",
+              "status": "passed"
+            },
+            {
+              "name": "authorization fence: zero rows, equal roles and concurrent guarded role predicates produce no invented revisions",
+              "status": "passed"
+            },
+            {
+              "name": "authorization fence: missing retained rows and forced revision overflow roll back native rows and every other fence",
+              "status": "passed"
+            },
+            {
+              "name": "authorization backfill: rows that predate the fence tables are backfilled for their own organization on first use; sign-out and member removal then move exactly their fences",
+              "status": "passed"
+            },
+            {
+              "name": "authorization backfill: a rerun adds nothing and never resets an advanced, inactive, stopped or deleted fence",
+              "status": "passed"
+            },
+            {
+              "name": "authorization backfill: two runs held after reading the same candidates converge on one row per pair",
+              "status": "passed"
+            },
+            {
+              "name": "authorization fence: the production organization routes create and move fences in the batches that write the native rows",
+              "status": "passed"
+            },
+            {
+              "name": "authorization backfill: the workerd deploy step is a server-only management method and idempotent",
+              "status": "skipped"
+            }
+          ]
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/fleet-admin-relay.host.e2e.test.ts",
+          "assertions": [
+            {
+              "name": "relay: non-canonical JSON reaches central byte for byte on all three routes, and each verifies",
+              "status": "passed"
+            },
+            {
+              "name": "relay: a body changed after signing is refused on intent while the original passes; a proof for the relay URL is refused on htu",
+              "status": "passed"
+            },
+            {
+              "name": "relay: a cookie, a Bearer scheme or a missing DPoP proof is refused at the relay with valid inputs, and nothing reaches central",
+              "status": "passed"
+            },
+            {
+              "name": "relay: over an expired stamp renewal cannot replace, the relay answers 503 and reaches no central admin route; once the re-sent stamp lands the same request is relayed",
+              "status": "passed"
+            },
+            {
+              "name": "relay: a renewal central never answers ends at its deadline; with nothing pending the relay over a valid stamp still goes out and over an expired one is withheld (D7)",
+              "status": "passed"
+            },
+            {
+              "name": "central forgot (WS7 R-notdue, R-floors): after central restarts empty, a ready organization that is not due recovers on its next relayed call; one 503, one fresh setup, its floors pushed again, and the retry is answered",
+              "status": "passed"
+            },
+            {
+              "name": "R-retrysignal (relay): after an emptied central recovers, the relayed retry carries the run deadline to the link and is aborted there; the first send carries none",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/fleet-cli.host.e2e.test.ts",
+          "assertions": [
+            {
+              "name": "fleet CLI: loopback sign-in binds the token and refresh credential to the CLI key; commands go through the relay; refresh needs no browser",
+              "status": "passed"
+            },
+            {
+              "name": "fleet CLI: with Keychain custody each fresh store instance (a later CLI run's store over one shared stand-in keychain) refreshes from the credential the previous one rotated, same key, no fallback",
+              "status": "passed"
+            },
+            {
+              "name": "fleet CLI: a refresh with another key is invalid_dpop_proof and leaves the credential usable; after native sign-out the refresh is invalid_grant with no credential",
+              "status": "passed"
+            },
+            {
+              "name": "fleet CLI snapshot probe: once the session row is gone the refresh is invalid_grant with no credential, and the CLI clears its store",
+              "status": "passed"
+            },
+            {
+              "name": "fleet CLI: after a stale factor, a real app confirmation, a same-key refresh and one retry apply once; a cancelled confirmation refreshes and retries nothing",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+          "assertions": [
+            {
+              "name": "people: an unavailable outer backing call returns 503 before native captcha or state effects",
+              "status": "passed"
+            },
+            {
+              "name": "people: changing spoofed XFF leaves native counting on the trusted host address",
+              "status": "passed"
+            },
+            {
+              "name": "people: social starts hit the native limit and the real outer counter (Miniflare binding, Node counter) without more stored effects, and another address still passes",
+              "status": "passed"
+            },
+            {
+              "name": "people: the service own page reaches the real outer counter (Miniflare binding, Node counter) without a write, and another address still passes",
+              "status": "passed"
+            },
+            {
+              "name": "people: five failed recovery codes reach native verification and the sixth is limited without another intent or stamp",
+              "status": "passed"
+            },
+            {
+              "name": "people: the token endpoint counts refused clients and limits the thirty-first request without minting or storing anything",
+              "status": "passed"
+            }
+          ]
+        }
+      ],
+      "skips": [
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/authorization-fence.host.e2e.test.ts",
+          "name": "authorization backfill: the workerd deploy step is a server-only management method and idempotent",
+          "status": "skipped",
+          "reason": "Cloudflare workerd deploy caller only; Node startup backfill has separate integration proof."
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/authorization-revision-drain.host.e2e.test.ts",
+          "name": "drain: workerd has no scheduled handler, so no cron can run a drain, backfill or renewal (owner, 12 Nov)",
+          "status": "skipped",
+          "reason": "Cloudflare workerd no-scheduled-handler wiring only; Node wiring has separate integration proof."
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+          "name": "B2e joint journey, Node sign-in + Tokio central at ea030e5135 (under test) provisioning: the owner's new organization is stamped through the real link and central records it once",
+          "status": "skipped",
+          "reason": "B2E_CENTRAL_ARTIFACTS absent; gated joint suite not selected by this packet."
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+          "name": "B2e joint journey, Node sign-in + Tokio central at ea030e5135 (under test) renewal on use: in the 60-day window two concurrent Fleet calls leave one stamp in doubt; both send its exact bytes, central applies it once and answers the replay",
+          "status": "skipped",
+          "reason": "B2E_CENTRAL_ARTIFACTS absent; gated joint suite not selected by this packet."
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+          "name": "B2e joint journey, Node sign-in + Tokio central at ea030e5135 (under test) renewal: two distinct signed proposals name the same digest; central applies the first released and refuses the other as stale, its stamp and records unchanged",
+          "status": "skipped",
+          "reason": "B2E_CENTRAL_ARTIFACTS absent; gated joint suite not selected by this packet."
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+          "name": "B2e joint journey, Node sign-in + Tokio central at ea030e5135 (under test) revision push: removing a member reaches central as an inactive floor, its ACK is recorded, and the pair reads synced",
+          "status": "skipped",
+          "reason": "B2E_CENTRAL_ARTIFACTS absent; gated joint suite not selected by this packet."
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+          "name": "B2e joint journey, Node sign-in + Tokio central at ea030e5135 (under test) lost ACK: central applies the removal but its reply is dropped; the pair stays pending until the next drain at +60 s resends the same bytes",
+          "status": "skipped",
+          "reason": "B2E_CENTRAL_ARTIFACTS absent; gated joint suite not selected by this packet."
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+          "name": "B2e joint journey, Node sign-in + Tokio central at ea030e5135 (under test) admin page: the owner's create, lookup and records apply in central; a member's are refused notPermitted with no effect",
+          "status": "skipped",
+          "reason": "B2E_CENTRAL_ARTIFACTS absent; gated joint suite not selected by this packet."
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+          "name": "B2e joint journey, Node sign-in + Tokio central at ea030e5135 (under test) owner CLI through the relay: create, then a same-key refresh, then lookup, all applied by real central",
+          "status": "skipped",
+          "reason": "B2E_CENTRAL_ARTIFACTS absent; gated joint suite not selected by this packet."
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+          "name": "B2e joint journey, Node sign-in + Tokio central at ea030e5135 (under test) duplicate name from the admin page: central answers nameInUse, the page's one lookup at its own operation finds nothing, and it shows the nameInUse words; workspaces and records are unchanged",
+          "status": "skipped",
+          "reason": "B2E_CENTRAL_ARTIFACTS absent; gated joint suite not selected by this packet."
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+          "name": "B2e joint journey, Node sign-in + Tokio central at ea030e5135 (under test) replay within 24 hours: the same create sent again gets byte-identical bytes back, and central holds one workspace and one workspaceCreated record",
+          "status": "skipped",
+          "reason": "B2E_CENTRAL_ARTIFACTS absent; gated joint suite not selected by this packet."
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+          "name": "B2e joint journey, Node sign-in + Tokio central at ea030e5135 (under test) late retry from the admin page: the first create applies but its reply is lost; past 24 hours the same operation meets nameInUse, one lookup finds its own workspace, and the page reports it created",
+          "status": "skipped",
+          "reason": "B2E_CENTRAL_ARTIFACTS absent; gated joint suite not selected by this packet."
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+          "name": "B2e joint journey, Node sign-in + Tokio central at ea030e5135 (under test) late retry from the owner CLI: the first create applies but its reply is lost; past 24 hours the repeated command meets nameInUse, one lookup finds its own workspace, and the CLI prints \"Workspace created.\"",
+          "status": "skipped",
+          "reason": "B2E_CENTRAL_ARTIFACTS absent; gated joint suite not selected by this packet."
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+          "name": "B2e joint journey, Node sign-in + Tokio central at ea030e5135 (under test) conflict on the admin page: a lost reply keeps the operation; a changed name under it is a conflict with its own words, and the next try applies under a fresh operation",
+          "status": "skipped",
+          "reason": "B2E_CENTRAL_ARTIFACTS absent; gated joint suite not selected by this packet."
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+          "name": "B2e joint journey, Node sign-in + Tokio central at ea030e5135 (under test) drifted and expired stamp (R29, R-adopt): central's digest read answers its expired facts; sign-in adopts them on the stale refusal and releases no push, then its next call replaces central's digest and its push goes out",
+          "status": "skipped",
+          "reason": "B2E_CENTRAL_ARTIFACTS absent; gated joint suite not selected by this packet."
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+          "name": "B2e joint journey, Node sign-in + Tokio central at ea030e5135 (under test) revoked token (native fence, real drain, Rust refusal): after the owner's native sign-out, with the hint's push held, the old token's next relay first delivers the revocation through its own guard, so central refuses it refreshRequired with no effect",
+          "status": "skipped",
+          "reason": "B2E_CENTRAL_ARTIFACTS absent; gated joint suite not selected by this packet."
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+          "name": "B2e joint journey, Node sign-in + Tokio central at ea030e5135 (under test) central restarts empty (WS7 R-notdue, R-floors): the owner's next admin call meets central's 503, sign-in probes none, sets the organization up again, pushes its floors again and the retried call is answered",
+          "status": "skipped",
+          "reason": "B2E_CENTRAL_ARTIFACTS absent; gated joint suite not selected by this packet."
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-joint-journey.host.e2e.test.ts",
+          "name": "B2e joint journey, Node sign-in + Tokio central at ea030e5135 (under test) central restarts empty (WS7 R-push503): a member removed after the restart leaves a pending revision; the owner's next call meets central's 503 on that push, recovers and then goes out, with the removal applied",
+          "status": "skipped",
+          "reason": "B2E_CENTRAL_ARTIFACTS absent; gated joint suite not selected by this packet."
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-launcher-teardown.host.e2e.test.ts",
+          "name": "B2e Tokio launcher teardown a suite whose case never calls close() starts a real launcher through the fixture and leaves it running",
+          "status": "skipped",
+          "reason": "B2E_CENTRAL_ARTIFACTS absent; gated joint suite not selected by this packet."
+        },
+        {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/b2e-launcher-teardown.host.e2e.test.ts",
+          "name": "B2e Tokio launcher teardown that suite's registered teardown ended exactly its launcher before this case ran",
+          "status": "skipped",
+          "reason": "B2E_CENTRAL_ARTIFACTS absent; gated joint suite not selected by this packet."
+        }
+      ]
+    }
+  ],
+  "browserReceipts": [
+    {
+      "receipt": {
+        "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/2030-01-sign-in-native-browser-node-Nus5kc/node-harness-01b8dac5-b400-79b3-9940-123335b60274.json",
+        "bytes": 17616,
+        "sha256": "abb4b9a9ed0acd007b123abdea942d1e3d88efb3b1a6fb9a8c7680ab98c94b64"
+      },
+      "receiptId": "01b8dac5-b400-79b3-9940-123335b60274",
+      "expected": [
+        {
+          "httpMethod": "GET",
+          "path": "/sign-in",
+          "invocationId": "01b8dac5-b400-7abd-83a9-282dcd3ce892",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "3964220ff87215dae70a93cd3786b674ce3542f29e72c45f35f771b5d5b4d8cd",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/assets/sign-in-3fbb1125fa0d96d8.css",
+          "invocationId": "01b8dac5-b400-7317-b735-afae5415d99a",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "3fbb1125fa0d96d82f2d062c11df3a26e2e60129aa3f9a527fb899d896ef9209",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/favicon.ico",
+          "invocationId": "01b8dac5-b400-7db6-b1fe-ec1665981cb6",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "803cb0e9b33bf52c5617f82d9857d432d8b080c0d2adc0a8bf7727bd04547256",
+          "status": 404
+        },
+        {
+          "httpMethod": "POST",
+          "path": "/api/auth/sign-in/social",
+          "invocationId": "01b8dac5-b400-771c-aaf3-3c47a02a1680",
+          "method": "http",
+          "requestHash": "8b4a602986a13a42e39b0902ec17b38dd8e37a8226b814d2e7aedbd4a50d1ad1",
+          "responseHash": "abb95f315277e272e9fe86af68f9039eda7fe3974f628aa78b57c6be2545d964",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/api/auth/callback/google",
+          "invocationId": "01b8dac5-b400-723b-880c-227f1e3ff154",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "status": 302
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/owner-ready",
+          "invocationId": "01b8dac5-b400-7db4-abfa-8e0ca00eb065",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "df0c2a92a66ae2fb9cd2b91106606aafd3aeaae62e6e322acae0951882d4f20f",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/assets/sign-in-pages-674398d5f3e953cb.js",
+          "invocationId": "01b8dac5-b400-7aea-b702-e91c055d18d2",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "674398d5f3e953cb30ef3d6723b416b552efe223e98af915a9bf9c0f89b60e8e",
+          "status": 200
+        },
+        {
+          "httpMethod": "POST",
+          "path": "/api/auth/two-factor/enable",
+          "invocationId": "01b8dac5-b400-78e8-9994-809fb5508b32",
+          "method": "http",
+          "requestHash": "f4458c3b7acfee36c4c39a8be4c1576ec7ca1a6676b8c904c4e215417347c628",
+          "responseHash": "a08126b19834e493a2fc12b1a0ad3f211f952c3f8c51d2fcfc6888e239f8fd3c",
+          "status": 200
+        },
+        {
+          "httpMethod": "POST",
+          "path": "/api/auth/two-factor/verify-totp",
+          "invocationId": "01b8dac5-b400-72b9-a24f-d77281778986",
+          "method": "http",
+          "requestHash": "8e6ca5f3c368e118875736baab22838d9ad195434c747e9cf2b50b6e5c60d0c9",
+          "responseHash": "195b5b7e525fccad86561359657aba2e951808286534dd50b617299c28e89307",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/owner-ready",
+          "invocationId": "01b8dac5-b400-7451-9dd7-90e3f795a8f8",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "659697372af7098c4f4aa667e5ce7c496a6bf6579f7c0ac25af2ef0659e7d9ee",
+          "status": 200
+        },
+        {
+          "httpMethod": "POST",
+          "path": "/__auth-proof/set-clock",
+          "invocationId": "01b8dac5-b400-753a-95fb-44ef19a57600",
+          "method": "http",
+          "requestHash": "f9fc0c87ef20f0527d16de83f6d9c5a4d74d3fed6778a4439f7373be5d1b72f0",
+          "responseHash": "6d1ae346ceee0c91e7377f058d0452b7e9ae92ae3686a538354cfbe1f0d9eb80",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/owner-ready",
+          "invocationId": "01b8dac5-b400-7453-93b3-e49f2005fa89",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "5d2ffdc6ea5b8bbdae57b25a6789e514d37c8d226c75b7bcb1960e9272190100",
+          "status": 200
+        },
+        {
+          "httpMethod": "POST",
+          "path": "/api/auth/two-factor/verify-totp",
+          "invocationId": "01b8dac5-b400-71cf-b2dd-337d042b9dd8",
+          "method": "http",
+          "requestHash": "87f7e7d1b156b5a8e9855aef307f75116451756ee3b8cd14f6651d8faf82aefb",
+          "responseHash": "9f1b69323c9386de4b78514294f92b9617c5817edcb0da4dafbb239ecb4724d4",
+          "status": 401
+        },
+        {
+          "httpMethod": "POST",
+          "path": "/api/auth/two-factor/verify-totp",
+          "invocationId": "01b8dac5-b400-7c0e-a6c0-62bb4d954c89",
+          "method": "http",
+          "requestHash": "f420b307357f573d24d0e67c749850ec025c3fbf7e3eedea41fe2c6fd8b66fcd",
+          "responseHash": "fa96a99bb47e4ecad4f09001bde2e01703c18aa39f1b3c95c1b7a025b81cc8f5",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/owner-ready",
+          "invocationId": "01b8dac5-b400-7660-9b05-12425c5ad4b2",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "3b9b53cd02da98fd84f0c77fdc52bab44defd6d0fa276bc1e63b23e030b768d6",
+          "status": 200
+        },
+        {
+          "httpMethod": "POST",
+          "path": "/api/auth/organization/create",
+          "invocationId": "01b8dac5-b400-7f5c-9964-5d855630ceff",
+          "method": "http",
+          "requestHash": "1bb1e144486a6ce9e66b10f26478d0d722ec180b017b7735ae049c8e8821fc47",
+          "responseHash": "ea796af34c35bd3f1951a1d50a506031c4b5d78a977651327cca33cd87393b0f",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/owner-ready",
+          "invocationId": "01b8dac5-b400-7027-add2-3d7b78d243d7",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "f0a5fa57e35d50d0608680e55afaae2ed39be7c02aad2dd3004dad9f9398bf7f",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/api/auth/passkey/list-user-passkeys",
+          "invocationId": "01b8dac5-b400-7d25-aa55-44345b5af933",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/api/auth/get-session",
+          "invocationId": "01b8dac5-b400-7af5-a8f9-4a05aff64499",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "22e4ced465f58a200288c0288c6b9f588eb7f73303772d3e7fe7431205d6ba4e",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/api/auth/passkey/list-user-passkeys",
+          "invocationId": "01b8dac5-b400-73d2-928e-7bf9905704a2",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "status": 200
+        },
+        {
+          "httpMethod": "POST",
+          "path": "/api/auth/two-factor/generate-backup-codes",
+          "invocationId": "01b8dac5-b400-705c-b729-c9b0dfdd5a2e",
+          "method": "http",
+          "requestHash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "responseHash": "a98bde81af5b921d436bdc618440a55750104a887fa80bc0d55a2aeeb16ae34b",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/owner-ready",
+          "invocationId": "01b8dac5-b400-7747-91ce-ed2dfc45ddc9",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "bf9c65b4542bee3fa173a76f55da1ced872fd1d1a147099df06a211b82d83e2b",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/api/auth/passkey/list-user-passkeys",
+          "invocationId": "01b8dac5-b400-7af4-99ca-42a392be7c2d",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/api/auth/get-session",
+          "invocationId": "01b8dac5-b400-7fc7-9bb8-2e6adafe921f",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "22e4ced465f58a200288c0288c6b9f588eb7f73303772d3e7fe7431205d6ba4e",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/api/auth/passkey/list-user-passkeys",
+          "invocationId": "01b8dac5-b400-7ce0-b3fc-7fb4cb352e3d",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/api/auth/get-session",
+          "invocationId": "01b8dac5-b400-7ceb-bc6e-b9d997c746f4",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "22e4ced465f58a200288c0288c6b9f588eb7f73303772d3e7fe7431205d6ba4e",
+          "status": 200
+        }
+      ],
+      "actual": [
+        {
+          "httpMethod": "GET",
+          "path": "/sign-in",
+          "invocationId": "01b8dac5-b400-7abd-83a9-282dcd3ce892",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "3964220ff87215dae70a93cd3786b674ce3542f29e72c45f35f771b5d5b4d8cd",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/assets/sign-in-3fbb1125fa0d96d8.css",
+          "invocationId": "01b8dac5-b400-7317-b735-afae5415d99a",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "3fbb1125fa0d96d82f2d062c11df3a26e2e60129aa3f9a527fb899d896ef9209",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/favicon.ico",
+          "invocationId": "01b8dac5-b400-7db6-b1fe-ec1665981cb6",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "803cb0e9b33bf52c5617f82d9857d432d8b080c0d2adc0a8bf7727bd04547256",
+          "status": 404
+        },
+        {
+          "httpMethod": "POST",
+          "path": "/api/auth/sign-in/social",
+          "invocationId": "01b8dac5-b400-771c-aaf3-3c47a02a1680",
+          "method": "http",
+          "requestHash": "8b4a602986a13a42e39b0902ec17b38dd8e37a8226b814d2e7aedbd4a50d1ad1",
+          "responseHash": "abb95f315277e272e9fe86af68f9039eda7fe3974f628aa78b57c6be2545d964",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/api/auth/callback/google",
+          "invocationId": "01b8dac5-b400-723b-880c-227f1e3ff154",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "status": 302
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/owner-ready",
+          "invocationId": "01b8dac5-b400-7db4-abfa-8e0ca00eb065",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "df0c2a92a66ae2fb9cd2b91106606aafd3aeaae62e6e322acae0951882d4f20f",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/assets/sign-in-pages-674398d5f3e953cb.js",
+          "invocationId": "01b8dac5-b400-7aea-b702-e91c055d18d2",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "674398d5f3e953cb30ef3d6723b416b552efe223e98af915a9bf9c0f89b60e8e",
+          "status": 200
+        },
+        {
+          "httpMethod": "POST",
+          "path": "/api/auth/two-factor/enable",
+          "invocationId": "01b8dac5-b400-78e8-9994-809fb5508b32",
+          "method": "http",
+          "requestHash": "f4458c3b7acfee36c4c39a8be4c1576ec7ca1a6676b8c904c4e215417347c628",
+          "responseHash": "a08126b19834e493a2fc12b1a0ad3f211f952c3f8c51d2fcfc6888e239f8fd3c",
+          "status": 200
+        },
+        {
+          "httpMethod": "POST",
+          "path": "/api/auth/two-factor/verify-totp",
+          "invocationId": "01b8dac5-b400-72b9-a24f-d77281778986",
+          "method": "http",
+          "requestHash": "8e6ca5f3c368e118875736baab22838d9ad195434c747e9cf2b50b6e5c60d0c9",
+          "responseHash": "195b5b7e525fccad86561359657aba2e951808286534dd50b617299c28e89307",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/owner-ready",
+          "invocationId": "01b8dac5-b400-7451-9dd7-90e3f795a8f8",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "659697372af7098c4f4aa667e5ce7c496a6bf6579f7c0ac25af2ef0659e7d9ee",
+          "status": 200
+        },
+        {
+          "httpMethod": "POST",
+          "path": "/__auth-proof/set-clock",
+          "invocationId": "01b8dac5-b400-753a-95fb-44ef19a57600",
+          "method": "http",
+          "requestHash": "f9fc0c87ef20f0527d16de83f6d9c5a4d74d3fed6778a4439f7373be5d1b72f0",
+          "responseHash": "6d1ae346ceee0c91e7377f058d0452b7e9ae92ae3686a538354cfbe1f0d9eb80",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/owner-ready",
+          "invocationId": "01b8dac5-b400-7453-93b3-e49f2005fa89",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "5d2ffdc6ea5b8bbdae57b25a6789e514d37c8d226c75b7bcb1960e9272190100",
+          "status": 200
+        },
+        {
+          "httpMethod": "POST",
+          "path": "/api/auth/two-factor/verify-totp",
+          "invocationId": "01b8dac5-b400-71cf-b2dd-337d042b9dd8",
+          "method": "http",
+          "requestHash": "87f7e7d1b156b5a8e9855aef307f75116451756ee3b8cd14f6651d8faf82aefb",
+          "responseHash": "9f1b69323c9386de4b78514294f92b9617c5817edcb0da4dafbb239ecb4724d4",
+          "status": 401
+        },
+        {
+          "httpMethod": "POST",
+          "path": "/api/auth/two-factor/verify-totp",
+          "invocationId": "01b8dac5-b400-7c0e-a6c0-62bb4d954c89",
+          "method": "http",
+          "requestHash": "f420b307357f573d24d0e67c749850ec025c3fbf7e3eedea41fe2c6fd8b66fcd",
+          "responseHash": "fa96a99bb47e4ecad4f09001bde2e01703c18aa39f1b3c95c1b7a025b81cc8f5",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/owner-ready",
+          "invocationId": "01b8dac5-b400-7660-9b05-12425c5ad4b2",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "3b9b53cd02da98fd84f0c77fdc52bab44defd6d0fa276bc1e63b23e030b768d6",
+          "status": 200
+        },
+        {
+          "httpMethod": "POST",
+          "path": "/api/auth/organization/create",
+          "invocationId": "01b8dac5-b400-7f5c-9964-5d855630ceff",
+          "method": "http",
+          "requestHash": "1bb1e144486a6ce9e66b10f26478d0d722ec180b017b7735ae049c8e8821fc47",
+          "responseHash": "ea796af34c35bd3f1951a1d50a506031c4b5d78a977651327cca33cd87393b0f",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/owner-ready",
+          "invocationId": "01b8dac5-b400-7027-add2-3d7b78d243d7",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "f0a5fa57e35d50d0608680e55afaae2ed39be7c02aad2dd3004dad9f9398bf7f",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/api/auth/passkey/list-user-passkeys",
+          "invocationId": "01b8dac5-b400-7d25-aa55-44345b5af933",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/api/auth/get-session",
+          "invocationId": "01b8dac5-b400-7af5-a8f9-4a05aff64499",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "22e4ced465f58a200288c0288c6b9f588eb7f73303772d3e7fe7431205d6ba4e",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/api/auth/passkey/list-user-passkeys",
+          "invocationId": "01b8dac5-b400-73d2-928e-7bf9905704a2",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "status": 200
+        },
+        {
+          "httpMethod": "POST",
+          "path": "/api/auth/two-factor/generate-backup-codes",
+          "invocationId": "01b8dac5-b400-705c-b729-c9b0dfdd5a2e",
+          "method": "http",
+          "requestHash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "responseHash": "a98bde81af5b921d436bdc618440a55750104a887fa80bc0d55a2aeeb16ae34b",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/owner-ready",
+          "invocationId": "01b8dac5-b400-7747-91ce-ed2dfc45ddc9",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "bf9c65b4542bee3fa173a76f55da1ced872fd1d1a147099df06a211b82d83e2b",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/api/auth/passkey/list-user-passkeys",
+          "invocationId": "01b8dac5-b400-7af4-99ca-42a392be7c2d",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/api/auth/get-session",
+          "invocationId": "01b8dac5-b400-7fc7-9bb8-2e6adafe921f",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "22e4ced465f58a200288c0288c6b9f588eb7f73303772d3e7fe7431205d6ba4e",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/api/auth/passkey/list-user-passkeys",
+          "invocationId": "01b8dac5-b400-7ce0-b3fc-7fb4cb352e3d",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/api/auth/get-session",
+          "invocationId": "01b8dac5-b400-7ceb-bc6e-b9d997c746f4",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "22e4ced465f58a200288c0288c6b9f588eb7f73303772d3e7fe7431205d6ba4e",
+          "status": 200
+        }
+      ]
+    },
+    {
+      "receipt": {
+        "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/2030-01-sign-in-native-browser-node-svVSqS/node-harness-01b8dac5-b400-75e6-9857-d2c8c0977aba.json",
+        "bytes": 17616,
+        "sha256": "0da74baba19049ad2d8dd5eb698aa60d578533c694d9226ee7db627941203728"
+      },
+      "receiptId": "01b8dac5-b400-75e6-9857-d2c8c0977aba",
+      "expected": [
+        {
+          "httpMethod": "GET",
+          "path": "/sign-in",
+          "invocationId": "01b8dac5-b400-7ba2-9c32-fe0c6b6551f9",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "d3dab108e61518a6a50bc929b4001fe8cc37d1e674c543c757a734234760d639",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/assets/sign-in-3fbb1125fa0d96d8.css",
+          "invocationId": "01b8dac5-b400-73c9-b18d-438e93d70929",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "3fbb1125fa0d96d82f2d062c11df3a26e2e60129aa3f9a527fb899d896ef9209",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/favicon.ico",
+          "invocationId": "01b8dac5-b400-77f7-a4a3-0d8b3077f58a",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "803cb0e9b33bf52c5617f82d9857d432d8b080c0d2adc0a8bf7727bd04547256",
+          "status": 404
+        },
+        {
+          "httpMethod": "POST",
+          "path": "/api/auth/sign-in/social",
+          "invocationId": "01b8dac5-b400-7141-9873-99ef31375257",
+          "method": "http",
+          "requestHash": "9fc8a4398ae6c6298da0083b447b962247c2e8f771dcc241953814c8443b0e5e",
+          "responseHash": "9107876f93a28589a33cd5477bd3abf44f424cf2c15c6e2996800c307214918f",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/api/auth/callback/google",
+          "invocationId": "01b8dac5-b400-7394-8ecf-7353b1993ed7",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "status": 302
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/owner-ready",
+          "invocationId": "01b8dac5-b400-776b-bc3d-032d38c0a420",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "a4d48603b1982c1122b0ac9991443076668373abe47de3faf27020a6561e7df6",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/assets/sign-in-pages-674398d5f3e953cb.js",
+          "invocationId": "01b8dac5-b400-7d52-bba9-f279ec76a7c0",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "674398d5f3e953cb30ef3d6723b416b552efe223e98af915a9bf9c0f89b60e8e",
+          "status": 200
+        },
+        {
+          "httpMethod": "POST",
+          "path": "/api/auth/two-factor/enable",
+          "invocationId": "01b8dac5-b400-7c3c-b0f0-185f7070ffa4",
+          "method": "http",
+          "requestHash": "f4458c3b7acfee36c4c39a8be4c1576ec7ca1a6676b8c904c4e215417347c628",
+          "responseHash": "e062318fa8ff90f8648c3cee3ea3984ecc38551f471142ab8e7edc70203c063b",
+          "status": 200
+        },
+        {
+          "httpMethod": "POST",
+          "path": "/api/auth/two-factor/verify-totp",
+          "invocationId": "01b8dac5-b400-70bf-9aaa-0b4c52b9a3d7",
+          "method": "http",
+          "requestHash": "7fd5cd79239647b946a4cf69e535734b3c774d640a9ba75e65f4628a6079376e",
+          "responseHash": "f2b4a2f340ec400bb5b0b24693a184eabceb07729525170f03825dce759598eb",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/owner-ready",
+          "invocationId": "01b8dac5-b400-76e8-bc20-e7de10bee65e",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "67f673387d2053e97af12c869ab8827e263db667e4567a738906f836bab5e333",
+          "status": 200
+        },
+        {
+          "httpMethod": "POST",
+          "path": "/__auth-proof/set-clock",
+          "invocationId": "01b8dac5-b400-7923-b538-f2176fcfed0a",
+          "method": "http",
+          "requestHash": "f9fc0c87ef20f0527d16de83f6d9c5a4d74d3fed6778a4439f7373be5d1b72f0",
+          "responseHash": "6d1ae346ceee0c91e7377f058d0452b7e9ae92ae3686a538354cfbe1f0d9eb80",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/owner-ready",
+          "invocationId": "01b8dac5-b400-7038-a632-279823c057a1",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "cdfe3e2c5c1c6408ab9d3e5697b4f4b1d4443c605854c0cf6d64d59979816fe3",
+          "status": 200
+        },
+        {
+          "httpMethod": "POST",
+          "path": "/api/auth/two-factor/verify-totp",
+          "invocationId": "01b8dac5-b400-7235-b3e8-c1ff0ff625d1",
+          "method": "http",
+          "requestHash": "87f7e7d1b156b5a8e9855aef307f75116451756ee3b8cd14f6651d8faf82aefb",
+          "responseHash": "9f1b69323c9386de4b78514294f92b9617c5817edcb0da4dafbb239ecb4724d4",
+          "status": 401
+        },
+        {
+          "httpMethod": "POST",
+          "path": "/api/auth/two-factor/verify-totp",
+          "invocationId": "01b8dac5-b400-7d8e-84c5-f313df4a8bba",
+          "method": "http",
+          "requestHash": "f292fadc0baf4c9a5d060a12f683e42d4bac57a9740821f6dc45961330d6969d",
+          "responseHash": "eb389d3630c8530c9cdc41acf8f71db87c62bdf4b429864f1804c2e7e4d3072f",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/owner-ready",
+          "invocationId": "01b8dac5-b400-7457-80d1-cc48ab9cac03",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "5880402381560921732ec23df13dfad63f762fb89786b754b70c488e8ff8f916",
+          "status": 200
+        },
+        {
+          "httpMethod": "POST",
+          "path": "/api/auth/organization/create",
+          "invocationId": "01b8dac5-b400-7011-b6d5-786f2bd52125",
+          "method": "http",
+          "requestHash": "1bb1e144486a6ce9e66b10f26478d0d722ec180b017b7735ae049c8e8821fc47",
+          "responseHash": "9ed1bb8bba1b438b7bda696b6142828e5ffb72132dd46eff3f1d8e25774df63c",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/owner-ready",
+          "invocationId": "01b8dac5-b400-7221-85d4-7de9a94c607a",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "c28928f9acdd56bb719310ea655c99b88cfd1c614c62a8c7f70d0b261ad5fa2b",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/api/auth/passkey/list-user-passkeys",
+          "invocationId": "01b8dac5-b400-733b-bb11-66b0c359efe0",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/api/auth/get-session",
+          "invocationId": "01b8dac5-b400-7a56-8759-c0cc76cf9e76",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "00f99402822e160a1cb1ff8041adcde3e6210b3d5cfba660e407c83fb4498f3f",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/api/auth/passkey/list-user-passkeys",
+          "invocationId": "01b8dac5-b400-7f27-9341-745190a50293",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "status": 200
+        },
+        {
+          "httpMethod": "POST",
+          "path": "/api/auth/two-factor/generate-backup-codes",
+          "invocationId": "01b8dac5-b400-731f-83d3-8570ea5f2d3d",
+          "method": "http",
+          "requestHash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "responseHash": "af3d52fd439e24a96c04316ffbfb3f8ed49dfbea7fe3f00ca5daf11aa2e48100",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/owner-ready",
+          "invocationId": "01b8dac5-b400-7e18-9a05-dabbf02d5e10",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "24cfce03f9f38819adb91dc73c5ba5993682a0659c399293a43be226c39f9b5a",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/api/auth/passkey/list-user-passkeys",
+          "invocationId": "01b8dac5-b400-7fa2-8f4c-c97684001184",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/api/auth/get-session",
+          "invocationId": "01b8dac5-b400-70d6-9570-05ceda75c921",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "00f99402822e160a1cb1ff8041adcde3e6210b3d5cfba660e407c83fb4498f3f",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/api/auth/passkey/list-user-passkeys",
+          "invocationId": "01b8dac5-b400-7c42-8e00-1a2c00c7b999",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/api/auth/get-session",
+          "invocationId": "01b8dac5-b400-7a8b-a789-90f0138abb20",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "00f99402822e160a1cb1ff8041adcde3e6210b3d5cfba660e407c83fb4498f3f",
+          "status": 200
+        }
+      ],
+      "actual": [
+        {
+          "httpMethod": "GET",
+          "path": "/sign-in",
+          "invocationId": "01b8dac5-b400-7ba2-9c32-fe0c6b6551f9",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "d3dab108e61518a6a50bc929b4001fe8cc37d1e674c543c757a734234760d639",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/assets/sign-in-3fbb1125fa0d96d8.css",
+          "invocationId": "01b8dac5-b400-73c9-b18d-438e93d70929",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "3fbb1125fa0d96d82f2d062c11df3a26e2e60129aa3f9a527fb899d896ef9209",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/favicon.ico",
+          "invocationId": "01b8dac5-b400-77f7-a4a3-0d8b3077f58a",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "803cb0e9b33bf52c5617f82d9857d432d8b080c0d2adc0a8bf7727bd04547256",
+          "status": 404
+        },
+        {
+          "httpMethod": "POST",
+          "path": "/api/auth/sign-in/social",
+          "invocationId": "01b8dac5-b400-7141-9873-99ef31375257",
+          "method": "http",
+          "requestHash": "9fc8a4398ae6c6298da0083b447b962247c2e8f771dcc241953814c8443b0e5e",
+          "responseHash": "9107876f93a28589a33cd5477bd3abf44f424cf2c15c6e2996800c307214918f",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/api/auth/callback/google",
+          "invocationId": "01b8dac5-b400-7394-8ecf-7353b1993ed7",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "status": 302
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/owner-ready",
+          "invocationId": "01b8dac5-b400-776b-bc3d-032d38c0a420",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "a4d48603b1982c1122b0ac9991443076668373abe47de3faf27020a6561e7df6",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/assets/sign-in-pages-674398d5f3e953cb.js",
+          "invocationId": "01b8dac5-b400-7d52-bba9-f279ec76a7c0",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "674398d5f3e953cb30ef3d6723b416b552efe223e98af915a9bf9c0f89b60e8e",
+          "status": 200
+        },
+        {
+          "httpMethod": "POST",
+          "path": "/api/auth/two-factor/enable",
+          "invocationId": "01b8dac5-b400-7c3c-b0f0-185f7070ffa4",
+          "method": "http",
+          "requestHash": "f4458c3b7acfee36c4c39a8be4c1576ec7ca1a6676b8c904c4e215417347c628",
+          "responseHash": "e062318fa8ff90f8648c3cee3ea3984ecc38551f471142ab8e7edc70203c063b",
+          "status": 200
+        },
+        {
+          "httpMethod": "POST",
+          "path": "/api/auth/two-factor/verify-totp",
+          "invocationId": "01b8dac5-b400-70bf-9aaa-0b4c52b9a3d7",
+          "method": "http",
+          "requestHash": "7fd5cd79239647b946a4cf69e535734b3c774d640a9ba75e65f4628a6079376e",
+          "responseHash": "f2b4a2f340ec400bb5b0b24693a184eabceb07729525170f03825dce759598eb",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/owner-ready",
+          "invocationId": "01b8dac5-b400-76e8-bc20-e7de10bee65e",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "67f673387d2053e97af12c869ab8827e263db667e4567a738906f836bab5e333",
+          "status": 200
+        },
+        {
+          "httpMethod": "POST",
+          "path": "/__auth-proof/set-clock",
+          "invocationId": "01b8dac5-b400-7923-b538-f2176fcfed0a",
+          "method": "http",
+          "requestHash": "f9fc0c87ef20f0527d16de83f6d9c5a4d74d3fed6778a4439f7373be5d1b72f0",
+          "responseHash": "6d1ae346ceee0c91e7377f058d0452b7e9ae92ae3686a538354cfbe1f0d9eb80",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/owner-ready",
+          "invocationId": "01b8dac5-b400-7038-a632-279823c057a1",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "cdfe3e2c5c1c6408ab9d3e5697b4f4b1d4443c605854c0cf6d64d59979816fe3",
+          "status": 200
+        },
+        {
+          "httpMethod": "POST",
+          "path": "/api/auth/two-factor/verify-totp",
+          "invocationId": "01b8dac5-b400-7235-b3e8-c1ff0ff625d1",
+          "method": "http",
+          "requestHash": "87f7e7d1b156b5a8e9855aef307f75116451756ee3b8cd14f6651d8faf82aefb",
+          "responseHash": "9f1b69323c9386de4b78514294f92b9617c5817edcb0da4dafbb239ecb4724d4",
+          "status": 401
+        },
+        {
+          "httpMethod": "POST",
+          "path": "/api/auth/two-factor/verify-totp",
+          "invocationId": "01b8dac5-b400-7d8e-84c5-f313df4a8bba",
+          "method": "http",
+          "requestHash": "f292fadc0baf4c9a5d060a12f683e42d4bac57a9740821f6dc45961330d6969d",
+          "responseHash": "eb389d3630c8530c9cdc41acf8f71db87c62bdf4b429864f1804c2e7e4d3072f",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/owner-ready",
+          "invocationId": "01b8dac5-b400-7457-80d1-cc48ab9cac03",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "5880402381560921732ec23df13dfad63f762fb89786b754b70c488e8ff8f916",
+          "status": 200
+        },
+        {
+          "httpMethod": "POST",
+          "path": "/api/auth/organization/create",
+          "invocationId": "01b8dac5-b400-7011-b6d5-786f2bd52125",
+          "method": "http",
+          "requestHash": "1bb1e144486a6ce9e66b10f26478d0d722ec180b017b7735ae049c8e8821fc47",
+          "responseHash": "9ed1bb8bba1b438b7bda696b6142828e5ffb72132dd46eff3f1d8e25774df63c",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/owner-ready",
+          "invocationId": "01b8dac5-b400-7221-85d4-7de9a94c607a",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "c28928f9acdd56bb719310ea655c99b88cfd1c614c62a8c7f70d0b261ad5fa2b",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/api/auth/passkey/list-user-passkeys",
+          "invocationId": "01b8dac5-b400-733b-bb11-66b0c359efe0",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/api/auth/get-session",
+          "invocationId": "01b8dac5-b400-7a56-8759-c0cc76cf9e76",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "00f99402822e160a1cb1ff8041adcde3e6210b3d5cfba660e407c83fb4498f3f",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/api/auth/passkey/list-user-passkeys",
+          "invocationId": "01b8dac5-b400-7f27-9341-745190a50293",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "status": 200
+        },
+        {
+          "httpMethod": "POST",
+          "path": "/api/auth/two-factor/generate-backup-codes",
+          "invocationId": "01b8dac5-b400-731f-83d3-8570ea5f2d3d",
+          "method": "http",
+          "requestHash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "responseHash": "af3d52fd439e24a96c04316ffbfb3f8ed49dfbea7fe3f00ca5daf11aa2e48100",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/owner-ready",
+          "invocationId": "01b8dac5-b400-7e18-9a05-dabbf02d5e10",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "24cfce03f9f38819adb91dc73c5ba5993682a0659c399293a43be226c39f9b5a",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/api/auth/passkey/list-user-passkeys",
+          "invocationId": "01b8dac5-b400-7fa2-8f4c-c97684001184",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/api/auth/get-session",
+          "invocationId": "01b8dac5-b400-70d6-9570-05ceda75c921",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "00f99402822e160a1cb1ff8041adcde3e6210b3d5cfba660e407c83fb4498f3f",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/api/auth/passkey/list-user-passkeys",
+          "invocationId": "01b8dac5-b400-7c42-8e00-1a2c00c7b999",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "status": 200
+        },
+        {
+          "httpMethod": "GET",
+          "path": "/api/auth/get-session",
+          "invocationId": "01b8dac5-b400-7a8b-a789-90f0138abb20",
+          "method": "http",
+          "requestHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "responseHash": "00f99402822e160a1cb1ff8041adcde3e6210b3d5cfba660e407c83fb4498f3f",
+          "status": 200
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "No request contents, headers, credentials, screenshots or raw database values included.",
+    "No new runs; remaining journey and sensitivity outcomes separate."
+  ]
+}

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B2 · Central organizations · Plan</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>B2 · Central organizations: Plan</h1>
+<p>Four packets. <strong>Starts only when B1-A is merged, Lead A's directory-read slice, engine deliverable 1 and the central slice after it (including the bounded Cloudflare key fetch, 10 s) are merged with their artifacts, you have confirmed the lost-reply window and answered whether rule 6's Central restart stays, I have removed the unchosen branches and had the pages rechecked, and you give the go-ahead.</strong></p>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What to check" tone="note" icon="shield-check">
+<p>The two Central dependencies are named exactly. Production steps (key withdrawal, running the digest roll in production) are yours.</p>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p>Packets follow the recommendations; another answer changes the steps listed under Branch notes on Program Design.</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>The Reviewer judges against your words and the approved B2, never this plan.</p>
+</ex-callout>
+
+<h2 id="deps">Order and dependencies</h2>
+<ex-mermaid id="deps-picture" label="B2 dependencies" data-width="canvas"><script type="text/plain">
+flowchart TB
+  b1a["B1-A merged"] --> go["Your go-ahead"]
+  dir["Lead A: workspace directory read merged, artifacts exported"] --> go
+  eng["Lead A: engine deliverable 1 merged"] --> go
+  answers["Your lost-reply yes and rule 6 answer"] --> go
+  go --> build["Implementer"]
+  build --> verify["Verifier, both pairings, Sunclaw"]
+  verify --> review["Reviewer"]
+  review --> accept["Lead acceptance"]
+  class b1a,dir,eng,answers slot1
+  class build slot2
+  class verify,review slot4
+  class accept slot6
+</script></ex-mermaid>
+<p><strong>Code:</strong> a new Agent Studio worktree of <code>/Users/shravansunder/code/projects/switchboard</code> from <code>main</code> after B1-A (and B1-C if merged). <strong>Hand-back:</strong> <code>docs/specs/2026-11-15-fleet-access-b2-central/work/</code>. I fill the pair's addresses and the pinned Central artifacts in <code>work/commission.md</code> first.</p>
+
+<h2 id="implementer">Packet 1 · Implementer</h2>
+<p><strong>Read the whole design first.</strong> All seven pages: Audit, Requirements, Specification, Program Design, Verification Design, this Plan and Decisions. Also the approved B2 deliverable, Lead A's directory contract and engine P8, and Switchboard's <code>AGENTS.md</code>. The design pages are the authority. The steps below are a checklist pointing into them, not a replacement. Where a step and the design differ, the design wins: stop and ask me.</p>
+<ol>
+<li><strong>Client.</strong> <code>ListWorkspaces</code>, page checks and the corruption body in <code>central-link/fleet-admin-client.ts</code>; widen record kinds and origins.</li>
+<li><strong>Forwarding.</strong> Add <code>ListWorkspaces</code>; attach <code>nextOperationId</code> from <code>platform.ids.nextId()</code> on definite <code>nameInUse</code>/<code>conflict</code>.</li>
+<li><strong>Status.</strong> <code>better-auth/organization-status.ts</code> with the strict reply; permission <code>organization:view</code>.</li>
+<li><strong>Page.</strong> Replace <code>organization-admin-page.ts</code> with <code>pages/organization-admin-page.tsx</code> and <code>pages/islands/organization-admin.tsx</code>; shipped <code>ConfirmSecondFactorStep</code>; delete the inline script and <code>freshOperationId</code>.</li>
+<li><strong>Machines.</strong> <code>organization-setup-transitions.ts</code> (M1), <code>organization-stamp-transitions.ts</code> (M2: move <code>decideOrganizationStampStep</code>, add <code>settleStampAnswer</code>), <code>key-retirement-transitions.ts</code> (M3), M4 in the island module. Turn the existing provisioning, renewal and key-change code into their runners, keeping every existing conditional-write guard; the only addition is the current-key condition below.</li>
+<li><strong>Engine permission.</strong> Add <code>organization:repairWork</code> to the owner; new refusals; digest test; <code>organizations/policy-digest-roll.ts</code> (M5) with its conditional fence write and report.</li>
+<li><strong>Maintenance entry (hidden owner-only page, your pick):</strong> the concealment gate in <code>sign-in-http-handler.ts</code>'s outer handler, before route matching; <code>better-auth/maintenance-plugin.ts</code> and <code>pages/maintenance-page.tsx</code>; <code>storage/maintenance-audit.ts</code> over the existing <code>sign_in_audit</code> table; <code>better-auth/sign-in-maintenance.ts</code>; the explicit <code>signingKeyId</code> override through <code>organization-statement-signing.ts</code>; retained-versus-published key checks; the current-key condition (Rotation with no pause, below). A test-only <code>holdNextReply</code> in <code>b2e/link-fault-proxy.ts</code> and separable joint clocks for V6.</li>
+<li><strong>Tests.</strong> Every file in V1–V10; move joint pins to Lead A's final artifacts; run each wrong build to red and back.</li>
+<li><strong>Gates and PR</strong> (below), on Sunclaw. One draft PR.</li>
+</ol>
+<p><strong>Rotation with no pause (S12, your pick):</strong> add the current-key condition (statement key ID equals Better Auth's newest live <code>jwks</code> key) to <code>claimSentStamp</code> only; confirmation, seeding and recorded tries stay unconditional. Add <code>prepare</code>'s <code>new-key-not-current</code> refusal. No new table, setting or migration. <strong>May not change:</strong> any migration or schema, Better Auth, Central's code, token formats, CI or check scripts. <strong>Stop</strong> if a Central artifact differs from the agreed contract, or proof would weaken. <strong>Return</strong> <code>work/implementer-handback.md</code> with heads, files, commands, counts, exits, red and green receipts, and anything unobserved.</p>
+
+<h2 id="verifier">Packet 2 · Verifier</h2>
+<p>Read all seven design pages first. Observe V1–V10 on the frozen head, on both pairings and in real Chrome. Expected results come from the Specification, the Verification Design and the approved rows, never from the Implementer's summary. Never repair product code. <strong>Return</strong> <code>work/verifier-observation.md</code> and <code>work/evidence/</code>. Unverified always includes hosted bindings, staging and production.</p>
+
+<h2 id="reviewer">Packet 3 · Reviewer</h2>
+<p>Fresh, independent. Inputs are the whole design except this Plan: <code>audit.html</code>, <code>requirements.html</code>, <code>specification.html</code>, <code>program-design.html</code>, <code>verification-design.html</code> and <code>decisions.html</code>. Also the approved B2 deliverable, the approved Requirements and Specification, Lead A's directory contract and engine P8, the PR and the evidence. First question: what does this drop compared with your words, the approved rows, or the existing code and tests? Then follow each request to Central and back, the late-answer settlement, key retirement's finish condition, and the digest roll. <strong>Return</strong> <code>work/reviewer-report.html</code>, READY or NOT READY.</p>
+
+<h2 id="acceptance">Packet 4 · Lead acceptance</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Rule</th><th>Evidence I open</th><th>State</th></tr></thead>
+<tbody>
+<tr><td>S1</td><td>V1 on both pairings</td><td>Not started</td></tr>
+<tr><td>S2, S3</td><td>V2 insert-failure and refusals</td><td>Not started</td></tr>
+<tr><td>S4, S5</td><td>V3 dropped replies; your answer</td><td>Awaiting your answer</td></tr>
+<tr><td>S6, S7</td><td>V4 130 workspaces, 230 records, all kinds</td><td>Not started</td></tr>
+<tr><td>S8, S9</td><td>V5 browser and status</td><td>Not started</td></tr>
+<tr><td>S10</td><td>V6 late answers</td><td>Not started</td></tr>
+<tr><td>S11, S12</td><td>V7 real keys, no pause, late old-key writes refused; restart pending your word on rule 6</td><td>Not started</td></tr>
+<tr><td>S15</td><td>V8</td><td>Not started</td></tr>
+<tr><td>S13, S14, S16</td><td>V9, V10, gates, CI</td><td>Not started</td></tr>
+</tbody></table></div>
+
+<h2 id="gates">Gates</h2>
+<ex-code lang="sh" title="Sunclaw"><script type="text/plain">
+pnpm install --frozen-lockfile
+pnpm build
+pnpm check
+pnpm test:unit
+pnpm test:integration
+pnpm test:e2e:host
+SIGN_IN_TEST_HOST=node pnpm test:e2e:host
+B2E_CENTRAL_ARTIFACTS=<dir> B2E_CENTRAL_CHECKOUT=<codex-router checkout> pnpm test:e2e:host
+SIGN_IN_TEST_HOST=node B2E_CENTRAL_ARTIFACTS=<dir> B2E_CENTRAL_NODE=<path> pnpm test:e2e:host
+</script></ex-code>
+<p>The <code>B2E_CENTRAL_*</code> variables are the joint fixture's existing inputs (<code>b2e-joint-journey.host.e2e.test.ts</code>, <code>test-fixtures/b2e/</code>); without them the joint cases skip, and a skip is not a pass. Production: you withdraw the old key and run the maintenance operations; I prepare the exact commands for you.</p>
+</ex-document>
+</body>
+</html>

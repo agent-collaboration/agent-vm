@@ -1,0 +1,10 @@
+--- packages/sign-in-test-support/src/test-fixtures/native-browser-protocol.ts
++++ packages/sign-in-test-support/src/test-fixtures/native-browser-protocol.ts
+@@ -81,6 +81,7 @@
+ 
+ 	static async connect(url: string): Promise<ChromeProtocol> {
+ 		const socket = new WebSocket(url);
++		setTimeout(() => socket.close(), 20_000);
+ 		await new Promise<void>((resolve, reject): void => {
+ 			socket.addEventListener('open', (): void => resolve(), { once: true });
+ 			socket.addEventListener(

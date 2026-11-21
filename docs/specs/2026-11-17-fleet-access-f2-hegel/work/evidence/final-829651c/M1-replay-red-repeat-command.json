@@ -1,0 +1,23 @@
+{
+  "phase": "red-repeat",
+  "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+  "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-829651c",
+  "command": [
+    "pnpm",
+    "exec",
+    "vitest",
+    "run",
+    "--project",
+    "integration",
+    "packages/tool-host-core/src/workspace-authority/approval-token-replay.hegel.integration.test.ts",
+    "--testNamePattern",
+    "models replay, expiry pruning and each capacity across generated sequences",
+    "--maxWorkers",
+    "1",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/final-829651c/M1-replay-red-repeat.json"
+  ],
+  "exit": 1,
+  "signal": null
+}

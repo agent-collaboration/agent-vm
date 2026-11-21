@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BG · Getting in · Specification</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>BG · Getting in: Specification</h1>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What to check" tone="note" icon="shield-check">
+<p>S1: one decision picks every page, and a pending step always wins. S3: the deadline is fixed once and checked again just before navigating. S6: Decline never overwrites an Accept. S8: production refuses staging cookies and the test path.</p>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p>Rules follow the 30 Oct assumptions, all of which you agreed on 15 Nov.</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>From R57–R67 and your 6 Nov answers. Nothing built.</p>
+</ex-callout>
+
+<h2 id="terms">Things</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Thing</th><th>Rules</th></tr></thead>
+<tbody>
+<tr><td>Setup page</td><td><code>signIn | step(secondFactor) | step(organization: create | invitations(ids) | askForInvitation) | invitation(id) | chooseOrganization | continueCommandLine | account(notice?)</code>.</td></tr>
+<tr><td>Return destination</td><td><code>commandLine(authorize, deadlineMs) | invitation(id, then) | none</code>; lives only in the page URL; anything invalid parses as none.</td></tr>
+<tr><td>Test identity</td><td>A Better Auth user on staging's own database under the reserved <code>.invalid</code> test domain.</td></tr>
+</tbody></table></div>
+
+<h2 id="rules">Rules</h2>
+<h3 id="S1">S1 · One decision picks the page</h3>
+<p>From G1, G6. Every request to <code>/sign-in</code>, <code>/setup</code>, <code>/invitation/:id</code> or <code>/account</code> MUST get the page chosen by one pure <code>decideSetupPage(facts, destination, now)</code>. Order: not signed in → sign-in; second factor never enrolled → authenticator step; no organization → organization step (everyone offered their pending invitations, the configured owner also offered create, otherwise told to ask); a live invitation destination for the person's verified email → invitation page; an invitation destination that isn't theirs, or is used, expired, canceled or unknown → a page explaining that without naming any organization or email, with one action; command line waiting with several memberships and no current organization → choose; with one membership and no current organization, the page selects it (by Better Auth's set-active POST) and continues; command line waiting, ready, before its deadline → continue; otherwise account. A pending step wins over every destination, except that when only the organization step is pending and the destination is an invitation for that person, the invitation page is the organization step. Readiness depends on enrolment, never on how recent a confirmation is; a stale confirmation only matters for protected changes. No GET writes anything.</p>
+<h3 id="S2">S2 · Recovery codes stay until Finish</h3>
+<p>From G2, R59. The authenticator page shows the QR code and the same key as text; a wrong code keeps the same setup. After a correct first app code the page shows the recovery codes, and nothing navigates away until Finish. A reload or second tab is a fresh decision: the factor is set up, the codes are never shown again, and the page says new recovery codes need confirming with two factors.</p>
+<h3 id="S2a">S2a · Confirming again for a change</h3>
+<p>From G6, R53. When a protected change needs a recent second factor (from the CLI or a page), the person confirms at <code>/account/confirm</code> with an app or recovery code, then the change is retried once. A confirmation counts only for the browser session it was made in. So for the CLI, the confirmation page MUST continue to a CLI authorization, and the CLI MUST retry with the new credential from the confirmed session. If the browser had to sign in again, that session is a new one. The retry MUST be refused when that credential belongs to a different person. The CLI's step-up link and the factor forms, which pointed at <code>/owner-ready</code>, point here. The organization admin page's redirect for a visitor with no matching current membership, which also pointed there, goes to <code>/setup</code> instead.</p>
+<h3 id="S3">S3 · Back to the command line, within its deadline</h3>
+<p>From G3. The CLI adds <code>deadline</code> (its own wait end, epoch milliseconds) to the URL it opens. It is fixed once, carried through every step and redirect, and never extended. Before the deadline, continue goes to authorize with skip-consent (owner first runs bootstrap; a member skips it) and the CLI receives its code. At or past the deadline the person lands on the account page with “Your command-line sign-in expired; run it again”. The continuation script checks the deadline again immediately before navigating.</p>
+<h3 id="S4">S4 · The account page</h3>
+<p>From G5. Shows your second factors (manage, add a passkey), your organizations with one to choose (B1-C's surface), and a clear “done”. No admin actions.</p>
+<h3 id="S5">S5 · The invitation page</h3>
+<p>From G4. Reads the invitation through Better Auth's <code>get-invitation</code>, which checks the signed-in recipient first; a wrong account learns nothing and is offered “sign out and use another account”. Shows “Join <em>organization</em> as <em>role</em>” with Accept and Decline. After either, a waiting command line carried inside the invitation destination becomes the destination, with its original deadline, and the page goes through <code>/setup</code>, so a used invitation is never shown again.</p>
+<h3 id="S6">S6 · Decline is guarded</h3>
+<p>From G4. Our Decline endpoint MUST change the invitation only while it is pending and unexpired, for the signed-in recipient. If an Accept landed first, Decline answers “already answered”. Better Auth's own <code>reject-invitation</code> stays closed.</p>
+<h3 id="S7">S7 · Staging without you</h3>
+<p>From G8. A separate staging build (same core factory and options plus Better Auth's <code>testUtils</code>) serves two routes behind a staging secret: create-or-find a test identity and sign it in; reset test-domain users and what they own (sessions, memberships, organizations owned only by test users, and their Central side). After each staging deploy the run resets, creates identities and drives every journey from a signed-in test identity, and checks the refusals R65 names: pages under their security policy, a protected change without a recent factor (R53), an action without permission (R13), and a page reached while a step is pending (R57), each changing and revealing nothing. The provider sign-in step itself is not part of these runs. Removing test organizations' Central stores waits on a Central operation that doesn't exist yet (Lead A, asked); until then they remain as unreferenced residue.</p>
+<h3 id="S8">S8 · Production refuses the test path</h3>
+<p>From G8. Production MUST answer <code>/__staging/*</code> as unknown; refuse a cookie minted on staging; contain no test-utils plugin, staging module or local stand-in in its build (shown by module path in the build's own record, for the deployed version); and its configured owner is not under the test domain. Staging and production have separate databases and auth secrets.</p>
+<h3 id="S9">S9 · One real sign-in per release</h3>
+<p>From G9. Once per release, one real Google sign-in on staging, including its real Turnstile check, by the dedicated test account or by you with a Verifier watching, recorded with the artifact identity.</p>
+<h3 id="S10">S10 · Look and cutover</h3>
+<p>From G10. “Switchboard” on every page, one top heading, the shared dark design, 400 px and keyboard. <code>/owner-ready</code> and its Continue are removed with no redirect.</p>
+<h3 id="S11">S11 · Machines and Hegel</h3>
+<p>The page decision (M1), Decline (M2), the continuation (M3) and a test identity (M4) MUST be closed unions with pure transitions, inline <code>x satisfies never</code>, effects as data where they call out, and Hegel families; Decline's conditional write races Accept on both databases.</p>
+
+<h2 id="trace">Rules to proof</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Rules</th><th>Decided by</th></tr></thead>
+<tbody>
+<tr><td>S1</td><td><a href="verification-design.html#V1">V1</a></td></tr>
+<tr><td>S2–S6, S10</td><td><a href="verification-design.html#V2">V2</a> (six journeys, local)</td></tr>
+<tr><td>S6</td><td><a href="verification-design.html#V3">V3</a> (Decline races)</td></tr>
+<tr><td>S7–S9</td><td><a href="verification-design.html#V4">V4</a> (staging, production)</td></tr>
+<tr><td>S11</td><td><a href="verification-design.html#V5">V5</a></td></tr>
+</tbody></table></div>
+</ex-document>
+</body>
+</html>

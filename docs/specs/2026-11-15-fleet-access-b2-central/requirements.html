@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B2 · Central organizations · Requirements</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>B2 · Central organizations: Requirements</h1>
+<p><strong>An owner creates an organization and runs it through sign-in: it is set up in its own Central store with no deploy, the owner creates and finds workspaces and reads the full history, sees when renewal is stuck, and the organization survives a signing-key change even when idle.</strong> Organizations never see each other.</p>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What to check" tone="note" icon="shield-check">
+<ul>
+<li>Ready means Central confirmed; a lost reply never becomes success.</li>
+<li>Every workspace and every history record is reachable, however many there are, including the machine records Central already writes.</li>
+<li>The owner can see an expired pending stamp; an old signing key can't be retired while any organization still depends on it.</li>
+</ul>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p>Settled 16 Nov: key rotation with no pause (yours); a hidden owner-only maintenance page (yours); the console as its own later feature (mine). Still yours on <a href="decisions.html#open">Decisions</a>: a “yes” to the 24-hour lost-reply recovery, and whether rule 6's Central restart stays.</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>The <a href="../2026-11-02-fleet-access/deliverables/b2-central-organizations.source.html">approved B2</a>, approved with the overall design on 4 Nov (<em>“yes you need anytnhign?”</em>, <a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl">Fleet transcript 71226, 71230</a>), with your later answers quoted below from the <a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-codex-router/13635880-b8f1-47f9-8d66-ca6aa9ddc134.jsonl">Central transcript</a>. Test evidence is from source, not new runs.</p>
+</ex-callout>
+
+<h2 id="map">Three capabilities</h2>
+<ex-mermaid id="capabilities" label="What the owner gets" data-width="canvas"><script type="text/plain">
+flowchart TB
+  owner["Organization owner"] --> c1["C1 · Set up, know when ready"]
+  owner --> c2["C2 · Create and find workspaces, read full history"]
+  owner --> c3["C3 · Keep it running: see renewal trouble, survive key changes"]
+  class owner slot1
+  class c1,c2,c3 slot2
+</script></ex-mermaid>
+
+<h2 id="C1">C1 · Set up, and know when it's ready</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Need</th><th>Your words or approved row</th><th>Existing proof</th><th>Missing</th></tr></thead>
+<tbody>
+<tr><td><strong>U45</strong> · One Central store per organization, no deploy, behind sign-in</td><td><em>“we dont need a worker per orgnizaiton i think, we need a durable object per orgnaizaiotn”</em>; <em>“central worker is not exposed to itnernet”</em> (<a href="../2026-11-02-fleet-access/requirements.source.html#requirements--needs">Requirements line 104</a>); your 1 Nov revision: one central Worker behind the authentication Worker, a Durable Object per organization.</td><td><code>people-organization-provisioning.host.e2e.test.ts:43–91</code> with a controlled Central; the gated joint journey on an older real Central.</td><td>The current Central and the final page.</td></tr>
+<tr><td><strong>OD22/OD23</strong> · Ready only on a confirmed answer; Try again targets the same organization</td><td><a href="../2026-11-02-fleet-access/deliverables/b2-central-organizations.source.html#b2-flows">Approved B2 flows</a>: setting up becomes ready only once Central has set it up; repeating provisioning finds the existing stamp.</td><td>Provisioning cases :93–222: one send per create or Try again, none on reads.</td><td>Kept as is; the setup page itself is BG's.</td></tr>
+<tr><td><strong>U15</strong> · One owner per truth</td><td><em>“better auth is onlyk ts … fleet is decoup0ed”</em> (Requirements line 96).</td><td>Central owns workspaces (<code>organization_admin_plans.rs:69–100</code>).</td><td>No workspace cache in sign-in; the directory comes from Central.</td></tr>
+</tbody></table></div>
+
+<h2 id="C2">C2 · Create and find workspaces, read the full history</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Need</th><th>Your words or approved row</th><th>Existing proof</th><th>Missing</th></tr></thead>
+<tbody>
+<tr><td><strong>U21</strong> · Owner only; workspace and its record commit together</td><td><em>“yes lets keep it all owner only”</em> (Requirements line 98); B2 proof: a failed record write leaves no workspace.</td><td>Member refusal against a controlled Central (<code>organization-admin.host.e2e.test.ts:584–647</code>); joint case on older Central.</td><td>The record-write failure on the current Central.</td></tr>
+<tr><td><strong>U27</strong> · No cross-organization sight or change</td><td><em>“i dont want cross organization any sharing stuff or comm”</em> (line 103).</td><td>Forwarding checks body organization against the token (<code>fleet-admin-forwarding.ts:89–98</code>); Central rechecks.</td><td>Two-organization negatives on the final build.</td></tr>
+<tr><td><strong>U43</strong> · A recent second factor to change, none to look</td><td><em>“i want step up signin”</em> (line 138); R53.</td><td>The page's custom confirmation dialog; isolated DOM driver only.</td><td>Real browser: fresh and stale factor, cancel, failure.</td></tr>
+<tr><td>Complete directory and history</td><td>Approved B2 parts: <em>“the admin page: create a workspace, list the organization's workspaces and records”</em>.</td><td>None; the page truncates at 100 (Audit gap 1).</td><td>Every workspace and every record page reachable.</td></tr>
+<tr><td>Descriptions and unique names</td><td><em>“(a) Description + unique names”</em> (Central transcript 111553, 15 Nov).</td><td>Duplicate-name and description cases in the joint journey.</td><td>Kept.</td></tr>
+<tr><td>A lost create reply is never a false success or a duplicate</td><td>Approved B2: the same operation returns its original answer.</td><td>Joint cases: within-24-hour replay, late reconciliation.</td><td>How long after a lost reply it stays recoverable is your open choice.</td></tr>
+</tbody></table></div>
+
+<h2 id="C3">C3 · Keep it running</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Need</th><th>Your words or approved row</th><th>Existing proof</th><th>Missing</th></tr></thead>
+<tbody>
+<tr><td>Renew on use, one statement in doubt</td><td>Approved renewal rules 1–4 and your 9 Nov values: 120-day statement, renew at 60 days or less.</td><td><code>organization-statement.host.e2e.test.ts:339–622</code>.</td><td>Kept; expressed as pure steps.</td></tr>
+<tr><td>See when renewal is stuck</td><td>Rule 5: an unanswered statement that itself expires can't recover alone; <em>“The record keeps that condition for the admin page; notifications are later.”</em></td><td>The record holds it; nothing shows it (Audit gap 4).</td><td>An owner-visible status, with no statement bytes.</td></tr>
+<tr><td>Survive a key change, including idle organizations</td><td>Rule 6: every organization re-signed before the old key is retired, then confirmed and cold-restarted.</td><td>Helper tested with a controlled peer (<code>organization-statement.host.e2e.test.ts:624–654</code>).</td><td>A trusted operation, real keys, real restarts.</td></tr>
+<tr><td>Recover even from an expired stored stamp</td><td><em>“yes i agree to chagne r29”</em> (Central transcript 105129, 14 Nov).</td><td>Joint case :1164–1240 on older Central.</td><td>Kept.</td></tr>
+<tr><td>Old data</td><td><em>“No migration, backup only”</em>; <em>“we will manauly talk thtough whta i awnt to keep or write one off scripts later”</em> (Central transcript 97881, 13 Nov).</td><td>—</td><td>No automatic import; Central owns the backup.</td></tr>
+</tbody></table></div>
+
+<h2 id="rules">Standing rules</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Your rule</th><th>Here</th></tr></thead>
+<tbody>
+<tr><td><em>“righ ok let smake srue we use hegel then an dpure transiton fucitons with exatsutiveness in enukms or helpers and make good plans on hegel then”</em>; <em>“we can use the ideas like effects and transition fucitons then?”</em> (Fleet transcript 142100, 142119)</td><td>Setup, renewal, key retirement and the create operation each get closed unions, pure transitions with inline <code>x satisfies never</code>, effects as data run after the state write commits, and a Hegel plan.</td></tr>
+<tr><td><em>“you inject stukff not pkul out engines”</em>; <em>“we ony use uuidv7”</em>; <em>“i dont allow wall clock time ever in tests”</em> (Requirements lines 174–176)</td><td>Injected capabilities, Drizzle and UUIDv7; server-made operation IDs; controlled clocks.</td></tr>
+<tr><td>No new cron or background trigger without you</td><td>Nothing in B2 runs on a timer; renewal stays on use.</td></tr>
+<tr><td>Production steps are yours</td><td>Key withdrawal and production maintenance are owner steps in the Plan.</td></tr>
+</tbody></table></div>
+
+<h2 id="elsewhere">Not in B2</h2>
+<ul>
+<li>Central's store, startup gate, routing and atomic changes: Lead A.</li>
+<li>Choosing an organization and member lookup: B1-C. Person tokens and revocation: B2 additions. Setup page completion, staging, deployment switch: BG. Machine records' behaviour: B3.</li>
+</ul>
+</ex-document>
+</body>
+</html>

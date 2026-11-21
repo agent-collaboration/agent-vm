@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B2X · Person tokens and revocation · Program Design</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>B2X · Person tokens and revocation: Program Design</h1>
+<p>How it's built. Sign-in core paths are under <code>packages/sign-in-core/src/</code>; CLI paths under <code>packages/sign-in-owner-cli/src/</code>. Device login uses a real session, as you picked on 15 Nov.</p>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What to check" tone="note" icon="shield-check">
+<p><a href="#device">Device login</a> uses Better Auth's own device flow; browsers can't call the device routes, so page script never gets the session token, and only terminal requests on six paths can use it. <a href="#sync">The sync view</a> counts person changes too, and still answers for a removed person.</p>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p>Your pick: a real session. <a href="#branches">Shared with machine login</a> says what B3 reuses.</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>Built on <a href="specification.html">S1–S10</a>; Better Auth and its OAuth provider at 1.7.11 as installed.</p>
+</ex-callout>
+
+<h2 id="parts">Parts</h2>
+<ex-mermaid id="parts-picture" label="B2X parts" data-width="canvas"><script type="text/plain">
+flowchart TB
+  cli["CLI --device: M3"] --> dev["Better Auth deviceAuthorization: code, approve, redeem"]
+  dev --> sess["New native session"]
+  cli --> auth["OAuth authorize with bearer session, PKCE"]
+  auth --> exch["Existing token exchange: token carries session ID"]
+  release["Outer handler: device routes terminal-only; terminal bearer session to signed cookie on six paths"] --> auth
+  owner["Owner page"] --> sync["access-sync read: M2"]
+  sync --> store["readSynchronization"]
+  guard["Fleet-call guard"] --> m1["Delivery M1 + runner"]
+  m1 --> central["Central"]
+  class cli,owner slot1
+  class auth,exch,release,sync,m1 slot2
+  class dev,sess,store,guard slot3
+  class central slot4
+</script></ex-mermaid>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>File</th><th>New / changed</th><th>Job</th></tr></thead>
+<tbody>
+<tr><td><code>better-auth/provider-configuration.ts</code></td><td>Changed</td><td>Adds <code>deviceAuthorization({ validateClient })</code> for the Fleet CLI client only. No <code>bearer()</code>.</td></tr>
+<tr><td><code>response-release/sign-in-request-handler.ts</code>, <code>response-release/terminal-session.ts</code> (new)</td><td>Changed / new</td><td>Browser-or-terminal classification; device routes terminal-only; terminal bearer session converted to the signed session cookie on six paths.</td></tr>
+<tr><td><code>pages/device-approval-page.tsx</code> and island</td><td>New</td><td>The browser page where the signed-in person enters or confirms the code, then approves or denies.</td></tr>
+<tr><td><code>fleet/device-login.ts</code>, <code>fleet/device-login-transitions.ts</code> (CLI)</td><td>New</td><td>M3 and its runner.</td></tr>
+<tr><td><code>fleet/proof-key-store.ts</code> (CLI)</td><td>Changed</td><td>Also stores the device session secret, Keychain or memory.</td></tr>
+<tr><td><code>owner-cli.ts</code>, <code>fleet/fleet-cli-commands.ts</code> (CLI)</td><td>Changed</td><td>Removes the “not available” exit; wires <code>--device</code>.</td></tr>
+<tr><td><code>better-auth/access-sync.ts</code>; island on the admin and lookup pages</td><td>New</td><td><code>GET /api/auth/organization/access-sync</code> and M2.</td></tr>
+<tr><td><code>organizations/revision-delivery-transitions.ts</code>; <code>organizations/authorization-revision-drainer.ts</code></td><td>New / changed</td><td>M1; the drainer becomes its runner.</td></tr>
+</tbody></table></div>
+
+<h2 id="device">Device login, with a real session (your pick)</h2>
+<ex-mermaid id="device-sequence" label="Device login keeps a real session" data-width="canvas"><script type="text/plain">
+sequenceDiagram
+  participant C as CLI
+  participant SI as Sign-in
+  participant B as Person's browser
+  C->>SI: POST /device/code (Fleet CLI client)
+  SI-->>C: user code, URL, device code, interval
+  C->>C: print code and URL
+  B->>SI: signed in, opens URL, approves
+  C->>SI: POST /device/token (poll)
+  SI-->>C: native session token
+  C->>SI: GET /oauth2/authorize, Bearer session, PKCE
+  SI-->>C: code tied to that session
+  C->>SI: token exchange with DPoP, as today
+  SI-->>C: person token carrying session ID, refresh credential
+</script></ex-mermaid>
+<ul>
+<li><strong>Configuration.</strong> <code>deviceAuthorization()</code> from Better Auth 1.7.11 with <code>validateClient</code> admitting only the Fleet CLI client ID; its own expiry and polling interval. Approval is Better Auth's endpoint, reached from our approval page; the approving browser must be signed in. Better Auth stores and expires the code; redeeming creates the session (<code>routes.mjs:433–475</code>).</li>
+<li><strong>Terminal requests only.</strong> <code>/api/auth/device/code</code> and <code>/api/auth/device/token</code> are admitted only for terminal requests. In <code>sign-in-request-handler.ts</code>, before dispatch, a request is a browser request if it carries any of <code>Origin</code>, <code>Sec-Fetch-Site</code>, <code>Sec-Fetch-Mode</code> or <code>Cookie</code>; browser requests to those two paths get 404. <code>Origin</code> is a header page script can't remove or set, and browsers send it on every POST, same-origin included, even when Fetch Metadata is withheld (which happens for origins that aren't potentially trustworthy) and cookies are omitted. The CLI and Router clients send none of the four. Residual: a browser too old to send <code>Origin</code> on same-origin POST is not covered; named as unverified. So page script can't obtain the session token that <code>/device/token</code> returns in its JSON body (<code>routes.mjs:455–475</code>). Approval stays a normal cookie request from the signed-in browser.</li>
+<li><strong>Using the session from the terminal, without <code>bearer()</code>.</strong> Better Auth's <code>bearer()</code> plugin is <em>not</em> added: its conversion only takes effect after every before-hook has run (<code>dist/api/dispatch.mjs:64–106,209–220</code>), so our factor and actor hooks would see no session, and its after-hook puts session tokens in a <code>set-auth-token</code> header. Instead, the outer handler converts a terminal request's <code>Authorization: Bearer &lt;session token&gt;</code> into Better Auth's own signed session cookie before dispatch, using the same <code>serializeSignedCookie</code> from <code>better-call</code> and the configured secret that <code>bearer()</code> itself uses (<code>bearer/index.mjs:3,34–47</code>), and removes the Authorization header. Every hook then sees an ordinary session. The conversion happens only for terminal requests on six paths: <code>GET /api/auth/oauth2/authorize</code>, <code>GET /api/auth/organization/list</code>, <code>POST /api/auth/organization/set-active</code>, <code>POST /api/auth/two-factor/verify-totp</code>, <code>POST /api/auth/two-factor/verify-backup-code</code>, <code>POST /api/auth/sign-out</code>. Anywhere else a bearer session is simply not a session (Better Auth reads only cookies), so nothing else changes. <code>GET /api/auth/organization/list</code> is admitted by the outer route table only on this terminal path.</li>
+<li><strong>Authorize and exchange.</strong> The CLI calls authorize with the bearer session, S256 PKCE and <code>redirect: 'manual'</code>, reads the code from the <code>Location</code> header of the registered loopback redirect without listening on it, and exchanges as today. Authorize reads the session through <code>getSessionFromCtx</code> and the Fleet CLI client skips consent (<code>owner-client-bootstrap.ts</code>), so the code carries the session; the existing contributor and Central accept the token unchanged.</li>
+<li><strong>Organization.</strong> A fresh session with one membership selects it; with several, the CLI calls Better Auth's native <code>GET /api/auth/organization/list</code> (<code>crud-org.mjs:436–453</code>) through the terminal path, shows the person's organizations, and calls set-active with the chosen ID before authorizing.</li>
+<li><strong>Second factor.</strong> The new session has no confirmation. When Central answers <code>secondFactorRequired</code>, the CLI prompts for an app or recovery code and posts it with the bearer session, which confirms that session. The approving browser's confirmation is never copied.</li>
+<li><strong>Custody.</strong> <code>ProofKeyStore</code> (<code>fleet/proof-key-store.ts:11–27</code>) gains the session secret beside the key and refresh credential: macOS Keychain through the injected runner, otherwise memory for that command only, never a file. Losing any of the three clears all three.</li>
+</ul>
+
+<h3 id="m3">M3 · The CLI's device login</h3>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>From</th><th>Event</th><th>Next and effects</th></tr></thead>
+<tbody>
+<tr><td>start</td><td><code>begin</code></td><td>requesting; [request-code]</td></tr>
+<tr><td>requesting</td><td><code>code(userCode, uri, deviceCode, interval, expiresAt)</code></td><td>waiting; [print-code, wait(interval)]</td></tr>
+<tr><td>waiting</td><td><code>waited</code></td><td>polling; [poll(deviceCode)]</td></tr>
+<tr><td>polling(interval)</td><td><code>pending</code> / <code>slow-down</code></td><td>waiting(interval); [wait(interval)] / waiting(interval + 5 s); [wait(interval + 5 s)]. The longer interval is kept for every later poll (RFC 8628 §3.5: increase "for this and all subsequent requests").</td></tr>
+<tr><td>polling</td><td><code>session(token)</code></td><td>choosing-organization; [list-memberships]</td></tr>
+<tr><td>polling</td><td><code>denied</code> / <code>expired</code></td><td>failed(reason); none</td></tr>
+<tr><td>choosing-organization</td><td><code>one</code> / <code>chose(id)</code></td><td>authorizing; [authorize-pkce] / [set-active(id), authorize-pkce]</td></tr>
+<tr><td>authorizing</td><td><code>auth-code(code)</code></td><td>exchanging; [exchange(code)]</td></tr>
+<tr><td>exchanging</td><td><code>tokens</code></td><td>signed-in; [store-custody]</td></tr>
+<tr><td>any live</td><td><code>failed(reason)</code></td><td>failed; [clear-custody]</td></tr>
+</tbody></table></div>
+<p>The runner's <code>wait</code> is an injected capability: real time in the CLI, controlled in tests. Better Auth owns the code's own states and single use.</p>
+
+<h2 id="sync">The owner's sync view</h2>
+<p>Today's <code>readSynchronization({ kind: 'organization' })</code> reads only the organization fence (<code>authorization-revision-delivery-store.ts:338–344</code>), but removals and role changes advance person fences only. So the store gains one scope, <code>{ kind: 'organizationWithPeople', organizationId }</code>: one Drizzle read of the organization fence and every retained person fence in that organization, <code>synced</code> only if every row's ACK equals its revision, missing rows pending.</p>
+<p><code>better-auth/access-sync.ts</code>: <code>POST /api/auth/organization/access-sync</code> with <code>{ organizationId, email? }</code>. Checks the person's current organization and <code>organization:view</code>. Returns <code>organization</code> from <code>organizationWithPeople</code>; with an email, finds the retained authorization subject for that person in <em>this</em> organization (it survives removal) and returns <code>person</code> from <code>personInOrganization</code> for that subject, or <code>none</code> if this organization never had them. Reply <code>{ organization: 'synced' | 'pending', person?: 'synced' | 'pending' | 'none' }</code>, 503 unavailable; no-store; email in the body, never the URL. Shown on B2's admin page status card (“All access changes have reached Central” / “Waiting for Central”) and on B1-C's lookup page for a member or a removed person (“removed; waiting for Central” / “removed; reached Central”).</p>
+<h3 id="m2">M2 · The view in the browser</h3>
+<p>States <code>loading | synced | pending | unavailable</code>, each with a request generation; events <code>refresh</code>, <code>reply(generation, value)</code>, <code>failed(generation)</code>. Only the current generation settles; refresh is manual or on page entry, no polling.</p>
+
+<h2 id="delivery">Delivery, as a machine</h2>
+<h3 id="m1">M1 · One revision row</h3>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>From</th><th>Event</th><th>Next and effects</th></tr></thead>
+<tbody>
+<tr><td>pending(rev)</td><td><code>deliver</code> (guard run or hint)</td><td>pushing(rev); [push(row at rev)]</td></tr>
+<tr><td>pushing(pushed)</td><td><code>ack(r)</code>, r ≤ current source revision</td><td>[record-ack(r)], conditional on <code>r ≤</code> the row's current revision (the store's existing rule, <code>authorization-revision-delivery-store.ts:229–267</code>); then acknowledged if r equals the current revision, otherwise pending(current) for a re-push. A higher ACK than pushed is valid when the source has reached it (Central ACKs its retained revision for older deliveries, <code>floor_delivery.rs:78–79,106–107</code>; the drainer already allows it, <code>authorization-revision-drainer.ts:266–274</code>).</td></tr>
+<tr><td>pushing(pushed)</td><td><code>ack(r)</code>, r &gt; current source revision</td><td>discrepancy; [report]; source never lowered</td></tr>
+<tr><td>pushing(rev)</td><td><code>refused(reason)</code> / <code>unknown</code> / <code>central-unavailable</code></td><td>deferred(reason); [record-defer(rev, due)]</td></tr>
+<tr><td>acknowledged</td><td><code>source-advanced(rev')</code></td><td>pending(rev')</td></tr>
+<tr><td>deferred</td><td><code>deliver</code></td><td>pushing; [push]</td></tr>
+</tbody></table></div>
+<p>An organization's person rows are only pushed after its fence row is acknowledged (<code>organization-not-delivered</code> defers them). The runner is today's drainer, keeping its batch loop, deadline and conditional ACK and defer writes (<code>authorization-revision-delivery-store.ts:229–291</code>). The retry time stays 60,000 ms as a due time, not a timer.</p>
+
+<h2 id="branches">Shared with machine login</h2>
+<p>The <code>deviceAuthorization()</code> plugin, its approval page and the device-route containment are the base B3's machine login builds on. B3 admits its machine client beside the Fleet CLI client in the same <code>validateClient</code>. A person's device session is never a machine's identity: machines get B3's own enrollment and token. A later OIDC grant for unattended machines would end in that same B3 enrollment.</p>
+
+<h2 id="trace">Rule homes</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Rule</th><th>Home</th><th>Proof seam</th></tr></thead>
+<tbody>
+<tr><td>S1, S2</td><td>Issuance, release, refresh (existing)</td><td>Real token against Central</td></tr>
+<tr><td>S3, S4</td><td>Device configuration, release containment, M3</td><td>CLI run with a test browser approval; session deletion</td></tr>
+<tr><td>S5, S7</td><td>Fence, M1 runner</td><td>Lost ACKs; advancing revisions</td></tr>
+<tr><td>S6</td><td>access-sync, M2</td><td>Pending then synced after ACK</td></tr>
+<tr><td>S8</td><td>Central (Lead A) and sign-in</td><td>Joint pairings</td></tr>
+<tr><td>S10</td><td>M1, M2, M3, issuance</td><td>Hegel</td></tr>
+</tbody></table></div>
+</ex-document>
+</body>
+</html>

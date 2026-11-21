@@ -1,0 +1,394 @@
+[
+  {
+    "id": "P2-trust",
+    "red": {
+      "phase": "red",
+      "sourceRevision": "78c0a98ef3709d4bbd55108944a97d8f3d57f825",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-78c0a98",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "unit",
+        "packages/tool-access/src/authorization/portal-access-policy.hegel.unit.test.ts",
+        "--testNamePattern",
+        "uses the independent MCP annotation and selector decision table",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/P2-trust-red.json"
+      ],
+      "exit": 1,
+      "signal": null
+    },
+    "green": {
+      "phase": "restored",
+      "sourceRevision": "78c0a98ef3709d4bbd55108944a97d8f3d57f825",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-78c0a98",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "unit",
+        "packages/tool-access/src/authorization/portal-access-policy.hegel.unit.test.ts",
+        "--testNamePattern",
+        "uses the independent MCP annotation and selector decision table",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/P2-trust-restored.json"
+      ],
+      "exit": 0,
+      "signal": null
+    }
+  },
+  {
+    "id": "P3-and",
+    "red": {
+      "phase": "red",
+      "sourceRevision": "78c0a98ef3709d4bbd55108944a97d8f3d57f825",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-78c0a98",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "unit",
+        "packages/tool-access/src/authorization/cli-allowances/cli-allowance.hegel.unit.test.ts",
+        "--testNamePattern",
+        "applies AND predicates, OR alternatives, and deny before ask and baseline",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/P3-and-red.json"
+      ],
+      "exit": 1,
+      "signal": null
+    },
+    "green": {
+      "phase": "restored",
+      "sourceRevision": "78c0a98ef3709d4bbd55108944a97d8f3d57f825",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-78c0a98",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "unit",
+        "packages/tool-access/src/authorization/cli-allowances/cli-allowance.hegel.unit.test.ts",
+        "--testNamePattern",
+        "applies AND predicates, OR alternatives, and deny before ask and baseline",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/P3-and-restored.json"
+      ],
+      "exit": 0,
+      "signal": null
+    }
+  },
+  {
+    "id": "P4-directory",
+    "red": {
+      "phase": "red",
+      "sourceRevision": "78c0a98ef3709d4bbd55108944a97d8f3d57f825",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-78c0a98",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "unit",
+        "packages/oauth-broker-contracts/src/gog-file-arguments.hegel.unit.test.ts",
+        "--testNamePattern",
+        "refuses directory-only values as files and refuses input-directory descriptors",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/P4-directory-red.json"
+      ],
+      "exit": 1,
+      "signal": null
+    },
+    "green": {
+      "phase": "restored",
+      "sourceRevision": "78c0a98ef3709d4bbd55108944a97d8f3d57f825",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-78c0a98",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "unit",
+        "packages/oauth-broker-contracts/src/gog-file-arguments.hegel.unit.test.ts",
+        "--testNamePattern",
+        "refuses directory-only values as files and refuses input-directory descriptors",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/P4-directory-restored.json"
+      ],
+      "exit": 0,
+      "signal": null
+    }
+  },
+  {
+    "id": "P5-ceiling",
+    "red": {
+      "phase": "red",
+      "sourceRevision": "78c0a98ef3709d4bbd55108944a97d8f3d57f825",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-78c0a98",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "unit",
+        "packages/oauth-broker/src/google/google-operation-grants.hegel.unit.test.ts",
+        "--testNamePattern",
+        "refuses groups above the ceiling and unknown or foreign-family selections and ceilings",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/P5-ceiling-red.json"
+      ],
+      "exit": 1,
+      "signal": null
+    },
+    "green": {
+      "phase": "restored",
+      "sourceRevision": "78c0a98ef3709d4bbd55108944a97d8f3d57f825",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-78c0a98",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "unit",
+        "packages/oauth-broker/src/google/google-operation-grants.hegel.unit.test.ts",
+        "--testNamePattern",
+        "refuses groups above the ceiling and unknown or foreign-family selections and ceilings",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/P5-ceiling-restored.json"
+      ],
+      "exit": 0,
+      "signal": null
+    }
+  },
+  {
+    "id": "P5-scope",
+    "red": {
+      "phase": "red",
+      "sourceRevision": "78c0a98ef3709d4bbd55108944a97d8f3d57f825",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-78c0a98",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "unit",
+        "packages/oauth-broker/src/google/google-operation-grants.hegel.unit.test.ts",
+        "--testNamePattern",
+        "refuses missing, surplus and substituted exact-scope evidence",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/P5-scope-red.json"
+      ],
+      "exit": 1,
+      "signal": null
+    },
+    "green": {
+      "phase": "restored",
+      "sourceRevision": "78c0a98ef3709d4bbd55108944a97d8f3d57f825",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-78c0a98",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "unit",
+        "packages/oauth-broker/src/google/google-operation-grants.hegel.unit.test.ts",
+        "--testNamePattern",
+        "refuses missing, surplus and substituted exact-scope evidence",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/P5-scope-restored.json"
+      ],
+      "exit": 0,
+      "signal": null
+    }
+  },
+  {
+    "id": "P1-expiry",
+    "red": {
+      "phase": "red",
+      "sourceRevision": "78c0a98ef3709d4bbd55108944a97d8f3d57f825",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-78c0a98",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "unit",
+        "packages/tool-engine/src/mcp-gateway/signed-tokens/approval-token-signing.hegel.unit.test.ts",
+        "--testNamePattern",
+        "binds the audience, ordered call fields, key, agent, and expiry",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/P1-expiry-red.json"
+      ],
+      "exit": 1,
+      "signal": null
+    },
+    "green": {
+      "phase": "restored",
+      "sourceRevision": "78c0a98ef3709d4bbd55108944a97d8f3d57f825",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-78c0a98",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "unit",
+        "packages/tool-engine/src/mcp-gateway/signed-tokens/approval-token-signing.hegel.unit.test.ts",
+        "--testNamePattern",
+        "binds the audience, ordered call fields, key, agent, and expiry",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/P1-expiry-restored.json"
+      ],
+      "exit": 0,
+      "signal": null
+    }
+  },
+  {
+    "id": "P7-recursion",
+    "red": {
+      "phase": "red",
+      "sourceRevision": "78c0a98ef3709d4bbd55108944a97d8f3d57f825",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-78c0a98",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "unit",
+        "packages/tool-engine/src/upstream-mcp-connectors/upstream-response-middleware.hegel.unit.test.ts",
+        "--testNamePattern",
+        "redacts nested credential keys while retaining ordinary fields",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/P7-recursion-red.json"
+      ],
+      "exit": 1,
+      "signal": null
+    },
+    "green": {
+      "phase": "restored",
+      "sourceRevision": "78c0a98ef3709d4bbd55108944a97d8f3d57f825",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-78c0a98",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "unit",
+        "packages/tool-engine/src/upstream-mcp-connectors/upstream-response-middleware.hegel.unit.test.ts",
+        "--testNamePattern",
+        "redacts nested credential keys while retaining ordinary fields",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/P7-recursion-restored.json"
+      ],
+      "exit": 0,
+      "signal": null
+    }
+  },
+  {
+    "id": "P9-origin",
+    "red": {
+      "phase": "red",
+      "sourceRevision": "78c0a98ef3709d4bbd55108944a97d8f3d57f825",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-78c0a98",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "unit",
+        "packages/tool-host-node/src/mcp-proxy-server/http-boundaries.hegel.unit.test.ts",
+        "--testNamePattern",
+        "checks Host by canonical hostname and Origin by canonical scheme, host and port",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/P9-origin-red.json"
+      ],
+      "exit": 1,
+      "signal": null
+    },
+    "green": {
+      "phase": "restored",
+      "sourceRevision": "78c0a98ef3709d4bbd55108944a97d8f3d57f825",
+      "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-78c0a98",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "unit",
+        "packages/tool-host-node/src/mcp-proxy-server/http-boundaries.hegel.unit.test.ts",
+        "--testNamePattern",
+        "checks Host by canonical hostname and Origin by canonical scheme, host and port",
+        "--maxWorkers",
+        "1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/P9-origin-restored.json"
+      ],
+      "exit": 0,
+      "signal": null
+    }
+  }
+]

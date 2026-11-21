@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>F1 · Fuzz testing · Decisions</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>F1 · Fuzz testing for sign-in: Decisions</h1>
+
+<h2 id="open">For you to decide</h2>
+<ex-callout title="Nothing open" tone="decision" icon="users"><p>Everything on this page is decided by you (quoted) or by me (listed with reasons).</p></ex-callout>
+<h3 id="f1-1">Decision F1-1 · Should Bombadil run in CI?</h3>
+<p>The Hegel tests join the unit, integration and host suites that CI already runs, so they need no new gate. Bombadil is different: a 5-minute real-Chrome exploration per page per host, from a 0.x experimental tool, with no seed, so one run can find what another misses. Adding it to CI is a new gate, and gate changes are yours.</p>
+<ex-mermaid id="f12" label="The three options" data-width="canvas"><script type="text/plain">
+flowchart TB
+  a["A · On demand only<br/>run on Sunclaw for each sign-in PR"] --> ag["merges never wait on a random UI run"]
+  b["B · Nightly CI job, not required for merge"] --> bg["finds problems within a day; never blocks a PR"]
+  c["C · Required PR check"] --> cg["blocks merges on findings; slower PRs, possible noise"]
+</script></ex-mermaid>
+<ex-callout title="Decided by you (17 Nov): A, on demand now; decide CI after a week of clean runs" tone="done" icon="path"><p><em>“these are not important decisions for me to make for now”</em>. Calls like this are the Lead's from now on.</p></ex-callout>
+
+<h2 id="decided">Decided by you</h2>
+<ul>
+<li>Use Hegel for fuzz testing: <em>“yes i hegel is fuzz testing we hsoudld use it”</em> (17 Nov).</li>
+<li>UI fuzz testing with Bombadil: <em>“and ui fuzz testing with bombardil if we need it as a later step”</em>, then <em>“did you add diesgns and paln out and execute fuzz testing? for heagel ts and bombardil ts?”</em> (17 Nov).</li>
+<li>Property-based testing is the norm; proof never changes in a move: AGENTS.md rules 6 and 7, PR #297 (17 Nov).</li>
+</ul>
+
+<h2 id="calls">My calls</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Call</th><th>Why</th><th>Should it have been yours?</th></tr></thead>
+<tbody>
+<tr><td>F1 is its own deliverable, not folded into B1-B or B1-C</td><td>Those are nearly done; F1 then covers their endpoints through the S1 coverage test</td><td>No: sequencing</td></tr>
+<tr><td>Body fuzzing at the real host entry, not only at schema parse</td><td>A crash or leak only shows at the real entry</td><td>No</td></tr>
+<tr><td>Storage invariants checked every step (<code>alwaysCheck</code>)</td><td>Hegel samples invariants between steps by default (<code>stateful.d.ts:55–71</code>)</td><td>No</td></tr>
+<tr><td>A Bombadil finding becomes an ordinary regression test</td><td>Bombadil has no seed and its replay can diverge</td><td>No</td></tr>
+<tr><td>F1 split: Hegel built now; Bombadil waits for a feasibility probe</td><td>The design review stopped converging on Bombadil's startup handshake; an experiment beats a fifth paper revision</td><td>No: Bombadil stays required (U3), only sequenced later</td></tr>
+<tr><td>Turmoil isn't in F1</td><td>It's for Rust network simulation; Central's crates are Lead A's</td><td>No</td></tr>
+<tr><td>PR #2 merged (d96e9650). Its two low review findings become a follow-up fix: link-social pre-reads only JSON-typed bodies, and a malformed Basic header gets Better Auth's own refusal instead of 503</td><td>The fresh review read READY, and neither finding is a regression. Client input that comes back as 503 is a bug, so it is fixed without asking (<code>work/handler-input-errors-commission.md</code>)</td><td>No: bug fixes and merge sequencing are mine</td></tr>
+</tbody></table></div>
+</ex-document>
+</body>
+</html>

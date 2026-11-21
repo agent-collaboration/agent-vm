@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B1-A · One sign-in core, injected and honestly tested · Specification</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>B1-A · One sign-in core, injected and honestly tested: Specification</h1>
+<p>What must be observably true when B1-A is done. The rules come from your approved Specification:</p>
+<ul>
+<li><strong>R30:</strong> the core is runtime-free, with every effect handed in by its host.</li>
+<li><strong>R33:</strong> no wall clock in tests, and Hegel property tests.</li>
+<li><strong>R52:</strong> flood limits.</li>
+<li><strong>R32:</strong> UUIDv7 only.</li>
+<li><strong>R38:</strong> no tool credential for people, and today's agent path kept.</li>
+</ul>
+<p>Their source is <code>docs/specs/2026-11-02-fleet-access/specification.source.html</code>: R38 at line 184, R52 at 270, R30 at 277, R32 at 279, R33 at 280. How it's built is on the <a href="program-design.html">Program Design</a>.</p>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What you should check" tone="note" icon="shield-check">
+<ul>
+<li><strong>S1–S6:</strong> every random value and every crypto operation the sign-in rules use comes from the host. The architecture check fails on any runtime global outside a short allowed list, so crypto, clock, timers, <code>fetch</code> or anything else can't come back.</li>
+<li><strong>S7–S8:</strong> no sign-in test reads the real clock or waits on real time, and a scan enforces it. Two of the three Hegel families your rule names exist: token-kind dispatch (new) and the claims round trip. The third, device-code single use, is built with machine login (B3), as the B1 you approved on 4 Nov says ("machine login and device codes (B3)"); the device-code grant isn't on <code>main</code> either.</li>
+<li><strong>S9:</strong> "limited" is proven on Miniflare's real counter.</li>
+<li><strong>S10:</strong> every stored ID is a UUIDv7.</li>
+<li><strong>S11:</strong> agents unchanged; people get no tool credential.</li>
+<li><strong>S12:</strong> no UUID other than v7 is made anywhere in the sign-in packages, tests included, and a check enforces it.</li>
+</ul>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p><strong>None.</strong> Rule S5 keeps every page, token, proof and digest format exactly as today. S9 and S11 keep the limits and the agent path as today. Some exported function signatures change. Neither package is on the public npm registry, and every switchboard caller is updated in the same PR. Other consumers are unknown (<a href="decisions.html#published">Decisions</a>).</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
+<p>Your rule R30, word for word: <em>"The core MUST reach storage, time, identifiers, cryptography and outbound requests only through capabilities its host supplies, and each capability is required. The Cloudflare host and the Node host MUST each supply them and add no sign-in rule."</em></p>
+<p>Your rule R33: <em>"No sign-in test, test helper or test harness MAY read the real clock or wait on real time."</em></p>
+<p>They come from your words in the <a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/requirements.source.html">approved Requirements</a>: <em>"you inject stukff not pkul out engines"</em> (line 174) and <em>"i dont allow wall clock time ever in tests"</em> (line 176).</p>
+<p>Both come from your <a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/specification.source.html">approved Specification</a> (lines 277 and 280). They trace to your words on the <a href="requirements.html#three">Requirements</a> page.</p>
+</ex-callout>
+
+<h2 id="terms">The terms the rules use</h2>
+<p>These are R30's own words. The shared design has no entity numbers for them, because they're parts of the service, not things a person owns.</p>
+<table>
+<thead><tr><th>Term</th><th>Means</th><th>Two of them are the same when</th></tr></thead>
+<tbody>
+<tr><td id="core"><strong>Core</strong></td><td>The sign-in rules: everything in the package <code>sign-in-core</code>, whose source is under <code>packages/sign-in-core/src/</code></td><td>There is one core</td></tr>
+<tr><td id="host"><strong>Host</strong></td><td>A runtime package that runs the core and hands in its capabilities. Today: the Cloudflare host and the Node host. The owner CLI also uses the core's proof and digest functions, and hands in capabilities the same way.</td><td>Same package</td></tr>
+<tr><td id="cap"><strong>Crypto capability</strong></td><td>The one thing a host hands in for randomness, hashing, and creating, exporting, importing and signing keys</td><td>One per running core, handed in at start-up</td></tr>
+<tr><td id="nonce"><strong>Page nonce</strong></td><td>The one-time value on each served sign-in page that lets only that page's own scripts run (its security policy)</td><td>Same response</td></tr>
+<tr><td id="browser"><strong>Browser script</strong></td><td>JavaScript the core writes into a page as text, which runs in the person's browser, not in the service</td><td>—</td></tr>
+</tbody>
+</table>
+
+<h2 id="rules">The rules</h2>
+<ex-mermaid id="rules-pic" label="What the rules require" data-width="canvas"><script type="text/plain">
+flowchart TB
+  host["Each host<br/>Cloudflare, Node, owner CLI"] -->|S4 hands in| cap["Crypto capability<br/>required, no default"]
+  cap -->|S1 random values| core["Core rules"]
+  cap -->|S2 hashing, keys, signing| core
+  core -->|S5 same formats| out["Pages, proofs, digests<br/>unchanged"]
+  scan["Architecture check"] -->|S6 fails on| slip["Runtime crypto, clock or timers<br/>in core source, .ts or .tsx"]
+  class host slot1
+  class cap slot6
+  class core slot2
+  class out slot3
+  class scan,slip slot5
+</script></ex-mermaid>
+<p><strong>Key:</strong> blue is the host, green is the capability, amber is the core, teal is what outsiders see, rose is the check and what it rejects.</p>
+
+<h3 id="S1">S1 · Random values come from the host</h3>
+<p>Every random value the core uses MUST come from the crypto capability. There are two today:</p>
+<ul>
+<li><strong>The page nonce:</strong> 16 random bytes, written as 32 lowercase hex characters.</li>
+<li><strong>The admin forwarding verifier:</strong> 32 random bytes, written in base64url without padding, used as the PKCE verifier when the sign-in service obtains a person's admin credential.</li>
+</ul>
+<p><strong>Edge cases:</strong></p>
+<ul>
+<li>Each rendered page asks the capability once, and its nonce is exactly the bytes it got back. Two pages getting different nonces depends on the host's randomness (each runtime's secure random source), not on a promise in the core.</li>
+<li>A reply that isn't a rendered page (JSON, a redirect, a passed-through response) asks for no random bytes.</li>
+<li>The nonce on every script tag of a page equals the nonce in that page's security policy header.</li>
+</ul>
+<p><strong>Wrong if:</strong> a page's nonce or the verifier comes from anywhere other than the capability. With a capability that returns fixed bytes, the nonce or verifier would then differ from those bytes.</p>
+
+<h3 id="S2">S2 · Hashing, keys and signing go through the host</h3>
+<p>Every SHA-256 digest, and every key creation, export, import and signature the core performs, MUST go through the crypto capability. That covers:</p>
+<ul>
+<li>the canonical-JSON digest;</li>
+<li>the admin operation's intent digest;</li>
+<li>the base64url SHA-256 used for PKCE challenges and the proof's token binding;</li>
+<li>the organization statement digest;</li>
+<li>the admin proof key: create (ES256, P-256), export, import and thumbprint;</li>
+<li>the DPoP proof signature.</li>
+</ul>
+<p><strong>Edge case:</strong> a non-extractable key stays non-extractable. Only the owner CLI's Keychain custody asks for an extractable key, as today.</p>
+<p><strong>Wrong if:</strong> a recording capability doesn't see the operation when that code path runs.</p>
+
+<h3 id="S3">S3 · The capability is required</h3>
+<p>The core MUST NOT fall back to the runtime's crypto when a host doesn't hand one in. Every function that needs it takes it explicitly, and a host that leaves it out does not build: it fails type-checking.</p>
+<p><strong>Wrong if:</strong> any core function has a default that reads the runtime's crypto.</p>
+<p><strong>Outside effect:</strong> this changes exported signatures of <code>@agent-collaboration/sign-in-core</code> and <code>@agent-collaboration/sign-in-owner-cli</code>. Neither is on the public npm registry (404, 15 Nov), and every switchboard caller is updated in the same PR. Other consumers are unknown (<a href="decisions.html#published">Decisions</a>).</p>
+
+<h3 id="S4">S4 · Each host hands it in and adds no rule</h3>
+<p>The Cloudflare host, the Node host and the owner CLI MUST each hand in a crypto capability built from their runtime's standard Web Crypto. The host adds no sign-in rule while doing so: no extra checks, no format choices.</p>
+<p><strong>Wrong if:</strong> a host computes a digest, nonce or proof itself instead of handing in the capability.</p>
+
+<h3 id="S5">S5 · Nothing outsiders see changes</h3>
+<p>For the same inputs, every output except the page nonce's value MUST be byte-for-byte what it is today. The nonce keeps its form, 32 lowercase hex characters, but its value and bit layout change (below):</p>
+<ul>
+<li><strong>Digests and thumbprints:</strong> SHA-256, base64url without padding or lowercase hex as today, and RFC 7638 for the thumbprint. Central computes the same digests.</li>
+<li><strong>Proofs:</strong> DPoP proofs (RFC 9449), with header <code>typ: dpop+jwt</code>, <code>alg: ES256</code> and the public JWK, the same claims, and an IEEE P1363 signature.</li>
+<li><strong>Page security policy:</strong> the same policy text, with only the nonce value varying.</li>
+<li><strong>The nonce itself</strong> stays 32 lowercase hex characters. Today it's a version-4 UUID with the hyphens removed (122 random bits and fixed version bits). After B1-1 it's 16 random bytes (128 random bits). Only its value and internal bit layout change. It's used once and never parsed.</li>
+</ul>
+<p><strong>Wrong if:</strong> a fixed input gives a different digest or thumbprint than <code>main</code> at <code>f3b2b88b</code>, central refuses a proof it accepts today, or the page policy text changes.</p>
+
+<h3 id="S6">S6 · The architecture check catches a slip</h3>
+<p>The architecture check (<code>pnpm test:portal-architecture</code>, part of <code>pnpm check</code>) MUST fail when any source file under <code>packages/sign-in-core/src/</code>, both <code>.ts</code> and <code>.tsx</code>, uses a runtime global that isn't on a short allowed list. It's an allowed list, not a banned list, so a primitive nobody thought of is caught too: R30 names storage, time, identifiers, cryptography <em>and outbound requests</em>, and a bare <code>fetch</code> must fail as surely as a bare <code>crypto</code>.</p>
+<p><strong>Allowed:</strong> plain language and web data types that do no I/O and read no clock or randomness. They are exactly those the core's server code uses today, measured at <code>f3b2b88b</code>:</p>
+<ul>
+<li>the language's own: <code>Array</code>, <code>Boolean</code>, <code>Date</code> (only as <code>new Date(value)</code>), <code>Error</code>, <code>RangeError</code>, <code>SyntaxError</code>, <code>TypeError</code>, <code>JSON</code>, <code>Map</code>, <code>Set</code>, <code>Math</code> (not <code>Math.random</code>), <code>Number</code>, <code>Object</code>, <code>Promise</code>, <code>String</code>, <code>Uint8Array</code>;</li>
+<li>web data types: <code>Headers</code>, <code>Request</code>, <code>Response</code>, <code>URL</code>, <code>URLSearchParams</code>, <code>TextEncoder</code>, <code>AbortController</code>, <code>atob</code>, <code>btoa</code>, <code>encodeURIComponent</code>.</li>
+</ul>
+<p><strong>Also allowed:</strong> the language value <code>undefined</code>.</p>
+<p><strong>Everything else fails,</strong> including <code>crypto</code>, <code>globalThis</code> in any form, a runtime-only name that doesn't resolve under the core's settings (such as <code>process</code>), <code>fetch</code>, <code>setTimeout</code>, <code>setInterval</code>, <code>performance</code>, <code>process</code>, <code>navigator</code>, <code>console</code>, <code>Date.now()</code>, a zero-argument <code>new Date()</code> and <code>Math.random()</code>. Adding a name to the allowed list is a reviewed change to the check, with its reason.</p>
+<p>Your proof row U23 already asks for this check to point at <code>packages/sign-in-core/src/</code>.</p>
+<p><strong>Edge cases:</strong></p>
+<ul>
+<li>A browser script written as text in a string is not code the service runs, so the check MUST NOT flag it.</li>
+<li>A property or local name that happens to be called <code>crypto</code>, such as <code>platform.crypto</code>, MUST NOT be flagged.</li>
+<li>Type-only names (in type positions) aren't runtime use and aren't flagged.</li>
+<li>The browser components under <code>src/pages/islands/</code> run in the person's browser, like the text scripts, and aren't checked by this rule.</li>
+<li>Test files keep their own rules.</li>
+</ul>
+<p><strong>Wrong if:</strong> a planted <code>crypto.randomUUID()</code> in a <code>.tsx</code> page, or a planted <code>fetch(…)</code>, passes the check; or the check flags the admin page's browser script or one of today's allowed uses.</p>
+
+<h3 id="S7">S7 · No sign-in test reads the real clock or waits on real time</h3>
+<p>From R33. This covers every test, test helper and harness of the sign-in packages:</p>
+<ul>
+<li>every file Vitest runs as a test under <code>packages/sign-in-*/src/</code> (<code>*.test.ts</code>, <code>*.test.tsx</code> and <code>*.unit.spec.ts</code>);</li>
+<li>all of <code>packages/sign-in-test-support/src/</code>;</li>
+<li><code>scripts/verify-auth/</code>.</li>
+</ul>
+<ul>
+<li><strong>Waits are on events only.</strong> A DevTools reply arrives, a socket opens, errors or closes, a process exits, a readiness line arrives, a promise settles.</li>
+<li><strong>Time comes from a controlled clock.</strong> Every timer runs on a controlled clock or on Vitest's fake timers. Any fixture value that depends on time, such as an invitation's expiry, is computed from the controlled clock, never from <code>Date.now()</code> or <code>new Date()</code>.</li>
+<li><strong>There's no real-time watchdog or "bound".</strong> If a browser or process hangs without an event, the test hangs. The test runner's own job limit, outside test code, ends the run. This follows from R33 itself: tests "wait only on events … and every timer runs on a controlled clock", so a real-time bound in a helper isn't allowed.</li>
+<li><strong>A scan enforces it:</strong> the same architecture check fails on any of these in those files: <code>setTimeout</code>, <code>setInterval</code>, <code>Date.now()</code>, a zero-argument <code>new Date()</code>, any read of <code>performance</code> (including <code>performance.timeOrigin</code>), <code>process.hrtime</code> or <code>process.uptime</code>. Vitest's own fake-timer APIs (<code>vi.useFakeTimers</code>, <code>vi.setSystemTime</code>, <code>vi.advanceTimersByTime</code>) and the names of timers passed as strings to them are allowed.</li>
+</ul>
+<p><strong>Wrong if:</strong> a planted <code>setTimeout</code> in a test helper passes the scan, a fixture built with <code>Date.now()</code> passes, or a value derived from <code>performance.timeOrigin</code> (as the browser test's evidence folder does today) passes.</p>
+
+<h3 id="S8">S8 · The Hegel families exist</h3>
+<p>From R33: <em>"The tests MUST include Hegel property tests of at least: the token-kind dispatch over every client kind, grant and resource; the device code's single use under concurrent redemption; and the token claims' parse round trip."</em></p>
+<ul>
+<li><strong>Token-kind dispatch (new):</strong> generated combinations of grant (<code>client_credentials</code>, person, introspection, none), audience (a workspace resource, central's admin audience, the management audience, anything else), client (a registered agent, the owner fleet CLI, any other person client), and whether a refresh credential is present. Each combination's decision from <code>releaseSignInResponse</code> must equal a model written from the approved rules: released, passed through, or refused with its exact error.</li>
+<li><strong>Claims parse round trip (exists):</strong> <code>person-identity-contracts.unit.test.ts:118</code> stays.</li>
+<li><strong>Device code single use:</strong> belongs to machine login (B3) and isn't in this feature.</li>
+</ul>
+<p>Each family is deterministic: Hegel's derandomize setting, no stored example database.</p>
+<p><strong>Wrong if:</strong> a dispatch that admits a combination outside the model, such as a refresh credential released to a client other than the owner fleet CLI, still passes the family.</p>
+
+<h3 id="S9">S9 · "Limited" is proven on Miniflare's real counter</h3>
+<p>From R52 and your journey SO2: <em>"Miniflare's binding keeps its own clock: locally it proves 'limited', the window reset is proven through the core's limiter on a controlled clock, and the binding's reset is checked once on the private stack."</em></p>
+<ul>
+<li><strong>On local workerd:</strong> the over-limit cases run against Miniflare's real rate-limit binding, not a stand-in. From one address, past the limit, the next request gets 429 with <code>Retry-After</code>, and every sign-in row reads back unchanged. Another address still passes. A forged <code>x-forwarded-for</code> is ignored.</li>
+<li><strong>The window reset</strong> is proven on the layers that run on a controlled clock. The core itself has no counter: it hands each request to the host's limiter (<code>request-limits/sign-in-request-admission.ts:23–34</code>). So the layers are:
+  <ul>
+  <li><strong>Better Auth's own provider-layer limit</strong>, inside the service: after the limit, moving the harness's controlled clock past the window lets the next request through (the existing recovery-code case, <code>people-request-limits.host.e2e.test.ts:173–232</code>);</li>
+  <li><strong>the Node host's fixed-window counter</strong>, which reopens exactly at expiry on the injected clock (<code>fixed-window-request-limiter.unit.test.ts</code>).</li>
+  </ul>
+  That's how SO2's "the core's limiter on a controlled clock" maps onto the real code (<a href="decisions.html#mine">Decisions</a>).</li>
+<li><strong>The binding's reset</strong> and counting across Cloudflare locations are checked on the private stack, not here.</li>
+<li><strong>The real counter's own clock:</strong> it counts in windows aligned to its real clock, which the test never reads or waits on. A burst sent across a window boundary would let one extra request through. That's the residual risk recorded on the <a href="decisions.html#flood-clock">Decisions</a> page.</li>
+</ul>
+<p><strong>Wrong if:</strong> the binding is unbound or removed from the Worker, and the "limited" case still passes.</p>
+
+<h3 id="S10">S10 · Every stored ID is a UUIDv7</h3>
+<p>From R32: <em>"No UUID other than version 7 MAY be minted or stored by the sign-in service."</em></p>
+<ul>
+<li><strong>Every UUID the service stores is version 7, wherever it sits.</strong> That means any column, including UUIDs inside JSON or URLs, not just columns named as IDs. It holds after the people journey on each database (D1 through the Cloudflare host, better-sqlite3 through the Node host), checked twice:
+  <ul>
+  <li><strong>before the member's removal,</strong> so rows that the removal deletes are seen;</li>
+  <li><strong>at the end.</strong></li>
+  </ul>
+  It already holds for the owner-and-agent journey, which the existing inventory covers.</li>
+<li><strong>Coverage:</strong> before the first check, <code>user</code>, <code>session</code>, <code>account</code>, <code>organization</code>, <code>member</code>, <code>invitation</code>, <code>twoFactor</code> and <code>signInAudit</code> must each hold at least one row, so an empty table can't pass by having nothing to check.</li>
+<li><strong>Derived keys stay derived.</strong> The client-assertion record's key (<code>oauthClientAssertion.id</code>) is a digest of the assertion's <code>jti</code>, which is what makes its replay refusable. It must stay that digest, not become a UUID, and a replay must be refused. The existing case in <code>storage-cases/provider-identifier-cases.ts</code> (lines 56–130) already proves this, and it stays.</li>
+<li><strong>Secrets and codes are never UUIDs, of any version.</strong> The inventory can't show this, because a v7 UUID used as a secret would pass it. So each value reached gets its own non-UUID assertion:
+  <ul>
+  <li>the recovery codes shown to the person;</li>
+  <li>the stored two-factor secret and recovery codes;</li>
+  <li>the stored signing private key;</li>
+  <li>session tokens;</li>
+  <li>client secrets.</li>
+  </ul>
+  PKCE verifiers aren't stored, so their format is checked where they're made (S1, proven by V2). Device codes and user codes belong to B3.</li>
+<li><strong>Not reached by this journey:</strong> <code>passkey</code> (B1-B), <code>deviceCode</code> (machine login, B3), and the agent-path tables <code>oauthResource</code> and <code>oauthClientResource</code>. They're listed as uncovered, not claimed.</li>
+</ul>
+<p><strong>Wrong if:</strong> a version-4 UUID anywhere in a stored row passes, including in JSON or in a row later deleted; an expected table is empty and the check still passes; a secret is UUID-shaped; or the client-assertion key stops being the <code>jti</code> digest.</p>
+
+<h3 id="S11">S11 · People get no tool credential, and today's agents still work</h3>
+<p>From R38. On the final build of this feature:</p>
+<ul>
+<li>today's agent client gets a token for its linked workspace with its release checks, and makes one allowed tool call;</li>
+<li>a person asking for a tool credential is refused.</li>
+</ul>
+<p><strong>Wrong if:</strong> either breaks on that build.</p>
+
+<h3 id="S12">S12 · No UUID other than v7 is made, anywhere in the sign-in packages</h3>
+<p>From R32 (<em>"No UUID other than version 7 MAY be minted or stored by the sign-in service"</em>) and your words, U24 <em>"we ony use uuidv7"</em>, restated on 15 Nov: <em>"also said enver use uuid ony kuuidv7?"</em>. S10 checks what's stored; this rule covers what's made, in product code and in tests.</p>
+<ul>
+<li><strong>The only UUID source is the injected ID capability:</strong> <code>platform.ids.nextId()</code>, which the shared builder makes with <code>uuid</code>'s <code>v7</code> (<code>sign-in-platform-web/src/index.ts:8</code>), or the tests' controlled ID source.</li>
+<li><strong>Today's two v4s go:</strong>
+  <ul>
+  <li>the page nonce, <code>crypto.randomUUID()</code> at <code>page-document.tsx:181</code>, becomes 16 random bytes from the host (S1). It's a secret, not an identifier, so it isn't a UUID at all. A v7 would be weaker: it starts with a timestamp.</li>
+  <li>the keychain test's service name, <code>randomUUID()</code> from <code>node:crypto</code> at <code>sign-in-owner-cli/src/fleet/macos-keychain-proof-key-store.host.e2e.test.ts:1, 17</code>, uses a v7 from the shared builder's ID source instead, given a fixed clock. The builder's default clock reads the real time, which S7 forbids in tests.</li>
+  </ul></li>
+<li><strong>A check enforces it:</strong> the architecture check fails on any of these, in every file under <code>packages/sign-in-*/src/</code> (tests included) and <code>scripts/verify-auth/</code>:
+  <ul>
+  <li>a <code>randomUUID</code> call or import;</li>
+  <li>an import from <code>uuid</code> of anything but <code>v7</code>;</li>
+  <li>any other UUID library.</li>
+  </ul></li>
+</ul>
+<p><strong>Wrong if:</strong> a planted <code>crypto.randomUUID()</code> in a test, or <code>import { v4 } from 'uuid'</code>, passes the check; or the base tree's check doesn't report today's two v4s.</p>
+
+<h2 id="failure">When something fails</h2>
+<ul>
+<li><strong>The capability throws while a page is being rendered:</strong> the handler's existing error handling (<code>sign-in-http-handler.ts:168–404</code>) attempts to delete the sessions issued in this request and to clean up people created without a linked account. Both are best-effort, so a failed cleanup is ignored, as today. It replies <code>503 {"error":"sign-in-unavailable"}</code>. No page is sent. Anything already written earlier in the same request stands, as it does today for any error at that point. For example, a factor just enabled, or a recorded sign-in.</li>
+<li><strong>The capability throws during admin forwarding:</strong> the steps after it don't happen. Steps already completed (an earlier token exchange or call to central) stand. The admin page shows its existing failure.</li>
+<li><strong>The capability throws during stamp renewal:</strong> that renewal attempt ends the way a failed central read ends today.</li>
+<li><strong>A host is built without the capability:</strong> it doesn't compile (S3). There's no runtime fallback to discover.</li>
+</ul>
+
+<h2 id="trace">Where each rule comes from, and how it's proven</h2>
+<table>
+<thead><tr><th>Rule</th><th>From (approved design)</th><th>Proven by</th></tr></thead>
+<tbody>
+<tr><td><a href="#S1">S1</a></td><td>R30 "cryptography … only through capabilities"; audit R1-X7</td><td><a href="verification-design.html#V1">V1</a>, <a href="verification-design.html#V2">V2</a></td></tr>
+<tr><td><a href="#S2">S2</a></td><td>R30; proof row U23 "every … crypto … call is recorded"</td><td><a href="verification-design.html#V2">V2</a></td></tr>
+<tr><td><a href="#S3">S3</a></td><td>R30 "each capability is required"</td><td><a href="verification-design.html#V4">V4</a> (type mutation), source read</td></tr>
+<tr><td><a href="#S4">S4</a></td><td>R30 "each supply them and add no sign-in rule"</td><td>the Verifier's source read of the host diffs; <a href="verification-design.html#V5">V5</a> as regression</td></tr>
+<tr><td><a href="#S5">S5</a></td><td>R30 (no behavior change is authorized); central's digest contract</td><td><a href="verification-design.html#V3">V3</a>, <a href="verification-design.html#V5">V5</a></td></tr>
+<tr><td><a href="#S6">S6</a></td><td>Proof row U23 "a Node or Worker import placed in a sign-in-core source file makes the audit fail"</td><td><a href="verification-design.html#V4">V4</a></td></tr>
+<tr><td><a href="#S7">S7</a></td><td>R33; proof row U25 "a scan finds no real-clock read, real-time wait or real timer in the sign-in tests, helpers or harness"</td><td><a href="verification-design.html#V6">V6</a></td></tr>
+<tr><td><a href="#S8">S8</a></td><td>R33 (Hegel families)</td><td><a href="verification-design.html#V7">V7</a></td></tr>
+<tr><td><a href="#S9">S9</a></td><td>R52; journey SO2 (flood limits)</td><td><a href="verification-design.html#V8">V8</a></td></tr>
+<tr><td><a href="#S10">S10</a></td><td>R32; proof row U24</td><td><a href="verification-design.html#V9">V9</a></td></tr>
+<tr><td><a href="#S11">S11</a></td><td>R38; journey SO2 ("today's agent path still works")</td><td><a href="verification-design.html#V10">V10</a></td></tr>
+<tr><td><a href="#S12">S12</a></td><td>R32; U24; your 15 Nov restatement</td><td><a href="verification-design.html#V11">V11</a></td></tr>
+</tbody>
+</table>
+</ex-document>
+</body>
+</html>

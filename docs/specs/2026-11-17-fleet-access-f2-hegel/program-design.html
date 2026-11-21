@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>F2 · Hegel on critical systems · Program Design</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>F2 · Hegel on critical systems: Program Design</h1>
+<p>F2 is test code only: no product file changes, no new CI gate, no new dependency (<code>@hegeldev/hegel</code> 0.4.10 is already in the repo). Each test sits beside the package it tests, in the lane its boundary needs, per Switchboard's <code>AGENTS.md:35</code>:</p>
+<ul>
+<li>pure functions in unit;</li>
+<li>SQLite and process-local stores in integration;</li>
+<li>Durable Object or live-host stores in the host lane.</li>
+</ul>
+<ex-mermaid id="layout" label="Where each target's test lives" data-width="canvas"><script type="text/plain">
+flowchart TB
+  subgraph unit["Unit lane, pure"]
+    p["P1–P9 · <package>/src/**/<target>.hegel.unit.test.ts<br/>generators + independent oracle"]
+  end
+  subgraph integ["Integration lane"]
+    m["M1, M2, M3 · <target>.hegel.integration.test.ts<br/>StateMachine + model; injected clock; process-local stores as the code has them"]
+  end
+  subgraph host["Host lane"]
+    h["M4 on the Durable Object store, M5 over a real Unix socket<br/><target>.hegel.host.e2e.test.ts"]
+  end
+  class p,m,h slot2
+</script></ex-mermaid>
+<h2 id="shape">Shape of each test</h2>
+<ul>
+<li><strong>Generators</strong> are built from the target's real Zod input schema, hand-written (Hegel has no Zod adapter), drawing valid, near-valid and boundary values. Security targets add adversarial strings: <code>..</code>, encoded separators, Unicode lookalikes, case and port variants, overlong values.</li>
+<li><strong>Oracles</strong> are independent: P5's operation/group/scope/support model built from literal catalog cases, P2's per-entry decision table, P3's authored-policy table, round trips and frozen vectors for P1 and P8, the code's documented rules for P4 and P9, and small state models for M1–M5. Never the function under test.</li>
+<li><strong>State machines</strong> use <code>hegel.stateful.StateMachine</code> with <code>runAsync</code>. Invariants are <code>alwaysCheck: true</code> (Hegel otherwise samples between steps). Clocks are injected, and stores come from the package's own injected Drizzle/store factories. 50 steps per case.</li>
+<li><strong>Settings:</strong> 500 cases per pure property, 100 per state machine, except M4's Durable Object host test at 25 (its native core test stays at 100; Lead call, 17 Nov: see Decisions), <code>derandomize</code> and the database disabled in CI. Failures print values through <code>tc.note</code>.</li>
+<li><strong>A finding:</strong> the Implementer stops and reports it to the Lead with the minimal case. A product fix is a separate bug fix with that case as its regression test.</li>
+</ul>
+</ex-document>
+</body>
+</html>

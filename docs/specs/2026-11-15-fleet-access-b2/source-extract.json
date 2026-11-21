@@ -1,0 +1,1636 @@
+{
+  "purpose": "Non-normative source extraction; grouping pending Lead go; no product change authorized.",
+  "sources": {
+    "requirements": {
+      "path": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/requirements.source.html",
+      "sha256": "335c02575394670a42e4d239240e8f9ef8e9ca07d4025a80db7416bc80e93efe"
+    },
+    "specification": {
+      "path": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/specification.source.html",
+      "sha256": "defe8a0c4153402e282fd874a3d3d8d1deb74c557ec8709f3ccf39f8a961c8dd"
+    },
+    "verification-design": {
+      "path": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/verification-design.source.html",
+      "sha256": "2ca5ba5252741a1f238dd2ffd31167521afc50a982a2b544f22dc45afeb118ba"
+    },
+    "deliverables/b2-central-organizations": {
+      "path": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/deliverables/b2-central-organizations.source.html",
+      "sha256": "e726edc5628d40e6183f355d4003c252eaa7e9d12a63b3532d6744f7a8b70c5b"
+    },
+    "deliverables/b2-additions": {
+      "path": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/deliverables/b2-additions.source.html",
+      "sha256": "bbc66a85c3e569560916345aec4bceb856a5e2d95f4bfa3a160dc8fbba79e827"
+    },
+    "program-design": {
+      "path": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/program-design.source.html",
+      "sha256": "3cdfe75980f6c5b5585062ce8e7f449a3734240515aab36f689169515d1a136b"
+    },
+    "audit": {
+      "path": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-15-full-review/report-B2.html",
+      "sha256": "eca9862bc90a686d5e172dd551a4cd6fba48d0bc38a6e98733ce73c44878e7e2",
+      "authority": "independent delivery findings only; not governing design"
+    }
+  },
+  "rows": {
+    "requirements": [
+      {
+        "id": "U15",
+        "line": 96,
+        "raw": "| U15 | **Fleet central holds the Fleet truth**: each organization's workspaces, projects, machines and sessions, and the list of organizations. **The sign-in service holds people**: who belongs to which organization and with which role, in Better Auth's organization plugin. The sign-in service, on Better Auth, also proves people and machines and mints their tokens, and it is the only way in: central isn't on the internet. Workspaces keep their existing IDs. | One owner per truth, and no token server written in Rust. | \"we have fleet taht shoud be doing the login\"; \"better auth is onlyk ts … fleet is decoup0ed\"; \"central worker is behind authentication worker\" |"
+      },
+      {
+        "id": "U20",
+        "line": 97,
+        "raw": "| U20 | **People sign in** with Google, GitHub or a passkey. Your organization's owner invites people; a person belongs to an organization once they accept. Only people reach administration. | The people sign-in rules carry over. | the people sign-in design (D2, F-64, F-78, F-82) |"
+      },
+      {
+        "id": "U21",
+        "line": 98,
+        "raw": "| U21 | **Only you administer.** You invite and remove people, create workspaces, log machines in by approving their codes, choose the workspaces each machine serves, and revoke machines. Managers are a later concept. | Granting access is your call. | \"owners can allow people to log in or allow auth related stuff\"; \"right now its just owner\"; \"yes lets keep it all owner only\" |"
+      },
+      {
+        "id": "U46",
+        "line": 99,
+        "raw": "| U46 | **Roles and permissions.** The roles are **owner** and **member** now, with managers later. A permission is one action on one resource; a role is a list of permissions; a person has one role per organization. The resources are: managing people, managing machines, managing workspaces, administering a workspace, seeing the organization (who is logged in, lookups, change records) and managing bots (with bots, step 5). For now the owner holds every permission and a member holds none: a member belongs, adds no one and logs in no machines. **Being in the organization is not being in a workspace**; workspaces get their own roles later. | Adding managers or workspace roles later must be a new mapping, not a redesign. | \"members belong to the system cant enrole machiens ... owners can do everythign. members cant add anyoen else\"; \"member of organziation is nto teh same as member of worskapce\"; \"1. manage people 2. manage machiens 3. manage worskapces 4. administor workspaces 5. logging etc\"; \"yeah manage bots is good\" |"
+      },
+      {
+        "id": "U47",
+        "line": 100,
+        "raw": "| U47 | **Three deciders, each with one job.** The sign-in service decides what people may do (their actions go through it, never over a machine's WebSocket). Fleet central decides what agents, bots and machines may do, from its own rules, on every request they make. The Switchboard decides tool calls, in its own store. Approvals use the same wording everywhere, and the sign-in service decides who may give one. | Each rule lives where it is enforced, and the Switchboard can still run without the fleet. | \"got it thsi make sense to me\"; \"no owner actiosn of creating and enrolling machiens does not\" (go over the WebSocket) |"
+      },
+      {
+        "id": "U26",
+        "line": 102,
+        "raw": "| U26 | **Organization first.** A person is admitted to an organization before anything else. | The organization decides who exists in it. | \"you add peope bot to organzisiton. then join workspaces\" |"
+      },
+      {
+        "id": "U27",
+        "line": 103,
+        "raw": "| U27 | **Nothing is shared or sent between organizations.** One Fleet central serves several, each kept in its own storage. A person may be in several; a machine and a workspace each belong to exactly one. | Organizations stay apart even on one service. | \"i dont want cross organization any sharing stuff or comm\"; \"a single router only belongs to one organization\" |"
+      },
+      {
+        "id": "U45",
+        "line": 104,
+        "raw": "| U45 | **Two services, one way in.** The sign-in service is the only part on the internet. Fleet central sits behind it, reached only through it, and is never reachable directly. Inside central, **each organization has its own storage**, so one organization's data never sits with another's. **A new organization needs no deploy:** creating it creates its storage. | Isolation by storage, one front door, and no per-organization deploys to run. | \"we dont need a worker per orgnizaiton i think, we need a durable object per orgnaizaiotn\"; \"central worker is behind aukthentication wroker\"; \"yes, atuhtentication worker. central worker is not exposed to itnernet\" |"
+      },
+      {
+        "id": "U9",
+        "line": 106,
+        "raw": "| U9 | You can **look up** who someone is: a person's role in your organization (from the sign-in service); a machine's organization, what authorized it and the workspaces it serves; a session's machine, project and isolation. | You must be able to answer \"who is this, and where does it belong?\" | \"know which works ace each identy regsitered with t system belkongs to\" |"
+      },
+      {
+        "id": "U14",
+        "line": 117,
+        "raw": "| U14 | When Fleet central can't be reached, **no new machine token or connection is admitted**: the system fails closed. | You accept the system stopping rather than running on stale grants. | \"if central is out yes system shouldn't work?\" |"
+      },
+      {
+        "id": "U43",
+        "line": 138,
+        "raw": "| U43 | **Step-up sign-in.** People sign in with Google or GitHub, or with a passkey that needs their fingerprint, face or PIN, which counts as both factors. Every change only the owner can make (inviting or removing people, approving or revoking machines, and the rest) also needs a **second factor**: a passkey, with fingerprint, face or PIN, or an authenticator-app code (TOTP), from the last 15 minutes. The organization's very first machine can be approved without it. Looking (the lookups, who is logged in) needs no second factor. | Someone holding your Google or GitHub account alone can't change your organization. | \"i want step up signin\"; on a passkey signing in, \"2, second facteor is foos\"; \"once they sign in, more people and more stuff they have to use a passkey ... Or they have to use two factors: one passkey or TOTP and one sign in\"; on the first machine, \"easy to make it so first enroll is allowed, thens econd mahcine onwards\" |"
+      },
+      {
+        "id": "U41",
+        "line": 145,
+        "raw": "| U41 | **You can see what happened.** Logs and traces from every Fleet-access service reach an OpenTelemetry tool. On Cloudflare that's what Cloudflare gives: Workers Logs for both Workers and traces for Fleet central, exported over OTLP (the sign-in Worker's automatic traces would record sign-in codes from its URLs). The Node and Tokio hosts export the same over OTLP. Every login, refusal and connection leaves a record with its reason. No token, code or secret is ever in one. | When a login or a connection fails, you need to see why without reading code or adding logging after the fact. | \"we shoudl also allow otel logign etc cloudflare gives us\" |"
+      },
+      {
+        "id": "U16",
+        "line": 172,
+        "raw": "| U16 | One versioned contract between services, on **any host**. Cloudflare is one runtime; the same design runs elsewhere. | The product runs on Cloudflare or elsewhere without a second design. | \"maqke sure clodufalre is one runtiem and we decokuple yes? same design\" |"
+      },
+      {
+        "id": "U22",
+        "line": 173,
+        "raw": "| U22 | The sign-in service stores everything in **SQLite through Drizzle**: D1 on Cloudflare, `better-sqlite3` on Node. Better Auth uses its Drizzle adapter, and `drizzle-kit` generates the checked-in migrations. Never Kysely, SQL strings or `node:sqlite`. You approve the schema and migrations before code uses them. | Sign-in was built on hand-written SQL and Kysely, which you didn't choose. | \"obviously fuckkgin drizzle eveyrwhere\"; \"we kuse drizzle and sqlite\"; \"i will nto allow you to yolo zqlite migraiton crap\" |"
+      },
+      {
+        "id": "U23",
+        "line": 174,
+        "raw": "| U23 | The sign-in service has **one runtime-free core** holding every rule. Each runtime is a host that injects storage, clock, IDs, crypto and outbound calls, the way codex-router's Fleet central does. | One design on any host. | \"it shoudl be runtime seperated like fuckign codex router\"; \"you inject stukff not pkul out engines\"; \"lets maek sure teh runtime (cloudfare, local node) vs logic is seggrated liek fleet (tokio vs clodufalre wokrer rs)\" |"
+      },
+      {
+        "id": "U24",
+        "line": 175,
+        "raw": "| U24 | **Types say what is valid:** discriminated unions for states and results. Only **UUIDv7** is ever used as a UUID. | One identifier format, and types that can't hold an invalid state. | \"type safeyt and good tyeps and descrimatn union\"; \"we ony use uuidv7\" |"
+      },
+      {
+        "id": "U25",
+        "line": 176,
+        "raw": "| U25 | Tests **never use wall-clock time**, include **Hegel** property tests, and are TypeScript. | Time and ordering are proven deterministically. | \"i dont allow wall clock time ever in tests\"; \"use hegal\" |"
+      },
+      {
+        "id": "OD4",
+        "line": 264,
+        "raw": "| OD4 | The sign-in service's tables and migrations: Better Auth 1.7.11's tables as its CLI generates them for the Drizzle adapter (no SQL time default; IDs from the injected generator), the organization plugin's tables, the second-factor tables and columns, `sign_in_audit` and the device-code columns, as drawn in the [Program Design](program-design.html#program-design--the-sign-in-service-storage-core-and-hosts). | **Approved in part (you, 2 November): \"tables are approved\"** for the revised generated SQL (sha256 `7aab7380…df8897a3`): the plugin's `organization` (with `fleetState`), `member` and `invitation`, the session's `activeOrganizationId`, `sign_in_audit.organization_id`, and the old admission tables removed. First approved on 31 October (\"sounds good\"). **Not yet approved:** the generated SQL for the second-factor tables and columns, which comes to you before B1b uses it. | B1b's second factors |"
+      },
+      {
+        "id": "OD17",
+        "line": 272,
+        "raw": "| OD17 | Where logs and traces go. | **Decided (you, 31 October): nowhere yet; turn on OpenTelemetry export later.** Cloudflare keeps the records meanwhile. | only JT1's export leg, which waits until you name a destination |"
+      },
+      {
+        "id": "OD22",
+        "line": 273,
+        "raw": "| OD22 | How new organizations are provisioned. | **Owner decision (OD23, 1 November):** a new organization needs no deployment and keeps separate storage in central; an organization's owner creates it through the sign-in service (OD24). **Current B2 design choice (D12):** the sign-in service makes one idempotent provisioning call; without confirmation the organization stays setting up and Fleet refuses work, and the owner can press **Try again**. Automatic retry waits for later workflow work ([B2](deliverables/b2-central-organizations.html#b2-flows)). | D12 on the assumptions page (the manual-only Try again) |"
+      },
+      {
+        "id": "OD24",
+        "line": 274,
+        "raw": "| OD24 | Who may create an organization, and which roles exist. | **Decided (you, 1 November):** there is no fleet operator role. The roles are owner, managers (later, per workspace) and members; for now only owners act. Whoever creates an organization owns it. Now there is no sign-up, so only you create organizations; later, with open sign-up (people sign-in SD2), anyone who signs in may create one and own it. **Revised (you, 2 November):** owner and member now, managers later; a member holds no permission; workspaces get their own roles later (U46). | open sign-up, with SD2 |"
+      },
+      {
+        "id": "OD25",
+        "line": 275,
+        "raw": "| OD25 | How Fleet central knows a person may do an admin action, now that roles live in the sign-in service. | **Decided (you, 2 November): A.** The sign-in service checks the person's permission live (`hasPermission`) as it forwards the request, and attaches the permission it checked to its own confirmation. Central checks that confirmation, then its own records, in the same transaction as the change. Central holds no one's role, so a role change needs no push. | nothing |"
+      },
+      {
+        "id": "OD23",
+        "line": 277,
+        "raw": "| OD23 | How organizations are kept apart. | **Decided (you, 1 November, superseding that morning's \"a central per organization\"):** two services. The sign-in service is the only public one; Fleet central is reached only through it; each organization has its own storage inside central. | nothing |"
+      }
+    ],
+    "specification": [
+      {
+        "id": "E1",
+        "line": 95,
+        "raw": "| E1 | **Organization** | Its organization ID. | Held by the one E26, in its own storage there. Has 0..n E2, E6 and E19. Has at least one E19 whose role is owner. | Nothing is shared or sent between two organizations (R34). Exists from its creation; creating one deploys nothing (R55). | active |"
+      },
+      {
+        "id": "E2",
+        "line": 96,
+        "raw": "| E2 | **Workspace** | Its workspace ID: the fleet's existing UUIDv7, kept as is. | Belongs to exactly one E1. Has 0..n E16 and E15. | Its ID never changes. | active, archived |"
+      },
+      {
+        "id": "E16",
+        "line": 97,
+        "raw": "| E16 | **Project** | Its project ID: the fleet's existing project. | Belongs to exactly one E2, through its board. Has 0..n E7 started for it. | Never moves to another workspace without its sessions ending. | active, retired |"
+      },
+      {
+        "id": "E3",
+        "line": 98,
+        "raw": "| E3 | **Person** | Their sign-in account. | Has 0..n E19, at most one per E1. | Never a session or a machine. Never holds a tool token (R38). | as in the people sign-in design |"
+      },
+      {
+        "id": "E19",
+        "line": 99,
+        "raw": "| E19 | **Organization membership** (of a person) | The pair of one E1 and one E3, with that person's E28 role there. Joining again after it ended is a new membership. | Belongs to one E1 and one E3. Has one E28. | At most one per person per organization. Being a member of an organization gives no access inside any workspace (U46). Held by the sign-in service, never by Fleet central (U15). An organization's last owner can't be removed. | invited, active, ended |"
+      },
+      {
+        "id": "E27",
+        "line": 100,
+        "raw": "| E27 | **Permission** | One action on one resource, named `resource:action` (for example `machine:revoke`). | Belongs to 0..n E28. | The resources are the organization plugin's own `member` and `invitation` (people), `organization` (the plugin's update and delete, plus view and change records), and `machine`, `workspace`, `workspaceAdmin` and `bot` (U46). Checked by name; nothing checks a role's name. | — |"
+      },
+      {
+        "id": "E28",
+        "line": 101,
+        "raw": "| E28 | **Role** | Its name within the deployment: `owner` or `member` (managers later). | Has 0..n E27. Held by 0..n E19. | `owner` has every E27; `member` has none (U46). Adding a role adds a mapping, not a new check. | — |"
+      },
+      {
+        "id": "E25",
+        "line": 107,
+        "raw": "| E25 | **Second factor** | One passkey or one authenticator-app (TOTP) registration of one E3, by its ID. A person's recovery codes are issued with their first one and act as a second factor once each. | Belongs to one E3; a person has 0..n. | A passkey counts only with user verification (fingerprint, face or PIN). Added, replaced or removed only as R54 allows. | active, removed |"
+      },
+      {
+        "id": "E26",
+        "line": 108,
+        "raw": "| E26 | **Fleet central** | The one Fleet service of the deployment. | Holds 0..n E1, each in its own storage, with that organization's E2, E6 enrollments, E7, E15, E21 and E24. Reached only through the sign-in service. | Not reachable from the internet. Holds no organization's state in another's storage, and refuses any request whose organization differs from the storage it reaches (R55). | — |"
+      },
+      {
+        "id": "R34",
+        "line": 180,
+        "raw": "| R34 | Every workspace and fleet machine MUST belong to exactly one organization. A session belongs to its machine's organization, and its project MUST be in that organization. A person MAY be a member of several. No machine allowance, session registration, remote start, message or token MAY span two organizations; a request that would MUST be refused with nothing changed and nothing about the other organization revealed. **Until step 3**, a machine still reads every workspace of its own organization (see [Requirements: what stays as today](requirements.html#requirements--after-the-switch)); it never reads another organization's. | E1, E2, E6, E7, E15 | U27, P6, O6 |"
+      },
+      {
+        "id": "R55",
+        "line": 181,
+        "raw": "| R55 | Fleet central (E26) MUST NOT be reachable from the internet: every request MUST reach it only through the sign-in service, over a link that only the sign-in service holds. Each organization's state MUST be held in that organization's own storage, apart from every other organization's, and central MUST refuse, with nothing changed, any request whose organization differs from the storage it reaches. Creating an organization MUST NOT need a deployment. A Router MUST be given only the sign-in address and the organization. | E1, E6, E26 | U45, U27, U15 |"
+      },
+      {
+        "id": "R13",
+        "line": 198,
+        "raw": "| R13 | Only a person whose role holds the permission (E27, U46) MAY: invite people to an organization or remove them (`member`); create workspaces; allow or withdraw a machine's allowance; approve or deny a device-code login; revoke a machine's enrollment; remove a session; set the token lifetime; and read the lookups (R14) and the who-is-logged-in view (R49).<br>In this design only the owner holds any permission, so \"the admin\" below means the owner. Only the deployment's configured owner MAY create an organization (A5, 3 November), and the creator becomes the new organization's owner. In this design an organization has one owner, its creator, who can't be removed or demoted; handing over comes later and MUST keep at least one owner. There is no fleet-wide role: the roles are owner and member, with managers to come (OD24, U46). Open sign-up, where anyone signed in may create an organization, waits with the people sign-in design's SD2.<br>The permission is checked live by the sign-in service, for the organization the action belongs to, with the person signed in to that organization and current there, at the time of the action as the people sign-in design's R9, R19 and R20 require (its freshness bound SD8); the confirmation it attaches names the permission it checked (OD25). Each change also needs R53's second factor. Creating a workspace is one step at Fleet central (4 November, B2), so it's checked and applied together, with no later application.<br>Each admin change MUST be recorded, as the people sign-in design's R12 requires. A change Fleet central applies is recorded in the same step as the change; a change whose record can't be written MUST NOT happen. A people change the sign-in service applies (inviting, removing) MUST be recorded before it happens, and refused if the record can't be written; its outcome is recorded after, and a record whose outcome was never written stays unconfirmed (OD26).<br>Anyone else MUST be refused with nothing changed and nothing revealed: a member, another organization's owner, a person no longer a member, a session no longer current, a bot or a session. | E1, E2, E6, E7, E15, E19, E21, E23 | U21, U20, U31 |"
+      },
+      {
+        "id": "R14",
+        "line": 199,
+        "raw": "| R14 | For a person, the system MUST answer their membership in the organization asked about (a member with a role, invited, or not a member), from the sign-in service, never another organization (R34). For a session: its machine, project, workspace and isolation record. For a workspace: the machines allowed to serve it. For a machine: its organization, its enrollment's state and what authorized it, its allowed workspaces, and its shared bucket. | E1, E3, E6, E7, E13, E14, E15, E21 | U9, O3 |"
+      },
+      {
+        "id": "R27",
+        "line": 235,
+        "raw": "| R27 | Every request from the sign-in service to Fleet central (C7) MUST arrive over the link that only the sign-in service holds (R55), and MUST be for an operation C7 names. From the internet, the sign-in service MUST pass on only machine connections and people's admin requests. A machine connection carries no person confirmation and needs none (R40). To each person's request it MUST attach its own confirmation that the person's session is current and that their role there holds the permission the request needs (E27), discarding any a caller sent. It MUST send the decisions (device-login, machine-token and organization-provisioning) only on its own behalf, from facts it verified itself, never as a request passed on from the internet. A request for another operation, or one naming an organization the person or machine it acts for may not act in, MUST be refused and change nothing. Repeating an accepted request MUST have no further effect beyond what C7 states. Central's only request to the sign-in service MUST be reading its published signing keys; central MUST send it nothing that asks, decides or changes anything. | all | U15, U16 |"
+      },
+      {
+        "id": "R53",
+        "line": 241,
+        "raw": "| R53 | **Step-up.** Each change R13 reserves for the admin MUST be refused with nothing changed unless the admin's sign-in includes a second factor (E25) confirmed no more than 15 minutes (one setting) before the change. Those changes are: inviting or removing a person, changing a person's role, creating a workspace, changing a machine's allowances, approving or denying a device-code login, revoking an enrollment, removing a session and setting the token lifetime. The refusal MUST say that a second factor is needed.<br>One exception: approving a device-code login into an organization that has never had an enrollment MAY rely on the provider sign-in alone.<br>A second factor confirms on top of the same person's provider sign-in. A passkey sign-in with user verification counts as both factors, so its new session is confirmed from that moment (OD21); a passkey assertion without user verification MUST NOT sign in or confirm anything.<br>Reading (the lookups and the who-is-logged-in view) needs no second factor. A passkey confirms only with user verification. | E1, E3, E21, E25 | U43, U21 |"
+      },
+      {
+        "id": "R51",
+        "line": 269,
+        "raw": "| R51 | **Telemetry.** Fleet central, the sign-in service and the Router MUST each leave one structured record for every decision and every refusal on the login, connection, registration, presence, activity, remote-start and view paths, and for each outbox step. A record MUST name its kind, its outcome with a bounded reason class, and the identifiers involved (organization, enrollment, installation, connection, session, client), and nothing else from the request.<br>No record, trace attribute or span name MAY contain a token, refresh credential, device code, user code, client secret, cookie, authorization header, private key or email address.<br>On Cloudflare, both Workers MUST turn on Workers Logs, Fleet central MUST also turn on Workers traces, and each MUST export what it keeps over OTLP to the destinations the deployment names (OD17). The sign-in Worker's automatic traces and invocation logs MUST stay off, because they record each request's full URL, and OAuth callbacks carry the provider's one-time code in theirs. Fleet central MAY keep its automatic records because nothing it receives carries a secret in its URL (machine, service and Access credentials travel in headers), but none of them MAY contain the value of a credential-bearing header (`Authorization`, cookies, Cloudflare Access credentials). A secret a caller deliberately places in a URL to central is outside this guarantee. On Node and Tokio, the same records MUST be exported over OTLP to the endpoint the deployment configures, and with none configured they are written to the host's own output only. Each service MUST leave the same records on each of its hosts.<br>A telemetry failure (a destination down, missing or slow) MUST NOT change or delay any answer. | all | U41, U16 |"
+      },
+      {
+        "id": "R29",
+        "line": 276,
+        "raw": "| R29 | All the sign-in service's persistent state MUST be in SQLite through Drizzle: D1 through Drizzle on Cloudflare, a `better-sqlite3` file through Drizzle on Node. Better Auth MUST reach it through its Drizzle adapter. Its schema MUST change only through migrations `drizzle-kit` generates and the repository checks in, and each database MUST apply them through exactly one mechanism before it serves a request.<br>No Kysely or `node:sqlite` MAY appear in its code or tests, and no code MAY execute SQL text. Queries use the Drizzle query builder, which MAY include its `sql` template for an expression inside a builder call with bound parameters, but never `sql.raw(`, `db.run\\|all\\|get\\|values(sql…)`, or a driver's own `.prepare(` or `.exec(`.<br>**Your gate (OD4):** you approve the schema and its migrations before code uses them. | E3, E23 | U22 |"
+      },
+      {
+        "id": "R30",
+        "line": 277,
+        "raw": "| R30 | Every sign-in rule (the token-kind dispatch, the final checks before a token is released, the permission check, the device-code approval, the service-request receivers, the audit, the who-is-logged-in page) MUST live in one runtime-free core. The core MUST reach storage, time, identifiers, cryptography and outbound requests only through capabilities its host supplies, and each capability is required. The Cloudflare host and the Node host MUST each supply them and add no sign-in rule. As with Fleet central's core crate and its Tokio and Cloudflare hosts, the core MUST be its own package that depends on neither runtime: no Cloudflare or Node types and no SQLite driver. Each host MUST be its own package that depends on the core, never the reverse. | E3, E23 | U23, U16 |"
+      },
+      {
+        "id": "R31",
+        "line": 278,
+        "raw": "| R31 | Each decision that writes more than one row MUST hold without an interactive transaction, because D1 has none: it MUST be either one conditional statement, or a fixed batch whose later statements stay correct when an earlier conditional statement changes no row. A decision MUST NOT read a row in code and then write on the strength of that read. In particular:<br>- an unknown answer from central MUST NOT be treated as a refusal;<br>- a device code MUST be consumed at most once, however many concurrent polls redeem it. | E3, E23 | U22, U16, U33 |"
+      },
+      {
+        "id": "R32",
+        "line": 279,
+        "raw": "| R32 | No UUID other than version 7 MAY be minted or stored by the sign-in service. Every identifier it mints as a UUID, and every model identifier Better Auth gets from its configured generator, MUST be a UUIDv7.<br>Two kinds of value aren't UUIDs and keep their own form. Secret material (client secrets, session tokens, PKCE verifiers, signing keys, device codes and user codes) MUST stay random secret bytes or codes. A key Better Auth derives from presented data to make something single-use (the client-assertion record keyed by a digest of the assertion's `jti`) MUST stay derived, because a fresh identifier would remove the replay protection. | E3, E23 | U24 |"
+      },
+      {
+        "id": "R33",
+        "line": 280,
+        "raw": "| R33 | No sign-in test, test helper or test harness MAY read the real clock or wait on real time. Tests wait only on events (a process's exit, a readiness message, a returned promise), and every timer runs on a controlled clock or mocked timers. Time-dependent behavior, including the expiries Better Auth computes itself, MUST be exercised with a controlled clock, and no production build MAY be changed to make that possible. The tests MUST include Hegel property tests of at least: the token-kind dispatch over every client kind, grant and resource; the device code's single use under concurrent redemption; and the token claims' parse round trip. | E22, E23 | U25 |"
+      },
+      {
+        "id": "V9",
+        "line": 460,
+        "raw": "| V9 | R13, C4 | Your admin actions apply with their records: inviting and removing a person, creating a workspace, allowing a machine, approving a device code, revoking an enrollment. A member (whose role holds no permission), another organization's owner, a removed member, a stale session, a bot and a session are each refused with nothing changed and nothing revealed; so is a request whose attached confirmation names a different permission, organization or person than the request. Only an organization's owner creates an organization, and the creator owns it; a member can't. The last owner can't be removed. A change central applies whose record can't be written doesn't happen; people changes are recorded first and refused if the record can't be written (OD26). | An unauthorized action applies, reveals something, a confirmation for one permission authorizes another, or a change applies without its record. |"
+      },
+      {
+        "id": "V19",
+        "line": 466,
+        "raw": "| V19 | R27, C7 | Each C7 operation sent by the sign-in service over its link is accepted. A request reaching central any other way is refused or finds no route. An operation C7 doesn't name, a body naming an organization the person or machine it acts for may not act in, a body whose organization differs from the storage it reaches, and a malformed body are each refused with nothing changed. A repeat has only the effect C7 states. Central sends the sign-in service nothing beyond reading its published keys; after a revoke, the sign-in service disables that machine's client. (The machine token's clock edges, including `grant_expires_at`, belong to V32.) | Central answers a request that didn't come over the link, accepts another operation or an out-of-scope organization, asks the sign-in service anything beyond its published keys, or a repeat changes more than C7 allows. |"
+      },
+      {
+        "id": "V21",
+        "line": 467,
+        "raw": "| V21 | R29 | The sign-in service runs on D1 and on a `better-sqlite3` file through Drizzle and Better Auth's Drizzle adapter. A database built from the checked-in migrations serves every case. A scan finds no Kysely, `node:sqlite`, `sql.raw(`, `db.run\\|all\\|get\\|values(sql`, or a driver's own `.prepare(` or `.exec(`. Your approval (OD4) is recorded before the first commit using the schema. | SQL text runs outside the query builder, Kysely remains, a database serves before its migrations run, or code that uses the schema predates your approval. |"
+      },
+      {
+        "id": "V22",
+        "line": 468,
+        "raw": "| V22 | R30 | The same sign-in suite passes on the Cloudflare host and the Node host, and a core run with recording capabilities shows every time, identifier, crypto and outbound use went through them. | A rule lives in one host, or the core reaches a platform global. |"
+      },
+      {
+        "id": "V23",
+        "line": 469,
+        "raw": "| V23 | R31 | Each multi-row decision gives the same result on D1 and `better-sqlite3`, and an unknown answer from central is never treated as a refusal. Concurrent redemptions of one approved device code yield exactly one machine login. | An unknown answer is treated as a refusal, a decision holds on one database only, or a device code logs in twice. |"
+      },
+      {
+        "id": "V24",
+        "line": 470,
+        "raw": "| V24 | R32 | Every UUID-shaped identifier stored during the sign-in suite is version 7. Client-assertion records carry the derived `jti` digest key, and a replayed assertion is refused. No secret, device code or user code is a UUID. | A version-4 or version-5 UUID anywhere; a client-assertion record with a fresh random key; a UUID used as a secret or code. |"
+      },
+      {
+        "id": "V25",
+        "line": 471,
+        "raw": "| V25 | R33 | A scan of the sign-in tests, their helpers and their harness finds no real-clock read, no real-time wait, and no real timer: no hang-guard timeout and no wall-clock log timestamp. Every wait is on an event. Expiries are crossed by moving a controlled clock; the four Hegel families exist and run. | A test depends on real time, or an expiry is only tested by waiting. |"
+      },
+      {
+        "id": "V26",
+        "line": 472,
+        "raw": "| V26 | R34 | An allowance, registration, remote start, message or token that would span two organizations is each refused with nothing changed and nothing revealed. A person admitted to two organizations acts in each separately. A machine never reads another organization's workspaces. | Anything crosses organizations. |"
+      },
+      {
+        "id": "V43",
+        "line": 486,
+        "raw": "| V43 | R51 | After a login, a refusal, a connection, a registration and a view refresh, the OTLP collector holds one record for each, naming its kind, outcome and identifiers. No token, refresh credential, code, secret, cookie or email from the run appears anywhere in what was exported. With the collector stopped, every answer is the same. Deployed, both Workers keep Workers Logs, central keeps traces, and the sign-in Worker's traces and invocation logs are off. A harmless canary placed in the sign-in Worker's request URLs appears in no record Cloudflare keeps, and no credential carried in a header appears in any record Cloudflare keeps for central. | A decision leaves no record, a record carries a secret, the two hosts of one service leave different records, a stopped collector changes an answer, a sign-in URL's contents reach a record Cloudflare keeps, or a header credential reaches one of central's. |"
+      },
+      {
+        "id": "V45",
+        "line": 488,
+        "raw": "| V45 | R53, C13 | Each R13 change by the owner with a second factor confirmed within 15 minutes succeeds; without one, or after the window on a controlled clock, it's refused with `secondFactorRequired` and nothing changed. Approving the organization's first machine succeeds with the provider sign-in alone; the second doesn't. Denying a code needs it too. Lookups and the view need none. A passkey sign-in with user verification is confirmed from the start; one without it signs in nothing and confirms nothing. | A change goes through on Google alone, the window isn't enforced, the first-machine exception covers a second machine, or reads demand a second factor. |"
+      },
+      {
+        "id": "V47",
+        "line": 490,
+        "raw": "| V47 | R55 | Two organizations on one central, on each host. A request reaching central other than through the sign-in service is refused, or finds nothing to reach. A request naming org A that reaches org B's storage is refused with nothing changed, and org B's storage holds none of org A's workspaces, sessions or machines. A machine already logged in to org A is refused an approval into org B, with nothing written in either. A new organization created by an owner works at once, with no deploy. A Router given only the sign-in address and the organization logs in and connects. | Central answers a request that didn't come through the sign-in service, one organization's data lands in another's storage, a machine is in two organizations, a new organization needs a deploy, or a Router needs anything else typed in. |"
+      },
+      {
+        "id": "R26",
+        "line": 234,
+        "raw": "| R26 | Every interaction between Fleet central, the sign-in service and the Routers MUST use one versioned contract whose meaning doesn't depend on the host. Each service MUST behave the same on Cloudflare and on a non-Cloudflare host. | all | U16, O5 |"
+      },
+      {
+        "id": "V18",
+        "line": 465,
+        "raw": "| V18 | R26 | The same obligations pass with each service on Cloudflare and on a non-Cloudflare host. | Behavior differs by host. |"
+      },
+      {
+        "id": "V10",
+        "line": 461,
+        "raw": "| V10 | R14, C4 | Lookups answer correctly for a person, a session, a workspace (its allowed machines) and a machine (organization, enrollment state, what authorized it, allowed workspaces, shared bucket). | An answer is missing or wrong. |"
+      }
+    ],
+    "verification-design": [
+      {
+        "id": "U9",
+        "line": 43,
+        "raw": "| U9 | Look up who belongs where | Each lookup answers correctly for a person, a session, a workspace (its allowed machines) and a machine: its organization, login state, what authorized it, its workspaces and its shared bucket. | — |"
+      },
+      {
+        "id": "U14",
+        "line": 44,
+        "raw": "| U14 | Fail closed | Stop Fleet central: no approval, machine token, connection, renewal, registration or remote start; a token already decided mints only inside its window. | — |"
+      },
+      {
+        "id": "U15",
+        "line": 45,
+        "raw": "| U15 | One owner per truth | Fleet's truth (workspaces, machines, sessions) lives only in Fleet central, each organization in its own storage, with the organization list and machine claims in its Organization Registry; the sign-in service holds people: their sign-ins, credentials, membership and roles, and device codes. Central is reached only through the sign-in service: a request reaching it any other way finds no route, and an operation it doesn't name, or an out-of-scope organization, is refused. | — |"
+      },
+      {
+        "id": "U16",
+        "line": 46,
+        "raw": "| U16 | One contract, any host | The same suites pass for Fleet central on Tokio and local workerd, and for the sign-in service on Cloudflare and Node. | Production Node and Tokio deployments |"
+      },
+      {
+        "id": "U20",
+        "line": 50,
+        "raw": "| U20 | People sign-in unchanged | The people sign-in design's own proof, run again with membership and roles in the sign-in service's organization plugin. | SD8, inherited open |"
+      },
+      {
+        "id": "U21",
+        "line": 51,
+        "raw": "| U21 | Only you administer | Your admin actions work and leave their record: inviting and removing a person, creating a workspace, allowing a machine, approving a code, revoking a machine. A member, whose role holds no permission, and anyone else is refused and changes nothing. | SD8, inherited open |"
+      },
+      {
+        "id": "U22",
+        "line": 52,
+        "raw": "| U22 | Sign-in on Drizzle and SQLite | The sign-in suite runs on D1 and on a `better-sqlite3` file through Drizzle and Better Auth's Drizzle adapter; a scan finds no Kysely, `node:sqlite` or SQL text. | Remote D1 replication and load |"
+      },
+      {
+        "id": "U23",
+        "line": 53,
+        "raw": "| U23 | One sign-in core, injected | The same sign-in suite passes on the Cloudflare and Node hosts, and a run with recording capabilities shows every clock, ID, crypto and outbound call went through them. | — |"
+      },
+      {
+        "id": "U24",
+        "line": 54,
+        "raw": "| U24 | UUIDv7, good types | Every UUID the sign-in service stored during the suite is version 7; no secret or code is a UUID. | — |"
+      },
+      {
+        "id": "U25",
+        "line": 55,
+        "raw": "| U25 | Deterministic sign-in tests, Hegel | A scan finds no real-clock read, real-time wait or real timer in the sign-in tests, helpers or harness; every wait is on an event; expiries are crossed with a controlled clock; the Hegel families run. | — |"
+      },
+      {
+        "id": "U26",
+        "line": 56,
+        "raw": "| U26 | Organization first | A person acts in an organization only as its member, after accepting an invitation; a session is a member only while its machine is enrolled. | — |"
+      },
+      {
+        "id": "U46",
+        "line": 57,
+        "raw": "| U46 | Roles and permissions | Each admin action works only for a role that holds its permission: the owner's apply, a member's are refused; a confirmation for one permission never authorizes another route. | — |"
+      },
+      {
+        "id": "U47",
+        "line": 58,
+        "raw": "| U47 | Three deciders | No admin action travels on a machine's connection, and central decides agents' and machines' requests without asking anyone's role. | — |"
+      },
+      {
+        "id": "U27",
+        "line": 60,
+        "raw": "| U27 | Organizations stay apart | With two organizations on one central, every kind of request that would cross them is refused and reveals nothing; a machine never reads the other's workspaces. | — |"
+      },
+      {
+        "id": "U45",
+        "line": 61,
+        "raw": "| U45 | Two services, one way in | Two organizations run on one central behind the sign-in service, on each host. A direct request to central finds no route. A request naming org A that reaches org B's storage is refused with nothing changed. A machine claimed for A can't be approved into B. A new organization works with no deploy. A Router given only the sign-in address and organization connects through it. | Production idle and billing behavior of connections through the binding; a native deployment split across machines |"
+      },
+      {
+        "id": "U41",
+        "line": 70,
+        "raw": "| U41 | See what happened | Run a login, a refusal, a connection and a view refresh with an OpenTelemetry collector attached: each leaves one record with its reason, nothing secret from the run is anywhere in what was exported, and stopping the collector changes no answer. | Export from Cloudflare to your destination, until you name one (OD17) |"
+      },
+      {
+        "id": "U43",
+        "line": 72,
+        "raw": "| U43 | Step-up | As owner, invite someone and approve a second machine: refused until you confirm with your passkey or app code, then it works; 15 minutes later it asks again. The first machine is approved without it, and looking needs none. | — |"
+      }
+    ]
+  },
+  "sections": {
+    "b2-answer-text": {
+      "source": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/deliverables/b2-central-organizations.source.html",
+      "line": 39,
+      "text": "\n- **Written fresh on 4 November.** It sits on the central storage reset: one Fleet object per organization, plus one per project. All of Fleet access's earlier central layout is thrown out: the Organization Registry, the separate authority object, the per-machine Connection objects, and hand-offs between stores.\n- **What B2 delivers:**\n  - central sets up a new organization when the sign-in service creates one, so \"setting up\" becomes \"ready\" for real;\n  - admin actions (to start with, creating a workspace and reading the organization's records) are applied only under the permission the sign-in service checked;\n  - two organizations never see each other's data.\n- **Everything B2 adds is tables and modules inside the reset's Fleet object.** No new store, no new object kind.\n- **B2 starts after the reset's D1 is on `main`** (D1 is the other Lead's first deliverable: central becomes one Fleet object).\n"
+    },
+    "b2-see-text": {
+      "source": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/deliverables/b2-central-organizations.source.html",
+      "line": 52,
+      "text": "\n- You create an organization on the sign-in page. It changes from \"setting up\" to \"ready\" once central has really set it up, on both builds (Cloudflare and Tokio). On a healthy system that's a few seconds; it's a goal, not a guarantee.\n- As its owner, you create a workspace. It appears, and a record of who created it, with which permission, is written in the same step.\n- A member, who holds no permissions, tries the same and is refused, and nothing changes.\n- A second organization can't see the first one's workspaces or records, even if a request names the wrong organization.\n- Your existing organization keeps today's central data.\n"
+    },
+    "b2-base-text": {
+      "source": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/deliverables/b2-central-organizations.source.html",
+      "line": 62,
+      "text": "\nThe other Lead's design (codex-router `design/central-storage-reset`; shared database page `stores.html`) gives central **one Fleet object per organization** and **one object per project**, with nothing per machine. The Fleet object holds:\n- the machine connections;\n- enrollments and leases;\n- the directory (`fleet_workspaces`, `fleet_boards`, `fleet_project_directory`, `fleet_creation_decisions`);\n- the Fleet outbox;\n- **one durable-steps journal with one alarm**.\n\nTheir D1 builds it for one organization. **B2 adds what's needed for many organizations, and for actions taken under a person's permission.**\n\n```mermaid\nflowchart TB\n  SI[\"sign-in service<br/>people, roles, organizations (Better Auth)<br/>checks the permission live\"]\n  subgraph C[\"central\"]\n    subgraph FA[\"Fleet object, organization A\"]\n      R[\"the reset's parts<br/>connections · directory · leases · outbox · journal\"]\n      B2A[\"B2 adds: organization identity · permission guard<br/>admin commands · change records\"]\n    end\n    FB[\"Fleet object, organization B<br/>(same shape, its own store)\"]\n    P[\"project objects\"]\n  end\n  SI -->|\"the link: ProvisionOrganization, admin requests\"| FA\n  SI -->|\"the link\"| FB\n  FA --> P\n```\n"
+    },
+    "b2-scope-text": {
+      "source": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/deliverables/b2-central-organizations.source.html",
+      "line": 91,
+      "text": "\n| In B2 | Not in B2 (where it goes) |\n|---|---|\n| the Fleet address keyed by organization: `Fleet { organization }` | machine login, enrollments, allowances and the locked link (B3) |\n| setting up an organization (`ProvisionOrganization` → `Provisioned`), and the sign-in service's real call replacing B1's stand-in | sessions registering through their machine (B4) |\n| **the link itself** (the `CENTRAL` service binding on Cloudflare, the Unix socket on Node and Tokio), and **the sign-in service's admin forwarding for B2's operations**: its admin page and endpoints, the live permission check, and the attached confirmation | machine connections over the link (B3) |\n| each Fleet object stamped with its organization by a **statement the sign-in service signs**, checked whenever central starts and on every command; a request for another organization refused | the authenticated command-line tool (B5) |\n| the stamp renewed **when the organization is used**: it lasts 120 days, and before sign-in calls an organization's Fleet it re-signs a stamp with 60 days or less left (your choice 3f; renew-on-use and tracking, your decisions of 9 Nov) | — (pinning the stamp in a machine's enrollment was dropped by your decision of 9 Nov) |\n| a project belongs to the organization whose Fleet directory lists it; imports name their target organization and are refused if it differs from the stamp | a project's organization in its replicated state (never: replicated state isn't a source of truth) |\n| the permission guard: person token, the sign-in service's attached confirmation, second-factor freshness | who is logged in, presence (B7); remote start (B8) |\n| admin command `CreateWorkspace`; `WorkspaceLookup` for the workspace itself (its allowed machines come with B3's allowances); reading the organization's change records | machine commands: `AllowMachine`, `RevokeMachineEnrollment`, `SetTokenLifetime` (B3); `RemoveSession` (B4) |\n| change records written in the same transaction as each change | \"one machine, one organization\" (you deferred it) |\n"
+    },
+    "b2-data-text": {
+      "source": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/deliverables/b2-central-organizations.source.html",
+      "line": 135,
+      "text": "\nTwo new tables, both in each organization's Fleet store, following your table rule: a UUIDv7 key, `created_at` and `updated_at`, typed columns, and a concern prefix.\n\n```mermaid\nerDiagram\n  organization_identity {\n    text id PK \"UUIDv7: the organization ID (from Better Auth)\"\n    text organization_statement \"the signed stamp, stored exactly as received\"\n    integer created_at\n    integer updated_at\n  }\n  organization_change_records {\n    text id PK \"UUIDv7\"\n    text request_id UK \"the operation's own ID; a repeat finds this row\"\n    text kind \"organizationProvisioned or workspaceCreated\"\n    text origin \"person or signInProvisioning\"\n    text actor_person_id \"from the verified person token; empty for signInProvisioning\"\n    text permission_checked \"the permission the sign-in service confirmed; empty for signInProvisioning\"\n    text target_id \"e.g. the workspace ID\"\n    integer created_at\n    integer updated_at\n  }\n```\n\n- `organization_identity` has **at most one row**, and it's written only by the internal provisioning request:\n  - On a fresh store, every public command and read is refused until it's stamped, revealing nothing.\n  - The organization never changes, and provisioning for a different organization fails. The signed statement can be replaced, but only by a valid statement for the same organization that names the stored statement's digest inside its signature. A setup retry without that never replaces anything: if a stamp is stored, it answers `Provisioned` and keeps it.\n  - Central checks the stored statement against the sign-in service's published keys whenever it starts, and refuses every command if the check fails.\n  - The Fleet object runs one transaction at a time (a Durable Object on Cloudflare; one writing connection on Tokio), so two first provisions can't both stamp it.\n- **Your existing organization** keeps today's store. The deployment's config names its one organization ID, mapped to today's object `fleet` (Cloudflare) and `fleet.db` (Tokio), the same on both hosts. No other organization can take that name.\n- **Two kinds of change record**, both in this one table:\n  - *Set-up* (`origin: signInProvisioning`): written with the stamp. Its `request_id` is the organization ID, which is all the unchanged `ProvisionOrganization { organizationId }` request carries, so a retry finds the same record. It has no person and no permission; none is invented.\n  - *A person's change* (`origin: person`): the verified person from the token, and the exact permission the sign-in service confirmed.\n- Workspaces live in the reset's own `fleet_workspaces` table. B2 adds no workspace table.\n- **Project ownership needs no new column or table.** A project belongs to O because O's Fleet directory (`fleet_project_directory`) lists it. An organization column on each project would only copy the stamp.\n- No people are stored at central. Membership and roles stay in the sign-in service (Better Auth).\n- **The SQL comes to you before B2 uses it**, like B1's.\n"
+    },
+    "b2-flows-text": {
+      "source": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/deliverables/b2-central-organizations.source.html",
+      "line": 176,
+      "text": "\n**Setting up an organization.** One idempotent transaction at central, so central needs no workflow of its own for it. The sign-in service makes a plain call (B1 builds no workflows). If the call fails or its reply is lost, the organization stays \"setting up\" until the call is made again, which nothing does automatically until the later workflow work. Any repeat is safe: it finds the same stamp and record and answers `Provisioned`.\n\n```mermaid\nsequenceDiagram\n  participant SI as Sign-in service (plain call)\n  participant L as The link\n  participant F as Fleet object of organization O\n  SI->>SI: sign the stamp statement for O (Better Auth signJWT, 120 days)\n  SI->>L: ProvisionOrganization { organizationId: O, organizationStatement }\n  L->>F: routed by Fleet { organization: O }\n  F->>F: verify the statement against the published keys\n  F->>F: one transaction: stamp organization_identity = O with the statement, write its change record\n  F-->>SI: Provisioned\n  Note over SI,F: a repeat finds the stamp already O and answers Provisioned, changing nothing\n  SI->>SI: mark the organization ready (Better Auth fleetState)\n```\n\n**Renewing the stamp when the organization is used (your decisions of 9 Nov).** There's no daily job. Before sign-in sends anything to an organization's Fleet (a machine's token refresh, a machine-login approval, a forwarded admin command or lookup, a member or role revision push), it checks that organization's stamp record and renews the stamp if 60 days or less are left (your choice 3f). Browser sign-in, account pages and a person's own session refresh don't reach the Fleet, so they don't count.\n\nThe **stamp record** is extra columns on Better Auth's organization row (`additionalFields`, `input: false`, server-written, like `fleetState`):\n- the confirmed stamp: its digest and expiry;\n- the **sent** stamp: the full signed statement, while its answer is still unknown, and empty otherwise;\n- the last renewal time;\n- **unanswered** tries and **refused** tries, counted apart, with the last time and reason.\n\n**Rules:**\n1. **At most one stamp in doubt.** While a sent stamp is unanswered, sign-in only re-sends that same signed statement, byte-identical, and signs nothing new. If it landed, central's identical-replay path answers \"already done\". If it didn't, it still names the confirmed stamp, so central applies it.\n2. **One writer per organization.** Setting, re-sending and clearing the sent stamp is a conditional row update: set only when empty, clear only when it still holds the same statement. Every sign-in instance and the key-change re-sign use the same guard.\n3. **Answers.**\n   - *Swapped* or *already done:* the sent stamp becomes the confirmed one, the sent column is cleared, and the renewal time is set.\n   - *No answer or an unclear one:* one unanswered try, keep the sent stamp.\n   - *Refused:* one refused try with its reason. If the refusal says the named stamp isn't the current one, sign-in reads central's current stamp, adopts it when its digest differs (even when it has expired, so a drifted and expired organization recovers: owner R29 change, 14 Nov), reconciles, and clears the sent column only once that's settled. An adopted expired stamp is due at once, so the next pass replaces it. Admin calls and revision pushes still require a valid stamp.\n4. **The call itself.**\n   - If the current stamp is still valid, the call goes ahead whatever renewal did.\n   - If it has expired and renewal didn't land, the caller gets \"try again shortly\" (the existing unavailable answer). It is never treated as success.\n5. **The limit.** A re-send works only while the sent stamp is valid, up to 120 days. If it expires still unanswered, sign-in can't recover on its own. The record keeps that condition for the admin page; notifications are later.\n6. **Key change.** On a key change, every organization is re-signed before the old key is retired, including idle ones and ones with more than 60 days left. It then confirms each central holds the new key's statement and passes a cold restart. It goes through the same rules.\n\n```mermaid\nsequenceDiagram\n  participant SI as Sign-in service (before a Fleet call)\n  participant F as Fleet object of O\n  SI->>SI: record: 60 days or less left? a sent stamp still unanswered?\n  SI->>SI: none sent: sign a new statement, replaces = confirmed digest; save it as sent (only if empty)\n  SI->>F: ProvisionOrganization { O, sent statement } (re-sent byte-identical after a lost answer)\n  F->>F: verify it; stored digest is the named one? then replace and write a change record\n  F-->>SI: Provisioned / already done, or refused as stale\n  SI->>SI: settle the record, then make the original call (or \"try again shortly\" if the stamp has expired)\n```\n\n**An admin command under the checked permission.**\n\n```mermaid\nsequenceDiagram\n  participant You\n  participant SI as Sign-in service\n  participant F as Fleet object of your organization\n  You->>SI: create workspace \"research\"\n  SI->>SI: session current? your role holds workspace:create? (live check)\n  SI->>F: CreateWorkspace + your person token + its confirmation naming workspace:create\n  F->>F: guard: token valid, confirmation matches person, organization, permission and route; second factor fresh\n  F->>F: one transaction: workspace in fleet_workspaces + change record\n  F-->>You: Applied (or Refused: notPermitted · secondFactorRequired · conflict)\n```\n\n**What the guard checks** (carried over from the design's permission rules, unchanged):\n- The person token is valid, its audience is central's admin address, and it's the right kind of token. Its expiry is rechecked at the applying transaction.\n- The confirmation is bound to this token, person, session, organization, route permission and request, and it's used once.\n- The applying transaction runs within **5 seconds of central receiving the request** (SD8), on central's own clock.\n- Changes need a fresh second factor; reads are exempt.\n- A refusal happens before anything about the subject is read, so it reveals nothing.\n\n**Repeats and lost replies on `CreateWorkspace`.** Each request carries two identities:\n- **The operation ID** (UUIDv7), chosen once by the sign-in admin page and kept on every retry. It goes through the Fleet object's existing request ledger, the reset's `fleet_request_decisions`, which keeps each request's canonical hash and its answer (`fleet_decision_step.rs`):\n  - the same operation repeated gets its original answer, with the same workspace;\n  - the same operation ID with a different body, person or organization is refused as a conflict;\n  - two operations for the same canonical name (trimmed, then compared byte for byte) end with one workspace, and the second gets that workspace back.\n- **A fresh confirmation** from the sign-in service's live check, for every attempt. A retry is checked again; an old confirmation is never reused.\n- If the reply is lost after central commits, the retry finds the operation in the ledger and gets the original answer. The caller sees an honest \"created\" or \"already created\". The workspace and its record go through the Fleet's own write path and feed, not a separate insert.\n\n**Every Fleet call carries its organization:** every resolver and call path, not just the two host address functions. Today's global Fleet call identities change to include it. A subject from another organization looks exactly like one that doesn't exist, before any project object is touched.\n\n**A request for a project:** central checks that the token's organization equals the stamp, and that the project is in this Fleet's directory, before touching the project. A project that isn't listed is refused exactly like one that doesn't exist.\n\n**A request naming the wrong organization:** the Fleet object compares the request's organization with its stamp. It refuses on a mismatch and changes nothing. A routing or forwarding bug therefore can't reach another organization's data.\n\n**Simpler than before:** creating a workspace used to be \"admitted\", then applied later by another store. Now it's one transaction in one store, so its answer is `Applied` or `Refused`, and a lost reply is recovered through the operation ID. Project moves (B5) and remote starts (B8) keep their own existing result contracts, unchanged. The generic `Admitted` and `CommandStatus` shapes are no longer used by any B2 command; what happens to them is decided when B5 is designed.\n"
+    },
+    "b2-proof-text": {
+      "source": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/deliverables/b2-central-organizations.source.html",
+      "line": 268,
+      "text": "\nEvery check runs on **both builds** (workerd Durable Objects and native Tokio), with the clock injected and no wall-clock waits. Heavy runs happen on Sunclaw.\n\n| What | The check | Wrong build it catches |\n|---|---|---|\n| setting up is real and repeat-safe | provision O, then provision O again: one stamp, one change record, both answers `Provisioned` | a repeat that writes a second record, or a \"ready\" without central's answer |\n| organizations stay apart | provision A and B; create \"research\" in A; B's lookup and records show nothing of A's (B2 proves this for admin data; machines and sessions are proven in B3 and B4) | shared storage, or an unkeyed address |\n| a wrong organization is refused | send A's Fleet object a request naming B: refused, nothing changed | a missing stamp check |\n| the permission is enforced | no confirmation, a confirmation for another permission, another person or another organization: each `notPermitted`, nothing written | a guard that trusts the caller |\n| second-factor freshness | a stale factor on a change gives `secondFactorRequired`; reads are exempt | factors ignored |\n| change and record together | make the record write fail: no workspace is created | the record written separately |\n| your organization keeps its data | provision your organization on a store holding today's data: everything is still there; the configured name is the same organization on both hosts, and no other organization can claim it | a fresh store replacing yours |\n| before set-up, nothing works | a public command or read on an unstamped store is refused, revealing nothing. This covers B2's own public commands and reads on any unstamped store. Today's Access-era routes on today's store keep working until the switch removes them in the same deploy that provisions your organization (Program Design, step 2); that is the approved transition, not an exception to the rule (Lead, 8 Nov) | a store usable before it's provisioned |\n| the stamp can't be stolen or doubled | provision B on A's stamped store: refused; two first provisions at once: one stamp | an overwrite, or two IDs |\n| the guard holds over time | a request held past 5 s, an expired token or factor, a reused confirmation, the wrong audience or token kind: each refused, nothing written | a guard checked only on arrival |\n| lost replies and repeats | cut the reply after central commits a workspace, restart, retry the same operation: one workspace, one record, the original answer; the same operation ID with a changed body is refused; two requests for one name end with one workspace | duplicates, or a replay that changes the answer |\n| set-up records | provisioning writes one set-up record with no person; its retry finds the same record | an invented person, or a missing record |\n| the real journey | you, signed in, create a workspace on the sign-in admin page and it appears; a member is refused; requests off the link, or a public request to an internal route, are refused; on both builds | a central test with a hand-made token passed off as the journey |\n| the stamp is genuine | an edited or forged statement, the wrong type, purpose, audience or organization, an access token presented as a stamp, an unknown or retired key: each refused before a write; a stored statement edited on disk makes central refuse every command after a restart | a stamp trusted without its signature |\n| renewal can't go backwards | a newer statement is stored, then one prepared against the older stamp arrives late: refused; a setup retry after renewal keeps the new stamp; two renewals at once: one wins | the old key's statement coming back and stranding startup |\n| renewal happens on use | on a controlled clock, both builds: a Fleet call with 60 days or less left re-signs first; one further from expiry isn't touched; no timer or trigger exists | a daily job, a manual step, or a used organization's stamp expiring |\n| a lost answer can't strand renewal | the reply is lost after the swap, and the next use re-sends the same bytes: \"already done\"; the reply is lost before the swap: the re-send applies; two instances renew at once: one sent stamp, one swap; a valid stamp with renewal failing still makes the call; an expired one answers \"try again shortly\" | two stamps in doubt, a lost renewal treated as success, or a call over an expired stamp |\n| project ownership | a token for O naming a project that isn't in O's directory is refused, nothing changed; an import aimed at the wrong central is refused | a project-side organization trusted |\n| the real call from sign-in | B1's stand-in is replaced; creating an organization end to end turns it ready on both builds | a stand-in left in |\n"
+    },
+    "b2-plan-text": {
+      "source": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/deliverables/b2-central-organizations.source.html",
+      "line": 296,
+      "text": "\n**Starts after:** the reset's D1 reaches `main`, and B1 (which brings the sign-in side of provisioning, to a stand-in).\n\n| Step | What | Reuses / drops |\n|---|---|---|\n| B2a | `Fleet { organization }` on both hosts; the stamp and mismatch refusal | new, at the reset's two address resolvers |\n| B2b | `ProvisionOrganization`, the link (binding and socket), and the sign-in service's real call | F1c contracts (keep; prune the retired people commands) |\n| B2c | the permission guard and the person-token check | F2a: keeps its token parsing, freshness and factor window, drops the owner guard and callback. F3a: keeps the key cache and verifier, drops the directory, service tokens and introspection |\n| B2d | `CreateWorkspace`, `WorkspaceLookup`, change records, and the sign-in admin page plus forwarding for them | the reset's directory tables and request ledger |\n| B2e | the end-to-end journey on both builds | — |\n\n**Thrown out:**\n- F2c's Organization Registry (migrations and SQL);\n- F3a's directory and service-token code;\n- F2a's owner guard;\n- every plan to put authority, presence or a registry in its own object.\n\n**Pull requests:** one in codex-router (B2a–B2e), and one in switchboard: the link (Cloudflare service binding and the Node socket), the admin forwarding plugin with its live permission check, the admin endpoints, the workspaces-and-records page, and the real provisioning call. Both are built by Sol coders, with the Rust work running on Sunclaw.\n"
+    },
+    "b2-unknowns-text": {
+      "source": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/deliverables/b2-central-organizations.source.html",
+      "line": 318,
+      "text": "\n| Not fully known | Settled by |\n|---|---|\n| the exact SQL of the two tables (now with the signed statement column) and the copy's private Fleet note | on the [stamp decisions page](../../../../tmp/2026-10-30-lead-pages/fleet-stamp-decisions.html), decision 6 |\n| what happens if a stored stamp stops checking out | decision 4 on that page |\n| the exact adapter from `CreateWorkspace` onto the reset's request ledger (the rules above are fixed) | the reset's D1 code, once on `main` |\n| how the Fleet object's request routing reaches B2's module | the reset's D1 code, once on `main` |\n\n**Your decisions on this page:**\n1. **Approve B2 as written.**\n"
+    },
+    "b2x-change-text": {
+      "source": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/deliverables/b2-additions.source.html",
+      "line": 57,
+      "text": "\n| B2 as written (5 Nov) | Now |\n|---|---|\n| central's guard checks a person token **plus a confirmation the sign-in service attaches** to each request | central checks a **reusable person token** (role, permissions, revisions) and a **DPoP proof** signed by the caller's key; no per-request confirmation |\n| Stable operation IDs use the existing ledger for repeat results; a separate fresh/unused per-request confirmation is required but is not the operation ledger. | a **used-requests table** (`organization_used_requests`) with a watermark holds the fresh request ID; the stable operation ID still maps to the reset's `fleet_request_decisions` |\n| role checked live at the sign-in service, no push | **revision counters** pushed from the sign-in service; central refuses a token below its stored floor |\n| Retained from B2: provisioning carries the signed statement; renewal reads the current digest privately and uses signed replaces/CAS. The older PD's organizationId-only sketch is stale. | unchanged |\n| B2's one-year statement, renewed with 30 days left | 120-day statement / 60-days-left renewal (your choice 3f), coordinated across constants, validators, signing and renewal; existing statements are replaced by normal re-sign/CAS, not reset |\n"
+    },
+    "b2x-proof-text": {
+      "source": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/deliverables/b2-additions.source.html",
+      "line": 116,
+      "text": "\nEvery central check runs on both builds (workerd and Tokio), with the clock injected and no wall-clock waits. Sign-in checks run on workerd+D1 and Node+better-sqlite3. Heavy runs go to the Sunclaw test agent; staging runs are coordinated with Lead A.\n\nThese rows are examples. **The full gate is r3 section 9** (`tmp/2026-11-06-push-revision-replay/advisor-design-r3.md`): person/org scope, remove/rejoin and session-end fan-out races; independent session and snapshot expiry; old-policy refusal, stop/resume and deletion ordering, payload conflicts and missing floors; after-hook crash, zero-row and failed-batch cases and late ACKs; concurrent replay, rollback after purge and backup recovery; the 120/60 statement transition; and a controlled real Node/workerd issuer → Rust central → persisted admission observation. Seeded floors and handcrafted tokens can't stand in for that last one. The native-AS cleanup/rollback replay-refusal row is superseded by t15c's accepted limitation: native AS reservations remain required, but no cleanup change, sweep, adapter wrapper or claim of unconditional AS replay refusal is part of this gate. Central's separate replay/admission checks remain required.\n\n| What | The check | Wrong build it catches |\n|---|---|---|\n| a token below the floor is refused | push revision 3; a token at revision 2 is refused, nothing written | a guard that ignores pushed revisions |\n| each request counts once | the same request ID twice: the second is refused; a fresh request ID with the same operation ID gets the original answer | a replay applied, or a retry duplicating the effect |\n| the watermark holds | purge advances the watermark first; an old request after a purge is refused | a purge that reopens replay |\n| DPoP is required | a Bearer request, a proof for another URL, a stale proof, a proof signed by another key: each refused | a token usable without its key |\n| revision and write together | the Better Auth write fails, so no revision bump, and the reverse | a bump without the change, or a change without the bump |\n| push is truthful | drop an acknowledgement: the source keeps it pending; \"revoked everywhere\" waits for it | a revoke shown before central confirms |\n| floors never go backwards | an older push after a newer one changes nothing | a reordered push undoing a revoke |\n| the stamp renews safely | an old statement with a new digest, a late old statement, and two renewals at once: refused, refused, one wins | a stamp stolen back or doubled |\n"
+    },
+    "program-design--two-services-one-way-in-text": {
+      "source": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/program-design.source.html",
+      "line": 63,
+      "text": "\n**Decided 1 November (you, OD23), replacing that morning's \"a central per organization\":** two services. The sign-in service is the only one on the internet. Fleet central sits behind it, reached only over a link that only the sign-in service holds, and keeps each organization in its own storage. A new organization deploys nothing.\n\n| Part | How many | Owns | Reached from |\n|---|---|---|---|\n| **Sign-in service** | one | People's sign-in, the device-code login, every token, the approval page and the who-is-logged-in page; carrying every Fleet request to central | the internet |\n| **Fleet central** | one | Every organization's truth, each in its own **Fleet object**, named by the organization's ID (the reset's Fleet object, keyed by organization at B2), plus one object per project. The organization authority, presence and session records are tables in that Fleet object. Nothing is stored per machine, and nothing spans organizations | only the sign-in service, over the link |\n\n**The link.**\n- **Cloudflare:** a service binding, `CENTRAL`, on the sign-in Worker. Central's Worker has no route and no custom domain, and `workers.dev` is off, so nothing on the internet resolves to it. The sign-in Worker forwards each Fleet request with `env.CENTRAL.fetch(request)`. Cloudflare's Workers pricing says a binding call adds no request fee; CPU time counts across both Workers.\n- **Machine connections pass through it.** A local experiment on the pinned runtime (workerd 1.20261012.1, Miniflare 5.20261012.0-beta; `/tmp/2026-11-auth-front-central-spike/receipt.md`) carried a real WebSocket from a front Worker through a binding to a named Durable Object: the 101, messages both ways, unsolicited pushes, closes in both directions, and a forced hibernation and wake on the same socket. A direct request to the central Worker found nothing. Production idle timing, billing and long connections aren't measured.\n- **Node and Tokio:** central listens only on a Unix socket in a directory owned by the deployment's user (mode 0700), never on a network address, and the Node sign-in host forwards to it. Both run on one machine; a native deployment split across machines isn't designed in this design.\n- **Central's core takes no credential for the link.** Each host makes the link the only way in, so the core sees only requests that came over it.\n\n**What the sign-in service sends, and what central still checks:**\n\n| Request | The sign-in service | Central |\n|---|---|---|\n| A machine's connection (`public/v1/session`) and its renewals | forwards it unchanged, machine token included | checks the machine token itself (C9) against the sign-in service's published keys, then admits it at the organization authority the token names |\n| A person's command or lookup, including provisioning a new organization's storage and the who-is-logged-in view (`public/admin`) | confirms the person's session is current (people sign-in R9), checks live that their role holds the permission the route needs (`hasPermission`), drops any confirmation the caller sent, attaches its own, created by its server for this one request and naming that permission; forwards it with the person token | checks the person token, then the permission guard: the attached confirmation's person, organization and permission match the request and the route, plus the second factor and freshness |\n| `DecideDeviceLogin`, `DecideMachineToken`, `ProvisionOrganization` (`internal/`) | builds and sends them itself, on its own behalf; never forwards one from the internet | picks the operation from the route before parsing the body, then parses the body only as that operation's type ([service requests](#program-design--service-requests-r27-c7)) |\n\n**How the objects sit on each host.** The same Rust core runs every object; each host only stores and schedules it. On Cloudflare each is a Durable Object. On Tokio each object is a slot in the one central process with its own SQLite file (today's `fleet` file and project files; the reset's D1 sets the layout). The Fleet object has **one durable-steps journal, one dispatcher and one alarm**, and every task kind, this design's included, registers on it on both hosts. What serializes the Fleet object's state is its storage transaction, not a queue: calls and frames may interleave between transactions, so every rule's guards and unknown-outcome handling hold at transaction boundaries. A rule that used to cross two of today's objects (for example the authority and the directory) is now **one transaction inside one Fleet object**. That is simpler, and it is reproved at B2 rather than carried over from the old proofs.\n\n**Routing by organization, and the one check that guards it.** Central names the Fleet object from the organization in the request: `Fleet { organization }`, which this design adds at the reset's two address resolvers (Cloudflare `object_location.rs`, Tokio `native_objects.rs`); your organization keeps today's `fleet` object through a fixed mapping. A machine's connection is routed by the organization in its signed token. Each Fleet object is stamped with its organization when it's first created, and refuses, with nothing changed, any request whose organization differs (R55). So a forwarding or routing bug can't reach another organization's storage.\n\n**Creating an organization** needs no deploy: an owner creates it in Better Auth through the sign-in service, which then sends `ProvisionOrganization` to that organization's Fleet object in one plain call; if it doesn't confirm, the organization stays \"setting up\" until the owner presses **Try again** (B2; nothing retries automatically until the later workflow work). The Fleet object exists from its first call (Cloudflare creates a named Durable Object on first access; Tokio creates its SQLite file), stamps itself with the organization, and records it in one transaction. See [admin commands](#program-design--admin-commands-and-lookups).\n\n**Central asks the sign-in service nothing.** Its one outbound request is reading the sign-in service's published signing keys, cached, with one refetch on an unknown key ID. When the sign-in service learns an enrollment has ended (central's answer to `RevokeMachineEnrollment`, which names the ended enrollment and its client; the first `Grant` of a newer enrollment, which names the one it superseded; or central refusing a machine token for that enrollment), it disables that machine's client itself ([disabling a machine's client](#program-design--disabling-a-machine-s-client)).\n\n**The scalars, exactly.** One accepted set each, written once as the JSON Schema `pattern` plus `x-maxUtf8Bytes` (F1's rule). The sign-in service's generated Zod enforces that pattern. The Rust constructor enforces the same accepted set with linear-time matching: the workspace's pinned `regex` crate, with any lookahead in the pattern written as an explicit check. No backtracking regex engine enters the runtime-free core, and no wider URL or email library decides acceptance. A three-way probe (Rust, the JSON Schema, JavaScript) proves the sets equal.\n- **`HttpsUrl` and `ResourceUri`** (the sign-in address a Router is given; central's machine address, which machine tokens name) share one lexical rule. Their one constructor and schema live in `fleet-identity-protocol`, which both the Router and central core already depend on; neither copies the rule.\n  - ASCII only, with no whitespace or control characters, and at most 2,048 bytes.\n  - The scheme is `https`. `http` is allowed only when the host is `localhost`, `127.0.0.1` or `[::1]`, for local test deployments.\n  - The host is a lowercase DNS name in ASCII (an IDN as its `xn--` punycode, labels of 1–63 characters from `a–z 0–9 -`, never starting or ending with `-`), or one of those two loopback forms.\n  - An optional port, 1–65535, written without leading zeros (so `:443` is valid and `:0443` is refused).\n  - The path is empty, or starts with `/` followed by RFC 3986 path characters, percent-encoding included.\n  - No user info, no query, no fragment.\n  - Bytes are kept exactly as written and compared byte for byte, with no normalization.\n- **`VerifiedEmail`** keeps the people sign-in design's existing rule: a provider-verified email, stored and compared lower-cased. Its syntax is the pinned Zod version's own `z.email()` pattern, copied verbatim as the schema `pattern`, ASCII only, at most 254 bytes. Whether an email was verified is provenance, not syntax: it comes from the provider sign-in or an accepted invitation, never from the string.\n- `ReceiverId` and `PeerId` keep their existing owners and rules.\n- Anything outside these sets is refused, and operators bear that limit.\n\n**How a Router logs in and reaches central** (R41 unchanged):\n- **The first login:** `fleet login --sign-in <address> --organization <id> --label <label>`. Later logins reuse the saved address. Nothing deployment-specific is in the repository.\n- **The endpoints:** the Router reads the sign-in service's OAuth authorization-server metadata for its device and token endpoints. A small public document beside it, `/.well-known/fleet-login`, names the public Router device-login client. The document is closed: `{ \"client_id\": \"<the public Router device-login client>\" }`, and the Router refuses unknown fields. B3 serves it.\n- **The resource** is central's machine address, one value in the sign-in service's configuration; a Router can't choose one.\n- **The token answer** adds `fleet_central: { receiver, relay }`: central's authoritative receiver and relay peer IDs, from the sign-in service's configuration. They're public, and the connection needs them.\n- **Where it's kept:** the Router saves the sign-in address, organization, enrollment, machine environment, receiver and relay in one row of a new `fleet_login` table in its existing fleet store (`fleet-cache.sqlite`, owned by `message-board-storage`'s `FleetCache`; no new database, owner 3 November; never the proxy's `state.sqlite`). The refresh credential stays in the encrypted store or in memory (R41). Until step 3 the Access reference stays configured, as today.\n- **Connecting:** the Router connects at `<sign-in address>/fleet/v1/session`, which the sign-in service forwards to central's public namespace (below).\n  - The sign-in address is the issuer identifier, which may carry a path (for example `https://host/api/auth`).\n  - The `/fleet/` routes, and `/.well-known/fleet-login`, sit at that address's **origin**: `https://host/fleet/v1/session`. The issuer's path and any trailing slash never change them. Only the authorization-server metadata uses the issuer path, as RFC 8414 inserts it.\n  - So `<sign-in address>/fleet/…` throughout this design means `<origin of the sign-in address>/fleet/…`.\n\n**Two namespaces at central, and what the public edge may reach.** Every request arrives over the same link, so central can't tell from the link alone whether the sign-in service started a request or passed one on. The namespaces make that difference:\n- **`public/`: what the sign-in service passes on from the internet,** and only this: `/fleet/v1/session` (a machine's connection, checked by its machine token) and `/fleet/admin/…` (a person's request, checked by the person token plus the sign-in service's own attached confirmation; any confirmation the caller sent is dropped). Every other path under `/fleet/` is refused at the sign-in service and never forwarded.\n- **`internal/`: the decisions the sign-in service makes on its own behalf** (`DecideDeviceLogin`, `DecideMachineToken`, `ProvisionOrganization`). Only the sign-in core's central client builds these, from facts it has verified itself (a permission it checked, an organization Better Auth created); no public request is ever mapped here.\n- **Adopting the saved route:** the Host's login owner lives for the Host's lifetime and watches the confirmed `fleet_login` row. When the receiver and relay first appear, or change, the Host rebuilds its collaboration runtime in-process (pump, writers, mail), using the existing lifecycle teardown and reassembly. Board admission stays closed until the rebuilt runtime has adopted them. Local MCP and API clients reconnect by their usual path, and an uncertain write stays uncertain, with no replay. A Host that starts with a saved row assembles with it directly. Nothing restarts the Host or Router process, and no routing ID is ever invented.\n- **The Access reference until step 3** is the one already in `fleet/enrollment.json`. Only its Access part is read; the retired machine credential beside it never is. **One owner (agreed with the central storage reset, 3 November):** `fleet_login` is the only home of this Router's login and enrollment state, and `fleet/enrollment.json` is retired into it as a hard cutover, not kept beside it. `fleet/enrollment.json` changes in steps. **Until the switch (step 2)** today's login still uses it unchanged, machine credential included, and nothing touches it. **At step 2** the old login's code and its machine credential are removed, and the file shrinks to the Access reference (the Cloudflare client ID and secret key reference, or the self-hosted assertion key), which is transport configuration, not login state. **At step 3** the file is deleted with Access. `fleet_login` holds no Access column, and it has a row only after a confirmed device login. The reset's re-enrollment forget step clears only its named cache tables and never `fleet_login`. If the reset's D3 merges `fleet-cache.sqlite` and `fleet-outbox.sqlite` into one Router fleet store, `fleet_login` moves with it.\n- This replaces F11's hand-written `login-config.json` and its login metadata file.\n\n**What it costs, and who pays:**\n- **The sign-in service is on every path.** When it's down, Fleet is unreachable too, machine connections included; they reconnect when it's back. Nothing in central's storage is lost.\n- **Organizations share one deploy and one Worker's limits.** A bad central release reaches every organization; isolation is by storage, not deployment.\n- **The link differs by host:** a service binding on Cloudflare, a Unix socket on Node and Tokio on one machine.\n- **Gone, compared with that morning's design:** per-organization deploys and their runbook, the directory, the approval passed between Workers, the Router learning a per-organization central, the sign-in service's routing table, the service tokens between the two services, central's client key, and the credentials bound to an organization. The plan's removal list is on its own page.\n"
+    },
+    "program-design--admin-commands-and-lookups-text": {
+      "source": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/program-design.source.html",
+      "line": 1108,
+      "text": "\n> **Superseded placement (3 November).** Parts of this section were written for today's separate objects: a per-machine Connection object, a separate organization authority object, the Organization Registry and today's Registry. The central storage reset replaces them with **one Fleet object per organization plus one per project, and no new store** ([current map](#program-design--central-storage-with-the-fleet-structure-change)). Read this section's rules as rules: they still hold. Read its object names as homes in the current map:\n> - the organization authority is a module with `machine_*`, `session_*` and `organization_*` tables in the Fleet object;\n> - a Connection object's presence is the `machine_presence` table there;\n> - the Registry's leases are the reset's Fleet tables;\n> - the Organization Registry is withdrawn, and its \"one machine, one organization\" claim waits on your choice.\n> A hand-off between two of those objects becomes one transaction in the Fleet object, reproved in B2–B4. **Don't build the objects named below.**\n\nEvery organization command and lookup names its organization and is refused unless the permission guard below passes. There is no fleet-wide role (OD24), and central keeps no roles at all: the sign-in service decides which person holds which permission ([people, roles and permissions](#program-design--people-roles-and-permissions)). Results are `Applied`, `Admitted { commandId }` (a published generic shape that no B2 command uses; `CreateWorkspace` is one transaction, answered `Applied`. Project moves and remote starts keep their own result contracts, below; the generic shape's fate is decided with B5), or `Refused { reason: NotPermitted | NotFound | Conflict | RecordUnwritable | SecondFactorRequired { within_seconds } }`; a refused command reveals nothing, and `SecondFactorRequired` (R53) is answered only to a caller whose confirmation names the route's permission, before anything else is checked or changed. **Audit (people sign-in R12):** every applied command writes its record (who, what changed, the organization, when) in the same transaction as the change, at the owner of the state it changes; if the record can't be written, that transaction fails and nothing changes. Each B2 command (`ProvisionOrganization`, `CreateWorkspace`) changes the organization's Fleet store and is recorded there, in the same transaction. Project-owned changes keep their own records in their project's store. `ProvisionOrganization` is recorded there too, as a system-initiated record with no person (B2). People changes are recorded in the sign-in service (OD26). An organization's audit view is assembled when read, by the admin surface, from each owner's records for that organization; nothing is copied, and an owner that can't be read is shown as unavailable.\n\n**`CreateWorkspace` is one transaction** in the organization's Fleet object: the guard, the workspace in the reset's `fleet_workspaces`, and its change record, then `Applied`. No other store is involved, so it never answers `Admitted`. A repeat or a lost reply is settled through the Fleet's request ledger by the operation's ID: the same operation gets its original answer, and the same ID with a different body is a conflict (B2's doc). Project moves (B5) and remote starts (B8) keep their own result contracts; no B2 command uses the generic `Admitted`/`CommandStatus` shapes, whose fate is decided with B5. Creating a workspace is idempotent by its canonical name (the `ResourceName` value after its own trim, compared byte for byte).\n\n**The list of organizations** is Better Auth's `organization` table in the sign-in service. Central has one Fleet object per provisioned organization, stamped with its ID by `ProvisionOrganization` in one idempotent transaction (B2's doc).\n\n| Command | Request fields | What else it changes |\n|---|---|---|\n| `CreateWorkspace` | organizationId, name | — |\n| `AllowMachine`, `WithdrawMachineAllowance` | organizationId, installation, workspaceId | — (its notice to the Switchboard comes with step 3) |\n| `RevokeMachineEnrollment` (replaces the operator's `RevokeMachine`) | organizationId, installation | allowances withdrawn, sessions removed, the open connection closed; its answer, `Applied { ended: EndedMachineClient }`, names the client the sign-in service then disables (\"Revoking a machine\", below) |\n| A device-code approval | not an admin command: the owner approves on the sign-in service's page, which sends `DecideDeviceLogin` (C7). The sign-in service vouches that the approver's session is current and that their role holds `machine:enroll`, checked live. The organization authority checks that vouching, within SD8, in the transaction that creates the enrollment, with its record. | — |\n| `RemoveSession` | organizationId, session | — (its notice comes with step 3) |\n| Lookups: `IdentityLookup`, `WorkspaceLookup` (its allowed machines), `MachineLookup`, `CommandStatus`, `WhoIsLoggedIn` (below) | organizationId plus the subject | — (shapes below, under \"The four admin lookups\"; `WhoIsLoggedIn`'s under \"Who is logged in\") |\n\n**Permission guard (R13, OD25):** the caller presents a person access token whose audience is central's admin address, forwarded by the sign-in service with its confirmation attached. The sign-in service has confirmed, just before forwarding, that the person's session is current (the people sign-in design's privileged-decision confirmation, its R9, bound SD8) and, with `hasPermission`, that their role in the request's organization holds the permission the route needs. Its confirmation is created by its server for this one request and names the person, the session, the organization, the token it checked and that permission (`FleetPermission`). It drops any confirmation a caller sent. Central checks that the token's organization is the command's organization and the object's stamped organization; that the confirmation names this token's person, session and organization; that its permission is exactly the one the route requires (a table in the core, one row per route, never a role name); and that its request ID was never used before. SD8 is 5 seconds (the owner, 31 October). It is one setting, measured on central's injected clock from when central receives the forwarded request to when the owning transaction applies. It is never measured from the sign-in service's `checkedAt`, because the two clocks may differ by up to D. For a change the organization authority applies, the guard holds in that transaction: the confirmation must be within SD8 of it, and a confirmation is never reused for a later command. For a change another store applies, it holds when you ask (above). The guard refuses everyone else before any read or write.\n\n**Who is logged in (R47–R50, C12).** A read-only lookup under the permission guard (`organization:view`). It changes nothing: it writes no record and starts no outbox step; presence reads change nothing at the Connection objects.\n\n```rust\n#[serde(rename_all = \"camelCase\")]\npub struct WhoIsLoggedIn { pub organization_id: OrganizationId }\n#[serde(tag = \"result\", rename_all = \"camelCase\")]\npub enum WhoIsLoggedInResult {\n    #[serde(rename_all = \"camelCase\")]\n    Snapshot { as_of: UnixMillis, machines: Vec<MachineRow> },\n    Refused { reason: LookupRefusal },               // reveals nothing (R49); a lookup never answers secondFactorRequired\n}                                                    // no answer at all, or an error, means unavailable\n#[serde(rename_all = \"camelCase\")]\npub struct MachineRow {\n    pub installation: InstallationId,\n    pub label: MachineLabel,                         // from DecideDeviceLogin, kept on the enrollment\n    pub enrollment: EnrollmentView,                  // { state: enrolled | revoked | expired, approvedBy: PersonId, approvedAt }\n    pub may_serve: Vec<WorkspaceRef>,                // { workspaceId, name }: active allowances\n    pub connection: ConnectionView,\n    pub sessions: Vec<SessionRow>,                   // active only; removed and ended sessions are not listed\n}\n#[serde(tag = \"state\", rename_all = \"camelCase\")]\npub enum ConnectionView {\n    #[serde(rename_all = \"camelCase\")]\n    Connected { since: UnixMillis, last_heard_at: UnixMillis },\n    #[serde(rename_all = \"camelCase\")]\n    NotConnected { last_seen_at: Option<UnixMillis> }, // None: never connected on this enrollment\n}\n#[serde(rename_all = \"camelCase\")]\npub struct SessionRow {\n    pub session: SessionRef,                         // its endpoint names the harness: Codex, Claude or Cursor\n    pub project: ProjectRef,                         // { projectId, name }\n    pub workspace: WorkspaceRef,\n    pub isolation_kind: IsolationKind,\n    pub started_at: UnixMillis,\n    pub state: SessionStateView,                     // working | idle | unknown\n}\n#[serde(rename_all = \"camelCase\")]\n```\n\n- **One reading, one moment.** The organization authority reads its enrollments, allowances, sessions and activity in one transaction, at its own clock's `asOf`. In parallel it asks each enrolled machine's Connection object for its presence, with a deadline of half a refresh interval. It also asks its own Fleet object for the workspace and project names in the snapshot.\n- **Never partial.** If the Fleet object or any Connection object can't answer in time, the whole lookup fails, and the page shows unavailable.\n- **The derivations.**\n  - A machine is `Connected` when its Connection object answers `Open`.\n  - A revoked or expired enrollment always shows `NotConnected`, since its connection was closed and is refused.\n  - A session's state is unknown unless its machine is connected and its latest activity report came on that same connection.\n- **One organization.** Only machines with an enrollment in this organization are listed, which R34 already guarantees: one authority per organization.\n- **Stage C's people rows never come from central.** The sign-in service's page builds them from Better Auth's own rows: each member's name, whether they are signed in now, and when they last signed in. Central holds no people. Bots join the lookup, as a new field, when bots exist.\n\n**The four admin lookups (R14).** Read-only and under the permission guard (`organization:view`), like `WhoIsLoggedIn`: they write no record, start no outbox step, and never answer `secondFactorRequired`, because reads are exempt. Each answers only inside the organization it names. R14 asks for \"a person's organizations\", but an organization's owner may not learn of another organization (R34). The person lookup is answered by the sign-in service from Better Auth: that person's membership and role in this organization only (R14 says so). Central answers the session, workspace and machine lookups. A subject that doesn't exist and a subject in another organization both answer the same `unknown {}`, so nothing is revealed. Home: `identity_contract.rs`, beside the K12 shapes, whose `WorkspaceRef`, `ProjectRef` and `MachineLabel` they reuse.\n\n```rust\n#[serde(tag = \"subject\", rename_all = \"camelCase\", rename_all_fields = \"camelCase\", deny_unknown_fields)]\npub enum IdentityLookup {\n    Session { organization_id: OrganizationId, session: SessionRef },\n}\n#[serde(tag = \"result\", rename_all = \"camelCase\", rename_all_fields = \"camelCase\", deny_unknown_fields)]\npub enum IdentityLookupResult {\n    Session {\n        session: SessionRef,\n        machine: InstallationId,\n        project: ProjectRef,\n        workspace: WorkspaceRef,\n        isolation: AgentIsolation,                    // E13, as registered\n        machine_environment: MachineEnvironment,\n        launch_context: LaunchContext,\n        started_by: StartedBy,\n        started_at: UnixMillis,\n    },\n    Unknown {},                                       // no such subject here, or it belongs to another organization\n    Refused { reason: LookupRefusal },\n}\n\n#[serde(rename_all = \"camelCase\", deny_unknown_fields)]\npub struct WorkspaceLookup { pub organization_id: OrganizationId, pub workspace_id: WorkspaceId }\n#[serde(tag = \"result\", rename_all = \"camelCase\", rename_all_fields = \"camelCase\", deny_unknown_fields)]\npub enum WorkspaceLookupResult {\n    Workspace { workspace: WorkspaceRef, allowed_machines: Vec<AllowedMachineRow> }, // active allowances only\n    Unknown {},\n    Refused { reason: LookupRefusal },\n}\n#[serde(rename_all = \"camelCase\", deny_unknown_fields)]\npub struct AllowedMachineRow { pub installation: InstallationId, pub label: MachineLabel }\n\n#[serde(rename_all = \"camelCase\", deny_unknown_fields)]\npub struct MachineLookup { pub organization_id: OrganizationId, pub installation: InstallationId }\n#[serde(tag = \"result\", rename_all = \"camelCase\", rename_all_fields = \"camelCase\", deny_unknown_fields)]\npub enum MachineLookupResult {\n    Machine {\n        installation: InstallationId,\n        organization_id: OrganizationId,              // always the one asked about (R34)\n        label: MachineLabel,\n        enrollment: MachineEnrollment,                // its latest: state, what authorized it, its machine client\n        approved_at: UnixMillis,                      // when that enrollment's device code was approved: the same recorded fact as K12's EnrollmentView.approvedAt (C4)\n        allowed_workspaces: Vec<WorkspaceRef>,        // active allowances\n        shared_bucket: Vec<WorkspaceRef>,             // E14: workspaces that have had a Host-isolated session on it; shown, never enforced\n    },\n    Unknown {},\n    Refused { reason: LookupRefusal },\n}\n\n#[serde(rename_all = \"camelCase\", deny_unknown_fields)]\npub struct CommandStatus { pub organization_id: OrganizationId, pub command_id: CommandId } // CommandId: UUIDv7, from Admitted { commandId }\n#[serde(tag = \"result\", rename_all = \"camelCase\", rename_all_fields = \"camelCase\", deny_unknown_fields)]\npub enum CommandStatusResult {\n    Pending {},                                       // admitted; the other store hasn't applied it yet (it retries until it does)\n    Applied {},\n    Unknown {},\n    Refused { reason: LookupRefusal },\n}\n```\n\n**Creating and handing over organizations:** there is no fleet-wide role (you, 1 November, OD24). You create your first organization after your first sign-in, through Better Auth's own create, and become its owner. It's then provisioned at central, where B2 maps it onto today's Fleet storage. After that, **only you** may create another organization (A5, 3 November): `allowUserToCreateOrganization` answers yes only for the user the deployment's config names. Invites, an allowlist or Better Auth's admin plugin can widen it later without rework. The sign-in service then sends `ProvisionOrganization` on its own behalf. Handing over is adding another owner in Better Auth, then leaving. Today's Access-based operator caller (`AccessCaller::Owner`, `access_contract.rs:31–36`) is deleted with the other Access branches at step 2; Access identity proves nothing from then on. Open sign-up, where anyone signed in may create an organization and own it, waits with the people sign-in design's SD2.\n\n**Central's routes:** until step 2, today's routes stay behind the Access gate, as now. From step 2 central has no public address at all (R55): every route is reached through the sign-in service's link. `public/v1/session` admits machines only by the machine token check; `public/admin` only by the person token plus the sign-in service's own attached confirmation; the `internal/` decision routes by their route, because only the sign-in core builds requests to them and the public edge never forwards there. Access stays in front of Fleet traffic until step 3, at the sign-in service's `/fleet/` path instead of central's hostname; removing it, and the request limit that replaces its edge protection, come with step 3.\n\n**Central's outbound requests:** only reading the sign-in service's published signing keys, cached, with one refetch on an unknown key ID. There is no service caller and no client key.\n"
+    },
+    "program-design--people-roles-and-permissions-text": {
+      "source": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/program-design.source.html",
+      "line": 518,
+      "text": "\n**Three deciders, one job each (U47).** The sign-in service decides what people may do, on the sign-in path only. Fleet central decides what agents, bots and machines may do, from its own records, on every request they make; it never needs a person's role for that. The Switchboard decides tool calls in its own store. A WebSocket frame always acts as the machine and its sessions, never as a person, and no admin action is carried on a machine's connection.\n\n**Better Auth's organization plugin holds people** (E19), configured in `sign-in-core` `src/organizations/`, following Better Auth's own way:\n\n- **Roles from code, on the plugin's own resources.** `createAccessControl` declares the plugin's native statements (`defaultStatements`: `organization: [update, delete]`, `member: [create, update, delete]`, `invitation: [create, cancel]`) merged with the Fleet resources (E27). The plugin checks its own operations against those native names (inviting needs `invitation:create`, removing a member `member:delete`), and configured roles replace its default roles for those checks. So `ac.newRole` declares `owner` with `ownerAc`'s native statements plus every Fleet action, and `member` with nothing. Dynamic access control is off. The plugin's built-in `admin` role is not configured. `beforeAddMember`, `beforeUpdateMemberRole` and `beforeCreateInvitation` refuse any role but `owner` and `member`, and `beforeCreateInvitation` also refuses inviting as `owner` in this design.\n- **Invitations** are on. Inviting needs the native `invitation:create`, so only owners can do it now. A person joins by accepting at their sign-in, with a provider-verified email that matches the invitation.\n- **One owner per organization in this design, and it can't be removed.** The plugin's own last-owner check reads the owner count before a separate write, so two owners demoting or removing themselves at once could leave none, and D1 runs with transactions off. This design closes that by never letting the owner count go down: `beforeRemoveMember` refuses any target whose role is `owner`; the role-change and leave routes are not exposed; invitations are only as `member`. The organization's owner is its creator. Handing over (adding an owner, then leaving) comes later, with a guarded change that keeps at least one owner.\n- **Which plugin routes reach the internet.** The sign-in service's public route list (`isPublicSignInRoute`) already refuses every route it doesn't name, raw organization routes included, before Better Auth dispatches. This design adds exactly the plugin's create-organization, invite-member, cancel-invitation, accept-invitation, remove-member and set-active routes. Not added: leave, update-member-role, delete-organization, and the list and get routes (the pages read Better Auth's rows on the server).\n- **Creating an organization:** `allowUserToCreateOrganization` returns true only for the deployment's config-named owner (A5). There is no deploy-time initializer and no request-time seed: you sign in, then create your first organization through Better Auth's own create, and its creator-becomes-owner rule makes you its owner. Teams are off; they are not workspaces.\n- **Which organization a request is for, and the person token's organization (K6):** the person token names one organization, taken at mint from the session's `activeOrganizationId` after a fresh read confirms the person is a member there; with no active organization, or one they no longer belong to, no person token is minted and the page asks them to choose (the plugin's set-active route). A `databaseHooks.session.create.before` hook sets `activeOrganizationId` when the person belongs to exactly one organization, as Better Auth documents, so your first sign-in and the owner CLI's first authorization get your one organization with no extra step. Every forwarded request names its organization, which must equal the token's; the sign-in service checks the permission in exactly that organization, with a fresh member read, so the active organization only scopes the token and never decides a permission.\n\n**The permission each forwarded route needs.** The sign-in service checks it live: a fresh read of the `member` row for the verified token's person in the request's organization, then Better Auth's exported `hasPermission({ role, options, permissions, organizationId })` from `better-auth/plugins/organization`, with the configured roles and `useMemoryCache` off. The plugin's endpoint form (`auth.api.hasPermission`) needs a browser-cookie session, which a forwarded bearer request doesn't have, so every check, the device-code hooks included, uses the exported helper the same way. The helper's public type requires a real endpoint context, so every caller runs inside a Better Auth endpoint: the device-code hooks pass theirs, and the forwarding of `/fleet/admin/…` routes is a small plugin of our own whose endpoints (`createAuthEndpoint`, one per admin route) verify the person token, run the check with their own context and forward the request. The machine connection (`/fleet/v1/session`) needs no person check and stays in the request handler. It names the checked permission in the confirmation it attaches (K5):\n\n| Route (admin command or lookup) | Permission |\n|---|---|\n| `CreateWorkspace` | `workspace:create` |\n| `AllowMachine`, `WithdrawMachineAllowance` | `workspaceAdmin:allowMachine`, `workspaceAdmin:withdrawMachine` |\n| `RemoveSession` | `workspaceAdmin:removeSession` |\n| approving or denying a device code (`DecideDeviceLogin`) | `machine:enroll` |\n| `RevokeMachineEnrollment` | `machine:revoke` |\n| the lookups and `WhoIsLoggedIn` | `organization:view` |\n| reading change records | `organization:readAudit` |\n| the CLI's project commands (B5) | `project:read`, `project:repair`, `project:migrate`, `project:move`, `project:takeover`, `project:retire`, mapped per command in the overall design |\n\nInviting and removing people (the native `invitation:create`, `invitation:cancel`, `member:delete`) happen in Better Auth itself and never reach central; changing a role isn't offered in this design.\n\n**Central's permission guard.** Central keeps no roles. For each `public/admin` request it checks, before any read or write: the person token's signature; that the attached confirmation was made for this request (its request ID, never reused), names the token's person and the request's organization, which is also the organization the object is stamped with (R55), and names exactly the permission the route needs; and that it is within SD8 and carries R53's second factor. Then the command's own checks run against central's records, in the same transaction as the change and its record. A confirmation for one permission never authorizes another route.\n\n**A role change needs no push.** Central never holds roles, so demoting or removing someone takes effect at their next request, at the sign-in service's live check. The only gap is a change landing between that check and central applying the command, and SD8 bounds it. Machines a removed person approved keep working: a machine renews on its own enrollment (`DecideMachineToken`), and the owner revokes it with `machine:revoke` if it should go.\n\n**Provisioning a new organization.** `fleetState` is an organization additional field with `defaultValue: 'settingUp'` and `input: false`, so the plugin's own insert stores `settingUp` and no caller can choose a value. `afterCreateOrganization` then sends `ProvisionOrganization { organizationId }` to central; on `Provisioned`, the sign-in service's own server code sets `ready`. If central doesn't confirm, the organization stays `settingUp`: forwarded requests for it are refused with `settingUp` (they never send `ProvisionOrganization` as a side effect), and the owner page shows \"setting up\" with **Try again**, an owner action that passes the session confirmation and live permission check before it repeats the idempotent call. A failure is reported, never hidden.\n\n**People changes and their records (OD26, decided 2 November: record first, then confirm).** Better Auth on D1 runs with transactions off, so the plugin's own changes can't share one transaction with a record. Each people change has its own native hook pair in 1.7.11: inviting (`beforeCreateInvitation` / `afterCreateInvitation`), cancelling an invitation (`beforeCancelInvitation` / `afterCancelInvitation`), accepting (`beforeAcceptInvitation` / `afterAcceptInvitation`: the accept path inserts the member directly and never calls the `AddMember` hooks) and removing (`beforeRemoveMember` / `afterRemoveMember`). The `before*` hook writes the intent row to `sign_in_audit`, with its organization, and throws if it can't, so the change never happens without one; the `after*` hook writes the outcome row. **Re-sending an invitation is refused.** The invite route's `resend: true` extends a pending invitation's expiry and returns before `beforeCreateInvitation` runs, so it would change an invitation with no record; the sign-in service refuses a request carrying it before Better Auth sees it, and the plugin's cancel-on-re-invite option stays off. To re-invite, cancel, then invite again. **The actor is always the signed-in person who made the request,** taken from that request's authenticated session, never from the hook's payload: the remove hooks' `user` is the person being removed, not the one removing them. A record never confirmed stays unconfirmed, and is marked applied only by evidence covering that exact operation's completion, never from whether the person is a member now. An invitation row reading accepted proves only that step: the plugin marks the invitation accepted before it inserts the member, so in this design nothing proves a member addition completed, and such a record stays unconfirmed.\n"
+    }
+  },
+  "ownerRecords": [
+    {
+      "source": "/Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl",
+      "line": 71226,
+      "type": "assistant",
+      "time": "2026-11-04T16:44:45.321Z",
+      "text": "The Advisor finished the engine overview you asked it for. It passes the page checker cleanly, and I've opened it for you: [engine-overview.html](/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-04-workflow-experiment/engine-overview.html).\n\nWhat it covers:\n- **The four separate choices:** the interface, the engine, where it runs, and where it stores progress.\n- **The same interface in TypeScript and in Rust.** The Rust version is a sketch only, not compiled.\n- **The Advisor's recommendation:** one interface everywhere, with steps that are safe to repeat. Engines that can save a step together with its change offer that as an extra, and engines that can't refuse to.\n- **What's tested and what isn't:**\n  - The Rust engines on Tokio and Durable Objects exist in code.\n  - The TypeScript engines (Node, and Cloudflare run locally) were actually run.\n  - Running Rust on Cloudflare's managed workflows was not tested.\n- **The cost** of moving it into its own repo.\n\nThis is the workflow library you said is separate work for later. It doesn't change B1 or B2. Still waiting on you: approve the overall design, B1 and B2.",
+      "authority": "context only"
+    },
+    {
+      "source": "/Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl",
+      "line": 71230,
+      "type": "user",
+      "time": "2026-11-04T16:50:36.782Z",
+      "text": "yes you need anytnhign?",
+      "authority": "owner words"
+    },
+    {
+      "source": "/Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl",
+      "line": 81388,
+      "type": "user",
+      "time": "2026-11-06T00:50:41.546Z",
+      "text": "# Review of file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-10-30-lead-pages/fleet-stamp-decisions.html\nDocument revision: sha256:86f9e3066437d9f167377513b8ac606903140b98efaeb408b3b427c744ba2433\nReview ID: 2ac5dc6b-a5db-47de-896c-407eaeed828f\n\n# Selected answers\n\n## Signed stamp\nQuestion ID: d-confirm\n- Yes, signed by the sign-in service (d-confirm-yes)\n\n## What never changes\nQuestion ID: d-fixed\n- The organization (statement can be re-signed for the same organization) (d-fixed-org)\n\n## Stamp lifetime\nQuestion ID: d-lifetime\n- 1 year: a yearly re-sign step (d-lifetime-year)\n\nTarget ID: d-lifetime-year\nComment ID: ec5125c3-205b-4dad-a854-c7fc02ca5662\nAnchor: whole item\n\nid ont udnetand this why is this not automatic? i dotn getn why thsi is complex?  why sint the excahange happenign next thime like a refresh token? somethign did not add kup?  why teh fuck are you wsasting time what eh fuck man",
+      "authority": "owner words"
+    },
+    {
+      "source": "/Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl",
+      "line": 85545,
+      "type": "user",
+      "time": "2026-11-06T11:55:27.773Z",
+      "text": "do we have to # Review of file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-10-30-lead-pages/fleet-stamp-decisions.html\nDocument revision: sha256:e11234a1125090ddd643c48d75eac7b011b261f3082abf2efd1e5026adb4a2c9\nReview ID: feb0cb0d-421f-4d9d-9469-83930c0a2736\n\n# Selected answers\n\n## What central gets for each admin request\nQuestion ID: d-b2-page\n- A reusable token with your role in it (d-b2-page-snapshot)\n\n## Making a request count once\nQuestion ID: d-b2-once\n- A table of used tokens (d-b2-once-3)\n\n## Cap wrong codes per person\nQuestion ID: d-code-cap\n- Add a per-person cap (recommended) (d-code-cap-yes)\n\n## Fixing a stamp that stopped checking out\nQuestion ID: d-recovery\n- Let the sign-in service re-sign it (recommended) (d-recovery-resign)\n\n## The tables\nQuestion ID: d-sql\n- Change something (d-sql-change)\n\nTarget ID: d-sql-change\nComment ID: 2b31ce60-b147-48d7-88f9-d4ac60d9993b\nAnchor: whole item\n\nthe qeutison i asked gonan chagne things\n\n## Stamps last 1 year and renew automatically 30 days before they expire.\n\nTarget ID: decided-text--review-ul-1-li-3\nComment ID: 032a9257-981f-42a1-af26-21d9d7db0291\nSelected text: \"Stamps last 1 year and renew automatically 30 days before they expire.\\n\"\nText range (UTF-16): 0–70\n\nshould we do 4 months and renews 2 month before expiry?\n\n## A fresh token made from your session for each request (recommended)\n\nTarget ID: d-b2-page-fresh\nComment ID: 92ba97fa-f07e-4b09-9d5e-c20ee4b176dc\nAnchor: whole item\n\nok what i dont udnernsta d is why if somethign chagned we dont push a incrment and requirement to get cetnral and cli to refresh the token\n\n## Tie the token to its operation (recommended)\n\nTarget ID: d-b2-once-2\nComment ID: 0b067014-d8ca-46b4-830f-067fa88ee158\nAnchor: whole item\n\nno this is ot ok, we need to rpevent replay attqacks and eisgn this proerly this is currently slopw",
+      "authority": "owner words"
+    },
+    {
+      "source": "/Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl",
+      "line": 86867,
+      "type": "user",
+      "time": "2026-11-06T20:40:24.380Z",
+      "text": "# Review of file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-10-30-lead-pages/fleet-access-for-you.html\nDocument revision: sha256:6113011b836510eeda44297672c24765fa38d2894f80eb85791ce9510ebb32c8\nReview ID: 58647d30-10ce-4b2a-ba01-26f2e1879679\n\n# Selected answers\n\n## 1a. Are these the right two parts?\nQuestion ID: q-parts\n- Yes: getting in, and staging verification (q-parts-yes)\n\n## 1b. Build order, and the command-line screen\nQuestion ID: q-journeys\n- Build first: first-time owner, returning sign-in (step-up only for changes), command-line login, invited member. Then passkey and recovery. All six before release. Keep the command-line login as today, no approve screen (recommended) (q-journeys-rec)\n\n## 1c. Where do you land when setup is done and no command line is waiting?\nQuestion ID: q-landing\n- Your account page: your second factors, your organizations (choose one), and a clear \"done\" (recommended) (q-landing-account)\n\n## 2. How staging gets verified\nQuestion ID: q-staging\n- Better Auth test helpers for everything after sign-in, plus one real sign-in check per release (a dedicated test account, or you once while a Verifier watches) (recommended) (q-staging-rec)\n\nTarget ID: q-staging-rec\nComment ID: d56d1df5-148c-4ae4-8396-6395162f96b5\nAnchor: whole item\n\nfor ui testing you can mock things localy run the worker locallyf\n\n## 3a. When one person changes, whose tokens refresh?\nQuestion ID: t-scope\n- Only that person, within this organization (t-scope-person-org)\n\n## 3b. If central is unreachable when someone is removed\nQuestion ID: t-offline\n- Their old token works for at most its 5 minutes; \"revoked everywhere\" is shown only once central confirms (recommended) (t-offline-expiry)\n\n## 3c. How the command line refreshes\nQuestion ID: t-refresh\n- It reopens the browser sign-in when a refresh is needed (recommended) (t-refresh-browser)\n\n## 3d. Protection against a stolen command-line token\nQuestion ID: t-dpop\n- Key-bound tokens, checked by central itself (recommended) (t-dpop-central)\n\nTarget ID: t-dpop-central\nComment ID: 7af901d2-00c1-4c4f-a68e-3a6e4d6c8eef\nAnchor: whole item\n\nwhat does thi s mean i think what it means.  whats a keyboaudn tokens?\n\n## 3e. Accepting and remembering request IDs\nQuestion ID: t-window\n- Accept a request only if it's under 60 seconds old (5 seconds clock leeway), and keep used IDs until then (proposed tolerance, recommended) (t-window-60)\n\n## 3f. Stamp lifetime\nQuestion ID: t-stamp\n- 120 days, renewed when 60 days are left (recommended) (t-stamp-120)\n\n## 3g. These tables\nQuestion ID: t-tables\n- Approve the shapes (t-tables-approve)\n\nTarget ID: t-tables-approve\nComment ID: ea66ec64-d6f5-4930-bd2b-cb776ece6601\nAnchor: whole item\n\njall ids are uuidv7, unelss theres a defensible reason\n\n## Silent background refresh with a stored rotating refresh token\n\nTarget ID: t-refresh-token\nComment ID: c5d83cb1-751a-4456-997b-2fe4ab712c22\nAnchor: whole item\n\ni want to know detials and effor d and cocnpelxity",
+      "authority": "owner words"
+    },
+    {
+      "source": "/Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl",
+      "line": 112348,
+      "type": "user",
+      "time": "2026-11-09T11:11:29.306Z",
+      "text": "why are we using cron?  im confsued that seems liek slop",
+      "authority": "owner words"
+    },
+    {
+      "source": "/Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl",
+      "line": 112472,
+      "type": "user",
+      "time": "2026-11-09T12:10:18.242Z",
+      "text": "renew when organziation is used.",
+      "authority": "owner words"
+    },
+    {
+      "source": "/Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl",
+      "line": 113235,
+      "type": "user",
+      "time": "2026-11-09T14:48:12.187Z",
+      "text": "# Review of fleet-access-b3-open\nDocument revision: 2026-11-09.3\nReview ID: 20118899-0d2a-4c06-b703-b2745b3de569\n\n# Selected answers\n\n## Add the code-deadline column to machine_enrollments?\nQuestion ID: pick-q1\n- Yes, add it (recommended) (q1-yes)\n\n## Stamp pin and token lifetime\nQuestion ID: pick-q3\n- Drop the pin; one lifetime per organization (recommended) (q3-yes)\n\n## 2. An approval sent again with a change\n\nTarget ID: q2\nComment ID: 077a578b-763f-46e0-b180-8c5784360f32\nSelected text: \"2. An approval sent again with a change\\n\"\nText range (UTF-16): 0–39\n\nwhat is this i have no fuckign diea\n\nyes update rmcp or whatever as requried.   if we can use new sqlx use that",
+      "authority": "owner words"
+    },
+    {
+      "source": "/Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-codex-router/13635880-b8f1-47f9-8d66-ca6aa9ddc134.jsonl",
+      "line": 97881,
+      "type": "user",
+      "time": "2026-11-13T14:58:08.393Z",
+      "text": "# Review of file:///Users/shravansunder/dev/memory-logs/projects/2026/2026-11-codex-router/owner-pages/live-workspace-storage-redesign.html\nDocument revision: sha256:fd5e28e3dec12d5d8ac35c086bd0bd9f32ad689d16eeac45a16c1adf0801b50e\nReview ID: d5c0931f-1012-4e25-9595-2ba056b9803f\n\n# Selected answers\n\n## 1 · Tasks or issues?\nQuestion ID: P1\n- Rename to issues (P1-issues)\n\n## 2 · Keep task links?\nQuestion ID: P2\n- Drop them (P2-drop)\n\nTarget ID: P2-drop\nComment ID: 4cb259db-208d-4dad-8cd1-40eff64f92d0\nAnchor: whole item\n\ndrop issu7e links it sonly deliverablesf\n\n## 3 · Roles as text, or a fixed set?\nQuestion ID: P3\n- Fixed set (recommended) (P3-set)\n\n## 4 · Who edits an area's backlog?\nQuestion ID: P4\n- Anyone in the workspace (P4-anyone)\n\nTarget ID: P4-anyone\nComment ID: 11f807a6-87e7-4f07-a375-39f6520c32b2\nAnchor: whole item\n\nthere is no area lead.  are we msisign soemthing or nto aligend?  we can add mroe seflty later.\n\nbut lead is for project i thoguht?\n\n## 5 · Where does deliverable blocking live?\nQuestion ID: P5\n- Own table (recommended) (P5-table)\n\n## 6 · Old project data\nQuestion ID: P6\n- No migration, backup only (recommended) (P6-none)\n\nTarget ID: P6-none\nComment ID: 912c8966-28c4-40fc-a076-5350c55e5e87\nAnchor: whole item\n\nwe will manauly talk thtough whta i awnt to keep or write one off scripts later\n\n## 7 · Can an initiative close?\nQuestion ID: P7\n- Open → closed (P7-close)\n\nTarget ID: P7-close\nComment ID: 06571414-e690-443f-87f0-30f189e0f71c\nAnchor: whole item\n\njust a status.\n\nbacklog -> open -> on hold -> closed\n\nall projects in the delvierable shoukdl be closed\nbacklog -> open -> on hold -> closed\n\ndelviralbe is closed if all issues are closed so its comptuered\n\nprject can be closed if comptued delvirables are closed.  \n\nsystem shodukl alwasy give proepr messages to agetns to helpf i hope this helps. this this worklog page was good",
+      "authority": "owner words"
+    },
+    {
+      "source": "/Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-codex-router/13635880-b8f1-47f9-8d66-ca6aa9ddc134.jsonl",
+      "line": 105127,
+      "type": "assistant",
+      "time": "2026-11-14T12:41:53.126Z",
+      "text": "I settled two timing-lane questions:\n- **Delivery:** this lane records when each message or notice becomes deliverable, and makes \"what's due for this session at this mark\" readable. Actually handing it to the Mac belongs to C and D.\n- **Repeating timers:** an interval starts at the next five-minute mark after it's set, so a 5-minute repeat set at 9:02 fires at 9:05, 9:10 and so on. Any explicit start time must already be on a mark.\n\nStill with you: the R29 stamp-digest change. I recommend yes.",
+      "authority": "context only"
+    },
+    {
+      "source": "/Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-codex-router/13635880-b8f1-47f9-8d66-ca6aa9ddc134.jsonl",
+      "line": 105129,
+      "type": "user",
+      "time": "2026-11-14T12:43:34.424Z",
+      "text": "yes i agree to chagne r29",
+      "authority": "owner words"
+    },
+    {
+      "source": "/Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-codex-router/13635880-b8f1-47f9-8d66-ca6aa9ddc134.jsonl",
+      "line": 111553,
+      "type": "user",
+      "time": "2026-11-15T00:25:43.137Z",
+      "text": "# Review of file:///Users/shravansunder/dev/memory-logs/projects/2026/2026-11-codex-router/owner-pages/live-workspace-storage-redesign.html\nDocument revision: sha256:4ff8e403421a0659c4d2a2c5d5fffed907119074d8e96e0fc7c6ee430524f537\nReview ID: fd4954ef-d704-4907-8739-ce42b523ec52\n\n# Selected answers\n\n## Where should an organization's machine token lifetime be stored?\nQuestion ID: tl-choice\n- C. Inside the signed stamp (tl-c)\n\n## Workspace shape\nQuestion ID: choose-workspace-shape\n- (a) Description + unique names (ws-choose-a)\n\n## Where should machine login keep its missing facts?\nQuestion ID: ml-choice\n- A. Approval row is the login, plus one counter on machines (ml-a)\n\nTarget ID: ml-a\nComment ID: 38530f8d-db5e-467f-8626-f6564e411ace\nAnchor: whole item\n\nwhats teh cons i don tkudnetand fully\n\n## Link admission\nQuestion ID: choose-link-auth\n- (a) Signed token + live enrollment; remove machine_credentials (auth-choose-a)\n\naaah lets just use always 10 mintues you are right is taht d?  explain tradeo fs or cons of d? i mgiht ahv econflcithing ifno\n\nalso for cadence it was standard clcoik tiem right  lcets calrify anytihnign now",
+      "authority": "owner words"
+    },
+    {
+      "source": "/Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-codex-router/13635880-b8f1-47f9-8d66-ca6aa9ddc134.jsonl",
+      "line": 111806,
+      "type": "user",
+      "time": "2026-11-15T00:37:46.414Z",
+      "text": "yes to d, clarify iwth the auth elad kpelase fuklly",
+      "authority": "owner words"
+    },
+    {
+      "source": "/Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-codex-router/13635880-b8f1-47f9-8d66-ca6aa9ddc134.jsonl",
+      "line": 105104,
+      "type": "assistant",
+      "time": "2026-11-14T12:40:53.883Z",
+      "text": "The Fleet access Lead checked how central uses sign-in's stamp. The org-identity use is correct, with three conditions that central already meets:\n- the row identifies the organization only, never authorizes anything;\n- no row means no alarm work;\n- the row's organization never changes.\n\nThe wire format and behavior match their code too.\n\n**One small contract question needs you,** because it changes R29, which I promised to keep unchanged. Today, reading the stamp's digest answers \"unavailable\" (503) once the stamp has expired. That leaves one narrow trap: if sign-in's copy and central's copy have drifted apart **and** the stamp has expired, sign-in probes, gets 503, and retries forever.\n\nTheir proposal: the digest read returns the stored stamp's facts even when expired. The expiry date shows it's expired. 503 stays for genuine signature or configuration failures. It's a fact about stored bytes, not an authorization, so nothing gets admitted on it.\n\nI agree with them. **OK to change R29 that way?** It's not blocking; otherwise they'll record it as an accepted limit.\n\n**Where things stand:** all four of your decisions are recorded on the work page, which now shows nothing waiting on you apart from this.\n\n| Lane | What it's doing |\n|---|---|\n| Sign-in pair | the Fleet access Lead's test launcher, then setup (create-workspace), then 4b (machine approvals) |\n| Timing pair (new) | the five-minute grid, 15/25/55 cadences, one-minute messages and 7-day limits, in its own worktree; writing the cut sheet |\n| C (Router link) | follows 4b, using your link admission choice (a) |",
+      "authority": "Proposal context explicitly accepted by owner at line105129; not independent authority by itself."
+    }
+  ],
+  "sourceTensions": [
+    {
+      "id": "T1",
+      "earlier": "Shared R13/R27/OD25 and PD permission guard: per-request confirmation, live role check, no push.",
+      "later": "B2 additions b2x-change: reusable permission token, DPoP proof and revision floors; no per-request confirmation.",
+      "treatment": "Show side by side; preserve original IDs as superseded where later approved sources decide. Do not silently combine the two guards. First-hand 8 Nov approval not found in inspected Fleet transcript."
+    },
+    {
+      "id": "T2",
+      "earlier": "B2 b2-flows and PD admin commands: repeat returns original answer; another operation for canonical name gets that workspace.",
+      "later": "Owner Central111553: Description + unique names; audit R2-D6 reports one-day answer retention.",
+      "treatment": "Duplicate-name behavior superseded by first-hand owner choice. Exact late-retry retention remains unresolved; recover central governing retention authority before an owner picker."
+    },
+    {
+      "id": "T3",
+      "earlier": "B2 b2-see/b2-data/b2-proof: existing organization adopts current store and keeps all data.",
+      "later": "Owner Central97881 P6-none: No migration, backup only; later manual selection/scripts.",
+      "treatment": "Mark automatic-data promise superseded; do not invent restoration scope or claim backup observed."
+    },
+    {
+      "id": "T4",
+      "earlier": "Shared VD U15/U45/SO4 and older PD trace still name Organization Registry and separate authority/Connection owners.",
+      "later": "B2 b2-base/b2-plan: one Fleet object per organization; Registry removed; no per-machine stores.",
+      "treatment": "Use explicit B2 placement; preserve stale text and no new store. Machine-claim enforcement remains B3."
+    },
+    {
+      "id": "T5",
+      "earlier": "PD ProvisionOrganization shape carries only organization_id.",
+      "later": "B2 b2-data/b2-flows and additions explicitly require signed organizationStatement and signed predecessor digest.",
+      "treatment": "Show stale PD sketch beside full B2 contract; do not implement organization-ID-only provisioning."
+    },
+    {
+      "id": "T6",
+      "earlier": "Some stamp page wording: one year, automatic renewal with 30 days left.",
+      "later": "Owner Fleet86867: 120 days renewed with60 days left; Fleet112472: renew when organization used.",
+      "treatment": "First-hand decisions settle lifetime and trigger; key change still renews idle organizations per B2 rule6, without cron."
+    },
+    {
+      "id": "T7",
+      "earlier": "Shared Spec R29 is sign-in Drizzle/migration gate.",
+      "later": "Central owner105129 agrees to change central R29 stamp-facts read on expiry.",
+      "treatment": "Keep namespaces distinct; central R29 does not relax sign-in storage or migration approval."
+    },
+    {
+      "id": "T8",
+      "earlier": "VD R-stamp cites Lead rulings D1-D7 and Lead plan as reference.",
+      "later": "Writer brief forbids Lead plans/acceptances/summaries as governing design.",
+      "treatment": "Carry original row provenance; ground renewal obligations in B2 rules1-6 and first-hand owner words. Timing details lacking independent authority stay unconfirmed."
+    },
+    {
+      "id": "T9",
+      "earlier": "Additions source says owner approved B2 SQL and server-held admin credential on8 Nov.",
+      "later": "No matching first-hand owner turn recovered in inspected8 Nov Fleet transcript.",
+      "treatment": "Unconfirmed provenance, not a fresh decision or an assertion of absence everywhere. First-hand table shapes at Fleet86867 do not establish exact generated SQL approval."
+    }
+  ],
+  "currentPreparation": {
+    "grouping": "HOLD all page writing per Lead push01a1e042-d430-7670-bf89-f36e2d2f56ee; owner restating design-document contract; extraction only",
+    "auditCheck": {
+      "command": "pnpm dlx https://demistify.getagentstudio.dev/v1/demistify-cli.tgz check docs/specs/2026-11-15-fleet-access-b2/audit.html",
+      "result": "1 file: 0 errors, 0 warnings",
+      "exitCode": 0,
+      "advisory": "CLI engine >=26; actual Node24.7.0"
+    },
+    "workHome": "no-home, per Lead message01a1e03b-bf9b-7fa1-b3c5-4b51fa3c1890",
+    "trace": "record returned in handback; no write to Lead trace",
+    "review": "no live pair, Lead commissions Terra medium after pages, explicit design-only override",
+    "auditNudges": {
+      "command": "pnpm dlx @sunstack/cli@0.21.1 lint --config <installed presentation-html rules config> --root \"$PWD\" docs/specs/2026-11-15-fleet-access-b2/audit.html",
+      "result": "6 section-picture warnings",
+      "exitCode": 0,
+      "disposition": "retained auditor folded evidence/limits; no findings recomposed"
+    },
+    "auditCopyComparison": "Audit body visible text unchanged except semantic palette-key terms; all original HTML links absolute;9menu links;no classDef",
+    "ownerLookupCoverage": "Named decision records opened directly; later scoped review lookup checked both string and text-block-array user forms in Fleet and Central for6-9Nov. No matching8Nov B2 SQL/admin-page approval recovered; no exhaustive-history absence claim.",
+    "scope": "Extraction only under explicit all-page-writing HOLD; nothing here is a new design, implemented repair, accepted product result, or removal of an obligation.",
+    "centralR29Context": "Central105104 explicitly proposes returning stored statement facts despite expiry while refusing signature/configuration failure and admitting no work; owner105129 accepts that change. This context is separate from sign-in SpecR29 Drizzle gate.",
+    "coverageExtraction": "Full source U/E/P/O/R/C/V trace for all17selected U rows retained, including contextual references; V10 direct lookup proof added. Context rows carry no new B2 authority."
+  },
+  "auditRows": {
+    "outcomes": [
+      [
+        "R2-O1",
+        "Each organization keeps its own records apart from every other organization.",
+        "B2-01: B2 #b2-base , #b2-scope ; U15/U27/U45; E1/E26; R34/R55",
+        "delivered",
+        "agent-collaboration@e7b709f6:crates/collaboration-central-core/src/core_contract.rs:36 agent-collaboration@e7b709f6:crates/collaboration-central-cloudflare/src/organization_signin_link.rs:97 Code and delivery detail",
+        "#268",
+        "none"
+      ],
+      [
+        "R2-O2",
+        "A new organization becomes ready only after central has really set it up.",
+        "B2-02: B2 #b2-see , #b2-flows ; OD22/OD23; R13/R55",
+        "delivered",
+        "switchboard@f3b2b88b:packages/sign-in-core/src/better-auth/organization-provider-options.ts:87 switchboard@f3b2b88b:packages/sign-in-core/src/better-auth/organization-provisioning-plugin.ts:27 agent-collaboration@e7b709f6:crates/collaboration-central-core/src/organization_provisioning_plans.rs:23 Code and delivery detail",
+        "#12, #268",
+        "none"
+      ],
+      [
+        "R2-O3",
+        "The owner can create an organization without deploying another service and retry an interrupted setup.",
+        "B2-03: B2 #b2-data , #b2-plan ; R55",
+        "delivered",
+        "switchboard@f3b2b88b:packages/sign-in-core/src/better-auth/organization-provider-options.ts:87 switchboard@f3b2b88b:packages/sign-in-core/src/better-auth/organization-provisioning-plugin.ts:27 Code and delivery detail",
+        "existing foundation / see provenance",
+        "none"
+      ],
+      [
+        "R2-O4",
+        "Central accepts an organization statement only from the configured sign-in service.",
+        "B2-04: B2 #b2-data , #b2-proof",
+        "delivered",
+        "switchboard@f3b2b88b:packages/sign-in-core/src/better-auth/organization-statement-signing.ts:15 agent-collaboration@e7b709f6:crates/collaboration-central-core/src/organization_authority/fleet_statement.rs:68 Code and delivery detail",
+        "#12/#268",
+        "none"
+      ],
+      [
+        "R2-O5",
+        "Central refuses work when its stored organization statement cannot be trusted.",
+        "B2-05: B2 #b2-data , #b2-proof",
+        "delivered",
+        "agent-collaboration@e7b709f6:crates/collaboration-central-core/src/organization_provisioning_plans.rs:23 agent-collaboration@e7b709f6:crates/collaboration-central-core/src/organization_authority_cache.rs:75 agent-collaboration@e7b709f6:crates/collaboration-central-core/src/organization_admin_plans.rs:10 Code and delivery detail",
+        "existing foundation / see provenance",
+        "none"
+      ],
+      [
+        "R2-O6",
+        "A retry cannot replace another organization or undo a newer organization statement.",
+        "B2-06: B2 #b2-data , #b2-flows",
+        "delivered",
+        "agent-collaboration@e7b709f6:crates/collaboration-central-core/src/organization_provisioning_plans.rs:23 agent-collaboration@e7b709f6:crates/collaboration-central-core/src/organization_authority/statement_replacement.rs:52 Code and delivery detail",
+        "#268",
+        "none"
+      ],
+      [
+        "R2-O7",
+        "Using an organization renews its statement when due, without a daily job.",
+        "B2-07: B2 renewal rules 1–2, #b2-proof ; VD R-stamp",
+        "delivered",
+        "switchboard@f3b2b88b:packages/sign-in-core/src/organizations/organization-stamp-renewal.ts:132 switchboard@f3b2b88b:packages/sign-in-core/src/storage/organization-stamp-store.ts:102 switchboard@f3b2b88b:packages/sign-in-core/src/organizations/authorization-revision-drainer.ts:84 Code and delivery detail",
+        "#12",
+        "none"
+      ],
+      [
+        "R2-O8",
+        "An organization can recover after central and sign-in disagree about an expired statement.",
+        "B2-08: B2 renewal rule 3; later owner R29",
+        "delivered",
+        "switchboard@f3b2b88b:packages/sign-in-core/src/organizations/organization-stamp-renewal.ts:132 agent-collaboration@e7b709f6:crates/collaboration-central-core/src/organization_provisioning_plans.rs:23 agent-collaboration@e7b709f6:crates/collaboration-central-core/src/organization_authority/fleet_statement.rs:68 Code and delivery detail",
+        "#17/#275",
+        "none"
+      ],
+      [
+        "R2-O9",
+        "Failed renewal attempts stay recorded and an expired statement cannot authorize work.",
+        "B2-09: B2 renewal record and rules 3–5",
+        "partial",
+        "switchboard@f3b2b88b:packages/sign-in-core/src/organizations/organization-stamp-renewal.ts:132 switchboard@f3b2b88b:packages/sign-in-core/src/storage/organization-stamp-store.ts:102 Code and delivery detail",
+        "#12",
+        "The owner can see what failed, whether an answer is still pending, and why work is blocked."
+      ],
+      [
+        "R2-O10",
+        "Changing the signing key keeps every organization usable after the old key is removed.",
+        "B2-10: B2 renewal rule 6",
+        "partial",
+        "switchboard@f3b2b88b:packages/sign-in-core/src/organizations/organization-key-change.ts:30 Code and delivery detail",
+        "#12",
+        "Every organization survives a restart under the new key, and failed renewal prevents old-key retirement."
+      ],
+      [
+        "R2-O11",
+        "Only a person with the required permission and recent second factor can create a workspace.",
+        "B2-11: B2 #b2-scope , #b2-flows ; R13/R53; V9",
+        "delivered",
+        "switchboard@f3b2b88b:packages/sign-in-core/src/organizations/person-fleet-issuance.ts:54 agent-collaboration@e7b709f6:crates/collaboration-central-core/src/organization_admin_plans.rs:10 agent-collaboration@e7b709f6:crates/collaboration-central-core/src/person_request/request_verifier.rs:185 Code and delivery detail",
+        "#12/#17/#268/#275",
+        "none"
+      ],
+      [
+        "R2-O12",
+        "Creating a workspace and recording who created it either both succeed or both fail.",
+        "B2-12: B2 #b2-data , #b2-proof ; R13",
+        "delivered",
+        "agent-collaboration@e7b709f6:crates/collaboration-central-core/src/organization_admin_plans.rs:10 agent-collaboration@e7b709f6:crates/collaboration-central-core/src/organization_workspace_plans.rs:85 Code and delivery detail",
+        "#275",
+        "none"
+      ],
+      [
+        "R2-O13",
+        "Repeating an operation keeps its original answer and refuses changed requests.",
+        "B2-13: B2 lost-reply/repeat rules",
+        "partial",
+        "agent-collaboration@e7b709f6:crates/collaboration-central-core/src/organization_workspace_plans.rs:85 agent-collaboration@e7b709f6:crates/collaboration-central-core/src/workspace_request_log.rs:13 switchboard@f3b2b88b:packages/sign-in-core/src/better-auth/organization-admin-page.ts:61 Code and delivery detail",
+        "#275/#17",
+        "The owner-approved retry lifetime is explicit, and the service and both clients honor it."
+      ],
+      [
+        "R2-O14",
+        "A workspace keeps its description and another workspace cannot take the same name.",
+        "B2-14: later owner workspace option (a), B2 admin result",
+        "delivered",
+        "agent-collaboration@e7b709f6:crates/collaboration-central-core/src/organization_workspace_plans.rs:85 switchboard@f3b2b88b:packages/sign-in-core/src/central-link/fleet-admin-client.ts:44 Code and delivery detail",
+        "#275/#17",
+        "none"
+      ],
+      [
+        "R2-O15",
+        "The owner can see all of the organization’s workspaces and change history.",
+        "B2-15: B2 #b2-parts admin page, #b2-see",
+        "contradicted",
+        "switchboard@f3b2b88b:packages/sign-in-core/src/better-auth/organization-admin-page.ts:61 agent-collaboration@e7b709f6:crates/collaboration-central-core/src/organization_change_rows.rs:15 Code and delivery detail",
+        "#12/#17",
+        "The owner can reach every workspace and every page of history, including later entries."
+      ],
+      [
+        "R2-O16",
+        "A project or import from another organization is refused before its records are touched.",
+        "B2-16: B2 project ownership flow/proof; U27/R34",
+        "partial",
+        "none — source inspection gap Code and delivery detail",
+        "existing foundation / see provenance",
+        "Current project and import paths refuse crossings on both builds, with no foreign read or write."
+      ],
+      [
+        "R2-O17",
+        "Old data is kept only through the backup and later selection the owner requested.",
+        "B2-17: B2 existing-data promise",
+        "partial",
+        "none — source inspection gap Code and delivery detail",
+        "existing foundation / see provenance",
+        "The agreed backup is verified, and only the data the owner later selects is restored."
+      ],
+      [
+        "R2-O18",
+        "People are administered through sign-in without obsolete commands still being advertised by central.",
+        "B2-18: B2 #b2-plan , index retirement table",
+        "partial",
+        "agent-collaboration@e7b709f6:crates/collaboration-central-core/src/identity_contract/organization_commands.rs:7 Code and delivery detail",
+        "existing foundation / see provenance",
+        "The retired commands disappear from exports, generated contracts and their obsolete tests."
+      ]
+    ],
+    "verification": [
+      [
+        "R2-V1 (R2-O1)",
+        "Show two organizations staying apart on both server builds.",
+        "B2-01: B2 #b2-base , #b2-scope ; U15/U27/U45; E1/E26; R34/R55; B2 #b2-proof; VD SO4/SO7/R-stamp",
+        "Existing server checks and a local journey use separate organizations.",
+        "independent Verifier",
+        "#17@116e499e + central@ea030e513",
+        "WS14 evidence Exact coverage and limits",
+        "The complete hosted and project paths were not observed."
+      ],
+      [
+        "R2-V2 (R2-O2)",
+        "Create an organization through each sign-in build and read back its saved setup.",
+        "B2-02: B2 #b2-see , #b2-flows ; OD22/OD23; R13/R55; B2 #b2-proof; VD SO4/SO7/R-stamp",
+        "The local journey created and read back a real organization on both builds.",
+        "independent Verifier",
+        "#17@116e499e + central@ea030e513",
+        "WS14 evidence Exact coverage and limits",
+        "The hosted deployment was not observed."
+      ],
+      [
+        "R2-V3 (R2-O3)",
+        "Show the permitted creator, refused callers and retry on both builds.",
+        "B2-03: B2 #b2-data , #b2-plan ; R55; B2 #b2-proof; VD SO4/SO7/R-stamp",
+        "Existing tests cover the creator rules and interrupted setup.",
+        "none for the complete required boundary; existing test/CI evidence only",
+        "f3b2b88b / e7b709f6 source; execution target varies or none",
+        "WS14 evidence Exact coverage and limits",
+        "Not every caller and second-organization screen was independently observed."
+      ],
+      [
+        "R2-V4 (R2-O4)",
+        "Use genuine and forged statements against both server builds.",
+        "B2-04: B2 #b2-data , #b2-proof ; B2 #b2-proof; VD SO4/SO7/R-stamp",
+        "The real sign-in service signed statements; separate server tests exercise refusals.",
+        "none for the complete required boundary; existing test/CI evidence only",
+        "f3b2b88b / e7b709f6 source; execution target varies or none",
+        "WS14 evidence Exact coverage and limits",
+        "The older original run logs are no longer present."
+      ],
+      [
+        "R2-V5 (R2-O5)",
+        "Restart each server with valid, edited and expired stored statements.",
+        "B2-05: B2 #b2-data , #b2-proof ; B2 #b2-proof; VD SO4/SO7/R-stamp",
+        "Existing restart and refusal tests cover these conditions.",
+        "none for the complete required boundary; existing test/CI evidence only",
+        "f3b2b88b / e7b709f6 source; execution target varies or none",
+        "WS14 evidence Exact coverage and limits",
+        "Their entire original run logs were not reopened in this audit."
+      ],
+      [
+        "R2-V6 (R2-O6)",
+        "Race two renewals, lose a reply and check the saved winner on both builds.",
+        "B2-06: B2 #b2-data , #b2-flows ; B2 #b2-proof; VD SO4/SO7/R-stamp",
+        "The real local services kept one winner and refused the stale proposal.",
+        "independent Verifier",
+        "#17@116e499e + central@ea030e513",
+        "WS14 evidence Exact coverage and limits",
+        "No hosted observation was found."
+      ],
+      [
+        "R2-V7 (R2-O7)",
+        "Use both builds with controlled time, concurrent calls and lost answers.",
+        "B2-07: B2 renewal rules 1–2, #b2-proof ; VD R-stamp; B2 #b2-proof; VD SO4/SO7/R-stamp",
+        "Existing tests and the real local journey exercised renewal and repeated delivery.",
+        "independent Verifier",
+        "#17@116e499e + central@ea030e513",
+        "WS14 evidence Exact coverage and limits",
+        "Cancellation inside the deployed private connection remains unobserved."
+      ],
+      [
+        "R2-V8 (R2-O8)",
+        "Make the real services disagree, expire the stored statement and recover on both builds.",
+        "B2-08: B2 renewal rule 3; later owner R29; B2 #b2-proof; VD SO4/SO7/R-stamp",
+        "The real local journey recovered on both builds without sending work too early.",
+        "independent Verifier",
+        "#17@116e499e + central@ea030e513",
+        "WS14 evidence Exact coverage and limits",
+        "No hosted observation was found."
+      ],
+      [
+        "R2-V9 (R2-O9)",
+        "Show saved failed attempts surviving restart and show their condition to the owner.",
+        "B2-09: B2 renewal record and rules 3–5; B2 #b2-proof; VD SO4/SO7/R-stamp",
+        "Existing tests check saved attempts and refusal after expiry.",
+        "none for the complete required boundary; existing test/CI evidence only",
+        "f3b2b88b / e7b709f6 source; execution target varies or none",
+        "WS14 evidence Exact coverage and limits",
+        "The owner cannot see the saved renewal condition on the page."
+      ],
+      [
+        "R2-V10 (R2-O10)",
+        "Change real signing keys, renew idle organizations, remove the old key and restart both servers.",
+        "B2-10: B2 renewal rule 6; B2 #b2-proof; VD SO4/SO7/R-stamp",
+        "A helper was tested against a controlled substitute for central.",
+        "none for the complete required boundary; existing test/CI evidence only",
+        "f3b2b88b / e7b709f6 source; execution target varies or none",
+        "WS14 evidence Exact coverage and limits",
+        "The real key-removal and restart sequence has not been demonstrated."
+      ],
+      [
+        "R2-V11 (R2-O11)",
+        "Create and refuse work through both builds, including an expired second factor.",
+        "B2-11: B2 #b2-scope , #b2-flows ; R13/R53; V9; B2 #b2-proof; VD SO4/SO7/R-stamp",
+        "The real services accepted the owner and refused a member; lower tests check factor age.",
+        "independent Verifier",
+        "#17@116e499e + central@ea030e513",
+        "WS14 evidence Exact coverage and limits",
+        "The complete confirmation dialog with real central was not observed in a browser."
+      ],
+      [
+        "R2-V12 (R2-O12)",
+        "Force the final database write to fail and verify that nothing else was saved.",
+        "B2-12: B2 #b2-data , #b2-proof ; R13; B2 #b2-proof; VD SO4/SO7/R-stamp",
+        "Real server tests fail the final write and retry; the local journey reads the saved result.",
+        "independent Verifier",
+        "#17@116e499e + central@ea030e513",
+        "WS14 evidence Exact coverage and limits",
+        "The server tests use prepared signed inputs rather than the real sign-in service."
+      ],
+      [
+        "R2-V13 (R2-O13)",
+        "Lose the answer, restart and repeat, including after the retained answer expires.",
+        "B2-13: B2 lost-reply/repeat rules; B2 #b2-proof; VD SO4/SO7/R-stamp",
+        "The local journey checks exact repeated answers within a day and later client recovery.",
+        "independent Verifier",
+        "#17@116e499e + central@ea030e513",
+        "WS14 evidence Exact coverage and limits",
+        "The raw service stops retaining the original answer after a day; approval for that limit was not found."
+      ],
+      [
+        "R2-V14 (R2-O14)",
+        "Create colliding names concurrently and check descriptions at the allowed size boundaries.",
+        "B2-14: later owner workspace option (a), B2 admin result; B2 #b2-proof; VD SO4/SO7/R-stamp",
+        "Server tests and the real local journey check duplicate names and the saved workspace.",
+        "independent Verifier",
+        "#17@116e499e + central@ea030e513",
+        "WS14 evidence Exact coverage and limits",
+        "No hosted observation was found."
+      ],
+      [
+        "R2-V15 (R2-O15)",
+        "Create enough history to need another page, then find later workspaces and records.",
+        "B2-15: B2 #b2-parts admin page, #b2-see ; B2 #b2-proof; VD SO4/SO7/R-stamp",
+        "Existing page tests cover small sets only.",
+        "none for the complete required boundary; existing test/CI evidence only",
+        "f3b2b88b / e7b709f6 source; execution target varies or none",
+        "WS14 evidence Exact coverage and limits",
+        "Later workspaces disappear because the page reads only the first hundred records."
+      ],
+      [
+        "R2-V16 (R2-O16)",
+        "Drive the current project and import paths on both builds with another organization’s references.",
+        "B2-16: B2 project ownership flow/proof; U27/R34; B2 #b2-proof; VD SO4/SO7/R-stamp",
+        "The older implementation has an explicit ownership check.",
+        "none for the complete required boundary; existing test/CI evidence only",
+        "f3b2b88b / e7b709f6 source; execution target varies or none",
+        "WS14 evidence Exact coverage and limits",
+        "The current project checks were traced, but the promised import path and current two-build observation remain unverified."
+      ],
+      [
+        "R2-V17 (R2-O17)",
+        "Inspect the backup and any later agreed restoration rather than assuming automatic migration.",
+        "B2-17: B2 existing-data promise; B2 #b2-proof; VD SO4/SO7/R-stamp",
+        "The owner’s decision to stop automatic migration was inspected.",
+        "none for the complete required boundary; existing test/CI evidence only",
+        "f3b2b88b / e7b709f6 source; execution target varies or none",
+        "WS14 evidence Exact coverage and limits",
+        "No backup or restoration operation was checked."
+      ],
+      [
+        "R2-V18 (R2-O18)",
+        "Check that the four retired command definitions and generated contracts are gone.",
+        "B2-18: B2 #b2-plan , index retirement table; B2 #b2-proof; VD SO4/SO7/R-stamp",
+        "Current source still exports and tests all four retired command definitions.",
+        "none for the complete required boundary; existing test/CI evidence only",
+        "f3b2b88b / e7b709f6 source; execution target varies or none",
+        "WS14 evidence Exact coverage and limits",
+        "The promised removal remains unfinished; no unsafe served route was found."
+      ]
+    ],
+    "decisions": [
+      [
+        "R2-D1",
+        "Old data would not migrate automatically; backup comes first.",
+        "owner transcript:97881, 13 Nov 14:58Z",
+        "yes",
+        "The old same-store migration promise is replaced by backup and later explicit selection.",
+        "superseded"
+      ],
+      [
+        "R2-D2",
+        "Expired organization statements may still reveal their verified stored facts.",
+        "owner transcript:105129, 14 Nov 12:43:34Z",
+        "yes",
+        "A drifted and expired organization can recover without authorizing work too early.",
+        "ok"
+      ],
+      [
+        "R2-D3",
+        "Workspaces have descriptions and unique names.",
+        "owner transcript:111553, 15 Nov 00:25:43Z",
+        "yes",
+        "A duplicate name is refused rather than returning another workspace as newly created.",
+        "ok"
+      ],
+      [
+        "R2-D4",
+        "Removing daily jobs would move renewal and pending updates to use-time.",
+        "Owner no-cron outcome; Lead’s implementation call, plan WS2/WS3",
+        "yes for implementation; first-hand owner turn not independently recovered here",
+        "The next request performs needed preparation without keeping a daily job.",
+        "ok"
+      ],
+      [
+        "R2-D5",
+        "A callable key-change helper was treated as the remaining deployment step.",
+        "Lead’s call; plan D6 and acceptance WS2",
+        "Only for internal sequencing, not for declaring the promised safe retirement complete",
+        "The real retirement and restart work stayed unproven.",
+        "wrong if counted as complete delivery"
+      ],
+      [
+        "R2-D6",
+        "Original operation answers are retained for one day.",
+        "Relayed from Central Lead; trace 14 Nov 21:29; owner authority not recovered",
+        "unknown — reconcile with the governing retention contract",
+        "Later retries get a different service answer and the clients infer earlier creation.",
+        "should have been the owner’s if it narrows the approved contract"
+      ]
+    ],
+    "defects": [
+      [
+        "R2-X2",
+        "P2",
+        "An idle organization can be stranded when its old signing key is retired.",
+        "Old-key stored statement + idle organization + key removal + cold restart → refusal; no enforced complete retirement operation found.",
+        "R2-02; B2:213; S7",
+        "Every organization is confirmed under the new key and survives restart before the old key can be retired."
+      ],
+      [
+        "R2-X3",
+        "P2",
+        "Later workspaces and change history disappear from the owner’s page.",
+        "More than 100 earlier records → load(after:null,limit:100) → later workspace never discovered.",
+        "R2-03; B2:130; S9; C12",
+        "All workspaces and pages of history can be reached, including later entries."
+      ],
+      [
+        "R2-X5",
+        "P2",
+        "The owner cannot see why renewal is blocked or whether its answer is still pending.",
+        "Unanswered sent statement expires → stored sent-expired/counters → page only shows generic unavailable.",
+        "R2-05 (renewal portion); B2:212; S4/S5/S9",
+        "The authorized owner sees the saved failure condition and pending answer without exposing credential bytes."
+      ],
+      [
+        "R2-X6",
+        "P2",
+        "The required complete browser interaction is still unproven.",
+        "Real-service API/isolated-DOM passes + separate Chrome test with controlled central → no observation of actual admin dialog with real central.",
+        "R2-06; B2:285; S19; T1",
+        "The actual browser creates and refuses actions with real central on both builds, including confirmation and cancellation."
+      ],
+      [
+        "R2-X8",
+        "P3",
+        "Central still advertises commands the design explicitly retired.",
+        "Current exported DTOs + generated schemas + positive tests → obsolete people-command surface remains.",
+        "R2-08; C13; index retirement table",
+        "The four retired commands disappear from exports, generated contracts and obsolete tests."
+      ]
+    ]
+  },
+  "currentEvidence": [
+    {
+      "repo": "/Users/shravansunder/code/projects/switchboard",
+      "commit": "f3b2b88b74225359970b0580a290cd34fe1e557b",
+      "path": "packages/sign-in-core/src/better-auth/organization-admin-page.ts",
+      "sha256": "a22c6de52eca1dc54bfbc8a837a70541c00a49adac450137aa5da4cc7e349c18",
+      "anchors": [
+        {
+          "line": 22,
+          "text": "* `secondFactorRequired` it runs the existing app-code or recovery-code confirmation, then"
+        },
+        {
+          "line": 26,
+          "text": "readonly organizationId: string;"
+        },
+        {
+          "line": 27,
+          "text": "readonly organizationName: string;"
+        },
+        {
+          "line": 34,
+          "text": "readonly operationId: string;"
+        },
+        {
+          "line": 41,
+          "text": "function freshOperationId(){const bytes=crypto.getRandomValues(new Uint8Array(16));let time=Date.now();for(let index=5;index>=0;index-=1){bytes[index]=time%256;time=Math.floor(time/256);}"
+        },
+        {
+          "line": 56,
+          "text": "if(answer.ok&&answer.result?.result==='refused'&&answer.result.reason==='secondFactorRequired'){"
+        },
+        {
+          "line": 61,
+          "text": "async function load(){const records=await admin('ReadChangeRecords',{organizationId,after:null,limit:100});"
+        },
+        {
+          "line": 66,
+          "text": "const workspaceIds=[...new Set(records.result.records.filter((record)=>record.kind==='workspaceCreated').map((record)=>record.targetId))];"
+        },
+        {
+          "line": 67,
+          "text": "for(const workspaceId of workspaceIds){const found=await admin('WorkspaceLookup',{organizationId,workspaceId});"
+        },
+        {
+          "line": 76,
+          "text": "else{say(${scriptValue(fleetAdminCreateWords.nameInUse)});operationId=freshOperationId();}}"
+        },
+        {
+          "line": 77,
+          "text": "else if(created.kind==='refused'&&created.reason==='conflict'){say(${scriptValue(fleetAdminCreateWords.conflict)});operationId=freshOperationId();}"
+        }
+      ],
+      "class": "source inspection only; no runtime observation"
+    },
+    {
+      "repo": "/Users/shravansunder/code/projects/switchboard",
+      "commit": "f3b2b88b74225359970b0580a290cd34fe1e557b",
+      "path": "packages/sign-in-core/src/organizations/organization-key-change.ts",
+      "sha256": "85b44d3dbe53e27b9d12e7d2e16006e1ad41796676f5ef83916addb2f41e6419",
+      "anchors": [
+        {
+          "line": 12,
+          "text": "| { readonly kind: 'current-key'; readonly organizationId: OrganizationId }"
+        },
+        {
+          "line": 14,
+          "text": "readonly kind: 'unfinished';"
+        },
+        {
+          "line": 28,
+          "text": "* short of that is reported unfinished, never counted done."
+        },
+        {
+          "line": 30,
+          "text": "export async function reSignOrganizationsForKeyChange("
+        },
+        {
+          "line": 32,
+          "text": "readonly organizations: Pick<OrganizationMembershipRecords, 'readyOrganizationIds'>;"
+        },
+        {
+          "line": 37,
+          "text": "const ready = await props.organizations.readyOrganizationIds();"
+        },
+        {
+          "line": 59,
+          "text": "return { kind: 'unfinished', organizationId, renewal: record };"
+        },
+        {
+          "line": 61,
+          "text": "if (value?.sent === null && value.confirmed?.signingKeyId === props.currentSigningKeyId)"
+        },
+        {
+          "line": 62,
+          "text": "return { kind: 'current-key', organizationId };"
+        },
+        {
+          "line": 65,
+          "text": "return { kind: 'unfinished', organizationId, renewal };"
+        }
+      ],
+      "class": "source inspection only; no runtime observation"
+    },
+    {
+      "repo": "/Users/shravansunder/code/projects/codex-router",
+      "commit": "e7b709f6aea27f9be267051674de335b4651372a",
+      "path": "crates/collaboration-central-core/src/organization_workspace_plans.rs",
+      "sha256": "a2381ba207630714bd0bd97827b54887c48625611bd14cd1d54cd383a1d47cc0",
+      "anchors": [
+        {
+          "line": 78,
+          "text": "reason: AdminRefusal::NameInUse,"
+        },
+        {
+          "line": 103,
+          "text": "let cutoff = (now - chrono::Duration::hours(24)).to_rfc3339();"
+        },
+        {
+          "line": 115,
+          "text": "let (result, retained) = if stored_actor != actor.actor"
+        },
+        {
+          "line": 116,
+          "text": "|| string(&logged, row, \"content_digest\")? != person.intent_digest"
+        },
+        {
+          "line": 153,
+          "text": "refused(AdminRefusal::NameInUse)"
+        },
+        {
+          "line": 161,
+          "text": "statements.push(workspace_directory_rows::insert("
+        },
+        {
+          "line": 167,
+          "text": "statements.push(organization_change_rows::insert("
+        },
+        {
+          "line": 194,
+          "text": "&person.intent_digest,"
+        }
+      ],
+      "class": "source inspection only; no runtime observation"
+    },
+    {
+      "repo": "/Users/shravansunder/code/projects/codex-router",
+      "commit": "e7b709f6aea27f9be267051674de335b4651372a",
+      "path": "crates/collaboration-central-core/src/workspace_request_log.rs",
+      "sha256": "4ec00272a8e91fc116621ea8bd462c6d182f94af9592afe3974d61ea3e964441",
+      "anchors": [
+        {
+          "line": 15,
+          "text": "sql: \"SELECT caller,content_digest,answer FROM request_log WHERE request_id=? AND created_at>?\","
+        },
+        {
+          "line": 61,
+          "text": "sql: \"INSERT INTO request_log (request_id,caller,content_digest,answer,created_at,updated_at) VALUES (?,?,?,?,?,?) ON CONFLICT(request_id) DO UPDATE SET caller=excluded.caller,content_digest=excluded.content_digest,answer=excluded.answer,created_at=excluded.created_at,updated_at=excluded.updated_at\","
+        },
+        {
+          "line": 75,
+          "text": "sql: \"DELETE FROM request_log WHERE created_at<=?\","
+        }
+      ],
+      "class": "source inspection only; no runtime observation"
+    },
+    {
+      "repo": "/Users/shravansunder/code/projects/codex-router",
+      "commit": "e7b709f6aea27f9be267051674de335b4651372a",
+      "path": "crates/collaboration-central-core/src/organization_change_rows.rs",
+      "sha256": "5e60e238001b7b29655bef268631d6ff972e376cdbbbf51c08cf999ef9d7bd7e",
+      "anchors": [
+        {
+          "line": 222,
+          "text": "pub(crate) async fn read_page("
+        },
+        {
+          "line": 227,
+          "text": "let rows=host.read(Statement{sql:\"SELECT id,request_id,kind,origin,actor_person_id,permission_checked,target_id,created_at FROM organization_change_records WHERE id>? ORDER BY id LIMIT ?\",args:vec![text(after.map(|id|id.to_string()).unwrap_or_default()),integer(i64::from(limit))?]}).await?;"
+        }
+      ],
+      "class": "source inspection only; no runtime observation"
+    }
+  ],
+  "deliverableProofRows": [
+    {
+      "sourceRow": 1,
+      "originalId": null,
+      "raw": "| setting up is real and repeat-safe | provision O, then provision O again: one stamp, one change record, both answers `Provisioned` | a repeat that writes a second record, or a \"ready\" without central's answer |",
+      "note": "Source row has no ID; ordinal is extraction metadata only."
+    },
+    {
+      "sourceRow": 2,
+      "originalId": null,
+      "raw": "| organizations stay apart | provision A and B; create \"research\" in A; B's lookup and records show nothing of A's (B2 proves this for admin data; machines and sessions are proven in B3 and B4) | shared storage, or an unkeyed address |",
+      "note": "Source row has no ID; ordinal is extraction metadata only."
+    },
+    {
+      "sourceRow": 3,
+      "originalId": null,
+      "raw": "| a wrong organization is refused | send A's Fleet object a request naming B: refused, nothing changed | a missing stamp check |",
+      "note": "Source row has no ID; ordinal is extraction metadata only."
+    },
+    {
+      "sourceRow": 4,
+      "originalId": null,
+      "raw": "| the permission is enforced | no confirmation, a confirmation for another permission, another person or another organization: each `notPermitted`, nothing written | a guard that trusts the caller |",
+      "note": "Source row has no ID; ordinal is extraction metadata only."
+    },
+    {
+      "sourceRow": 5,
+      "originalId": null,
+      "raw": "| second-factor freshness | a stale factor on a change gives `secondFactorRequired`; reads are exempt | factors ignored |",
+      "note": "Source row has no ID; ordinal is extraction metadata only."
+    },
+    {
+      "sourceRow": 6,
+      "originalId": null,
+      "raw": "| change and record together | make the record write fail: no workspace is created | the record written separately |",
+      "note": "Source row has no ID; ordinal is extraction metadata only."
+    },
+    {
+      "sourceRow": 7,
+      "originalId": null,
+      "raw": "| your organization keeps its data | provision your organization on a store holding today's data: everything is still there; the configured name is the same organization on both hosts, and no other organization can claim it | a fresh store replacing yours |",
+      "note": "Source row has no ID; ordinal is extraction metadata only."
+    },
+    {
+      "sourceRow": 8,
+      "originalId": null,
+      "raw": "| before set-up, nothing works | a public command or read on an unstamped store is refused, revealing nothing. This covers B2's own public commands and reads on any unstamped store. Today's Access-era routes on today's store keep working until the switch removes them in the same deploy that provisions your organization (Program Design, step 2); that is the approved transition, not an exception to the rule (Lead, 8 Nov) | a store usable before it's provisioned |",
+      "note": "Source row has no ID; ordinal is extraction metadata only."
+    },
+    {
+      "sourceRow": 9,
+      "originalId": null,
+      "raw": "| the stamp can't be stolen or doubled | provision B on A's stamped store: refused; two first provisions at once: one stamp | an overwrite, or two IDs |",
+      "note": "Source row has no ID; ordinal is extraction metadata only."
+    },
+    {
+      "sourceRow": 10,
+      "originalId": null,
+      "raw": "| the guard holds over time | a request held past 5 s, an expired token or factor, a reused confirmation, the wrong audience or token kind: each refused, nothing written | a guard checked only on arrival |",
+      "note": "Source row has no ID; ordinal is extraction metadata only."
+    },
+    {
+      "sourceRow": 11,
+      "originalId": null,
+      "raw": "| lost replies and repeats | cut the reply after central commits a workspace, restart, retry the same operation: one workspace, one record, the original answer; the same operation ID with a changed body is refused; two requests for one name end with one workspace | duplicates, or a replay that changes the answer |",
+      "note": "Source row has no ID; ordinal is extraction metadata only."
+    },
+    {
+      "sourceRow": 12,
+      "originalId": null,
+      "raw": "| set-up records | provisioning writes one set-up record with no person; its retry finds the same record | an invented person, or a missing record |",
+      "note": "Source row has no ID; ordinal is extraction metadata only."
+    },
+    {
+      "sourceRow": 13,
+      "originalId": null,
+      "raw": "| the real journey | you, signed in, create a workspace on the sign-in admin page and it appears; a member is refused; requests off the link, or a public request to an internal route, are refused; on both builds | a central test with a hand-made token passed off as the journey |",
+      "note": "Source row has no ID; ordinal is extraction metadata only."
+    },
+    {
+      "sourceRow": 14,
+      "originalId": null,
+      "raw": "| the stamp is genuine | an edited or forged statement, the wrong type, purpose, audience or organization, an access token presented as a stamp, an unknown or retired key: each refused before a write; a stored statement edited on disk makes central refuse every command after a restart | a stamp trusted without its signature |",
+      "note": "Source row has no ID; ordinal is extraction metadata only."
+    },
+    {
+      "sourceRow": 15,
+      "originalId": null,
+      "raw": "| renewal can't go backwards | a newer statement is stored, then one prepared against the older stamp arrives late: refused; a setup retry after renewal keeps the new stamp; two renewals at once: one wins | the old key's statement coming back and stranding startup |",
+      "note": "Source row has no ID; ordinal is extraction metadata only."
+    },
+    {
+      "sourceRow": 16,
+      "originalId": null,
+      "raw": "| renewal happens on use | on a controlled clock, both builds: a Fleet call with 60 days or less left re-signs first; one further from expiry isn't touched; no timer or trigger exists | a daily job, a manual step, or a used organization's stamp expiring |",
+      "note": "Source row has no ID; ordinal is extraction metadata only."
+    },
+    {
+      "sourceRow": 17,
+      "originalId": null,
+      "raw": "| a lost answer can't strand renewal | the reply is lost after the swap, and the next use re-sends the same bytes: \"already done\"; the reply is lost before the swap: the re-send applies; two instances renew at once: one sent stamp, one swap; a valid stamp with renewal failing still makes the call; an expired one answers \"try again shortly\" | two stamps in doubt, a lost renewal treated as success, or a call over an expired stamp |",
+      "note": "Source row has no ID; ordinal is extraction metadata only."
+    },
+    {
+      "sourceRow": 18,
+      "originalId": null,
+      "raw": "| project ownership | a token for O naming a project that isn't in O's directory is refused, nothing changed; an import aimed at the wrong central is refused | a project-side organization trusted |",
+      "note": "Source row has no ID; ordinal is extraction metadata only."
+    },
+    {
+      "sourceRow": 19,
+      "originalId": null,
+      "raw": "| the real call from sign-in | B1's stand-in is replaced; creating an organization end to end turns it ready on both builds | a stand-in left in |",
+      "note": "Source row has no ID; ordinal is extraction metadata only."
+    }
+  ],
+  "applicability": {
+    "U9": "B2 owns WorkspaceLookup for workspace facts; people membership lookup remains B1; allowed-machine facts follow B3. Full shared row retained as context.",
+    "U14": "B2 renewal must not authorize a call over an expired stamp; shared R25 machine/token outcomes remain B3+ context, not new B2 scope.",
+    "U15": "Fleet truth versus people authority and private ingress apply in B2; the source list-of-organizations wording conflicts with PD Better Auth list home and remains an explicit source tension.",
+    "U16": "R26 host-neutral versioned contracts plus R27 private operation surface apply to the B2 link on both hosts.",
+    "U20": "People sign-in is the B1 precondition; B2 consumes a genuine signed-in owner and replaces B1 provisioning stand-in.",
+    "U21": "Workspace creation/lookups/change records and owner-only organization provisioning are B2; machine allowances/enrollment/revocation remain B3; sessions B4.",
+    "U22": "Sign-in stamp state uses existing Drizzle databases and migration approval gates; exact generated-SQL approval remains a provenance gap.",
+    "U23": "B2 sign-in logic remains runtime-free, hosts inject effects; central keeps its existing runtime-free core.",
+    "U24": "B2 UUIDs are version7; secret/code values keep their own forms; no new identifier format or implicit validation weakening.",
+    "U25": "B2 tests/helpers controlled time and event waits; retain applicable existing Hegel families; broad family census unverified.",
+    "U26": "Organization precedes workspace administration; onboarding page details are BG.",
+    "U27": "B2 administrative/project/import isolation; machine/session data isolation extends in B3/B4.",
+    "U41": "B2 decisions/refusals and safe diagnostic records inherit telemetry constraints; destination export retains OD17 limit.",
+    "U43": "B2 workspace changes require15-minute factor freshness; B2 reads are exempt; first-machine exception belongs to B3.",
+    "U45": "B2 creates isolated organizations without deployments and establishes the private link; Router machine connection route is later B3.",
+    "U46": "B2 checks workspace:create, workspace/organization reads against permissions; owner/member mappings from B1 remain; managers/workspace roles later.",
+    "U47": "Sign-in owns human authorization; central owns applying B2 workspace changes/records. Tool-call and machine decisions are context only."
+  },
+  "sharedCoverageRows": [
+    {
+      "id": "U9",
+      "line": 513,
+      "raw": "| U9 | E1, E2, E3, E6, E7, E13, E14, E15, E21 | P3 | O3 | R14 | C4 | V10 |",
+      "scope": "full shared trace retained; B2 portions constrained by applicability metadata"
+    },
+    {
+      "id": "U14",
+      "line": 514,
+      "raw": "| U14 | E21, E22, E24 | — | — | R25 | — | V13 |",
+      "scope": "full shared trace retained; B2 portions constrained by applicability metadata"
+    },
+    {
+      "id": "U15",
+      "line": 515,
+      "raw": "| U15 | all | — | — | R27 | C7 | V19 |",
+      "scope": "full shared trace retained; B2 portions constrained by applicability metadata"
+    },
+    {
+      "id": "U16",
+      "line": 516,
+      "raw": "| U16 | all | — | O5 | R26, R27 | C7 | V18, V19 |",
+      "scope": "full shared trace retained; B2 portions constrained by applicability metadata"
+    },
+    {
+      "id": "U20",
+      "line": 520,
+      "raw": "| U20 | E1, E3, E19 | — | — | R5, R13 | C7 | V9, V19; the people sign-in design's own proof |",
+      "scope": "full shared trace retained; B2 portions constrained by applicability metadata"
+    },
+    {
+      "id": "U46",
+      "line": 521,
+      "raw": "| U46 | E19, E27, E28 | — | — | R13, R14 | C4, C7 | V9 |",
+      "scope": "full shared trace retained; B2 portions constrained by applicability metadata"
+    },
+    {
+      "id": "U47",
+      "line": 522,
+      "raw": "| U47 | E19, E27 | — | — | R13, R27 | C7 | V9, V19 |",
+      "scope": "full shared trace retained; B2 portions constrained by applicability metadata"
+    },
+    {
+      "id": "U21",
+      "line": 524,
+      "raw": "| U21 | E2, E6, E15, E19, E21 | — | — | R13 | C4 | V9 |",
+      "scope": "full shared trace retained; B2 portions constrained by applicability metadata"
+    },
+    {
+      "id": "U22",
+      "line": 525,
+      "raw": "| U22 | E3, E23 | — | O5 | R29, R31 | — | V21, V23 |",
+      "scope": "full shared trace retained; B2 portions constrained by applicability metadata"
+    },
+    {
+      "id": "U23",
+      "line": 526,
+      "raw": "| U23 | E3, E23 | — | O5 | R30 | C7 | V22 |",
+      "scope": "full shared trace retained; B2 portions constrained by applicability metadata"
+    },
+    {
+      "id": "U24",
+      "line": 527,
+      "raw": "| U24 | E3, E23 | — | — | R32 | — | V24 |",
+      "scope": "full shared trace retained; B2 portions constrained by applicability metadata"
+    },
+    {
+      "id": "U25",
+      "line": 528,
+      "raw": "| U25 | E22, E23 | — | — | R33 | — | V25 |",
+      "scope": "full shared trace retained; B2 portions constrained by applicability metadata"
+    },
+    {
+      "id": "U26",
+      "line": 529,
+      "raw": "| U26 | E8, E19 | P6 | O6 | R5, R35 | — | V27 |",
+      "scope": "full shared trace retained; B2 portions constrained by applicability metadata"
+    },
+    {
+      "id": "U27",
+      "line": 530,
+      "raw": "| U27 | E1, E2, E6, E15 | P6 | O6 | R34 | — | V26 |",
+      "scope": "full shared trace retained; B2 portions constrained by applicability metadata"
+    },
+    {
+      "id": "U45",
+      "line": 531,
+      "raw": "| U45 | E1, E6, E26 | P6 | O6 | R55 | C7, C8 | V47 |",
+      "scope": "full shared trace retained; B2 portions constrained by applicability metadata"
+    },
+    {
+      "id": "U41",
+      "line": 540,
+      "raw": "| U41 | all | P10 | O10 | R51 | — | V43 |",
+      "scope": "full shared trace retained; B2 portions constrained by applicability metadata"
+    },
+    {
+      "id": "U43",
+      "line": 542,
+      "raw": "| U43 | E1, E3, E21, E25 | P12 | O12 | R53, R13 | C13 | V45 |",
+      "scope": "full shared trace retained; B2 portions constrained by applicability metadata"
+    }
+  ],
+  "sharedContextRows": [
+    {
+      "id": "E6",
+      "line": 102,
+      "raw": "| E6 | **Fleet machine** | Its installation ID, kept in the Router's own saved state. Replacing the Router program keeps it; a fresh installation state is a new machine. | Belongs to exactly one E1, through its E21. Has 0..n E21, at most one active. Runs 0..n E7. Has 0..n E15 and E24. | Holds no private key (R24). | logged in, revoked, expired (from its E21) |",
+      "scope": "shared context only; not automatically a B2-owned obligation"
+    },
+    {
+      "id": "E21",
+      "line": 103,
+      "raw": "| E21 | **Machine enrollment** | Its enrollment ID: one authorization of one E6 into one E1. Each log-in or re-log-in of the same installation is a new enrollment. | Belongs to one E6 and one E1. Authorized by that E1's owner approving one E23. | At most one active per E6, and all of an E6's enrollments name one E1. Records what authorized it. Its machine holds one refresh credential, in an encrypted store or only in memory (R41). It expires when no machine token has been decided for it for 30 days (one setting); you approve the machine again after that. | enrolled, revoked, expired |",
+      "scope": "shared context only; not automatically a B2-owned obligation"
+    },
+    {
+      "id": "E23",
+      "line": 104,
+      "raw": "| E23 | **Device-code login request** | Its device code, which the machine keeps and never shows. The short user code is what you check. | Asks to log one E6 into one E1, under a label the machine supplies. Approved or denied by that E1's owner. | Works at most once. Expires after 10 minutes. Approving it logs in only that installation, only into that organization. | pending, approved, denied, expired, used |",
+      "scope": "shared context only; not automatically a B2-owned obligation"
+    },
+    {
+      "id": "E22",
+      "line": 105,
+      "raw": "| E22 | **Machine token** | Its token ID. | Identifies one E6 and its E21, and names its E1 and its issuer, the sign-in service. | Short-lived (R40). Accepted only by Fleet central. Minted only for an enrolled E21. Naming its issuer lets another kind of issuer be added later. | valid, expired, rejected |",
+      "scope": "shared context only; not automatically a B2-owned obligation"
+    },
+    {
+      "id": "E24",
+      "line": 106,
+      "raw": "| E24 | **Machine connection** | One authenticated session between one E6's Router and Fleet central, from when it opens to when it closes. A reconnect is a new connection. | Belongs to one E6, and to the E21 whose login opened it. | Opened only with that machine's valid login: before the switch, Cloudflare Access plus its enrollment credential; after it, a machine token (R40). Counts only while its E21 is the machine's active one. Carries no person. | open, closed. **Last seen** is the latest moment central heard from an open connection, or its close. |",
+      "scope": "shared context only; not automatically a B2-owned obligation"
+    },
+    {
+      "id": "E15",
+      "line": 109,
+      "raw": "| E15 | **Machine allowance** | The pair of one E6 and one E2. | Belongs to one E6 and one E2 of the same E1. | Only the owner grants or withdraws it. | active, withdrawn |",
+      "scope": "shared context only; not automatically a B2-owned obligation"
+    },
+    {
+      "id": "E7",
+      "line": 110,
+      "raw": "| E7 | **Fleet harness session** | Its session reference: its machine's installation, its harness endpoint (Codex, Claude or Cursor) and its conversation ID. A new conversation is a new session. | Runs on exactly one E6. Started for exactly one E16 in its machine's E1. Holds exactly one E8, in that project's workspace. Has exactly one E13. | Holds no secret and never logs in; accepted only as vouched for by its machine. Its machine has an active E15 for its workspace. Once removed or ended, nothing is decided for it again. Started by whoever operates its machine, or by another session of its workspace (R8, R46); no person is recorded as its starter. Its start time is when its Router registered it. | active, removed, ended. While active, its machine reports it as **working** (a turn in progress, including one waiting on an approval or a question) or **idle** (no turn in progress, loaded or not). It is **unknown** while its machine has no open E24. |",
+      "scope": "shared context only; not automatically a B2-owned obligation"
+    },
+    {
+      "id": "E8",
+      "line": 111,
+      "raw": "| E8 | **Membership** (of a session) | The pair of one workspace and one session. | Belongs to one E2 and one E7, in one E1. | A session has exactly one, in its project's workspace (R7). It requires its machine's active enrollment in that organization. Memberships of people and bots come in step 3. | active, removed |",
+      "scope": "shared context only; not automatically a B2-owned obligation"
+    },
+    {
+      "id": "E13",
+      "line": 112,
+      "raw": "| E13 | **Isolation record** | Its session. | Belongs to exactly one E7. Names its E6, its machine environment (physical or cloud VM), its isolation kind (`Host`, `ProcessSandbox`, `Container` or `Vm`), an instance ID minted at launch, and its launch context (working directory, repository, commit, model, who launched it). | Asserted by what launched the session; nothing proves it. Recorded at launch and never changed. | recorded |",
+      "scope": "shared context only; not automatically a B2-owned obligation"
+    },
+    {
+      "id": "E14",
+      "line": 113,
+      "raw": "| E14 | **Shared bucket** | One fleet machine, derived. | For one E6: the E2s that have had sessions with isolation kind `Host` on it. | Derived from E7 and E13. Shown, never enforced. | as derived |",
+      "scope": "shared context only; not automatically a B2-owned obligation"
+    },
+    {
+      "id": "R5",
+      "line": 174,
+      "raw": "| R5 | Person sign-in and organizations MUST behave as the people sign-in design states (its R1–R4, R9, R12, R14, R19 and R20), with each person's membership of an organization, and their role there, held by the sign-in service (U15, E19). One change since: a passkey sign-in must verify the person (fingerprint, face or PIN), and then counts as both factors (R53). | E1, E3, E19 | U20, U26 |",
+      "scope": "shared context only; not automatically a B2-owned obligation"
+    },
+    {
+      "id": "R35",
+      "line": 183,
+      "raw": "| R35 | A session MUST NOT become a member of workspace W unless its machine has an active enrollment in W's organization at that moment. Otherwise the request MUST be refused with nothing changed. | E8, E21 | U26, U27, O6 |",
+      "scope": "shared context only; not automatically a B2-owned obligation"
+    },
+    {
+      "id": "R25",
+      "line": 233,
+      "raw": "| R25 | While Fleet central's truth can't be consulted, no new decision MUST be made: no device-code approval, no new machine token, no new machine connection or renewal, no registration, no remote start. A machine token already decided MAY still be minted within 60 seconds of its decision, and nothing after. Nothing MAY be extended on stale information. | E21, E22, E24 | U14 |",
+      "scope": "shared context only; not automatically a B2-owned obligation"
+    },
+    {
+      "id": "V13",
+      "line": 462,
+      "raw": "| V13 | R25 | With central's truth unavailable, no approval, machine token, connection, renewal, registration or remote start is decided; a token already decided mints only within its window. | A decision is made during the outage, or a mint completes after its window. |",
+      "scope": "shared context only; not automatically a B2-owned obligation"
+    },
+    {
+      "id": "V27",
+      "line": 473,
+      "raw": "| V27 | R35 | A session whose machine isn't enrolled in W's organization isn't made a member of W. | A session gets a membership without its machine's enrollment. |",
+      "scope": "shared context only; not automatically a B2-owned obligation"
+    }
+  ]
+}

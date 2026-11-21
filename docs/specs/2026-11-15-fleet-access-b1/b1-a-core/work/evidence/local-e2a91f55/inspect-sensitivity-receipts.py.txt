@@ -1,0 +1,67 @@
+"""Inspect frozen-source mutation and restoration relationships in collected evidence."""
+import hashlib
+import json
+import re
+from pathlib import Path
+
+ROOT = Path(__file__).parent
+EVIDENCE = ROOT.parents[1] / 'docs/specs/2026-11-15-fleet-access-b1/b1-a-core/work/evidence'
+path = EVIDENCE / 'remote-sensitivity-final.json'
+assert hashlib.sha256(path.read_bytes()).hexdigest() == 'e144fa7131190cda764efb37fdc2850a4a261578d342207947ec8890ddd4d208'
+data = json.loads(path.read_text())
+assert data['sourceFinal']['value'] == {'head': data['source'], 'status': ''}
+results = []
+inspected_greens = {}
+for control in data['controls']:
+    original = (ROOT / 'candidate-27d39324' / control['source']).read_bytes()
+    original_hash = hashlib.sha256(original).hexdigest()
+    assert original_hash == control['originalSha256'] == control['originalSource']['sha256'] == control['restoredSourceSha256']
+    patch = control['patch']['literal']
+    assert hashlib.sha256(patch.encode()).hexdigest() == control['patchSha256'] == control['patch']['file']['sha256']
+    lines = original.decode().splitlines(keepends=True)
+    output = []
+    cursor = 0
+    active = False
+    for line in patch.splitlines(keepends=True):
+        if line.startswith('@@'):
+            match = re.match(r'@@ -(\d+)(?:,\d+)? \+\d+(?:,\d+)? @@', line)
+            start = int(match.group(1)) - 1
+            output.extend(lines[cursor:start])
+            cursor = start
+            active = True
+        elif active and line[0] in ' -+':
+            if line[0] in ' -':
+                assert lines[cursor] == line[1:]
+                cursor += 1
+            if line[0] in ' +':
+                output.append(line[1:])
+    output.extend(lines[cursor:])
+    assert hashlib.sha256(''.join(output).encode()).hexdigest() == control['mutantSha256'] == control['mutantSource']['sha256']
+    assert control['sourceRestored']
+    assert control['beforeArtifacts'] == control['restoredArtifacts']
+    for command in control['commands']:
+        assert 'node@24.7.0 pnpm@10.33.0' in command['command']
+        assert command['signal'] is None
+    for phase, expected_exit in [('baseline', 0), ('red', 1), ('restored', 0)]:
+        assert control[phase]
+        for run in control[phase]:
+            if 'reusedPriorFocusedGreen' in run:
+                run = inspected_greens[run['reusedPriorFocusedGreen']]
+            report = run['report']
+            assert run['exit'] == expected_exit and report['pending'] == 0
+            assert report['failed'] > 0 if phase == 'red' else report['failed'] == 0 and report['passed'] > 0
+            if phase == 'red':
+                assert any('AssertionError' in message for row in report['rows'] for message in row['failureMessages'])
+            else:
+                inspected_greens[run['step']] = run
+    if control['id'] != 'F':
+        assert control['mutantBuildExit'] == control['restoredBuildExit'] == 0
+        assert control['restoredDistExact']
+    results.append({'id': control['id'], 'originalAndRestoredSourceMatchFrozenPin': True,
+                    'literalPatchReconstructsMutantHash': True, 'restoredArtifactsIdentical': True,
+                    'red': [{'step': r['step'], 'exit': r['exit'], 'passed': r['report']['passed'], 'failed': r['report']['failed']} for r in control['red']],
+                    'restored': [{'step': r['step'], 'exit': r['exit'], 'passed': r['report']['passed'], 'failed': r['report']['failed']} for r in control['restored']],
+                    'decidingObservation': control['interpretation']})
+result = {'source': data['source'], 'controls': results, 'limits': data['limits']}
+(EVIDENCE / 'remote-sensitivity-inspection.json').write_text(json.dumps(result, indent=2) + '\n')
+print(json.dumps(result, indent=2))

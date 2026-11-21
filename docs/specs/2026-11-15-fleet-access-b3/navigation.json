@@ -1,0 +1,117 @@
+{
+  "version": 1,
+  "pages": [
+    {
+      "id": "home",
+      "title": "Home",
+      "href": "index.html",
+      "icon": "book-open"
+    },
+    {
+      "id": "requirements",
+      "title": "Requirements",
+      "href": "requirements.html",
+      "icon": "users"
+    },
+    {
+      "id": "specification",
+      "title": "Specification",
+      "href": "specification.html",
+      "icon": "book-open"
+    },
+    {
+      "id": "program-design",
+      "title": "Program design",
+      "href": "program-design.html",
+      "icon": "path"
+    },
+    {
+      "id": "verification-design",
+      "title": "Verification design",
+      "href": "verification-design.html",
+      "icon": "shield-check"
+    },
+    {
+      "id": "plan",
+      "title": "Plan",
+      "href": "plan.html",
+      "icon": "path"
+    },
+    {
+      "id": "s5-meaning",
+      "title": "S5: machine login meaning",
+      "href": "signin-machine-login-and-admin.html",
+      "icon": "key"
+    },
+    {
+      "id": "machine-claim",
+      "title": "Machine claim",
+      "href": "machine-claim.html",
+      "icon": "lock"
+    },
+    {
+      "id": "decisions",
+      "title": "Decisions",
+      "href": "decisions.html",
+      "icon": "chat-circle"
+    },
+    {
+      "id": "overview",
+      "title": "Back to the overview",
+      "href": "../2026-11-15-fleet-access-overview/index.html",
+      "icon": "book-open"
+    }
+  ],
+  "map": [
+    {
+      "title": "Behavior and ownership",
+      "description": "Read the design alongside the rules that govern it.",
+      "icon": "book-open",
+      "children": [
+        {
+          "title": "Sign-in ownership",
+          "description": "See which responsibilities belong to sign-in and Central.",
+          "icon": "path",
+          "target": {
+            "page": "program-design",
+            "fragment": "ownership"
+          }
+        },
+        {
+          "title": "Contract and lifecycle",
+          "description": "Find the service rules for machine login.",
+          "icon": "book-open",
+          "target": {
+            "page": "specification",
+            "fragment": "rules"
+          }
+        }
+      ]
+    },
+    {
+      "title": "Proof and decisions",
+      "description": "Find the evidence path and the governing choices.",
+      "icon": "shield-check",
+      "children": [
+        {
+          "title": "Machine revocation proof",
+          "description": "Find the revocation check and its expected outcome.",
+          "icon": "shield-check",
+          "target": {
+            "page": "verification-design",
+            "fragment": "V3"
+          }
+        },
+        {
+          "title": "Decision record",
+          "description": "See the ruling, its source and any open choices.",
+          "icon": "chat-circle",
+          "target": {
+            "page": "decisions",
+            "fragment": "storage"
+          }
+        }
+      ]
+    }
+  ]
+}

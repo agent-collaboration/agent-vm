@@ -1,0 +1,11 @@
+--- packages/sign-in-owner-cli/src/fleet/macos-keychain-proof-key-store.host.e2e.test.ts
++++ packages/sign-in-owner-cli/src/fleet/macos-keychain-proof-key-store.host.e2e.test.ts
+@@ -21,7 +21,7 @@
+ 	'the real Keychain stores, overwrites, re-saves a loaded key with its rotated credential, and deletes exactly its own namespaced item',
+ 	async (): Promise<void> => {
+ 		// Arrange
+-		const service = `dev.switchboard.fleet-cli.test.${keychainTestCapabilities.ids.nextId()}`;
++		const service = `dev.switchboard.fleet-cli.test.${globalThis.crypto.randomUUID()}`;
+ 		const store = createMacosKeychainProofKeyStore({
+ 			runner: nodeSecurityCommandRunner,
+ 			crypto: keychainTestCapabilities.crypto,

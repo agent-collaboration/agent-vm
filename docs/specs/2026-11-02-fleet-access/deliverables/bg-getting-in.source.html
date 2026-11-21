@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BG Getting in</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-presentation id="path-bg" title="BG, start to finish" description="What BG delivers, the parts it touches, its flows, how it's proven, and how it's built.">
+  <ex-step to="bg-see" icon="rocket">What you'll see working.</ex-step>
+  <ex-step to="bg-base" icon="stack">What it sits on.</ex-step>
+  <ex-step to="bg-scope" icon="shield-check">In and out of BG.</ex-step>
+  <ex-step to="bg-parts" icon="git-branch">The parts it touches.</ex-step>
+  <ex-step to="bg-data" icon="stack">Its data.</ex-step>
+  <ex-step to="bg-flows" icon="plug">Its flows.</ex-step>
+  <ex-step to="bg-proof" icon="shield-check">How it's proven.</ex-step>
+  <ex-step to="bg-plan" icon="rocket">How it's built.</ex-step>
+  <ex-step to="bg-unknowns" icon="users">Not fully known, and your decisions.</ex-step>
+</ex-presentation>
+<ex-nav for="content"><nav slot="pages" aria-label="Pages">
+<a href="../index.html">Overview</a>
+<a href="../requirements.html">Requirements</a>
+<a href="../specification.html">Specification</a>
+<a href="../program-design.html">Program Design</a>
+<a href="../verification-design.html">Verification Design</a>
+<a href="b1-people-roles-sign-in.html">B1 People, roles and sign-in</a>
+<a href="b2-central-organizations.html">B2 Central's organizations</a>
+<a href="b3-machine-login.html">B3 Machine login and the locked link</a>
+<a href="bg-getting-in.html">BG Getting in</a>
+<a href="b2-additions.html">B2 additions: tokens and revocation</a>
+</nav></ex-nav>
+<ex-document id="content" document-id="fleet-access-bg" revision="2026-11-07.1">
+
+<h1>BG Getting in: setup pages and staging proof</h1>
+
+<ex-callout id="bg-answer" title="In short" tone="tldr">
+<ex-markdown id="bg-answer-text"><script type="text/markdown">
+- **What BG delivers:**
+  - after sign-in, a person sees **one setup step at a time**: first the authenticator app and its recovery codes, then the organization;
+  - they go **back to where they were going**: a waiting command line, or an invitation;
+  - an invitation page (Join *organization* as *role*, Accept or Decline), and an account page;
+  - every journey is **checked on staging after each deploy, with no one signing in by hand**, and production refuses the test path.
+- **The design is in the four documents** (R57–R67, the Program Design's "Getting in" section, SO14–SO16), reviewed on 6 November. This page is the readable version.
+- **It starts after B2's sign-in branch lands,** because the organization step needs B2's link to central. It runs in parallel with B3.
+- **First, a prototype** of the two riskiest pieces: going back to the command line with no approve screen (`skip_consent`), and the Decline endpoint.
+- **This page is a draft for review.** Nothing in it has been built or observed yet.
+</script></ex-markdown>
+</ex-callout>
+
+<h2 id="bg-see">What you'll see working</h2>
+
+<ex-markdown id="bg-see-text"><script type="text/markdown">
+The six journeys (R63), on Switchboard pages in the shared dark Agent Studio look:
+1. **A first-time owner** signs in, sets up the authenticator app, sees the recovery codes until choosing Finish, creates the organization and lands on the account page.
+2. **A returning person** signs in and is asked for a second factor only on a change (R53).
+3. **A command-line login** started before sign-in goes straight back to the command line after any pending steps, with no approve screen.
+4. **An invited member** signs in as themselves, sees "Join *organization* as *role*", and accepts or declines.
+5. **A person adds a passkey** and then signs in with it.
+6. **A person who lost a factor** recovers with a recovery code or another second factor (R54).
+
+And, without you:
+- After every staging deploy, those journeys run on staging from test identities.
+- Production answers the staging test path as an unknown route.
+- Once per release, one real Google or GitHub sign-in **on staging**. Production gets the negative, configuration and bundle checks.
+</script></ex-markdown>
+
+<h2 id="bg-base">What it sits on</h2>
+
+<ex-markdown id="bg-base-text"><script type="text/markdown">
+- **B1** (merged): people, roles, second factors and sign-in in Better Auth, with today's two pages, `/sign-in` and `/owner-ready`.
+- **B2's sign-in branch:** organizations are provisioned at central, so the organization step can create one for real.
+- **PR #10** (`41302fc8`, draft): its form gate and tests are reused. Its page layout is replaced.
+- **Better Auth 1.7.11's own endpoints** do every change: `two-factor/enable`, `verify-totp`, `get-invitation`, `accept-invitation`, social and passkey sign-in, and `testUtils` on staging. BG adds one endpoint of its own: Decline.
+</script></ex-markdown>
+
+<h2 id="bg-scope">In and out of BG</h2>
+
+<ex-markdown id="bg-scope-text"><script type="text/markdown">
+| In BG | Not in BG (where it goes) |
+|---|---|
+| one pure decision, `decideSetupPage`, that picks the page from the person's facts, the destination and the clock | machine approval pages (B3) |
+| one small page per step: sign-in, authenticator, organization, invitation, choose organization, account | admin pages beyond B2's (later deliverables) |
+| the command line's destination kept through every step and redirect, with the command line's own deadline | the authenticated command-line tool itself (B5) |
+| recovery codes held in the page until Finish | a change to how second factors work (B1 and R54 hold) |
+| a Decline endpoint with a pending guard | Better Auth's native `reject-invitation`, which stays closed |
+| a separate staging build with Better Auth's `testUtils` and two test routes behind a staging secret | any test path in the production build |
+| local runs against stand-ins, and the staging run after every deploy | a new CI gate (you approve those separately) |
+| the name "Switchboard" on every page, exactly one top heading | the Tool Portal name anywhere |
+</script></ex-markdown>
+
+<h2 id="bg-parts">The parts it touches</h2>
+
+<ex-tree id="bg-tree" title="switchboard: what BG changes" icon="folder"><script type="text/markdown">
+- `packages/sign-in-core/src/`
+  - `setup-flow/decide-setup-page.ts` (new, pure): the facts, the destination and the injected clock in, one `SetupPage` out
+  - `pages/` (split): one component per page kind, from `tool-access-ui/server`, with a step indicator on the step pages
+  - the authenticator step controller and `factor-enrollment-page.ts` (modified): the recovery-code path below
+  - the invitation page controller (new): Accept or Decline, then on to `/setup`
+  - the `decline-invitation` endpoint (new), in a project Better Auth plugin beside `passkey-confirmation-plugin.ts`
+  - the continuation page script (new): replaces today's Continue button
+  - `sign-in-http-handler.ts` (modified): GET `/sign-in`, `/setup`, `/invitation/:id`, `/account`; no GET writes anything
+  - `sign-in-request-handler.ts` (modified): the route allowlist adds `get-invitation`, the Decline endpoint and the passkey sign-in routes
+- `packages/sign-in-owner-cli/src/owner-cli-login.ts` (modified): adds `deadline`, its own wait end, to the address it opens
+- `packages/sign-in-host-cloudflare/src/staging/` (new): the staging entrypoint, built with the same core factory and options plus `testUtils`, serving the two test routes
+- `/owner-ready` and its always-present Continue button go (hard cutover, no redirect)
+</script></ex-tree>
+
+<h2 id="bg-data">Its data</h2>
+
+<ex-markdown id="bg-data-text"><script type="text/markdown">
+**No new tables, and no new stored state for the flow.**
+- The decision reads the rows that already own each fact: second-factor history, `member`, `invitation`.
+- The destination lives only in the page's URL. Anything invalid parses as "none".
+- The recovery codes live only in the page, between `enable` and Finish.
+- Test identities are ordinary Better Auth `user` rows **on staging's own D1 only**, under a reserved `.invalid` test domain. Staging has its own database and its own auth secret, so nothing minted there means anything to production.
+
+The shapes, all closed TypeScript unions in `sign-in-core`:
+
+```text
+SetupPage = signIn | step(SetupStep) | invitation(invitationId) | chooseOrganization
+          | continueCommandLine | account(notice?: commandLineExpired)
+SetupStep = secondFactor | organization(offer: create | invitations(ids) | askForInvitation)
+ReturnDestination = commandLine(authorize, deadlineMs) | invitation(invitationId, then) | none
+TestIdentityResult = signedIn(userId, setCookie) | refused(unauthorized | notTestDomain) | unavailable
+```
+</script></ex-markdown>
+
+<h2 id="bg-flows">Its flows</h2>
+
+<ex-markdown id="bg-flows-text"><script type="text/markdown">
+**One decision picks the page.**
+
+```mermaid
+flowchart TB
+  REQ["a page request<br/>/sign-in, /setup, /invitation/:id, /account"] --> DEC["decideSetupPage<br/>pure, in sign-in-core"]
+  DEC -->|"not signed in"| P1["Sign-in page"]
+  DEC -->|"second factor pending"| P2["Authenticator step"]
+  DEC -->|"organization pending"| P3["Organization step"]
+  DEC -->|"an unanswered invitation"| P4["Invitation page"]
+  DEC -->|"command line waiting, no current organization"| P5["Choose organization"]
+  DEC -->|"command line waiting, ready, before its deadline"| CONT["Back to the command line"]
+  DEC -->|"ready, nothing waiting, or the deadline passed"| P6["Account page"]
+```
+
+**The owner's command line, end to end.**
+
+```mermaid
+sequenceDiagram
+  participant CLI as owner command line
+  participant B as browser
+  participant R as page router + decideSetupPage
+  participant BA as Better Auth endpoints
+  CLI->>B: open /sign-in?authorize=...&deadline=...
+  B->>BA: social or passkey sign-in (callback keeps authorize and deadline)
+  B->>R: GET /setup, then the authenticator step
+  B->>BA: enable, then verify-totp
+  B-->>B: show the recovery codes until Finish
+  B->>R: GET /setup, then the organization step
+  B->>BA: create organization (or accept an invitation)
+  B->>R: GET /setup, continueCommandLine (still before the deadline)
+  B->>BA: owner only: POST /owner/bootstrap. A member skips it. Then GET authorize (skip_consent)
+  BA-->>B: redirect to the CLI's loopback with the code
+  B->>CLI: code, and the CLI exchanges it as today
+```
+
+- **Only the owner runs bootstrap,** which creates or reads back the command line's client. A member, who needs no bootstrap, goes straight to authorize (PD:2093).
+- **Pending steps come first (R57).** While a step is pending, every page and every return destination answers with that step. The one exception: when only the organization step is pending and the destination is an invitation for the person's verified email, that step is the invitation's page.
+- **The deadline** is the command line's own wait end, fixed once. Past it, the page goes to the account page with "Your command-line sign-in expired; run it again". The continuation script checks the deadline again just before it navigates.
+- **Recovery codes:** after a correct code the page shows them, and nothing navigates away until Finish. A reload is a fresh page: the factor is set up, so the decision moves on, and the codes are gone.
+- **Invitations:** the page reads the invitation through Better Auth's `get-invitation`, which checks the recipient's verified email first, so a wrong account learns nothing. After Accept or Decline it goes to `/setup`, so a used invitation is never shown again.
+- **Decline:** our endpoint updates the invitation only while it's still pending. If an Accept landed first, Decline is told it's already answered. Better Auth's own `reject-invitation` has no such guard, so it stays closed.
+- **Create organization** is offered only to the deployment's configured owner. Everyone else is offered their invitations, or told to ask for one.
+
+**Staging, without you.**
+- The staging build has two routes, each needing the staging secret: one creates or finds a test identity and signs it in through Better Auth's `testUtils`, and one resets test-domain users and what they own.
+- After each staging deploy, the run resets, creates test identities, and drives every journey from a signed-in test identity. The sign-in step itself (Google, GitHub, passkey and Turnstile) isn't part of these runs.
+- **Production checks:**
+  - a cookie minted on staging is refused;
+  - production answers `/__staging/*` as an unknown route;
+  - the production artifact contains no `testUtils` and no staging module;
+  - production's configured owner isn't under the test domain.
+</script></ex-markdown>
+
+<h2 id="bg-proof">How it's proven</h2>
+
+<ex-markdown id="bg-proof-text"><script type="text/markdown">
+The Verification Design rows are U49–U54 with the shared observations SO14, SO15 and SO16. Sign-in checks run on both hosts: workerd with D1, and Node with better-sqlite3. Heavy runs go to the Sunclaw test agent.
+
+| What | The check | Wrong build it catches |
+|---|---|---|
+| the decision | property tests over every combination of facts and clock: one page, and never a setup step for a ready person | a page shown out of order, or a step after ready |
+| the six journeys, locally (SO14) | the local sign-in harness with stand-ins for the providers, Turnstile and central, driven by a real browser, including at 400 px and by keyboard | a page that only works in a unit test |
+| a clean start | a clean database with the command line started first, and an owner whose bootstrap was left incomplete | a first owner who can't get back to the command line |
+| the deadline | the command line's deadline passes while everything else is still valid | a stale command line continued |
+| recovery codes | the delivered controller against Better Auth's real `enable` and `verify-totp` answers | codes lost, or skipped past |
+| invitations | Accept then reload; Decline for a person in another organization; Accept and Decline at once | a used invitation reopened, or Decline overwriting Accept |
+| staging after every deploy (SO15) | reset, test identities, every journey driven on the staging deploy | a staging check that needs a person |
+| production refuses the test path (SO16) | the four production checks above | any way into production from staging |
+| one real sign-in per release (SO16) | one real Google or GitHub sign-in **on staging**, by a dedicated test account or by you with a Verifier watching | real provider settings broken |
+| the look | the name Switchboard on every page, exactly one top heading, the shared palette | a Tool Portal name, or a page off the design system |
+</script></ex-markdown>
+
+<h2 id="bg-plan">How it's built</h2>
+
+<ex-markdown id="bg-plan-text"><script type="text/markdown">
+**Starts after:** B2's sign-in branch lands. It runs in parallel with B3. Local builds and proof run against B2's controlled central peer; the real staging run also needs staging's central to provision organizations, as B2 delivers. BG shares the core factory, the route allowlist and host composition with B3's sign-in work, so the two lanes coordinate those files rather than forking them.
+
+| Step | What | Reuses / drops |
+|---|---|---|
+| BG0 | **prototype first, two risks only, on both hosts:** (1) the served continuation and code exchange with `skip_consent`, probed for a clean owner with no client, an incomplete bootstrap, recovery-code Finish, a bootstrap held across the fixed deadline, and the member who skips bootstrap; (2) the guarded Decline against native Accept, including expired, wrong-recipient and competing Accept/Decline cases, checked on the rows and not only the HTTP status. Not a second onboarding UI | new, thrown away or kept by its result |
+| BGa | `decideSetupPage` and its property tests; the page router; `/owner-ready` removed | today's two pages |
+| BGb | the step pages, the recovery-code path, the organization step, the invitation page with Accept and Decline, the account page | PR #10's form gate and tests; its layout is replaced |
+| BGc | the command line's `deadline`, and the continuation script | `owner-cli-login.ts` |
+| BGd | the staging entrypoint, the two test routes, and the staging run | the existing proof entrypoint's shape |
+| BGe | the six journeys locally and on staging; the production checks | the local auth harness |
+
+**Pull requests:** one in switchboard.
+
+**Who builds it:**
+- An Opus high Implementer takes the page split and router.
+- A Sol 6.1 high Implementer takes the exact pieces: the decision's cases, the Decline guard, the deadline and the staging routes.
+- Sol 6.1 high Verifiers and a Sol 6.1 xhigh Reviewer check it.
+</script></ex-markdown>
+
+<h2 id="bg-unknowns">Not fully known, and your decisions</h2>
+
+<ex-markdown id="bg-unknowns-text"><script type="text/markdown">
+| Not fully known | Settled by |
+|---|---|
+| that `skip_consent` and the continuation behave at 1.7.11 as the design expects | BG0, the prototype |
+| the BG agent choices (P01–P19, S01–S17) and the release record's identities (S15) | your answers on the [assumptions page](../../../../tmp/2026-10-30-lead-pages/assumptions-by-deliverable.html), groups BG pages, BG staging and the BG gap |
+| that Google and GitHub can never verify an address under the `.invalid` test domain | an assumption about the providers; the release run's owner check is the second fence |
+
+**Your decisions on this page:**
+1. **Approve BG as written,** starting with the prototype (BG0).
+</script></ex-markdown>
+
+<ex-choice id="approve-bg" title="Approve BG Getting in?">
+<ex-option id="bg-approve" title="**Approve BG**">
+<template slot="summary">The prototype (BG0) starts once B2's sign-in branch lands, then BGa to BGe.</template>
+</ex-option>
+<ex-option id="bg-change" title="Change something first (say what in a comment)">
+<template slot="summary">I'll revise it and bring it back.</template>
+</ex-option>
+</ex-choice>
+
+</ex-document>
+</body>
+</html>

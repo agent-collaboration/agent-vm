@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign-in verification, redesigned</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="content"></ex-nav>
+<ex-document id="content">
+
+<h1>Sign-in verification: one script that proves the user flows</h1>
+
+<p>Fleet access Lead, 20 Nov 2026 at about 00:50 UTC. This replaces how we prove sign-in work on Sunclaw. One checked-in script runs the user flows and the security checks against a commit, then prints a short verdict. It needs no hand-written packets, no record-keeping rules and no agent judgement to run.</p>
+
+<ex-callout title="Proposed: one command, run over SSH on Sunclaw" tone="decision" icon="robot">
+<p><code>pnpm verify:sign-in --commit &lt;sha&gt;</code> runs these steps:</p>
+<ol>
+<li>check out that commit fresh;</li>
+<li>install and build;</li>
+<li>run each user flow in real Chrome on both hosts;</li>
+<li>run each listed security check: break the guard, expect the named test to fail, put the code back, expect it to pass;</li>
+<li>print one table with the five deciding facts.</li>
+</ol>
+<p>It exits non-zero if anything is wrong. Anyone can run it: a person, me over SSH, or a runner agent. It never asks an agent to write a mutation, so there's nothing for Codex to refuse.</p>
+</ex-callout>
+
+<h2 id="why">Why change it</h2>
+<ul>
+<li><strong>Too much time went into proving the paperwork, not the flow.</strong> On 19 Nov about ten stops were about records: dependency fingerprints, environment names, process IDs and file checksums. None decided whether sign-in works.</li>
+<li><strong>Every run was a new hand-written JSON packet, 20–90 KB each.</strong> Writing and checking a packet cost more than running the tests. Each packet also invented its own setup scripts, and those had their own bugs: a wrong import, a launcher crash, a wrong file list.</li>
+<li><strong>The Codex runner refuses deliberate-break checks.</strong> Every one then needed a Claude agent or a relay.</li>
+</ul>
+
+<h2 id="assumptions">Assumptions I'm dropping</h2>
+<div class="ex-table-scroll">
+<table>
+<thead><tr><th>Assumption</th><th>Why it was wrong</th><th>Replaced by</th></tr></thead>
+<tbody>
+<tr><td>Every run must record dependency, tool and environment inventories, process trees and checksums at four points.</td><td>The rules came from my rulings after one-off incidents (R2, R5, the restore rule). The Implementers copied them into every packet. They never decided a result.</td><td>Five deciding facts, printed by the script.</td></tr>
+<tr><td>Each change needs its own hand-written run packet.</td><td>The flows don't change between PRs; only the commit does.</td><td>One script, plus a checked-in list of flows and security checks.</td></tr>
+<tr><td>An agent should run the tests and judge each step.</td><td>Judging is where it stalled: refusals, early stops, misread receipts.</td><td>The script judges pass and fail itself. Agents only read the verdict.</td></tr>
+<tr><td>A full 93-file sweep on Sunclaw is needed for every change.</td><td>CI already runs the full suite on every push. Sunclaw adds only what CI can't: real macOS Chrome on both hosts.</td><td>Sunclaw runs the user flows and security checks. The full sweep stays in CI.</td></tr>
+<tr><td>The <code>verify-auth</code> wrapper must require a "ready" receipt from every test.</td><td>It rejected valid new tests (the PR #8 review, F2) and adds about 900 lines of checking around the real tests.</td><td>The flow passes when its tests pass. Receipt checks stay inside the tests that need them.</td></tr>
+<tr><td>Chrome must be a fixed version.</td><td>Chrome updates itself. What matters is that one run uses one version.</td><td>The version is printed in the report, never a blocker.</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="flows">The user flows it proves</h2>
+<div class="ex-table-scroll">
+<table>
+<thead><tr><th>Flow</th><th>What a user sees</th><th>Tests (real Chrome, both hosts)</th></tr></thead>
+<tbody>
+<tr><td><strong>Passkey sign-in</strong></td><td>Sign in with a passkey, user verification required. A failure leaves you signed out. A removed member is refused.</td><td><code>sign-in-native-browser</code>, <code>people-passkey-sign-in</code></td></tr>
+<tr><td><strong>Organizations</strong></td><td>Pick or switch organization. The CLI sign-in continues. The owner sees People.</td><td><code>people-organization-browser</code>, <code>people-organizations</code>, <code>people-membership-lookup</code></td></tr>
+<tr><td><strong>CLI sign-in</strong></td><td>The owner signs in from the CLI and Continue works, by keyboard or click.</td><td><code>native-cli-keyboard-activation</code>, <code>native-browser-click</code>, the bootstrap journey</td></tr>
+<tr><td><strong>Agents</strong></td><td>The owner registers an agent; the agent gets workspace-bound tokens.</td><td>The agent journey files (already listed in <code>auth-verification-journeys.ts</code>)</td></tr>
+<tr><td><strong>Machine login</strong>, once B3 lands</td><td>Approve a Mac's code. The Mac connects. Revoke disconnects it.</td><td>The B3 joint Central test</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="security">Security checks (deliberate breaks)</h2>
+<p>These are kept in one checked-in file, <code>verification/security-checks.ts</code>. Each entry gives a file, the exact text to change, the test that must fail, and the assertion it must fail at. The script applies each one in its own temporary copy, runs that test, checks it failed at that assertion, restores the file, and checks the test passes again. Today's checks move into the file:</p>
+<ul>
+<li>the removed-member guard (V5);</li>
+<li>a failed sign-in is recorded;</li>
+<li>the second factor is required when switching organization (B04);</li>
+<li>the eight organization-access guards (HTTP checks 9–16);</li>
+<li>the stale-reply guard;</li>
+<li>both rate limiters.</li>
+</ul>
+
+<h2 id="report">What it prints</h2>
+<p>A table with one row per flow and host, and per security check. Each row shows the five deciding facts:</p>
+<ol>
+<li>the commit;</li>
+<li>the tests that ran, with counts;</li>
+<li>passed, or failed and at which assertion;</li>
+<li>for a security check, whether the code was restored exactly;</li>
+<li>whether anything was left running.</li>
+</ol>
+<p>It also writes the same as a small JSON file and keeps raw logs only on failure.</p>
+
+<h2 id="build">How it gets built</h2>
+<ol>
+<li>A Switchboard PR adds <code>scripts/verify-sign-in.mts</code> (TypeScript, per the repo standard for on-demand drivers), <code>verification/security-checks.ts</code>, a unit test for the report and pass/fail logic, and the <code>pnpm verify:sign-in</code> script entry. It doesn't change any CI gate.</li>
+<li>Proof: run it on Sunclaw at current main. Every flow must pass and every security check must go red, then green. Also run it once on a deliberately broken commit to show it fails.</li>
+<li>The same PR trims <code>verify-auth</code> guidance to point at the script.</li>
+</ol>
+
+<ex-callout title="What this means for the open work" tone="note" icon="path">
+<p><strong>Organizations (PR #1):</strong> its remaining proof becomes running this script at its head once the script exists. The hanging passkey test in the Chrome flows is the one open item.</p>
+<p><strong>Machine login (B3):</strong> its proofs move to the script as they land.</p>
+</ex-callout>
+
+</ex-document>
+</body>
+</html>

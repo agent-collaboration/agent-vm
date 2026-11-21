@@ -1,0 +1,42 @@
+{
+  "head": "1d52c99e82c5c595f8f3df2ddf068209b8715c95",
+  "checkpointOnly": true,
+  "noneCount": 13,
+  "uniqueReceiptIds": 13,
+  "readinessSchemaValid": true,
+  "noneSourceClientMatchesFrozenLocal": true,
+  "sourceClient": "f30385d36c78331464206d9a20446e8d858c5e72c4d1b4eb0f7c78b25e436598",
+  "counters": "13 real Cloudflare / no backing fault / empty limit observations",
+  "allNoneModuleMapsEqual": true,
+  "sourceHashes": [
+    {
+      "file": "test-fixtures/local-auth-harness.ts",
+      "bytes": 38888,
+      "sha256": "f94cd27afa97ed59eefd767b11820b18ce60f3f584c271b8addf324bbe5efe2a"
+    },
+    {
+      "file": "test-fixtures/local-auth-browser.ts",
+      "bytes": 2939,
+      "sha256": "7fde1da4c83c2518a186cd508a87d1c754f7ed7bbb73f52e7578759b6b078465"
+    },
+    {
+      "file": "turnstile-sign-in.host.e2e.test.ts",
+      "bytes": 11563,
+      "sha256": "6a44cdcfdfc146c3341640116d9b88026b8f89b63b0da8a16e08090e72f59cc4"
+    },
+    {
+      "file": "people-passkey-sign-in.host.e2e.test.ts",
+      "bytes": 15908,
+      "sha256": "24b071478e80832ff4aebbe1382dd39479894bbd25b724016885ef26685abc43"
+    }
+  ],
+  "sourceObservation": "Readiness defaults none and only observes usable JWKS, verified provider callback session or personToken. All12 turnstile tests plus accepted public-passkey challenge have no source action that records one of those readiness events. This source census is consistent with13 none receipts but does NOT join any runtime receipt to a testcase.",
+  "caseAssociation": "NOT RETAINED / NOT RECONSTRUCTED",
+  "positiveBootstrapCredit": false,
+  "unverified": [
+    "Complete40receipt audit/raw assertions/inventories/census artifacts not yet transferred",
+    "No original file hash/byte-integrity metadata for runtime receipt files in this checkpoint",
+    "Source-consistent aggregate cardinality is not per-case runtime attribution",
+    "No full-gate/control release or inherited author waiver"
+  ]
+}

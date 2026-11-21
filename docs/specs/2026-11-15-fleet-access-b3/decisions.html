@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B3 · Machine login · Decisions</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>B3 · Machine login: Decisions</h1>
+<p>B3 lets a machine (a Router on a laptop or server) log in to your organization with a device code you approve once. Its token then renews itself while it stays connected, and you can revoke it from the admin page. <strong>Nothing is open for you.</strong> You decided all three storage questions on 9 Nov in the B3 SQL review (option A), and the merge question is mine. Each is explained with background and an example.</p>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What to check" tone="note" icon="shield-check">
+<p>Nothing open. Decided by you on 9 Nov: <a href="#storage">one row per login</a>, <a href="#allow">a machine_allowances table</a>, <a href="#rekey">the former-ID column</a>.</p>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p>Decided by me under your 16 Nov rule: <a href="#pr11">B3 is finished on #11 and merged whole</a>.</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>Decided cards quote you. Central facts are from codex-router <code>e7b709f6a</code> and Lead A's boundary (push <code>01a1e199-bf63</code>). Nothing new is built.</p>
+</ex-callout>
+
+<h2 id="how">How machine login works, in one picture</h2>
+<ex-mermaid id="flow" label="A machine logs in, connects, renews and can be revoked" data-width="canvas"><script type="text/plain">
+sequenceDiagram
+  participant R as Router (your laptop)
+  participant S as Sign-in
+  participant O as You (owner, browser)
+  participant C as Central
+  R->>S: codex-router fleet login: ask for a code
+  S-->>R: code ABCD-1234 and an address
+  O->>S: open it, see the machine's label, pick workspaces, approve (fresh second factor)
+  R->>S: poll; redeem the code once
+  S->>C: record the enrollment and allowed workspaces
+  S-->>R: machine token and refresh credential (kept in Keychain)
+  R->>C: connect through sign-in; renew on the open connection
+  O->>S: later: Revoke
+  S->>C: end enrollment; the connection closes; the next renewal is refused
+</script></ex-mermaid>
+
+<h2 id="open">The decisions (all decided)</h2>
+
+<h3 id="pr11">1 · What happens to the existing login PR (#11)?</h3>
+<p><strong>Background.</strong> Draft PR #11 (with its verification PR #14) already has the device-code login and refresh, built before B3 was regrouped into one whole feature. It's frozen. It lacks revoke, the workspace picker, the connection through sign-in, and Deny's second-factor check: today Deny skips step-up and a stale confirmation can turn a Deny into an Approve.</p>
+<p><strong>Example.</strong> You want to log in your laptop's Router next week. Under A it can't log in until all of B3 is built. Under B it logs in sooner, but if you lose the laptop you can't revoke it from the page until the rest lands.</p>
+<ex-compare label="#11" data-width="canvas">
+<section id="pr-finish" label="A · Finish all of B3 on top of #11, then merge once" icon="path">
+<section data-compare-row="sees"><p><strong>What you get</strong></p><p>One merge delivering machine login whole: login, revoke, workspaces, the connection, and the Deny fix.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Nothing reaches main until all of B3 is done.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="pr-finish-pic" label="Option A"><script type="text/plain">
+flowchart TB
+  a["#11 login + refresh"] --> b["+ revoke, workspaces, connection, Deny fix"] --> m["Merge B3 whole"]
+</script></ex-mermaid></section>
+</section>
+<section id="pr-partial" label="B · Fix Deny, merge login-only first" icon="package">
+<section data-compare-row="sees"><p><strong>What you get</strong></p><p>Login and refresh on main sooner.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>For a while, machines can log in but not be revoked or limited to workspaces from the page. That breaks your rule that a deliverable is a whole feature.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="pr-partial-pic" label="Option B"><script type="text/plain">
+flowchart TB
+  a["#11 + Deny fix"] --> m1["Merge login only"] --> rest["Revoke and workspaces later"]
+</script></ex-mermaid></section>
+</section>
+</ex-compare>
+<ex-callout title="Decided by me: A" tone="decision" icon="path"><p>This is merging and sequencing, which you handed to me on 16 Nov: <em>“i dont care about of merging or operations you have to think and propelry seqeuknce things”</em>. B3 is finished on #11 and merged once, whole, per your whole-feature rule.</p></ex-callout>
+
+<h3 id="storage">2 · How Central stores each login (“enrollment storage”)</h3>
+<p><strong>Background.</strong> Each time you approve a machine's code, Central records an <em>enrollment</em>: who approved it, when, which machine, and later how it ended (revoked, replaced, or idle for 30 days). Central already stores enrollments as their own rows, one per login (A, merged in #281, <code>machine_enrollment.rs</code>). You approved this on 9 Nov in the B3 SQL review (option A: <code>machine_enrollments</code>, one row per login). An earlier version of this page wrongly asked again.</p>
+<p><strong>Example.</strong> You log in your laptop in March, revoke it in June after losing it, then log in a new laptop under the same name.</p>
+<ex-compare label="Enrollment storage" data-width="canvas">
+<section id="st-a" label="A · One row per login (already built)" icon="package">
+<section data-compare-row="sees"><p><strong>What you get</strong></p><p>Both logins stay as rows: March to June, revoked by you; then the new one, active. You can always answer “who let this machine in, and when did that end”. Only one row per machine can be active at a time.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>About ten columns per row, and ended logins stay as small rows forever. No rework.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="st-a-pic" label="Option A"><script type="text/plain">
+flowchart TB
+  m["Machine"] --> e0["March–June: revoked"]
+  m --> e1["June–: active"]
+</script></ex-mermaid></section>
+</section>
+<section id="st-b" label="B · Only the current login, kept on the machine row" icon="code">
+<section data-compare-row="sees"><p><strong>What you get</strong></p><p>The machine row says only “current login: June, approved by you”. The March login is overwritten.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Login history is lost; login state is split across two tables during approval; Central's merged code is reworked.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="st-b-pic" label="Option B"><script type="text/plain">
+flowchart TB
+  m["Machine row: current login only"] --> h["Earlier logins overwritten"]
+</script></ex-mermaid></section>
+</section>
+</ex-compare>
+<ex-callout title="Decided by you: A, one row per login" tone="done" icon="package"><p>9 Nov, B3 SQL review: <em>“Approve option A”</em>. Already built on Central in #281.</p></ex-callout>
+
+<h3 id="allow">3 · Where a machine's allowed workspaces live</h3>
+<p><strong>Background.</strong> When you approve a machine you pick which workspaces it may use, and later you can allow or withdraw one at a time. Central already has a column for this, <code>machines.allowed_workspaces</code> (<code>0001_workspace_requests.sql:3</code>). Central's admission reads it live on every request (Lead A's 4a). The approved B3 sketched a separate table, to be reconciled with existing columns.</p>
+<p><strong>Example.</strong> You approve your laptop for “billing” and “docs”, then withdraw “docs” a month later.</p>
+<ex-compare label="Allowances" data-width="canvas">
+<section id="al-col" label="A · The existing column, history as change records" icon="code">
+<section data-compare-row="sees"><p><strong>What you get</strong></p><p>The column goes from [billing, docs] to [billing]. The history page shows “docs withdrawn by you” as an <code>allowanceChanged</code> record. Admission stops allowing “docs” on the next request.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Per-workspace history lives in the record list, not in its own table.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="al-col-pic" label="Option A"><script type="text/plain">
+flowchart TB
+  cmd["Allow / Withdraw"] --> col["machines.allowed_workspaces"]
+  cmd --> rec["allowanceChanged record"]
+  col --> adm["Admission reads it (already)"]
+</script></ex-mermaid></section>
+</section>
+<section id="al-table" label="B · A new machine_allowances table" icon="package">
+<section data-compare-row="sees"><p><strong>What you get</strong></p><p>One row per machine and workspace with its own state: billing active, docs withdrawn.</p></section>
+<section data-compare-row="costs"><p><strong>What it costs</strong></p><p>A migration, the column retired, and Lead A's admission read moved to the table.</p></section>
+<section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="al-table-pic" label="Option B"><script type="text/plain">
+flowchart TB
+  cmd["Allow / Withdraw"] --> t["machine_allowances rows"]
+  t --> adm["Admission moved to read the table"]
+</script></ex-mermaid></section>
+</section>
+</ex-compare>
+<ex-callout title="Decided by you: B, a machine_allowances table" tone="done" icon="code"><p>9 Nov, B3 SQL review, option A: <code>machine_allowances</code>, “which workspaces each machine may serve”, one row per machine and workspace. An earlier version of this page recommended Central's newer column instead; your table stands. B3 retires <code>machines.allowed_workspaces</code> in its migration and moves admission's read to the table, coordinated with Lead A.</p></ex-callout>
+
+<p>On 20 November 2026 the owner reaffirmed this choice: <q>we want allwoance talbes</q>. See the <a href="../2026-11-15-fleet-access-overview/owner-quotes-2026-11-20.md#machine-allowances-b3">owner’s recorded wording</a>.</p>
+
+<h3 id="rekey">4 · The re-key column (decided)</h3>
+<p><strong>Background.</strong> Today a machine is known on Central by an older routing ID. At its first B3 login it takes its permanent ID: the Router's own UUIDv7. To keep its sessions, allowances and queued mail, Central renames the machine in one transaction and records the old ID, so that a retried login with the same mapping is accepted and a different mapping is refused. Recording it needs one new column on Central's <code>machines</code> table (<code>former_installation_id</code>).</p>
+<p><strong>Example.</strong> Your laptop's Router logs in, and the reply is lost. It retries with the same old-to-new mapping: accepted, with nothing duplicated. A different machine claiming the same old ID is refused.</p>
+<ex-callout title="Decided by you" tone="done" icon="database"><p>9 Nov, B3 SQL review, option A: the machine's former ID, set once and never reused (then <code>former_service_id</code>). It sits on Central's current <code>machines</code> table under the name <code>former_installation_id</code>. The exact SQL goes on the B3 PR for you to see; it isn't a new decision.</p></ex-callout>
+
+<h2 id="decided">Already decided by you</h2>
+<ex-card title="Device-code login" tone="done" icon="key" tag="Fleet transcript 12490" pick><p><em>“login i want login to work with device codes in codex”</em>.</p></ex-card>
+<ex-card title="Secret stores: macOS Keychain only, injected" tone="done" icon="lock" tag="7 Nov" pick><p>Only the macOS Keychain, through an injected trait. Linux stores are out of scope, and non-macOS Routers keep their secret in memory only until a later OIDC design.</p></ex-card>
+<ex-card title="Renewal on the open connection" tone="done" icon="key" tag="Approved R40, 4 Nov" pick><p>“On the open connection, the Router sends the fresh token (RenewMachineToken)”. Lead A confirmed you never changed it; 4a builds it.</p></ex-card>
+<ex-card title="Owner only" tone="done" icon="users" tag="Requirements line 98" pick><p><em>“yes lets keep it all owner only”</em>.</p></ex-card>
+<ex-card title="Hegel for the Rust machines, no Python" tone="done" icon="code" tag="15 Nov" pick><p><em>“make srue we use hegel”</em>; <em>“y6ou can swithc to latest version. do nto use any python in tis repo only ts … or rust tests”</em>. <code>hegeltest =0.52.6</code>, its native engine, shared with Lead A.</p></ex-card>
+
+<h2 id="calls">My calls</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Call</th><th>Why</th><th>Should it have been yours?</th></tr></thead>
+<tbody>
+<tr><td>Deny needs a recent second factor, like Approve</td><td>R53: changes need step-up; the audit found it missing.</td><td>No.</td></tr>
+<tr><td>Machines are managed from a section on B2's admin page</td><td>Where the owner already administers the organization.</td><td>Possibly: placement.</td></tr>
+<tr><td>The Central decisions merged in #281 are checked and extended, not rewritten</td><td>Lead A's boundary (push 01a1e199-bf63).</td><td>No.</td></tr>
+<tr><td>B3 M4 pinned to Lead A's <code>MachineTokenSource</code> seam (d23724feb). <code>CentralUnavailable</code> is transient and does not count toward needing a new code; <code>DifferentMachine</code> and <code>EnrollmentNotActive</code> stop at once; <code>TokenRejected</code> and <code>DifferentEnrollment</code> refresh once more</td><td>A Central outage must not push machines into asking a person for a new code. An identity mismatch must never auto-heal</td><td>No: a renewal mechanism inside the approved R40 / B3 contract</td></tr>
+</tbody></table></div>
+<h2 id="build-calls-1118">My calls during the build (18 Nov)</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Call</th><th>Why</th><th>Should it have been yours?</th></tr></thead>
+<tbody>
+<tr><td>S1 approval: a fresh second factor is required only when the organization already has an enrolled machine; the first machine is exempt</td><td>That is your OD18. Current Central does exactly this (<code>device_login_decision.rs:50-61</code>). The spec's unconditional S1 wording was my drafting error</td><td>No: it follows your decision</td></tr>
+<tr><td>F11 branch (<code>ef613d0bb</code>, not on main) is a reference only, not a base; the independent pieces are written fresh on Router main</td><td>F11 was built on the two-id machine model now being replaced</td><td>No</td></tr>
+<tr><td>Parts of B3 that depend on machine identity wait for the one-Mac-id rework</td><td>You asked for one id per Mac; Lead A is writing it up</td><td>No: it follows your direction</td></tr>
+</tbody></table></div>
+<h2 id="carrier-controlled-peer">Controlled peer for the Sign-in carrier</h2>
+<p>The Sign-in carrier can be exercised while Central's private upgrade routes are being settled. On Node, a test HTTP peer listens on the configured private Unix socket. On workerd, a controlled service binding stands in for Central's private Worker. Both replace the Central receiver at the transport boundary. They assume the agreed organization-scoped path and standard WebSocket upgrade, refusal, and close behavior. The bearer is opaque to Sign-in.</p>
+<p>The stand-ins can check forwarding and connection behavior. Central admission and private routing remain open until the new Central Lead identifies the private target for each host and V2 passes on those real pairings. <a href="verification-design.html#V2">Carrier verification</a> · <a href="router://0ff962c5-7fa3-4c18-a5ca-1bbe8db09e89/push/01a1f3ba-8ef6-7290-bd45-7cb980c3e743">Lead direction, 19 November</a>.</p>
+<h2 id="contract-1">Agreed Central contract</h2>
+<ul>
+  <li>The Node carrier sends the WebSocket upgrade to Central’s TCP listener at a configured private address on <code>/v1/organizations/{organization}/link</code>. The Worker uses the <code>CENTRAL</code> binding. This supersedes the Unix-socket carrier stand-in above. The controlled TCP peer exercises the Node transport while real Central V2 remains open.</li>
+  <li>The Router creates its single UUIDv7 machine ID and stores it in its database. Cutover starts fresh and reads no former or installation identity. B3 drops re-key and former-ID behavior.</li>
+  <li>M4 implements the Router-host <code>MachineTokenSource</code> from <code>origin/feat/link-router-inbox</code>. It publishes <code>Ready</code>, <code>RefreshPending</code>, or <code>NeedsNewCode</code>, wakes the driver on availability changes, and interprets Central renewal reports. Sign-in’s refresh capability is injected while the owner’s refresh-binding choice is open.</li>
+</ul>
+<p><a href="router://0ff962c5-7fa3-4c18-a5ca-1bbe8db09e89/push/01a1f43a-14a2-7e23-8cd7-438f988e62a4">Fleet access Lead’s scope update</a>.</p>
+</ex-document>
+</body>
+</html>

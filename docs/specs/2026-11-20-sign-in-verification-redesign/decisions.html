@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign-in verification decisions</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="decisions" src="./navigation.json"></ex-nav>
+<ex-document id="decisions">
+<h1>Sign-in verification decisions</h1>
+
+<p>D2–D8 record how the Sign-in Lead applied the owner’s direction to the design. See the <a href="../2026-11-15-fleet-access-overview/owner-quotes-2026-11-20.md">owner’s original words, 20 November 2026</a>.</p>
+
+<h2 id="verification-ownership">Who owns verification</h2>
+<p>On 20 November 2026 the owner assigned full responsibility for verifying auth to the Sign-in Lead: <q>you are doign full resposnbility of verifyign auth adn that stuff still udner your scope</q>.</p>
+
+<h2 id="wall-clock">Waits in tests</h2>
+<p>On 20 November 2026 the owner said <q>i dont fuckign say not playwright</q> and <q>i said no wall clock tiemrs</q>. The first quote corrects the restriction on test tools. The second sets the timing rule.</p>
+
+<h2 id="verification-choices">Driver, journeys and proof</h2>
+<h3 id="d1">D1. One browser driver, owned by a library</h3>
+<p>The spike (running on Sunclaw) builds the passkey journey twice and recommends one:</p>
+<ul>
+<li><strong>A: Vitest browser mode</strong> with the Playwright provider on Chromium. One runner. <code>cdp()</code> gives the virtual authenticator. The open question is whether a test can follow full-page navigation and redirects to our host, because test code runs inside Vitest's iframe. A custom <code>BrowserCommand</code> with the Playwright <code>context</code> is the escape hatch.</li>
+<li><strong>B: the Playwright library</strong> driven from our existing Vitest host tests. Still one runner (Vitest). Playwright launches and closes Chromium.</li>
+</ul>
+<p><strong>Pass criteria for the choice:</strong></p>
+<ol>
+<li>it follows full-page redirects;</li>
+<li>it drives the virtual WebAuthn authenticator;</li>
+<li>every wait is an event, with library timeouts at 0;</li>
+<li>Chromium starts and stops through the library;</li>
+<li>it gives the same result 5 out of 5 times on Sunclaw;</li>
+<li>it can observe what our retained tests depend on: hold and release a real response, order two live replies, read a real response body and HttpOnly cookie across navigation, trusted click and Enter, and the real CLI handoff (a small library-owned DevTools session is acceptable);</li>
+<li>a wait whose event never arrives has a defined cancellation that closes the browser, harness and CLI child;</li>
+<li>Chromium installs and is identified the same way on Sunclaw (macOS) and Linux CI;</li>
+<li>it needs the least code of ours.</li>
+</ol>
+<p><strong>Owner ruling, 20 November 2026.</strong> <q>k, if vites borwser with chorme/palrwrte driver works pick that.  if all features aren nto sstified use playwright for th thisng tha tneed ito veral plan looks fine</q></p>
+<p>Use Vitest browser mode with the Playwright provider on Chromium where it meets the criteria. Use the Playwright library for interactions browser mode cannot cover. The owner approved the overall plan.</p>
+<p><strong>Spike result (20 Nov, Sunclaw, main <code>7e32e00e</code>, both hosts, 5 runs each): B, the Playwright library from Vitest Node tests.</strong> Browser mode cannot host the journey. Our pages send <code>frame-ancestors 'none'</code>, so navigating Vitest’s iframe to the app is blocked (<code>ERR_BLOCKED_BY_RESPONSE</code>), and the CSP stays as it is. Browser mode works only by driving a separate page with Playwright from a Node command, plus extra setup and a 10 s shutdown hang on every run (about 20 s per run, against about 10 s for B). All six interaction probes passed with B. Under the owner's rule, the journeys use the Playwright library. <strong>Wait correction:</strong> the spike used 8 s event deadlines; S1 sets every wait to timeout 0 and catches a missing event with the causal cancellation the spike proved (<code>page.close({ reason })</code>). Report: Sunclaw <code>fleet-access-runner/spike-browser-tools/REPORT.md</code>, SHA-256 <code>5dde7f48</code>. Moving jsdom page tests to real Chromium is a separate decision with its own test list. The design calls for bringing the result back to the owner before building on it.</p>
+
+<h3 id="d2">D2. Delete our Chrome machinery</h3>
+<p><strong>On main, removed or replaced in S1:</strong> <code>native-browser-protocol.ts</code> and its unit test, and <code>native-browser-page.ts</code> and its unit tests. Their importers are dispositioned one by one (removed, ported or kept): the scenario helpers (<code>native-passkey-browser-scenario.ts</code>, <code>organization-browser-*.ts</code>, <code>native-browser-scenario.ts</code>), <code>native-passkey-registration-observation</code> and <code>native-browser-cleanup.ts</code>. The cleanup behaviour worth keeping is that the first error survives when evidence capture or close fails. <strong>Only in PR #9, never merged:</strong> groups, acquisition, abort worker, test-cleanup and owned-process-group. Test-only browser dependencies belong to the private <code>sign-in-test-support</code> package. If A needs a Node-side <code>BrowserCommand</code>, it is registered in that package's browser project and owned there. The browser tests (<code>native-browser-click</code>, <code>native-cli-keyboard-activation</code>, <code>people-organization-browser</code>, <code>sign-in-native-browser</code>) move onto the chosen driver and keep their assertions. An assertion is never weakened to make the move easier.</p>
+
+<h3 id="d3">D3. Keep PR #9's recipe and drop its lifecycle rules</h3>
+<p>The new <code>verify-auth</code> keeps PR #9's 29-line <code>SKILL.md</code> structure, its journey references and the four journey scripts. It drops the process-group, late-exit and SIGTERM rules, because the library owns Chrome now. It adds the <em>Staging sign-in</em> row, marked as a draft with its gap, and keeps the <em>Machine login</em> row as future. The skill stays honest about what the local fixtures fake.</p>
+
+<h3 id="d4">D4. Security checks: sensitivity on change, with the intended assertion identified</h3>
+<p>Keep the 14 deliberate breaks. A red counts only when it comes from the <strong>intended assertion</strong>, identified unambiguously. Same file, test name and message is not enough: the anchor test shows two neighbouring matchers (lines 37 and 38) with identical text, and only one is right. Keep an exact assertion identity (today the AST anchor plus the stack reader; a simpler mechanism only if it still rejects the neighbour). Also keep the exact case set and failure count, clean setup and teardown, and green on the same selection after exact restore and rebuild.</p>
+<p><strong>When they run:</strong> <code>pnpm verify:sign-in</code> runs the journeys only. The skill names when to run controls: a change to a guarded product path, its test, or the test oracle or driver it uses. The help text and the skill example change with the default. For the driver migration, S1 runs each control whose test moved. A red from an event that never arrived is an incomplete observation, not a catch, unless a deciding failure names the affected behaviour.</p>
+<h3 id="d5">D5. Staging follows BG's approved proof</h3>
+<p>The recipe gets a <em>Staging</em> row that points to <a href="../2026-11-15-fleet-access-bg/decisions.html#staging">BG’s staging decision</a> and <a href="../2026-11-15-fleet-access-bg/verification-design.html#V4">BG’s verification design</a> instead of inventing its own:</p>
+<ul>
+<li><strong>SO15:</strong> after each staging deploy, reset, create test identities and drive every journey signed in, using the staging-only <code>testUtils</code> routes.</li>
+<li><strong>SO16:</strong> the four production refusals, plus one real Google or GitHub sign-in on staging per release, by the dedicated test account or by the owner with a Verifier watching.</li>
+</ul>
+<p>Screenshots support a visible sign-in only when they are tied to the deployed build and an observed session. They do not prove CSP or rate limits. Deployed CSP needs the actual response policy observed. A deployed limiter is claimed only from an observed refusal with state unchanged. Passkey sign-in stays proven locally (B1-B R67), and revocation belongs to B3. Until BG's staging exists, the row is open, and no claim says the product is verified on its deployed target.</p>
+<h3 id="d6">D6. Waits</h3>
+<p>Inside tests, every wait is an event: navigation, a response, a DOM-ready signal or a <code>waitForEvent</code>, with library timeouts set to 0. No sleeps and no polling. Vitest's existing project timeouts in <code>vitest.config.ts</code> are a repository setting and stay unchanged (no gate changes). They bound the verdict, but cleanup still needs its own owner: each scenario closes its browser context, harness, CLI child and armed observers on every exit path, including a failed or cancelled wait.</p>
+
+<h3 id="d7">D7. Runner and command cutover</h3>
+<p>PR #9's entry scripts are thin wrappers over shared code. S1 lists each piece and what happens to it:</p>
+<ul>
+<li><strong>Kept:</strong> selection, target checkout and build, and the report with its five facts.</li>
+<li><strong>Removed:</strong> the process adapter (it uses the group helper) and the up-front Chrome requirement. The agent-only journey needs no browser.</li>
+<li><strong>Replaced:</strong> the assertion resolver, as D4 describes.</li>
+</ul>
+<p>The root command and import cut over from main's <code>scripts/verify-auth/verify-auth.ts</code> → <code>auth-verification-cli.ts</code>. Main's B2 selections (<code>organization</code>, <code>revision-fence</code>) and their evidence flags keep a route in the new recipe. Retiring them would need the owner. The cold pass proves that the four entries and the aggregate use the declared source and build, run the exact selected host cases, and report skips and cleanup accurately.</p>
+
+<h3 id="d8">D8. Discovery, host matrix and CI</h3>
+<p>Today CI runs the <code>e2e-host</code> project once, with no <code>SIGN_IN_TEST_HOST</code> matrix. The native sign-in test parameterises both hosts itself, but the organization browser scenarios default to Cloudflare. S1 defines the Vitest project and file suffix for browser tests, makes each browser scenario run on both hosts explicitly (no environment default), and installs and identifies Chromium on Linux CI and on Sunclaw. Changing <code>ci.yml</code> or adding a CI step is a gate change and goes to the owner first. One deliberately failed run is observed through cleanup and private evidence retention.</p>
+
+<h2 id="ci-approval">CI workflow approval</h2>
+<p>On 20 November 2026 the owner approved the <a href="ci-workflow.html#proposed">CI setup change</a> and asked to use background steps: <q>you can just do it odnt need to see.  what you nee dto do make we use backgorund steps.  so taht swha ti want to see in workflwo deisgn and propsoal html</q>.</p>
+<p>On removing Python setup from the host E2E job, the owner said <q>remove</q>. Both changes are part of <a href="https://github.com/agent-collaboration/switchboard/pull/10">Switchboard PR #10</a>.</p>
+
+<h2 id="ci-calls">CI implementation calls by the Sign-in Lead</h2>
+<table>
+<thead><tr><th>Call</th><th>Why</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><td>Headless shell only (<code>--only-shell</code>)</td><td>The tests are headless. The shell is smaller and is what the spike ran.</td><td>A future headed test would need the full browser.</td></tr>
+<tr><td>Cache key pinned to the Playwright version</td><td>The version decides the browser revision. The spike saw revision 1228 for 1.61.1.</td><td>The key's version has to be bumped together with the package pin.</td></tr>
+<tr><td>Wait on the apt step before Chromium</td><td>It avoids a dpkg lock race between two <code>apt-get</code> runs.</td><td>Chromium can't start until apt finishes.</td></tr>
+<tr><td>Build moved out of the Node setup action (<code>build: 'false'</code>, then <code>pnpm build</code>)</td><td>So the browser download overlaps with the build.</td><td>One extra step in the job.</td></tr>
+</tbody>
+</table>
+</ex-document>
+</body>
+</html>

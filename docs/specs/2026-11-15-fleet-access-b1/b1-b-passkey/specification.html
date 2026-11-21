@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B1-B · Passkey sign-in · Specification</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>B1-B · Passkey sign-in: Specification</h1>
+<p>What must be observably true when B1-B is done. Each rule says where it comes from and what would show it's wrong.</p>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What you should check" tone="note" icon="shield-check">
+<ul>
+<li><strong>S3:</strong> no fingerprint, face or PIN means no session, ever.</li>
+<li><strong>S4:</strong> a passkey sign-in is confirmed from the moment it happens, so your 15-minute window starts then.</li>
+<li><strong>S6:</strong> the session token never reaches the page's scripts.</li>
+<li><strong>S9:</strong> a passkey session is confirmed in the same write that creates it, and a failed sign-in leaves the person signed out.</li>
+</ul>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p><strong>S7, the sign-in page:</strong> a "Continue with Passkey" button. It doesn't offer passkeys in the browser's autofill list: you chose click only on 15 Nov (<a href="decisions.html#open">Decisions</a>).</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
+<p>Every rule traces to your approved design: OD21 (<em>"A passkey with fingerprint, face or PIN signs you in and counts as both factors"</em>, decided 31 October), and rules R5, R52, R53, R63 and R67 in the <a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/specification.source.html">approved Specification</a> (lines 174, 270, 241, 254 and 261).</p>
+</ex-callout>
+
+<h2 id="summary">In one list</h2>
+<ul>
+<li><strong>S1:</strong> the two passkey sign-in requests reach Better Auth through the public service. Nothing else opens.</li>
+<li><strong>S2:</strong> the challenge request needs a Turnstile pass for <code>passkey_sign_in</code>.</li>
+<li><strong>S3:</strong> without user verification, no session.</li>
+<li><strong>S4:</strong> with it, the new session counts as both factors from that moment.</li>
+<li><strong>S5:</strong> only a person who may sign in today can sign in with a passkey.</li>
+<li><strong>S6:</strong> the session token stays in the cookie.</li>
+<li><strong>S7:</strong> the sign-in page offers the passkey.</li>
+<li><strong>S8:</strong> the flood limit covers it.</li>
+<li><strong>S9:</strong> never an unconfirmed passkey session; a failure leaves the person signed out.</li>
+<li><strong>S10:</strong> journey 5 is proven in a real browser on both hosts.</li>
+<li><strong>S11:</strong> the "passkey sign-in stays off" fallback is gone.</li>
+<li><strong>S12:</strong> each passkey sign-in is recorded, as Google and GitHub sign-ins are.</li>
+</ul>
+
+<h2 id="terms">Terms</h2>
+<table>
+<thead><tr><th>Term</th><th>Meaning here</th></tr></thead>
+<tbody>
+<tr><td>Challenge request</td><td><code>GET /api/auth/passkey/generate-authenticate-options</code>. Better Auth stores a one-time challenge (a <code>verification</code> row) and sets a signed cookie naming it.</td></tr>
+<tr><td>Verify request</td><td><code>POST /api/auth/passkey/verify-authentication</code>, carrying the browser's signed answer to the challenge.</td></tr>
+<tr><td>User verification</td><td>The authenticator's flag saying the person proved themselves to it: fingerprint, face or PIN. WebAuthn calls it UV.</td></tr>
+<tr><td>Both factors</td><td>The session's second-factor time (<code>session.secondFactorAt</code>) and method (<code>session.secondFactorMethod</code>) are set, as R53 requires for a protected change.</td></tr>
+<tr><td>Protected change</td><td>A change R53 reserves for a fresh second factor, for example inviting a person.</td></tr>
+</tbody>
+</table>
+
+<h2 id="rules">The rules</h2>
+
+<h3 id="S1">S1 · The two passkey sign-in requests are public; nothing else opens</h3>
+<p>From R5 and approved Program Design line 2095. The public service MUST pass the challenge request (<code>GET</code>) and the verify request (<code>POST</code>) to Better Auth's own passkey endpoints. Every other passkey path keeps today's answer. In particular, Better Auth's <code>/passkey/delete-passkey</code> stays closed, because removal goes through the service's audited <code>/passkey/remove</code>.</p>
+<p><strong>Wrong if:</strong> either request answers 404, or the wrong method passes, or another passkey path's answer changes.</p>
+
+<h3 id="S2">S2 · The challenge request needs a Turnstile pass</h3>
+<p>From R52: "A person's sign-in MUST also pass a Cloudflare Turnstile check … when asking for a passkey sign-in's challenge."</p>
+<ul>
+<li>A challenge request with a missing, rejected, wrong-action, reused or unreachable Turnstile check MUST be refused, with no challenge stored and no cookie set. The refusal is logged as <code>captcha-refused</code> with action <code>passkey_sign_in</code>, as today's private-provider cases show.</li>
+<li>The verify request isn't checked again: a Turnstile token works once, and the verify request is bound to its stored challenge (approved Program Design line 1826).</li>
+</ul>
+<p><strong>Wrong if:</strong> any of those five gets a challenge through the public service.</p>
+
+<h3 id="S3">S3 · Without user verification, no session</h3>
+<p>From R53: "a passkey without user verification MUST NOT sign in or confirm anything."</p>
+<ul>
+<li>A verify request whose signed answer is valid but not user-verified MUST get 401 with code <code>USER_VERIFICATION_REQUIRED</code>.</li>
+<li>No session row is created, no session cookie is set, and the passkey's signature counter is unchanged.</li>
+<li>The challenge is used up: the same answer sent again is refused as "challenge not found".</li>
+</ul>
+<p><strong>Wrong if:</strong> any session or cookie exists after a no-UV answer, or the counter moved.</p>
+
+<h3 id="S4">S4 · With user verification, the new session counts as both factors from that moment</h3>
+<p>From OD21 and R53: "A passkey sign-in with user verification counts as both factors, so its new session is confirmed from that moment."</p>
+<ul>
+<li>A user-verified answer gets 200 and a session cookie.</li>
+<li>That session's <code>secondFactorAt</code> is the service's clock at the sign-in, and its <code>secondFactorMethod</code> is <code>passkey</code>.</li>
+<li>A protected change made within 15 minutes, for example inviting a person, goes through with no separate confirmation.</li>
+<li>The same change after 15 minutes is refused with "a second factor is needed", as for any other session.</li>
+</ul>
+<p><strong>Wrong if:</strong> the new session is asked for a second factor within 15 minutes, or its second-factor time is anything but the sign-in moment.</p>
+
+<h3 id="S5">S5 · Only a person who may sign in today can sign in with a passkey</h3>
+<p>From R5: passkey sign-in follows the same people rules as Google or GitHub.</p>
+<ul>
+<li>A passkey that belongs to a person who can't sign in today, for example one who was removed and has no other membership, MUST be refused with no session. The service's existing session-create check (<code>ensurePersonActive</code>) decides this, as for Google or GitHub.</li>
+<li>An unknown credential gets 401, with no session.</li>
+<li>The new session's active organization is set the same way as for Google or GitHub: the person's only membership, or none.</li>
+</ul>
+<p><strong>Wrong if:</strong> a person refused on Google or GitHub gets in with a passkey.</p>
+
+<h3 id="S6">S6 · The session token stays in the cookie</h3>
+<p>From your 12 Nov rule: "The session token is stripped from get-session before it reaches scripts." The same holds for every answer the page's scripts read.</p>
+<ul>
+<li>The verify request's 200 body MUST NOT contain the session token, anywhere in it.</li>
+<li>The cookie carries the session, as for Google or GitHub.</li>
+</ul>
+<p><strong>Wrong if:</strong> the token's value appears anywhere in the body.</p>
+
+<h3 id="S7">S7 · The sign-in page offers the passkey</h3>
+<p>From U20 and OD21, and your rule to use Better Auth UI as shipped.</p>
+<ul>
+<li>Under Google and GitHub there's a third button: <strong>Continue with Passkey</strong>, Better Auth UI's own button.</li>
+<li><strong>Clicking it:</strong> the page gets a fresh Turnstile pass for <code>passkey_sign_in</code>, sends it with the challenge request, then the browser asks for the passkey. On success, the person lands where Google or GitHub would have taken them: the same continuation address, so a command-line login started first still continues.</li>
+<li><strong>Cancelling, or a refusal,</strong> shows Better Auth UI's own error notice. The person stays on the sign-in page, signed out.</li>
+<li><strong>Autofill:</strong> the button doesn't offer passkeys in the browser's autofill list, and loading the page sends no challenge request. That's your 15 Nov choice, click only (<a href="decisions.html#open">Decisions</a>), set through Better Auth UI's own option; the button itself is unchanged.</li>
+<li><strong>If Turnstile can't load or refuses:</strong> clicking shows an error notice saying sign-in verification is unavailable. The button is usable again, and no challenge request is sent.</li>
+<li><strong>At 400 px</strong> the button follows the page column, like Google and GitHub.</li>
+</ul>
+<p><strong>Wrong if:</strong> the button is missing, sends no token, lands somewhere other than Google or GitHub would, or loading the page creates a challenge.</p>
+
+<h3 id="S8">S8 · The flood limit covers passkey sign-in</h3>
+<p>From R52. Both requests are in the <code>callback-passkey</code> class: 10 per 60 seconds per client address, at the outer limit and at Better Auth's own limit (<code>request-limit-policy.ts:32–35</code>). Past that, a request gets 429 and nothing is created: no challenge, no session.</p>
+<p><strong>Wrong if:</strong> an eleventh request in a minute from one address creates anything.</p>
+
+<h3 id="S9">S9 · Never an unconfirmed passkey session; a failure leaves the person signed out</h3>
+<ul>
+<li><strong>Born confirmed:</strong> a passkey sign-in's session MUST carry both factors from the moment its row exists. No passkey-sign-in session is ever stored without them, not even briefly.</li>
+<li><strong>A failure after the session was created</strong> (Better Auth fails after inserting it, or the sign-in record can't be written, S12) MUST leave the person signed out. The service answers <code>503 {"error":"sign-in-unavailable"}</code>, its existing answer for a failed sign-in (<code>sign-in-http-handler.ts:392–402</code>). No session cookie is sent.</li>
+<li><strong>The row:</strong> the service tries to delete that session, as it does for any failed sign-in today. That deletion is best effort: if storage is down for it too, the row can remain until it expires. It is already marked both factors, and no browser holds its cookie.</li>
+</ul>
+<p><strong>Wrong if:</strong> any stored passkey-sign-in session lacks both factors, at any moment; or, after a failure, the person's browser has a working session.</p>
+
+<h3 id="S10">S10 · Journey 5 is proven in a real browser on both hosts</h3>
+<p>From R63 journey 5 and R67. In real Chrome with Chrome's virtual authenticator, on local workerd with D1 and on Node with better-sqlite3:</p>
+<ol>
+<li>a person signs in with Google, confirms with their app, and adds a passkey;</li>
+<li>signs out;</li>
+<li>clicks Continue with Passkey, with fingerprint, face or PIN on;</li>
+<li>lands on their account page;</li>
+<li>invites a person, with no confirmation step.</li>
+</ol>
+<p>Two more runs:</p>
+<ul>
+<li><strong>User verification off:</strong> the same journey stops at step 3, signed out.</li>
+<li><strong>Started from the command line:</strong> the owner CLI starts a real login, the browser opens its <code>sign-in?authorize=…</code> address, the person signs in with the passkey, and the waiting CLI finishes its login.</li>
+</ul>
+<p>The page is served from a <code>localhost</code> address, because browsers refuse passkeys on an IP address. Every run must fail on today's build.</p>
+<p><strong>Wrong if:</strong> the journey passes on <code>f3b2b88b</code>, or runs on one host only.</p>
+
+<h3 id="S11">S11 · The "stays off" fallback is gone</h3>
+<p>The approved design kept passkey sign-in off until the user-verification hook was proven. This feature proves it and removes the fallback:</p>
+<ul>
+<li>the test assertion that both routes answer 404;</li>
+<li>the guidance that says passkeys only confirm, in <code>.agents/skills/verify-auth/</code>.</li>
+</ul>
+<p><strong>Wrong if:</strong> any test or guidance still says passkey sign-in is off.</p>
+
+<h3 id="S12">S12 · Each passkey sign-in is recorded, as Google and GitHub sign-ins are</h3>
+<p>Today every Google or GitHub sign-in callback writes one <code>sign_in_audit</code> row: kind <code>sign-in</code>, the person (or <code>anonymous</code>), the outcome <code>succeeded</code> or <code>failed</code>, and the method (<code>sign-in-http-handler.ts:383–390</code>). A passkey sign-in MUST do the same, with method <code>passkey</code>:</p>
+<ul>
+<li>every verify request writes one row;</li>
+<li>a success records the person and <code>succeeded</code>;</li>
+<li>a refusal (no user verification, unknown passkey, a person who can't sign in) records <code>anonymous</code> and <code>failed</code>.</li>
+</ul>
+<p>If the row can't be written, the sign-in fails and the person stays signed out, as for Google or GitHub today (S9).</p>
+<p><strong>Wrong if:</strong> a passkey sign-in, successful or refused, leaves no row, or a row names the wrong outcome.</p>
+
+<h2 id="failure">When things fail</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>What fails</th><th>What the person sees</th><th>What's stored</th></tr></thead>
+<tbody>
+<tr><td>Turnstile's script doesn't load</td><td>An error notice on each click, "Sign-in verification is unavailable. Reload the page to try again."; still signed out</td><td>Nothing: no challenge request is sent</td></tr>
+<tr><td>Turnstile can't be reached, or refuses</td><td>Better Auth UI's error notice; still signed out</td><td>Nothing: no challenge</td></tr>
+<tr><td>The person cancels the browser's passkey prompt</td><td>Better Auth UI's "cancelled" notice; still signed out</td><td>One unused challenge, which expires on its own</td></tr>
+<tr><td>The authenticator gives no user verification</td><td>An error notice; still signed out</td><td>The challenge is used up; no session</td></tr>
+<tr><td>The passkey isn't known, or its person can't sign in</td><td>An error notice; still signed out</td><td>No session</td></tr>
+<tr><td>Better Auth fails after creating the session, or the sign-in record can't be written</td><td>An error notice; still signed out</td><td>The session is deleted, best effort; if it remains, it's marked both factors and no browser holds its cookie (S9)</td></tr>
+<tr><td>Over the flood limit</td><td>An error notice</td><td>Nothing</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="trace">Trace</h2>
+<table>
+<thead><tr><th>Rule</th><th>From</th><th>Proven by</th></tr></thead>
+<tbody>
+<tr><td><a href="#S1">S1</a></td><td>R5; approved Program Design 2095</td><td><a href="verification-design.html#V1">V1</a></td></tr>
+<tr><td><a href="#S2">S2</a></td><td>R52, V44</td><td><a href="verification-design.html#V2">V2</a></td></tr>
+<tr><td><a href="#S3">S3</a></td><td>R53, OD21</td><td><a href="verification-design.html#V3">V3</a>, <a href="verification-design.html#V8">V8</a></td></tr>
+<tr><td><a href="#S4">S4</a></td><td>R53, OD21</td><td><a href="verification-design.html#V4">V4</a>, <a href="verification-design.html#V8">V8</a></td></tr>
+<tr><td><a href="#S5">S5</a></td><td>R5</td><td><a href="verification-design.html#V5">V5</a></td></tr>
+<tr><td><a href="#S6">S6</a></td><td>your 12 Nov rule</td><td><a href="verification-design.html#V4">V4</a></td></tr>
+<tr><td><a href="#S7">S7</a></td><td>U20, OD21; your Better Auth UI rule</td><td><a href="verification-design.html#V7">V7</a>, <a href="verification-design.html#V8">V8</a></td></tr>
+<tr><td><a href="#S8">S8</a></td><td>R52</td><td><a href="verification-design.html#V6">V6</a></td></tr>
+<tr><td><a href="#S9">S9</a></td><td>R53</td><td><a href="verification-design.html#V4">V4</a></td></tr>
+<tr><td><a href="#S10">S10</a></td><td>R63 journey 5, R67</td><td><a href="verification-design.html#V8">V8</a></td></tr>
+<tr><td><a href="#S11">S11</a></td><td>this feature's rule: old code goes</td><td><a href="verification-design.html#V9">V9</a></td></tr>
+<tr><td><a href="#S12">S12</a></td><td>today's sign-in record for Google and GitHub</td><td><a href="verification-design.html#V3">V3</a>, <a href="verification-design.html#V4">V4</a></td></tr>
+</tbody>
+</table>
+</ex-document>
+</body>
+</html>

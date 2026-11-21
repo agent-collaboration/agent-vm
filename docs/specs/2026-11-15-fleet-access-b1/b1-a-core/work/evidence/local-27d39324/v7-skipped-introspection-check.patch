@@ -1,0 +1,20 @@
+--- packages/sign-in-core/src/response-release/sign-in-response-release.ts
++++ packages/sign-in-core/src/response-release/sign-in-response-release.ts
+@@ -91,7 +91,7 @@
+ 				.parse(await props.response.clone().json());
+ 			if (!body.active) return props.response;
+ 			const checkedAt = props.ports.now();
+-			if (
++			if (false && (
+ 				body.sub === undefined ||
+ 				body.sid === undefined ||
+ 				body.organization_id === undefined ||
+@@ -103,7 +103,7 @@
+ 					body.sid,
+ 					body.organization_id,
+ 				))
+-			)
++			))
+ 				return Response.json({ active: false }, { headers: { 'cache-control': 'no-store' } });
+ 			return Response.json({ ...body, checkedAt }, { headers: { 'cache-control': 'no-store' } });
+ 		}

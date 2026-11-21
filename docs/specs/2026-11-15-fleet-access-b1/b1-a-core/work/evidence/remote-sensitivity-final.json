@@ -1,0 +1,3465 @@
+{
+  "kind": "B1-A independent authorized sensitivity final collection",
+  "source": "27d393240b5c31bd1cf7da522de300c0522dd222",
+  "host": "Sunclaw.local",
+  "authority": {
+    "baseline": "01a1e147-b14b-7160-85cd-975c9e96fd4c",
+    "repin": "01a1e154-e43a-7223-9a6e-e386dc5ca290",
+    "controls": "01a1e152-8db5-7ea3-8b98-86a21d014297",
+    "clock": "01a1e157-7a9f-7503-a0ab-572c876d4978"
+  },
+  "execution": "Pinned mise Node24.7.0/pnpm10.33.0 per exact command; no test retries or source repairs; one mutant at a time; restoration in finally.",
+  "controls": [
+    {
+      "id": "A",
+      "source": "packages/sign-in-core/src/better-auth/fleet-admin-forwarding.ts",
+      "package": "sign-in-core",
+      "baseline": [
+        {
+          "step": "sA-baseline-node",
+          "exit": 0,
+          "report": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sA-baseline-node.vitest.json",
+            "sha256": "56cb07e4e281be715518e9e292b979959202fb417346960f91e1e5a80d59d987",
+            "passed": 1,
+            "failed": 0,
+            "pending": 0,
+            "rows": [
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts",
+                "name": "admin forwarding (Node host): the verifier, proof key, signatures and intent digest all go through the host crypto",
+                "status": "passed",
+                "failureMessages": []
+              }
+            ]
+          }
+        }
+      ],
+      "red": [
+        {
+          "step": "sA-red-node",
+          "exit": 1,
+          "report": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sA-red-node.vitest.json",
+            "sha256": "1a6f710d60d35da290e389c73e0509f8da5aaa44a0d7482e677ace30cb128d60",
+            "passed": 0,
+            "failed": 1,
+            "pending": 0,
+            "rows": [
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts",
+                "name": "admin forwarding (Node host): the verifier, proof key, signatures and intent digest all go through the host crypto",
+                "status": "failed",
+                "failureMessages": [
+                  "AssertionError: expected [] to deeply equal [ { kind: 'random', byteLength: 32 } ]\n    at /private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts:104:65\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at file:///private/tmp/2026-11-b1a-verifier-27d39324/source/node_modules/.pnpm/@vitest+runner@4.1.5/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "restored": [
+        {
+          "step": "sA-restored-node",
+          "exit": 0,
+          "report": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sA-restored-node.vitest.json",
+            "sha256": "6b0ebe73cb987e9be256a58b81cfa386e236222ba98bd5b0f6e236bb0884e866",
+            "passed": 1,
+            "failed": 0,
+            "pending": 0,
+            "rows": [
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts",
+                "name": "admin forwarding (Node host): the verifier, proof key, signatures and intent digest all go through the host crypto",
+                "status": "passed",
+                "failureMessages": []
+              }
+            ]
+          }
+        }
+      ],
+      "originalSha256": "988cc5bbcb51b0a6f3c1c8415c737fcd062496d342c910ed6d3d51a379a412f3",
+      "mutantSha256": "381b0783c3067998904c3424df7f638d89dcd1ef368d2a81cf197c06fcc3abe9",
+      "beforeArtifacts": [
+        {
+          "file": "packages/sign-in-core/dist/better-auth/index.js",
+          "bytes": 974786,
+          "sha256": "47ed7365a83fb3494efd9bb8884e65d4e1e1543c37ca82fda54aa1028adefffb"
+        },
+        {
+          "file": "packages/sign-in-core/dist/contracts/person-identity-contracts.js",
+          "bytes": 2587,
+          "sha256": "b7e003339354ad25edad155bc2a397c8cfdff2f471b960a4d4ee173398370732"
+        },
+        {
+          "file": "packages/sign-in-core/dist/fleet-admin-create-words-zTlgq_UA.js",
+          "bytes": 100310,
+          "sha256": "788509091c45dae6a8c639031b9ed1fafff30f6c5cebf6d2c5e14f51cb921ecb"
+        },
+        {
+          "file": "packages/sign-in-core/dist/index.js",
+          "bytes": 84529,
+          "sha256": "762363deacf975649228600c76730c404ada1d5cdf7c8848c13ecaf1dd3f037c"
+        },
+        {
+          "file": "packages/sign-in-core/dist/second-factor-step-up-CNY5sRgq.js",
+          "bytes": 2297,
+          "sha256": "96cfbdbe99bb11349b190676bb2a107a26723ab6b0fd8614bed7484c581be760"
+        }
+      ],
+      "patchSha256": "86aa7c97dee0bd0b49cbd775751857d54672447e586e588deec4e691b076e156",
+      "mutantBuildExit": 0,
+      "mutantArtifacts": [
+        {
+          "file": "packages/sign-in-core/dist/better-auth/index.js",
+          "bytes": 974782,
+          "sha256": "973b59279d68594a710ad046aef70daf8f9de5d19f527be5f89ae6fddbac8c1f"
+        },
+        {
+          "file": "packages/sign-in-core/dist/contracts/person-identity-contracts.js",
+          "bytes": 2587,
+          "sha256": "b7e003339354ad25edad155bc2a397c8cfdff2f471b960a4d4ee173398370732"
+        },
+        {
+          "file": "packages/sign-in-core/dist/fleet-admin-create-words-zTlgq_UA.js",
+          "bytes": 100310,
+          "sha256": "788509091c45dae6a8c639031b9ed1fafff30f6c5cebf6d2c5e14f51cb921ecb"
+        },
+        {
+          "file": "packages/sign-in-core/dist/index.js",
+          "bytes": 84529,
+          "sha256": "762363deacf975649228600c76730c404ada1d5cdf7c8848c13ecaf1dd3f037c"
+        },
+        {
+          "file": "packages/sign-in-core/dist/second-factor-step-up-CNY5sRgq.js",
+          "bytes": 2297,
+          "sha256": "96cfbdbe99bb11349b190676bb2a107a26723ab6b0fd8614bed7484c581be760"
+        }
+      ],
+      "changedJsArtifacts": [
+        {
+          "file": "packages/sign-in-core/dist/better-auth/index.js",
+          "bytes": 974782,
+          "sha256": "973b59279d68594a710ad046aef70daf8f9de5d19f527be5f89ae6fddbac8c1f"
+        }
+      ],
+      "restoredSourceSha256": "988cc5bbcb51b0a6f3c1c8415c737fcd062496d342c910ed6d3d51a379a412f3",
+      "sourceRestored": true,
+      "restoredBuildExit": 0,
+      "restoredArtifacts": [
+        {
+          "file": "packages/sign-in-core/dist/better-auth/index.js",
+          "bytes": 974786,
+          "sha256": "47ed7365a83fb3494efd9bb8884e65d4e1e1543c37ca82fda54aa1028adefffb"
+        },
+        {
+          "file": "packages/sign-in-core/dist/contracts/person-identity-contracts.js",
+          "bytes": 2587,
+          "sha256": "b7e003339354ad25edad155bc2a397c8cfdff2f471b960a4d4ee173398370732"
+        },
+        {
+          "file": "packages/sign-in-core/dist/fleet-admin-create-words-zTlgq_UA.js",
+          "bytes": 100310,
+          "sha256": "788509091c45dae6a8c639031b9ed1fafff30f6c5cebf6d2c5e14f51cb921ecb"
+        },
+        {
+          "file": "packages/sign-in-core/dist/index.js",
+          "bytes": 84529,
+          "sha256": "762363deacf975649228600c76730c404ada1d5cdf7c8848c13ecaf1dd3f037c"
+        },
+        {
+          "file": "packages/sign-in-core/dist/second-factor-step-up-CNY5sRgq.js",
+          "bytes": 2297,
+          "sha256": "96cfbdbe99bb11349b190676bb2a107a26723ab6b0fd8614bed7484c581be760"
+        }
+      ],
+      "interpretation": "Missing recorded32byte random draw at testline104; digest/random-unavailable checks later are not reached after deciding assertion.",
+      "restoredDistExact": true,
+      "patch": {
+        "file": {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/A/mutation.patch",
+          "bytes": 879,
+          "sha256": "86aa7c97dee0bd0b49cbd775751857d54672447e586e588deec4e691b076e156"
+        },
+        "literal": "diff --git a/packages/sign-in-core/src/better-auth/fleet-admin-forwarding.ts b/packages/sign-in-core/src/better-auth/fleet-admin-forwarding.ts\nindex 9417edc8..34f7bc4d 100644\n--- a/packages/sign-in-core/src/better-auth/fleet-admin-forwarding.ts\n+++ b/packages/sign-in-core/src/better-auth/fleet-admin-forwarding.ts\n@@ -153,7 +153,7 @@ async function obtainPersonFleetCredential(props: {\n \tconst issuer = props.configuration.issuer;\n \tconst redirectUri = adminPageRedirectUri(props.configuration);\n \tconst verifierBytes = new Uint8Array(32);\n-\tprops.platform.crypto.getRandomValues(verifierBytes);\n+\tglobalThis.crypto.getRandomValues(verifierBytes);\n \tconst verifier = base64Url(verifierBytes);\n \t// Authorization is the person's browser step and carries their cookie; the exchange is the\n \t// PKCE client's own call and carries none. Both keep the host's trusted client address.\n"
+      },
+      "originalSource": {
+        "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/A/original-source",
+        "bytes": 9979,
+        "sha256": "988cc5bbcb51b0a6f3c1c8415c737fcd062496d342c910ed6d3d51a379a412f3"
+      },
+      "mutantSource": {
+        "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/A/mutant-source",
+        "bytes": 9975,
+        "sha256": "381b0783c3067998904c3424df7f638d89dcd1ef368d2a81cf197c06fcc3abe9"
+      },
+      "commands": [
+        {
+          "step": "sA-baseline-node",
+          "command": "mise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:e2e:host packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts --reporter=default --reporter=json --outputFile='/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sA-baseline-node.vitest.json'",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+            "SIGN_IN_TEST_HOST": "node"
+          },
+          "exit": 0,
+          "signal": null,
+          "elapsedMs": 6318,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sA-baseline-node.process.json",
+            "bytes": 4382,
+            "sha256": "03e76078decc48f89247721b4100e8e3000d2ed2b64c9e38500f8a30a281eab1"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sA-baseline-node.stdout",
+              "bytes": 960,
+              "sha256": "e3127336985ddc139d1726225bd2d8f0f2fe57341a005b71156982ba53651da1"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sA-baseline-node.stderr",
+              "bytes": 12693,
+              "sha256": "8a283603db89259000003d7cf318bb936027cd31ea8dc8b27654942f53a48ee4"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sA-baseline-node.log",
+              "bytes": 14215,
+              "sha256": "06f69401b1bcf393480354e230763e9820136cf869d219e4e02ca355c412661a"
+            }
+          ],
+          "rawTerminalBlock": [
+            " Test Files  1 passed (1)",
+            "      Tests  1 passed (1)",
+            "   Start at  18:26:43",
+            "   Duration  5.29s (transform 530ms, setup 0ms, import 1.61s, tests 3.59s, environment 0ms)",
+            "JSON report written to /private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sA-baseline-node.vitest.json"
+          ],
+          "rawDecidingFailureBlock": null,
+          "cleanup": {
+            "groupEmpty": true,
+            "observedPIDsAbsent": true,
+            "observedIdentityCount": 9,
+            "sampling": "bounded 1s group snapshots, maximum1800, not an exhaustive process-birth ledger",
+            "groupAfter": {
+              "label": "after-command",
+              "at": "2026-11-15T23:26:48.453Z",
+              "command": "/bin/ps -g 80463 -o pid=,ppid=,pgid=,lstart=,comm=",
+              "exit": 1,
+              "stdout": "",
+              "stderr": ""
+            },
+            "noSignalsSentByWrapper": true
+          }
+        },
+        {
+          "step": "sA-mutant-build",
+          "command": "unset SIGN_IN_TEST_HOST\nmise exec node@24.7.0 pnpm@10.33.0 -- pnpm --filter @agent-collaboration/sign-in-core build",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+          },
+          "exit": 0,
+          "signal": null,
+          "elapsedMs": 3131,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sA-mutant-build.process.json",
+            "bytes": 1364,
+            "sha256": "92152490f04f7aff57472cdff16ce830b810828efac8f81e3628a5e26e61443c"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sA-mutant-build.stdout",
+              "bytes": 1902,
+              "sha256": "83f4dc6edbf07f167d9c730f343c98e8e39e89208cc82a2788c1eee0a5413712"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sA-mutant-build.stderr",
+              "bytes": 105,
+              "sha256": "98f630aaebf1cf2395b08635ad8d74ebc4ab45fa9fe467b18df04c28d247ad83"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sA-mutant-build.log",
+              "bytes": 2381,
+              "sha256": "02252157700ff0a9d7a19d6a7874f751743ee74f67349281245f775ce92932b5"
+            }
+          ],
+          "rawTerminalBlock": [],
+          "rawDecidingFailureBlock": null,
+          "cleanup": null
+        },
+        {
+          "step": "sA-red-node",
+          "command": "mise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:e2e:host packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts --reporter=default --reporter=json --outputFile='/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sA-red-node.vitest.json'",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+            "SIGN_IN_TEST_HOST": "node"
+          },
+          "exit": 1,
+          "signal": null,
+          "elapsedMs": 5979,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sA-red-node.process.json",
+            "bytes": 4358,
+            "sha256": "edf4cf8dc3f41160058dd8d2b7835e7f085e847a4ea3ffc9f38927894e18cab2"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sA-red-node.stdout",
+              "bytes": 1009,
+              "sha256": "873be6aa1eaad51daedb0566a369e6043d0c9d7fc51ea2a45c314d5193e0d9f3"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sA-red-node.stderr",
+              "bytes": 12350,
+              "sha256": "fc9b62b21469cbddfc94390f963e5fea9aa9a81a177ba7d5d152488ac35f9f6e"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sA-red-node.log",
+              "bytes": 13916,
+              "sha256": "58a680909bd57ad4f402e714d8e6874527f76aecd5a8349b91c16f4321429399"
+            }
+          ],
+          "rawTerminalBlock": [
+            " Test Files  1 failed (1)",
+            "      Tests  1 failed (1)",
+            "   Start at  18:26:52",
+            "   Duration  5.30s (transform 529ms, setup 0ms, import 1.60s, tests 3.61s, environment 0ms)",
+            "JSON report written to /private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sA-red-node.vitest.json"
+          ],
+          "rawDecidingFailureBlock": " FAIL  |e2e-host| packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts > admin forwarding (Node host): the verifier, proof key, signatures and intent digest all go through the host crypto\nAssertionError: expected [] to deeply equal [ { kind: 'random', byteLength: 32 } ]\n\n- Expected\n+ Received\n\n- [\n-   {\n-     \"byteLength\": 32,\n-     \"kind\": \"random\",\n-   },\n- ]\n+ []\n\n ❯ packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts:104:65\n    102|     .parse(decodeProtectedHeader(centralProof).jwk);\n    103|    // Admin verifier: one 32-byte draw; the S256 challenge digests bas…\n    104|    expect(records.filter((record) => record.kind === 'random')).toEqua…\n       |                                                                 ^\n    105|     { kind: 'random', byteLength: 32 },\n    106|    ]);\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n",
+          "cleanup": {
+            "groupEmpty": true,
+            "observedPIDsAbsent": true,
+            "observedIdentityCount": 9,
+            "sampling": "bounded 1s group snapshots, maximum1800, not an exhaustive process-birth ledger",
+            "groupAfter": {
+              "label": "after-command",
+              "at": "2026-11-15T23:26:57.681Z",
+              "command": "/bin/ps -g 80585 -o pid=,ppid=,pgid=,lstart=,comm=",
+              "exit": 1,
+              "stdout": "",
+              "stderr": ""
+            },
+            "noSignalsSentByWrapper": true
+          }
+        },
+        {
+          "step": "sA-restored-build",
+          "command": "unset SIGN_IN_TEST_HOST\nmise exec node@24.7.0 pnpm@10.33.0 -- pnpm --filter @agent-collaboration/sign-in-core build",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+          },
+          "exit": 0,
+          "signal": null,
+          "elapsedMs": 3171,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sA-restored-build.process.json",
+            "bytes": 1372,
+            "sha256": "6ededb271052b5a759f2cac9fc129eb30403bb38d947770bfedf041eb12d5a90"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sA-restored-build.stdout",
+              "bytes": 1902,
+              "sha256": "e152a40521805b1a8719c356bf2ccc4a87587df9358642a41c9d684b6ce2a25e"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sA-restored-build.stderr",
+              "bytes": 105,
+              "sha256": "98f630aaebf1cf2395b08635ad8d74ebc4ab45fa9fe467b18df04c28d247ad83"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sA-restored-build.log",
+              "bytes": 2381,
+              "sha256": "f7ea201592c112e347084b4af6dd6142f913e23393e0f928b7a0a8ee40b2720e"
+            }
+          ],
+          "rawTerminalBlock": [],
+          "rawDecidingFailureBlock": null,
+          "cleanup": null
+        },
+        {
+          "step": "sA-restored-node",
+          "command": "mise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:e2e:host packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts --reporter=default --reporter=json --outputFile='/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sA-restored-node.vitest.json'",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+            "SIGN_IN_TEST_HOST": "node"
+          },
+          "exit": 0,
+          "signal": null,
+          "elapsedMs": 5926,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sA-restored-node.process.json",
+            "bytes": 4382,
+            "sha256": "f328ba2b6b94d359a4756a4a1e0ae80a8fa0b641b2a8349daba46da1a1087eb9"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sA-restored-node.stdout",
+              "bytes": 960,
+              "sha256": "e6c63ec6a079f68f7fdb008341af629209bd408d18efbf102fb3429a0e514e04"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sA-restored-node.stderr",
+              "bytes": 12693,
+              "sha256": "0cb90889b9e682a0aea9e64f0680501ffaa6524d6e7aca3c23b65cdec1e98ab1"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sA-restored-node.log",
+              "bytes": 14215,
+              "sha256": "67e2df06a1936b5e29366428b263ce1fe41ac2be0b3bf6a974760038d71af323"
+            }
+          ],
+          "rawTerminalBlock": [
+            " Test Files  1 passed (1)",
+            "      Tests  1 passed (1)",
+            "   Start at  18:27:01",
+            "   Duration  5.27s (transform 506ms, setup 0ms, import 1.54s, tests 3.63s, environment 0ms)",
+            "JSON report written to /private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sA-restored-node.vitest.json"
+          ],
+          "rawDecidingFailureBlock": null,
+          "cleanup": {
+            "groupEmpty": true,
+            "observedPIDsAbsent": true,
+            "observedIdentityCount": 9,
+            "sampling": "bounded 1s group snapshots, maximum1800, not an exhaustive process-birth ledger",
+            "groupAfter": {
+              "label": "after-command",
+              "at": "2026-11-15T23:27:06.838Z",
+              "command": "/bin/ps -g 80694 -o pid=,ppid=,pgid=,lstart=,comm=",
+              "exit": 1,
+              "stdout": "",
+              "stderr": ""
+            },
+            "noSignalsSentByWrapper": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "B",
+      "source": "packages/sign-in-core/src/central-link/fleet-admin-proof.ts",
+      "package": "sign-in-core",
+      "baseline": [
+        {
+          "host": "node",
+          "reusedPriorFocusedGreen": "sA-restored-node"
+        }
+      ],
+      "red": [
+        {
+          "step": "sB-red-node",
+          "exit": 1,
+          "report": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sB-red-node.vitest.json",
+            "sha256": "1966376ef49399d440a60171dc6e3f1c27e2009ffc4dba0eb9f3329d86046acb",
+            "passed": 0,
+            "failed": 1,
+            "pending": 0,
+            "rows": [
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts",
+                "name": "admin forwarding (Node host): the verifier, proof key, signatures and intent digest all go through the host crypto",
+                "status": "failed",
+                "failureMessages": [
+                  "AssertionError: expected [ { kind: 'clock-read', …(1) }, …(21) ] to deep equally contain { kind: 'generate-key', …(3) }\n    at /private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts:110:20\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at file:///private/tmp/2026-11-b1a-verifier-27d39324/source/node_modules/.pnpm/@vitest+runner@4.1.5/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "restored": [
+        {
+          "step": "sB-restored-node",
+          "exit": 0,
+          "report": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sB-restored-node.vitest.json",
+            "sha256": "a71a71f17a036831503628366542ebc64bdc448c426ed5ed8c6cdc41a4c9d32a",
+            "passed": 1,
+            "failed": 0,
+            "pending": 0,
+            "rows": [
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts",
+                "name": "admin forwarding (Node host): the verifier, proof key, signatures and intent digest all go through the host crypto",
+                "status": "passed",
+                "failureMessages": []
+              }
+            ]
+          }
+        }
+      ],
+      "originalSha256": "ad2f4a627b3846affcd6f74d24869fdb92ec6cf3a95ad02720edcc2de9da8e57",
+      "mutantSha256": "0b13f551325d1f409916610580bf2e87d76aff0356ba273ef1b6d6eb964ba517",
+      "beforeArtifacts": [
+        {
+          "file": "packages/sign-in-core/dist/better-auth/index.js",
+          "bytes": 974786,
+          "sha256": "47ed7365a83fb3494efd9bb8884e65d4e1e1543c37ca82fda54aa1028adefffb"
+        },
+        {
+          "file": "packages/sign-in-core/dist/contracts/person-identity-contracts.js",
+          "bytes": 2587,
+          "sha256": "b7e003339354ad25edad155bc2a397c8cfdff2f471b960a4d4ee173398370732"
+        },
+        {
+          "file": "packages/sign-in-core/dist/fleet-admin-create-words-zTlgq_UA.js",
+          "bytes": 100310,
+          "sha256": "788509091c45dae6a8c639031b9ed1fafff30f6c5cebf6d2c5e14f51cb921ecb"
+        },
+        {
+          "file": "packages/sign-in-core/dist/index.js",
+          "bytes": 84529,
+          "sha256": "762363deacf975649228600c76730c404ada1d5cdf7c8848c13ecaf1dd3f037c"
+        },
+        {
+          "file": "packages/sign-in-core/dist/second-factor-step-up-CNY5sRgq.js",
+          "bytes": 2297,
+          "sha256": "96cfbdbe99bb11349b190676bb2a107a26723ab6b0fd8614bed7484c581be760"
+        }
+      ],
+      "patchSha256": "a28cc877f5d267b118b0cbd0cd78da86487f231962132fb2e4b6e2bf3df85c0b",
+      "mutantBuildExit": 0,
+      "mutantArtifacts": [
+        {
+          "file": "packages/sign-in-core/dist/better-auth/index.js",
+          "bytes": 974786,
+          "sha256": "9e1a44752bff36e9e0b93b0c099644e11e29da0f3941e853657cbe8e8ecb70c9"
+        },
+        {
+          "file": "packages/sign-in-core/dist/contracts/person-identity-contracts.js",
+          "bytes": 2587,
+          "sha256": "b7e003339354ad25edad155bc2a397c8cfdff2f471b960a4d4ee173398370732"
+        },
+        {
+          "file": "packages/sign-in-core/dist/fleet-admin-create-words-3I9ZjO14.js",
+          "bytes": 100365,
+          "sha256": "fabc6f9311d35e8545b5dc088efd9ff5fce6a55a7baecec51edaf2fcd79cfed4"
+        },
+        {
+          "file": "packages/sign-in-core/dist/index.js",
+          "bytes": 84529,
+          "sha256": "185933d0387818946f541e99f7c5411ad2c702b823b4ee9f9347b8c7a695ab57"
+        },
+        {
+          "file": "packages/sign-in-core/dist/second-factor-step-up-CNY5sRgq.js",
+          "bytes": 2297,
+          "sha256": "96cfbdbe99bb11349b190676bb2a107a26723ab6b0fd8614bed7484c581be760"
+        }
+      ],
+      "changedJsArtifacts": [
+        {
+          "file": "packages/sign-in-core/dist/better-auth/index.js",
+          "bytes": 974786,
+          "sha256": "9e1a44752bff36e9e0b93b0c099644e11e29da0f3941e853657cbe8e8ecb70c9"
+        },
+        {
+          "file": "packages/sign-in-core/dist/fleet-admin-create-words-3I9ZjO14.js",
+          "bytes": 100365,
+          "sha256": "fabc6f9311d35e8545b5dc088efd9ff5fce6a55a7baecec51edaf2fcd79cfed4"
+        },
+        {
+          "file": "packages/sign-in-core/dist/index.js",
+          "bytes": 84529,
+          "sha256": "185933d0387818946f541e99f7c5411ad2c702b823b4ee9f9347b8c7a695ab57"
+        }
+      ],
+      "restoredSourceSha256": "ad2f4a627b3846affcd6f74d24869fdb92ec6cf3a95ad02720edcc2de9da8e57",
+      "sourceRestored": true,
+      "restoredBuildExit": 0,
+      "restoredArtifacts": [
+        {
+          "file": "packages/sign-in-core/dist/better-auth/index.js",
+          "bytes": 974786,
+          "sha256": "47ed7365a83fb3494efd9bb8884e65d4e1e1543c37ca82fda54aa1028adefffb"
+        },
+        {
+          "file": "packages/sign-in-core/dist/contracts/person-identity-contracts.js",
+          "bytes": 2587,
+          "sha256": "b7e003339354ad25edad155bc2a397c8cfdff2f471b960a4d4ee173398370732"
+        },
+        {
+          "file": "packages/sign-in-core/dist/fleet-admin-create-words-zTlgq_UA.js",
+          "bytes": 100310,
+          "sha256": "788509091c45dae6a8c639031b9ed1fafff30f6c5cebf6d2c5e14f51cb921ecb"
+        },
+        {
+          "file": "packages/sign-in-core/dist/index.js",
+          "bytes": 84529,
+          "sha256": "762363deacf975649228600c76730c404ada1d5cdf7c8848c13ecaf1dd3f037c"
+        },
+        {
+          "file": "packages/sign-in-core/dist/second-factor-step-up-CNY5sRgq.js",
+          "bytes": 2297,
+          "sha256": "96cfbdbe99bb11349b190676bb2a107a26723ab6b0fd8614bed7484c581be760"
+        }
+      ],
+      "interpretation": "Missing recorded generate-key at testline110; later export/sign assertions not reached.",
+      "restoredDistExact": true,
+      "patch": {
+        "file": {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/B/mutation.patch",
+          "bytes": 2178,
+          "sha256": "a28cc877f5d267b118b0cbd0cd78da86487f231962132fb2e4b6e2bf3df85c0b"
+        },
+        "literal": "diff --git a/packages/sign-in-core/src/central-link/fleet-admin-proof.ts b/packages/sign-in-core/src/central-link/fleet-admin-proof.ts\nindex 257bb5e9..30ca611b 100644\n--- a/packages/sign-in-core/src/central-link/fleet-admin-proof.ts\n+++ b/packages/sign-in-core/src/central-link/fleet-admin-proof.ts\n@@ -43,14 +43,14 @@ export async function createFleetAdminProofKey(\n \tcrypto: SignInCrypto,\n \toptions: { readonly extractable?: boolean } = {},\n ): Promise<FleetAdminProofKey> {\n-\tconst pair = await crypto.subtle.generateKey(\n+\tconst pair = await globalThis.crypto.subtle.generateKey(\n \t\t{ name: 'ECDSA', namedCurve: 'P-256' },\n \t\toptions.extractable === true,\n \t\t['sign', 'verify'],\n \t);\n \treturn {\n \t\tprivateKey: pair.privateKey,\n-\t\tpublicJwk: publicJwk(await crypto.subtle.exportKey('jwk', pair.publicKey)),\n+\t\tpublicJwk: publicJwk(await globalThis.crypto.subtle.exportKey('jwk', pair.publicKey)),\n \t};\n }\n \n@@ -59,7 +59,7 @@ export async function exportFleetAdminPrivateJwk(\n \tcrypto: SignInCrypto,\n \tkey: FleetAdminProofKey,\n ): Promise<FleetAdminPrivateJwk> {\n-\tconst exported = await crypto.subtle.exportKey('jwk', key.privateKey);\n+\tconst exported = await globalThis.crypto.subtle.exportKey('jwk', key.privateKey);\n \tif (exported.d === undefined) throw new Error('Proof key has no private part');\n \treturn { ...publicJwk(exported), d: exported.d };\n }\n@@ -73,7 +73,7 @@ export async function importFleetAdminProofKey(\n \tprivateJwk: FleetAdminPrivateJwk,\n \toptions: { readonly extractable?: boolean } = {},\n ): Promise<FleetAdminProofKey> {\n-\tconst privateKey = await crypto.subtle.importKey(\n+\tconst privateKey = await globalThis.crypto.subtle.importKey(\n \t\t'jwk',\n \t\t{ ...privateJwk },\n \t\t{ name: 'ECDSA', namedCurve: 'P-256' },\n@@ -122,7 +122,7 @@ export async function signFleetAdminProof(\n \t};\n \tconst signingInput = `${base64UrlJson(header)}.${base64UrlJson(claims)}`;\n \t// WebCrypto ECDSA returns IEEE P1363 r||s, which is exactly the JWS ES256 encoding.\n-\tconst signature = await crypto.subtle.sign(\n+\tconst signature = await globalThis.crypto.subtle.sign(\n \t\t{ name: 'ECDSA', hash: 'SHA-256' },\n \t\tprops.key.privateKey,\n \t\tnew TextEncoder().encode(signingInput),\n"
+      },
+      "originalSource": {
+        "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/B/original-source",
+        "bytes": 4771,
+        "sha256": "ad2f4a627b3846affcd6f74d24869fdb92ec6cf3a95ad02720edcc2de9da8e57"
+      },
+      "mutantSource": {
+        "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/B/mutant-source",
+        "bytes": 4826,
+        "sha256": "0b13f551325d1f409916610580bf2e87d76aff0356ba273ef1b6d6eb964ba517"
+      },
+      "commands": [
+        {
+          "step": "sB-mutant-build",
+          "command": "unset SIGN_IN_TEST_HOST\nmise exec node@24.7.0 pnpm@10.33.0 -- pnpm --filter @agent-collaboration/sign-in-core build",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+          },
+          "exit": 0,
+          "signal": null,
+          "elapsedMs": 3114,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sB-mutant-build.process.json",
+            "bytes": 1364,
+            "sha256": "2684abbbd67c7ad9efe94eab4a99095a2036750c1f0ff08a2a0d851928e26fcb"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sB-mutant-build.stdout",
+              "bytes": 1902,
+              "sha256": "f633f307fba6fdcee6063c2481316fcd6991aefd3c7e9e49e28aba4115112e21"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sB-mutant-build.stderr",
+              "bytes": 105,
+              "sha256": "f8d56a28c97378d599e47d9f7764c5b9771ef4395f213f20ce94ec1daf1a2065"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sB-mutant-build.log",
+              "bytes": 2381,
+              "sha256": "b6c51361ac5c977759495130436eff08c66580a984d670cd2ceafc560ed1968f"
+            }
+          ],
+          "rawTerminalBlock": [],
+          "rawDecidingFailureBlock": null,
+          "cleanup": null
+        },
+        {
+          "step": "sB-red-node",
+          "command": "mise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:e2e:host packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts --reporter=default --reporter=json --outputFile='/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sB-red-node.vitest.json'",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+            "SIGN_IN_TEST_HOST": "node"
+          },
+          "exit": 1,
+          "signal": null,
+          "elapsedMs": 6062,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sB-red-node.process.json",
+            "bytes": 4358,
+            "sha256": "ceccc424188ccb004d1dbe18ff59270788007c0433749ba6ed9e03192a2f8ab6"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sB-red-node.stdout",
+              "bytes": 1009,
+              "sha256": "acf1538af8aaebdaea6e2bcada9b63a5399c1ecd13aad1bbeea55b2fbade5201"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sB-red-node.stderr",
+              "bytes": 14244,
+              "sha256": "d11217c287956d0c409164f072cf3467a54d7e73581ad8207621e6f079ff044d"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sB-red-node.log",
+              "bytes": 15810,
+              "sha256": "b7676882a85a247bad72d916cd1ed78444f372bd6a2de5cc84087a802f412d65"
+            }
+          ],
+          "rawTerminalBlock": [
+            " Test Files  1 failed (1)",
+            "      Tests  1 failed (1)",
+            "   Start at  18:27:10",
+            "   Duration  5.38s (transform 508ms, setup 0ms, import 1.56s, tests 3.72s, environment 0ms)",
+            "JSON report written to /private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sB-red-node.vitest.json"
+          ],
+          "rawDecidingFailureBlock": " FAIL  |e2e-host| packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts > admin forwarding (Node host): the verifier, proof key, signatures and intent digest all go through the host crypto\nAssertionError: expected [ { kind: 'clock-read', …(1) }, …(21) ] to deep equally contain { kind: 'generate-key', …(3) }\n\n- Expected:\n{\n  \"algorithm\": {\n    \"name\": \"ECDSA\",\n    \"namedCurve\": \"P-256\",\n  },\n  \"extractable\": false,\n  \"keyUsages\": [\n    \"sign\",\n    \"verify\",\n  ],\n  \"kind\": \"generate-key\",\n}\n\n+ Received:\n[\n  {\n    \"kind\": \"clock-read\",\n    \"now\": 1893455970000,\n  },\n  {\n    \"byteLength\": 32,\n    \"kind\": \"random\",\n  },\n  {\n    \"id\": \"01b8dac5-b400-72af-928c-10aa57f18635\",\n    \"kind\": \"id-minted\",\n  },\n  {\n    \"algorithm\": \"SHA-256\",\n    \"inputSha256\": \"ea866a757e4c38babfa8127cbe9a409d3e1f93a00ff1488ff735fcf917afffd0\",\n    \"kind\": \"digest\",\n  },\n  {\n    \"id\": \"01b8dac5-b400-7285-86f2-121e16873ca7\",\n    \"kind\": \"id-minted\",\n  },\n  {\n    \"id\": \"01b8dac5-b400-7791-904b-47ade7790cc4\",\n    \"kind\": \"id-minted\",\n  },\n  {\n    \"kind\": \"clock-read\",\n    \"now\": 1893455970000,\n  },\n  {\n    \"kind\": \"clock-read\",\n    \"now\": 1893455970000,\n  },\n  {\n    \"kind\": \"clock-read\",\n    \"now\": 1893455970000,\n  },\n  {\n    \"kind\": \"clock-read\",\n    \"now\": 1893455970000,\n  },\n  {\n    \"kind\": \"clock-read\",\n    \"now\": 1893455970000,\n  },\n  {\n    \"kind\": \"clock-read\",\n    \"now\": 1893455970000,\n  },\n  {\n    \"algorithm\": \"SHA-256\",\n    \"inputSha256\": \"8afe59a7f6e35ab49dcd8cbabed120dafbe8d2a2cecb14e1486350d2564f9ac4\",\n    \"kind\": \"digest\",\n  },\n  {\n    \"id\": \"01b8dac5-b400-71bf-b144-f44fcec4a974\",\n    \"kind\": \"id-minted\",\n  },\n  {\n    \"kind\": \"clock-read\",\n    \"now\": 1893455970000,\n  },\n  {\n    \"algorithm\": \"SHA-256\",\n    \"inputSha256\": \"e8c40767bd84113cdfae61b525b31dcf6ef569b923ba74854b35e7a2962f7808\",\n    \"kind\": \"digest\",\n  },\n  {\n    \"algorithm\": \"SHA-256\",\n    \"inputSha256\": \"540b2368756c24f1f83b4d5231b97d219e15e64e5d3eb907eb7d6b44f692fa42\",\n    \"kind\": \"digest\",\n  },\n  {\n    \"kind\": \"clock-read\",\n    \"now\": 1893455970000,\n  },\n  {\n    \"kind\": \"clock-read\",\n    \"now\": 1893455970000,\n  },\n  {\n    \"kind\": \"central-call\",\n    \"operation\": \"sendFleetAdminRequest\",\n  },\n  {\n    \"kind\": \"clock-read\",\n    \"now\": 1893455970000,\n  },\n  {\n    \"kind\": \"clock-read\",\n    \"now\": 1893455970000,\n  },\n]\n\n ❯ packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts:110:20\n    108|    expect(digestInputs(records)).toContain(sha256Hex(verifier));\n    109|    // The proof key: created non-extractable, its public half exported…\n    110|    expect(records).toContainEqual({\n       |                    ^\n    111|     kind: 'generate-key',\n    112|     algorithm: { name: 'ECDSA', namedCurve: 'P-256' },\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n",
+          "cleanup": {
+            "groupEmpty": true,
+            "observedPIDsAbsent": true,
+            "observedIdentityCount": 9,
+            "sampling": "bounded 1s group snapshots, maximum1800, not an exhaustive process-birth ledger",
+            "groupAfter": {
+              "label": "after-command",
+              "at": "2026-11-15T23:27:16.110Z",
+              "command": "/bin/ps -g 80814 -o pid=,ppid=,pgid=,lstart=,comm=",
+              "exit": 1,
+              "stdout": "",
+              "stderr": ""
+            },
+            "noSignalsSentByWrapper": true
+          }
+        },
+        {
+          "step": "sB-restored-build",
+          "command": "unset SIGN_IN_TEST_HOST\nmise exec node@24.7.0 pnpm@10.33.0 -- pnpm --filter @agent-collaboration/sign-in-core build",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+          },
+          "exit": 0,
+          "signal": null,
+          "elapsedMs": 3147,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sB-restored-build.process.json",
+            "bytes": 1372,
+            "sha256": "570cf81c8e28cae85f10bce8e408fa6b335c88ce8e1bd786523c32cc18adb2e1"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sB-restored-build.stdout",
+              "bytes": 1902,
+              "sha256": "90cd4468aed8c0c8b91b6787438206f29a78567afb58cc1a18658a5c51e1a3be"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sB-restored-build.stderr",
+              "bytes": 105,
+              "sha256": "f783bae9e7bb0bf1185533e175cb61f4533461d7f0f6b341237d43d6dba3d388"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sB-restored-build.log",
+              "bytes": 2381,
+              "sha256": "59fe85e1096a991bbbd7a3821d64c243c1b4bee37e8954b090f507a2cf935b34"
+            }
+          ],
+          "rawTerminalBlock": [],
+          "rawDecidingFailureBlock": null,
+          "cleanup": null
+        },
+        {
+          "step": "sB-restored-node",
+          "command": "mise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:e2e:host packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts --reporter=default --reporter=json --outputFile='/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sB-restored-node.vitest.json'",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+            "SIGN_IN_TEST_HOST": "node"
+          },
+          "exit": 0,
+          "signal": null,
+          "elapsedMs": 6032,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sB-restored-node.process.json",
+            "bytes": 4382,
+            "sha256": "60cf816498916213c0f329d8b78ef7c8a2537ea6e3c3fe06d8000d2037d29d28"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sB-restored-node.stdout",
+              "bytes": 960,
+              "sha256": "578aa8bd3a733bbed42fdd1ec3876c68729ed59d15200e60f8f976c324627312"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sB-restored-node.stderr",
+              "bytes": 12693,
+              "sha256": "97914ca1c386ff81824af98fd2d4abf3c3d2ddf85c9d0fa27ca2bf4dce7edf8c"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sB-restored-node.log",
+              "bytes": 14215,
+              "sha256": "15bdd3048d42dc17aaf033b8d9e53041ba50104c02b59d8e6c5ad0dc6f34447a"
+            }
+          ],
+          "rawTerminalBlock": [
+            " Test Files  1 passed (1)",
+            "      Tests  1 passed (1)",
+            "   Start at  18:27:19",
+            "   Duration  5.39s (transform 539ms, setup 0ms, import 1.61s, tests 3.68s, environment 0ms)",
+            "JSON report written to /private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sB-restored-node.vitest.json"
+          ],
+          "rawDecidingFailureBlock": null,
+          "cleanup": {
+            "groupEmpty": true,
+            "observedPIDsAbsent": true,
+            "observedIdentityCount": 9,
+            "sampling": "bounded 1s group snapshots, maximum1800, not an exhaustive process-birth ledger",
+            "groupAfter": {
+              "label": "after-command",
+              "at": "2026-11-15T23:27:25.374Z",
+              "command": "/bin/ps -g 80927 -o pid=,ppid=,pgid=,lstart=,comm=",
+              "exit": 1,
+              "stdout": "",
+              "stderr": ""
+            },
+            "noSignalsSentByWrapper": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "C",
+      "source": "packages/sign-in-core/src/organizations/fleet-admin-operation.ts",
+      "package": "sign-in-core",
+      "baseline": [
+        {
+          "host": "node",
+          "reusedPriorFocusedGreen": "sB-restored-node"
+        }
+      ],
+      "red": [
+        {
+          "step": "sC-red-node",
+          "exit": 1,
+          "report": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sC-red-node.vitest.json",
+            "sha256": "b40581ae105747de86546142db26f25311cc5e2471d40f38da3143d691b04766",
+            "passed": 0,
+            "failed": 1,
+            "pending": 0,
+            "rows": [
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts",
+                "name": "admin forwarding (Node host): the verifier, proof key, signatures and intent digest all go through the host crypto",
+                "status": "failed",
+                "failureMessages": [
+                  "AssertionError: expected [ …(3) ] to include '4c60b98e4406d275d694c096d2b6a87bfa647…'\n    at Proxy.<anonymous> (file:///private/tmp/2026-11-b1a-verifier-27d39324/source/node_modules/.pnpm/@vitest+expect@4.1.5/node_modules/@vitest/expect/dist/index.js:1319:15)\n    at Proxy.<anonymous> (file:///private/tmp/2026-11-b1a-verifier-27d39324/source/node_modules/.pnpm/@vitest+expect@4.1.5/node_modules/@vitest/expect/dist/index.js:1156:15)\n    at Proxy.methodWrapper (file:///private/tmp/2026-11-b1a-verifier-27d39324/source/node_modules/.pnpm/chai@6.2.2/node_modules/chai/index.js:1700:25)\n    at /private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts:123:34\n    at file:///private/tmp/2026-11-b1a-verifier-27d39324/source/node_modules/.pnpm/@vitest+runner@4.1.5/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "restored": [
+        {
+          "step": "sC-restored-node",
+          "exit": 0,
+          "report": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sC-restored-node.vitest.json",
+            "sha256": "d6efc69f7aa51a22fd2a17dbe40f96dba138ea565207d1869a0c1765cfab3bd8",
+            "passed": 1,
+            "failed": 0,
+            "pending": 0,
+            "rows": [
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts",
+                "name": "admin forwarding (Node host): the verifier, proof key, signatures and intent digest all go through the host crypto",
+                "status": "passed",
+                "failureMessages": []
+              }
+            ]
+          }
+        }
+      ],
+      "originalSha256": "2ffcafa7fe134334eebf03404e9275e5b57750ae5b834e4d974ebc8b4c49e41f",
+      "mutantSha256": "123d57db916632c9d2b077a7363e81f0c361c5da2b0cd8b8ea2709ec57873572",
+      "beforeArtifacts": [
+        {
+          "file": "packages/sign-in-core/dist/better-auth/index.js",
+          "bytes": 974786,
+          "sha256": "47ed7365a83fb3494efd9bb8884e65d4e1e1543c37ca82fda54aa1028adefffb"
+        },
+        {
+          "file": "packages/sign-in-core/dist/contracts/person-identity-contracts.js",
+          "bytes": 2587,
+          "sha256": "b7e003339354ad25edad155bc2a397c8cfdff2f471b960a4d4ee173398370732"
+        },
+        {
+          "file": "packages/sign-in-core/dist/fleet-admin-create-words-zTlgq_UA.js",
+          "bytes": 100310,
+          "sha256": "788509091c45dae6a8c639031b9ed1fafff30f6c5cebf6d2c5e14f51cb921ecb"
+        },
+        {
+          "file": "packages/sign-in-core/dist/index.js",
+          "bytes": 84529,
+          "sha256": "762363deacf975649228600c76730c404ada1d5cdf7c8848c13ecaf1dd3f037c"
+        },
+        {
+          "file": "packages/sign-in-core/dist/second-factor-step-up-CNY5sRgq.js",
+          "bytes": 2297,
+          "sha256": "96cfbdbe99bb11349b190676bb2a107a26723ab6b0fd8614bed7484c581be760"
+        }
+      ],
+      "patchSha256": "d4166cac275fee25bb18b033922314a9a3ad15bb6edef948b0a7900aac2e3c9e",
+      "mutantBuildExit": 0,
+      "mutantArtifacts": [
+        {
+          "file": "packages/sign-in-core/dist/better-auth/index.js",
+          "bytes": 974786,
+          "sha256": "03169d19544669eaff069dbc3146522263e0a14a47b2a3ebfee6611416a8675e"
+        },
+        {
+          "file": "packages/sign-in-core/dist/contracts/person-identity-contracts.js",
+          "bytes": 2587,
+          "sha256": "b7e003339354ad25edad155bc2a397c8cfdff2f471b960a4d4ee173398370732"
+        },
+        {
+          "file": "packages/sign-in-core/dist/fleet-admin-create-words-CQ1zRpjt.js",
+          "bytes": 100321,
+          "sha256": "119ab32d2e168323dd9c86788aeda12f7304319f4137b503332ec85718b18aec"
+        },
+        {
+          "file": "packages/sign-in-core/dist/index.js",
+          "bytes": 84529,
+          "sha256": "347e8e7dfc6a6e4c8af906549db0d7fd7a1479cbf662f5e5f13cee6e37f1d14a"
+        },
+        {
+          "file": "packages/sign-in-core/dist/second-factor-step-up-CNY5sRgq.js",
+          "bytes": 2297,
+          "sha256": "96cfbdbe99bb11349b190676bb2a107a26723ab6b0fd8614bed7484c581be760"
+        }
+      ],
+      "changedJsArtifacts": [
+        {
+          "file": "packages/sign-in-core/dist/better-auth/index.js",
+          "bytes": 974786,
+          "sha256": "03169d19544669eaff069dbc3146522263e0a14a47b2a3ebfee6611416a8675e"
+        },
+        {
+          "file": "packages/sign-in-core/dist/fleet-admin-create-words-CQ1zRpjt.js",
+          "bytes": 100321,
+          "sha256": "119ab32d2e168323dd9c86788aeda12f7304319f4137b503332ec85718b18aec"
+        },
+        {
+          "file": "packages/sign-in-core/dist/index.js",
+          "bytes": 84529,
+          "sha256": "347e8e7dfc6a6e4c8af906549db0d7fd7a1479cbf662f5e5f13cee6e37f1d14a"
+        }
+      ],
+      "restoredSourceSha256": "2ffcafa7fe134334eebf03404e9275e5b57750ae5b834e4d974ebc8b4c49e41f",
+      "sourceRestored": true,
+      "restoredBuildExit": 0,
+      "restoredArtifacts": [
+        {
+          "file": "packages/sign-in-core/dist/better-auth/index.js",
+          "bytes": 974786,
+          "sha256": "47ed7365a83fb3494efd9bb8884e65d4e1e1543c37ca82fda54aa1028adefffb"
+        },
+        {
+          "file": "packages/sign-in-core/dist/contracts/person-identity-contracts.js",
+          "bytes": 2587,
+          "sha256": "b7e003339354ad25edad155bc2a397c8cfdff2f471b960a4d4ee173398370732"
+        },
+        {
+          "file": "packages/sign-in-core/dist/fleet-admin-create-words-zTlgq_UA.js",
+          "bytes": 100310,
+          "sha256": "788509091c45dae6a8c639031b9ed1fafff30f6c5cebf6d2c5e14f51cb921ecb"
+        },
+        {
+          "file": "packages/sign-in-core/dist/index.js",
+          "bytes": 84529,
+          "sha256": "762363deacf975649228600c76730c404ada1d5cdf7c8848c13ecaf1dd3f037c"
+        },
+        {
+          "file": "packages/sign-in-core/dist/second-factor-step-up-CNY5sRgq.js",
+          "bytes": 2297,
+          "sha256": "96cfbdbe99bb11349b190676bb2a107a26723ab6b0fd8614bed7484c581be760"
+        }
+      ],
+      "interpretation": "Missing intent input digest at testline123.",
+      "restoredDistExact": true,
+      "patch": {
+        "file": {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/C/mutation.patch",
+          "bytes": 697,
+          "sha256": "d4166cac275fee25bb18b033922314a9a3ad15bb6edef948b0a7900aac2e3c9e"
+        },
+        "literal": "diff --git a/packages/sign-in-core/src/organizations/fleet-admin-operation.ts b/packages/sign-in-core/src/organizations/fleet-admin-operation.ts\nindex 403aee79..084c73b5 100644\n--- a/packages/sign-in-core/src/organizations/fleet-admin-operation.ts\n+++ b/packages/sign-in-core/src/organizations/fleet-admin-operation.ts\n@@ -129,7 +129,7 @@ export async function fleetAdminIntentDigest(\n \tcrypto: SignInCrypto,\n \toperation: FleetAdminRequest,\n ): Promise<string> {\n-\treturn base64UrlSha256(crypto, canonicalJson(fleetAdminIntent(operation)));\n+\treturn base64UrlSha256(globalThis.crypto, canonicalJson(fleetAdminIntent(operation)));\n }\n \n /** base64url without padding, as central's `sha256_url`. */\n"
+      },
+      "originalSource": {
+        "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/C/original-source",
+        "bytes": 5374,
+        "sha256": "2ffcafa7fe134334eebf03404e9275e5b57750ae5b834e4d974ebc8b4c49e41f"
+      },
+      "mutantSource": {
+        "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/C/mutant-source",
+        "bytes": 5385,
+        "sha256": "123d57db916632c9d2b077a7363e81f0c361c5da2b0cd8b8ea2709ec57873572"
+      },
+      "commands": [
+        {
+          "step": "sC-mutant-build",
+          "command": "unset SIGN_IN_TEST_HOST\nmise exec node@24.7.0 pnpm@10.33.0 -- pnpm --filter @agent-collaboration/sign-in-core build",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+          },
+          "exit": 0,
+          "signal": null,
+          "elapsedMs": 3178,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sC-mutant-build.process.json",
+            "bytes": 1364,
+            "sha256": "58661aeec90da7d3b69ee7c72d309a45421efdbbec62fdb72f3187351a92a5ff"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sC-mutant-build.stdout",
+              "bytes": 1902,
+              "sha256": "28dd049add19cc9dd28b2b3742ba881bb7537a72cf9450af1ceb3f1e5fc6ba71"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sC-mutant-build.stderr",
+              "bytes": 105,
+              "sha256": "98f630aaebf1cf2395b08635ad8d74ebc4ab45fa9fe467b18df04c28d247ad83"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sC-mutant-build.log",
+              "bytes": 2381,
+              "sha256": "a8672766ec0576d3fc9518778fb5b62966c852954483a66bd5b781f077ff3ca7"
+            }
+          ],
+          "rawTerminalBlock": [],
+          "rawDecidingFailureBlock": null,
+          "cleanup": null
+        },
+        {
+          "step": "sC-red-node",
+          "command": "mise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:e2e:host packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts --reporter=default --reporter=json --outputFile='/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sC-red-node.vitest.json'",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+            "SIGN_IN_TEST_HOST": "node"
+          },
+          "exit": 1,
+          "signal": null,
+          "elapsedMs": 5952,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sC-red-node.process.json",
+            "bytes": 4358,
+            "sha256": "f89f74b194f05db257decf0a8b6d1fca488d9e11e68649fc3d043512d8a1fe13"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sC-red-node.stdout",
+              "bytes": 1009,
+              "sha256": "35dc5e402f4aadd5962aa276097e9f6c706dd2feb799ab166973b69bbd1e2d5c"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sC-red-node.stderr",
+              "bytes": 12308,
+              "sha256": "b849f9b0a9e0b30351c8c9a1c3fbd9872f738ded2065760e4bf642f59357913f"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sC-red-node.log",
+              "bytes": 13874,
+              "sha256": "d8ddc7d1dca6f4eedb67ce1ed2a3ee529723d31ede245931d67aacbe78cad73c"
+            }
+          ],
+          "rawTerminalBlock": [
+            " Test Files  1 failed (1)",
+            "      Tests  1 failed (1)",
+            "   Start at  18:27:29",
+            "   Duration  5.26s (transform 513ms, setup 0ms, import 1.56s, tests 3.61s, environment 0ms)",
+            "JSON report written to /private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sC-red-node.vitest.json"
+          ],
+          "rawDecidingFailureBlock": " FAIL  |e2e-host| packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts > admin forwarding (Node host): the verifier, proof key, signatures and intent digest all go through the host crypto\nAssertionError: expected [ …(3) ] to include '4c60b98e4406d275d694c096d2b6a87bfa647…'\n ❯ packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts:123:34\n    121|    expect(claimDigestHex(proofClaims.ath)).toBe(sha256Hex(accessToken)…\n    122|    expect(digestInputs(records)).toContain(sha256Hex(accessToken));\n    123|    expect(digestInputs(records)).toContain(claimDigestHex(proofClaims.…\n       |                                  ^\n    124|    // Two ES256 signatures (the token endpoint's DPoP proof and centra…\n    125|    // exactly central's signing input.\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n",
+          "cleanup": {
+            "groupEmpty": true,
+            "observedPIDsAbsent": true,
+            "observedIdentityCount": 9,
+            "sampling": "bounded 1s group snapshots, maximum1800, not an exhaustive process-birth ledger",
+            "groupAfter": {
+              "label": "after-command",
+              "at": "2026-11-15T23:27:34.589Z",
+              "command": "/bin/ps -g 81046 -o pid=,ppid=,pgid=,lstart=,comm=",
+              "exit": 1,
+              "stdout": "",
+              "stderr": ""
+            },
+            "noSignalsSentByWrapper": true
+          }
+        },
+        {
+          "step": "sC-restored-build",
+          "command": "unset SIGN_IN_TEST_HOST\nmise exec node@24.7.0 pnpm@10.33.0 -- pnpm --filter @agent-collaboration/sign-in-core build",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+          },
+          "exit": 0,
+          "signal": null,
+          "elapsedMs": 3123,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sC-restored-build.process.json",
+            "bytes": 1372,
+            "sha256": "3e452a82f9019e4112b48af3dde75b443a0ea34ae979d2d3ac2d90608f827345"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sC-restored-build.stdout",
+              "bytes": 1902,
+              "sha256": "b04a15a90485052995ccbf42474608149779ae22b3d9c63ae15b4965bbb8dc22"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sC-restored-build.stderr",
+              "bytes": 105,
+              "sha256": "f8d56a28c97378d599e47d9f7764c5b9771ef4395f213f20ce94ec1daf1a2065"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sC-restored-build.log",
+              "bytes": 2381,
+              "sha256": "5b0aed8732c5dd11e461e7dcfe024663fb85e10a13385aec72e0ce168124e2bc"
+            }
+          ],
+          "rawTerminalBlock": [],
+          "rawDecidingFailureBlock": null,
+          "cleanup": null
+        },
+        {
+          "step": "sC-restored-node",
+          "command": "mise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:e2e:host packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts --reporter=default --reporter=json --outputFile='/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sC-restored-node.vitest.json'",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+            "SIGN_IN_TEST_HOST": "node"
+          },
+          "exit": 0,
+          "signal": null,
+          "elapsedMs": 5987,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sC-restored-node.process.json",
+            "bytes": 4382,
+            "sha256": "14a804e8b46d9f8888310e348c80f59cca714d32df5dfc9bb5710b31ace237bc"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sC-restored-node.stdout",
+              "bytes": 960,
+              "sha256": "3bc4c6977bbc8400f313ad02897124b088111244c77933e5644ecd5c0b8e4e29"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sC-restored-node.stderr",
+              "bytes": 12693,
+              "sha256": "c609abde0a51569c948e9a39e9fbf0711d8650f7ce6bcb3f0c60586bb7ee24c3"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sC-restored-node.log",
+              "bytes": 14215,
+              "sha256": "bce4f2b1090e8f389f2ce8d89fc2fe9da745749e206bd1460a98e47ecb842abb"
+            }
+          ],
+          "rawTerminalBlock": [
+            " Test Files  1 passed (1)",
+            "      Tests  1 passed (1)",
+            "   Start at  18:27:38",
+            "   Duration  5.33s (transform 524ms, setup 0ms, import 1.59s, tests 3.64s, environment 0ms)",
+            "JSON report written to /private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sC-restored-node.vitest.json"
+          ],
+          "rawDecidingFailureBlock": null,
+          "cleanup": {
+            "groupEmpty": true,
+            "observedPIDsAbsent": true,
+            "observedIdentityCount": 9,
+            "sampling": "bounded 1s group snapshots, maximum1800, not an exhaustive process-birth ledger",
+            "groupAfter": {
+              "label": "after-command",
+              "at": "2026-11-15T23:27:43.772Z",
+              "command": "/bin/ps -g 81157 -o pid=,ppid=,pgid=,lstart=,comm=",
+              "exit": 1,
+              "stdout": "",
+              "stderr": ""
+            },
+            "noSignalsSentByWrapper": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "H",
+      "source": "packages/sign-in-core/src/better-auth/fleet-admin-forwarding.ts",
+      "package": "sign-in-core",
+      "baseline": [
+        {
+          "host": "node",
+          "reusedPriorFocusedGreen": "sC-restored-node"
+        }
+      ],
+      "red": [
+        {
+          "step": "sH-red-node",
+          "exit": 1,
+          "report": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sH-red-node.vitest.json",
+            "sha256": "cd1d1b454b41bafaa87feb0cb2ccbeab2178aae950ffc4b6394c9be4b6d9ed29",
+            "passed": 0,
+            "failed": 1,
+            "pending": 0,
+            "rows": [
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts",
+                "name": "admin forwarding (Node host): the verifier, proof key, signatures and intent digest all go through the host crypto",
+                "status": "failed",
+                "failureMessages": [
+                  "AssertionError: expected 1893456000 to be 1893455970 // Object.is equality\n    at /private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts:138:28\n    at file:///private/tmp/2026-11-b1a-verifier-27d39324/source/node_modules/.pnpm/@vitest+runner@4.1.5/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "restored": [
+        {
+          "step": "sH-restored-node",
+          "exit": 0,
+          "report": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sH-restored-node.vitest.json",
+            "sha256": "bb370271fcd53176118ae48206dd3e708177622f725d12679d6768a372f3155e",
+            "passed": 1,
+            "failed": 0,
+            "pending": 0,
+            "rows": [
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts",
+                "name": "admin forwarding (Node host): the verifier, proof key, signatures and intent digest all go through the host crypto",
+                "status": "passed",
+                "failureMessages": []
+              }
+            ]
+          }
+        }
+      ],
+      "originalSha256": "988cc5bbcb51b0a6f3c1c8415c737fcd062496d342c910ed6d3d51a379a412f3",
+      "mutantSha256": "6ea8c4a6581c00c5e9138a663f821ac4e24bc788a145a1f6201523d10ed1eac2",
+      "beforeArtifacts": [
+        {
+          "file": "packages/sign-in-core/dist/better-auth/index.js",
+          "bytes": 974786,
+          "sha256": "47ed7365a83fb3494efd9bb8884e65d4e1e1543c37ca82fda54aa1028adefffb"
+        },
+        {
+          "file": "packages/sign-in-core/dist/contracts/person-identity-contracts.js",
+          "bytes": 2587,
+          "sha256": "b7e003339354ad25edad155bc2a397c8cfdff2f471b960a4d4ee173398370732"
+        },
+        {
+          "file": "packages/sign-in-core/dist/fleet-admin-create-words-zTlgq_UA.js",
+          "bytes": 100310,
+          "sha256": "788509091c45dae6a8c639031b9ed1fafff30f6c5cebf6d2c5e14f51cb921ecb"
+        },
+        {
+          "file": "packages/sign-in-core/dist/index.js",
+          "bytes": 84529,
+          "sha256": "762363deacf975649228600c76730c404ada1d5cdf7c8848c13ecaf1dd3f037c"
+        },
+        {
+          "file": "packages/sign-in-core/dist/second-factor-step-up-CNY5sRgq.js",
+          "bytes": 2297,
+          "sha256": "96cfbdbe99bb11349b190676bb2a107a26723ab6b0fd8614bed7484c581be760"
+        }
+      ],
+      "patchSha256": "239105838ecf5b51225e856d0922e96f1270c108e33c83351cea5105dec1e102",
+      "mutantBuildExit": 0,
+      "mutantArtifacts": [
+        {
+          "file": "packages/sign-in-core/dist/better-auth/index.js",
+          "bytes": 974770,
+          "sha256": "7c202ac393e8dcacbee42f990689836cff88411096db73fcef97407c788eb3ba"
+        },
+        {
+          "file": "packages/sign-in-core/dist/contracts/person-identity-contracts.js",
+          "bytes": 2587,
+          "sha256": "b7e003339354ad25edad155bc2a397c8cfdff2f471b960a4d4ee173398370732"
+        },
+        {
+          "file": "packages/sign-in-core/dist/fleet-admin-create-words-zTlgq_UA.js",
+          "bytes": 100310,
+          "sha256": "788509091c45dae6a8c639031b9ed1fafff30f6c5cebf6d2c5e14f51cb921ecb"
+        },
+        {
+          "file": "packages/sign-in-core/dist/index.js",
+          "bytes": 84529,
+          "sha256": "762363deacf975649228600c76730c404ada1d5cdf7c8848c13ecaf1dd3f037c"
+        },
+        {
+          "file": "packages/sign-in-core/dist/second-factor-step-up-CNY5sRgq.js",
+          "bytes": 2297,
+          "sha256": "96cfbdbe99bb11349b190676bb2a107a26723ab6b0fd8614bed7484c581be760"
+        }
+      ],
+      "changedJsArtifacts": [
+        {
+          "file": "packages/sign-in-core/dist/better-auth/index.js",
+          "bytes": 974770,
+          "sha256": "7c202ac393e8dcacbee42f990689836cff88411096db73fcef97407c788eb3ba"
+        }
+      ],
+      "restoredSourceSha256": "988cc5bbcb51b0a6f3c1c8415c737fcd062496d342c910ed6d3d51a379a412f3",
+      "sourceRestored": true,
+      "restoredBuildExit": 0,
+      "restoredArtifacts": [
+        {
+          "file": "packages/sign-in-core/dist/better-auth/index.js",
+          "bytes": 974786,
+          "sha256": "47ed7365a83fb3494efd9bb8884e65d4e1e1543c37ca82fda54aa1028adefffb"
+        },
+        {
+          "file": "packages/sign-in-core/dist/contracts/person-identity-contracts.js",
+          "bytes": 2587,
+          "sha256": "b7e003339354ad25edad155bc2a397c8cfdff2f471b960a4d4ee173398370732"
+        },
+        {
+          "file": "packages/sign-in-core/dist/fleet-admin-create-words-zTlgq_UA.js",
+          "bytes": 100310,
+          "sha256": "788509091c45dae6a8c639031b9ed1fafff30f6c5cebf6d2c5e14f51cb921ecb"
+        },
+        {
+          "file": "packages/sign-in-core/dist/index.js",
+          "bytes": 84529,
+          "sha256": "762363deacf975649228600c76730c404ada1d5cdf7c8848c13ecaf1dd3f037c"
+        },
+        {
+          "file": "packages/sign-in-core/dist/second-factor-step-up-CNY5sRgq.js",
+          "bytes": 2297,
+          "sha256": "96cfbdbe99bb11349b190676bb2a107a26723ab6b0fd8614bed7484c581be760"
+        }
+      ],
+      "interpretation": "proofClaims.iat testline138: actual1893456000 expected1893455970; exactly30seconds.",
+      "restoredDistExact": true,
+      "patch": {
+        "file": {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/H/mutation.patch",
+          "bytes": 787,
+          "sha256": "239105838ecf5b51225e856d0922e96f1270c108e33c83351cea5105dec1e102"
+        },
+        "literal": "diff --git a/packages/sign-in-core/src/better-auth/fleet-admin-forwarding.ts b/packages/sign-in-core/src/better-auth/fleet-admin-forwarding.ts\nindex 9417edc8..6ae3f445 100644\n--- a/packages/sign-in-core/src/better-auth/fleet-admin-forwarding.ts\n+++ b/packages/sign-in-core/src/better-auth/fleet-admin-forwarding.ts\n@@ -100,7 +100,7 @@ export async function forwardFleetAdminRequest(props: {\n \t\tkey,\n \t\thtu: `${props.configuration.centralPublicOrigin}${fleetAdminRoutePaths[operation.operation]}`,\n \t\trequestId: props.platform.ids.nextId(),\n-\t\tissuedAtSeconds: Math.floor(props.platform.clock.now() / 1000),\n+\t\tissuedAtSeconds: Math.floor(Date.now() / 1000),\n \t\tbound: {\n \t\t\taccessToken: credential.accessToken,\n \t\t\tintent: await fleetAdminIntentDigest(props.platform.crypto, operation),\n"
+      },
+      "originalSource": {
+        "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/H/original-source",
+        "bytes": 9979,
+        "sha256": "988cc5bbcb51b0a6f3c1c8415c737fcd062496d342c910ed6d3d51a379a412f3"
+      },
+      "mutantSource": {
+        "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/H/mutant-source",
+        "bytes": 9963,
+        "sha256": "6ea8c4a6581c00c5e9138a663f821ac4e24bc788a145a1f6201523d10ed1eac2"
+      },
+      "commands": [
+        {
+          "step": "sH-mutant-build",
+          "command": "unset SIGN_IN_TEST_HOST\nmise exec node@24.7.0 pnpm@10.33.0 -- pnpm --filter @agent-collaboration/sign-in-core build",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+          },
+          "exit": 0,
+          "signal": null,
+          "elapsedMs": 3159,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sH-mutant-build.process.json",
+            "bytes": 1364,
+            "sha256": "db660d9b787b15123c30cd5e74bacd338ed1fdebcbc2c57e8923a6b924af75da"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sH-mutant-build.stdout",
+              "bytes": 1902,
+              "sha256": "4a3678151ce6275fa538cf3862250177bbce314ca1f2e244192a4606f6973083"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sH-mutant-build.stderr",
+              "bytes": 104,
+              "sha256": "f0925819f785103843d6aa527c0cdf2f0117ad0750ee6d3e7b5308ebb75f2c20"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sH-mutant-build.log",
+              "bytes": 2380,
+              "sha256": "52b8a0225894f03d119d3e1f05c3b3ffde73fbb6b4a9dafc54055d4f3e16337c"
+            }
+          ],
+          "rawTerminalBlock": [],
+          "rawDecidingFailureBlock": null,
+          "cleanup": null
+        },
+        {
+          "step": "sH-red-node",
+          "command": "mise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:e2e:host packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts --reporter=default --reporter=json --outputFile='/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sH-red-node.vitest.json'",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+            "SIGN_IN_TEST_HOST": "node"
+          },
+          "exit": 1,
+          "signal": null,
+          "elapsedMs": 5986,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sH-red-node.process.json",
+            "bytes": 4358,
+            "sha256": "4bea5619162a84cd3a38243673dae726501278a609545b6e237d4df00dd989b0"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sH-red-node.stdout",
+              "bytes": 1009,
+              "sha256": "072969107b6576a4b9d4ea754f611dc34f1b05a3a3e816a59cd6295c8285141e"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sH-red-node.stderr",
+              "bytes": 12270,
+              "sha256": "7e66ab32ccb9a2e19b7e67e58fda21fc4f7503d8c24710d6edd40f54be874b7e"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sH-red-node.log",
+              "bytes": 13836,
+              "sha256": "72742713f1d25f455de1ce6cf647216fd3015b830751481937469cb88c651798"
+            }
+          ],
+          "rawTerminalBlock": [
+            " Test Files  1 failed (1)",
+            "      Tests  1 failed (1)",
+            "   Start at  18:27:47",
+            "   Duration  5.30s (transform 513ms, setup 0ms, import 1.55s, tests 3.64s, environment 0ms)",
+            "JSON report written to /private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sH-red-node.vitest.json"
+          ],
+          "rawDecidingFailureBlock": " FAIL  |e2e-host| packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts > admin forwarding (Node host): the verifier, proof key, signatures and intent digest all go through the host crypto\nAssertionError: expected 1893456000 to be 1893455970 // Object.is equality\n\n- Expected\n+ Received\n\n- 1893455970\n+ 1893456000\n\n ❯ packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts:138:28\n    136|    // The proof's time is the core clock's, not the process clock's (p…\n    137|    const processSeconds = Math.floor(controlledSignInClock.now() / 100…\n    138|    expect(proofClaims.iat).toBe(\n       |                            ^\n    139|     Math.floor((controlledSignInClock.now() + coreClockOffsetMilliseco…\n    140|    );\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n",
+          "cleanup": {
+            "groupEmpty": true,
+            "observedPIDsAbsent": true,
+            "observedIdentityCount": 9,
+            "sampling": "bounded 1s group snapshots, maximum1800, not an exhaustive process-birth ledger",
+            "groupAfter": {
+              "label": "after-command",
+              "at": "2026-11-15T23:27:53.005Z",
+              "command": "/bin/ps -g 81275 -o pid=,ppid=,pgid=,lstart=,comm=",
+              "exit": 1,
+              "stdout": "",
+              "stderr": ""
+            },
+            "noSignalsSentByWrapper": true
+          }
+        },
+        {
+          "step": "sH-restored-build",
+          "command": "unset SIGN_IN_TEST_HOST\nmise exec node@24.7.0 pnpm@10.33.0 -- pnpm --filter @agent-collaboration/sign-in-core build",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+          },
+          "exit": 0,
+          "signal": null,
+          "elapsedMs": 3127,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sH-restored-build.process.json",
+            "bytes": 1372,
+            "sha256": "6167bb1bab760564a6419ee81d995decf611fbc218c30d5f48f10a3d509886c4"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sH-restored-build.stdout",
+              "bytes": 1902,
+              "sha256": "32880b3b2ebbfa86a639ae6def6dd68cdc3b2980696cb1d319c8987b263ce4b3"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sH-restored-build.stderr",
+              "bytes": 105,
+              "sha256": "7c51c6641b29e76a66178eb8bd0e34fe3023267747433878e50065ff81874c51"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sH-restored-build.log",
+              "bytes": 2381,
+              "sha256": "076992833b8ac82026c9e2944704ac2f0531d9be852ddded266ba3586398fcd4"
+            }
+          ],
+          "rawTerminalBlock": [],
+          "rawDecidingFailureBlock": null,
+          "cleanup": null
+        },
+        {
+          "step": "sH-restored-node",
+          "command": "mise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:e2e:host packages/sign-in-test-support/src/host-crypto-recording.host.e2e.test.ts --reporter=default --reporter=json --outputFile='/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sH-restored-node.vitest.json'",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+            "SIGN_IN_TEST_HOST": "node"
+          },
+          "exit": 0,
+          "signal": null,
+          "elapsedMs": 5938,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sH-restored-node.process.json",
+            "bytes": 4382,
+            "sha256": "f5cbd791518e94e1418afe44d7b2a50d32225a3f8086ec243075899e4437b120"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sH-restored-node.stdout",
+              "bytes": 960,
+              "sha256": "8c6f91e5939a0c2be8d8d3410a3ae3de1edc11189e5b4714295128f117f7fa42"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sH-restored-node.stderr",
+              "bytes": 12693,
+              "sha256": "8bf9073451005bda81c703301f62f80e769837f21b04235d9ece040569d99a9e"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sH-restored-node.log",
+              "bytes": 14215,
+              "sha256": "000b8734f6f9d26d32e3f79a6286a2c19798285145b760d236fbc5f2afbbeddb"
+            }
+          ],
+          "rawTerminalBlock": [
+            " Test Files  1 passed (1)",
+            "      Tests  1 passed (1)",
+            "   Start at  18:27:56",
+            "   Duration  5.28s (transform 525ms, setup 0ms, import 1.59s, tests 3.59s, environment 0ms)",
+            "JSON report written to /private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sH-restored-node.vitest.json"
+          ],
+          "rawDecidingFailureBlock": null,
+          "cleanup": {
+            "groupEmpty": true,
+            "observedPIDsAbsent": true,
+            "observedIdentityCount": 9,
+            "sampling": "bounded 1s group snapshots, maximum1800, not an exhaustive process-birth ledger",
+            "groupAfter": {
+              "label": "after-command",
+              "at": "2026-11-15T23:28:02.151Z",
+              "command": "/bin/ps -g 81386 -o pid=,ppid=,pgid=,lstart=,comm=",
+              "exit": 1,
+              "stdout": "",
+              "stderr": ""
+            },
+            "noSignalsSentByWrapper": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "D",
+      "source": "packages/sign-in-host-cloudflare/src/binding-request-limiter.ts",
+      "package": "sign-in-host-cloudflare",
+      "baseline": [
+        {
+          "step": "sD-baseline-cloudflare",
+          "exit": 0,
+          "report": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sD-baseline-cloudflare.vitest.json",
+            "sha256": "c598067abc4d4bf0e5720ac7355474ddefa278665c9ce8d97a2fe26d354be6fb",
+            "passed": 6,
+            "failed": 0,
+            "pending": 0,
+            "rows": [
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+                "name": "people: an unavailable outer backing call returns 503 before native captcha or state effects",
+                "status": "passed",
+                "failureMessages": []
+              },
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+                "name": "people: changing spoofed XFF leaves native counting on the trusted host address",
+                "status": "passed",
+                "failureMessages": []
+              },
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+                "name": "people: social starts hit the native limit and the real outer counter (Miniflare binding, Node counter) without more stored effects, and another address still passes",
+                "status": "passed",
+                "failureMessages": []
+              },
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+                "name": "people: the service own page reaches the real outer counter (Miniflare binding, Node counter) without a write, and another address still passes",
+                "status": "passed",
+                "failureMessages": []
+              },
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+                "name": "people: five failed recovery codes reach native verification and the sixth is limited without another intent or stamp",
+                "status": "passed",
+                "failureMessages": []
+              },
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+                "name": "people: the token endpoint counts refused clients and limits the thirty-first request without minting or storing anything",
+                "status": "passed",
+                "failureMessages": []
+              }
+            ]
+          }
+        }
+      ],
+      "red": [
+        {
+          "step": "sD-red-cloudflare",
+          "exit": 1,
+          "report": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sD-red-cloudflare.vitest.json",
+            "sha256": "3ec4e4c780fe11c4ad1ffab92ee1573b13f4c145fa6fd967109a429488b2a12f",
+            "passed": 3,
+            "failed": 3,
+            "pending": 0,
+            "rows": [
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+                "name": "people: an unavailable outer backing call returns 503 before native captcha or state effects",
+                "status": "failed",
+                "failureMessages": [
+                  "AssertionError: expected 200 to be 503 // Object.is equality\n    at /private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts:70:27\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at file:///private/tmp/2026-11-b1a-verifier-27d39324/source/node_modules/.pnpm/@vitest+runner@4.1.5/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+                ]
+              },
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+                "name": "people: changing spoofed XFF leaves native counting on the trusted host address",
+                "status": "passed",
+                "failureMessages": []
+              },
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+                "name": "people: social starts hit the native limit and the real outer counter (Miniflare binding, Node counter) without more stored effects, and another address still passes",
+                "status": "failed",
+                "failureMessages": [
+                  "AssertionError: expected [ …(13) ] to deep equally contain { kind: 'request-limited', …(2) }\n    at /private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts:139:24\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at file:///private/tmp/2026-11-b1a-verifier-27d39324/source/node_modules/.pnpm/@vitest+runner@4.1.5/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+                ]
+              },
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+                "name": "people: the service own page reaches the real outer counter (Miniflare binding, Node counter) without a write, and another address still passes",
+                "status": "failed",
+                "failureMessages": [
+                  "Error: The service page never reached its outer limit\n    at firstLimitedPage (/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts:159:28)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at /private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts:169:19\n    at file:///private/tmp/2026-11-b1a-verifier-27d39324/source/node_modules/.pnpm/@vitest+runner@4.1.5/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+                ]
+              },
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+                "name": "people: five failed recovery codes reach native verification and the sixth is limited without another intent or stamp",
+                "status": "passed",
+                "failureMessages": []
+              },
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+                "name": "people: the token endpoint counts refused clients and limits the thirty-first request without minting or storing anything",
+                "status": "passed",
+                "failureMessages": []
+              }
+            ]
+          }
+        }
+      ],
+      "restored": [
+        {
+          "step": "sD-restored-cloudflare",
+          "exit": 0,
+          "report": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sD-restored-cloudflare.vitest.json",
+            "sha256": "996c089295327c236ac25fbdb70266746af96f5b2974c31e9695de962fee1a73",
+            "passed": 6,
+            "failed": 0,
+            "pending": 0,
+            "rows": [
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+                "name": "people: an unavailable outer backing call returns 503 before native captcha or state effects",
+                "status": "passed",
+                "failureMessages": []
+              },
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+                "name": "people: changing spoofed XFF leaves native counting on the trusted host address",
+                "status": "passed",
+                "failureMessages": []
+              },
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+                "name": "people: social starts hit the native limit and the real outer counter (Miniflare binding, Node counter) without more stored effects, and another address still passes",
+                "status": "passed",
+                "failureMessages": []
+              },
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+                "name": "people: the service own page reaches the real outer counter (Miniflare binding, Node counter) without a write, and another address still passes",
+                "status": "passed",
+                "failureMessages": []
+              },
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+                "name": "people: five failed recovery codes reach native verification and the sixth is limited without another intent or stamp",
+                "status": "passed",
+                "failureMessages": []
+              },
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+                "name": "people: the token endpoint counts refused clients and limits the thirty-first request without minting or storing anything",
+                "status": "passed",
+                "failureMessages": []
+              }
+            ]
+          }
+        }
+      ],
+      "originalSha256": "137295f12dbb75c2ff4f97429b84cfa2d668e836b40ae1a2ee0a78ce98df8d0c",
+      "mutantSha256": "e1470fd601c07cc392dbbbfd3c5ca198d6e363bd191537710b287ed9414fe1e0",
+      "beforeArtifacts": [
+        {
+          "file": "packages/sign-in-host-cloudflare/dist/index.js",
+          "bytes": 2334,
+          "sha256": "90ff63fbc805b8b1e2faadb3128d615bca69b7a378548b748b6b5bd008d0d1ab"
+        },
+        {
+          "file": "packages/sign-in-host-cloudflare/dist/worker-configuration-CmNick6s.js",
+          "bytes": 4490,
+          "sha256": "b52151ebf3429ef4d458a81a2e4f84d21eab6c39d52be550bd33c39a6305a28a"
+        },
+        {
+          "file": "packages/sign-in-host-cloudflare/dist/worker-configuration.js",
+          "bytes": 184,
+          "sha256": "6259e43ea8252de66981d3663612995d90e0c46b21ad41c9b6d31f3e8d9bba7d"
+        }
+      ],
+      "patchSha256": "1bdc56045d0a5c366bcc555e52b9e5c68f1aac259c391650a4864354aff74c56",
+      "mutantBuildExit": 0,
+      "mutantArtifacts": [
+        {
+          "file": "packages/sign-in-host-cloudflare/dist/index.js",
+          "bytes": 2334,
+          "sha256": "128eb014a383ba56eb15ef4ffe14e9d4095cbfcd6a53b1d74f453b0c8ac3639d"
+        },
+        {
+          "file": "packages/sign-in-host-cloudflare/dist/worker-configuration-BqTeyNI7.js",
+          "bytes": 4417,
+          "sha256": "63b73922c42fe29474bffee5a1889cec6e03f9091c1e4e143b0a7c4315078e84"
+        },
+        {
+          "file": "packages/sign-in-host-cloudflare/dist/worker-configuration.js",
+          "bytes": 184,
+          "sha256": "97d7a6e0f7e7966be145866982a67e355356b3ccf97f8683def36d81a2d12ddc"
+        }
+      ],
+      "changedJsArtifacts": [
+        {
+          "file": "packages/sign-in-host-cloudflare/dist/index.js",
+          "bytes": 2334,
+          "sha256": "128eb014a383ba56eb15ef4ffe14e9d4095cbfcd6a53b1d74f453b0c8ac3639d"
+        },
+        {
+          "file": "packages/sign-in-host-cloudflare/dist/worker-configuration-BqTeyNI7.js",
+          "bytes": 4417,
+          "sha256": "63b73922c42fe29474bffee5a1889cec6e03f9091c1e4e143b0a7c4315078e84"
+        },
+        {
+          "file": "packages/sign-in-host-cloudflare/dist/worker-configuration.js",
+          "bytes": 184,
+          "sha256": "97d7a6e0f7e7966be145866982a67e355356b3ccf97f8683def36d81a2d12ddc"
+        }
+      ],
+      "restoredSourceSha256": "137295f12dbb75c2ff4f97429b84cfa2d668e836b40ae1a2ee0a78ce98df8d0c",
+      "sourceRestored": true,
+      "restoredBuildExit": 0,
+      "restoredArtifacts": [
+        {
+          "file": "packages/sign-in-host-cloudflare/dist/index.js",
+          "bytes": 2334,
+          "sha256": "90ff63fbc805b8b1e2faadb3128d615bca69b7a378548b748b6b5bd008d0d1ab"
+        },
+        {
+          "file": "packages/sign-in-host-cloudflare/dist/worker-configuration-CmNick6s.js",
+          "bytes": 4490,
+          "sha256": "b52151ebf3429ef4d458a81a2e4f84d21eab6c39d52be550bd33c39a6305a28a"
+        },
+        {
+          "file": "packages/sign-in-host-cloudflare/dist/worker-configuration.js",
+          "bytes": 184,
+          "sha256": "6259e43ea8252de66981d3663612995d90e0c46b21ad41c9b6d31f3e8d9bba7d"
+        }
+      ],
+      "interpretation": "Unavailable backing bypass gives200instead503; outer-layer observation missing even though provider limiting remains; service page never reaches outer limit at601requests.",
+      "restoredDistExact": true,
+      "patch": {
+        "file": {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/D/mutation.patch",
+          "bytes": 758,
+          "sha256": "1bdc56045d0a5c366bcc555e52b9e5c68f1aac259c391650a4864354aff74c56"
+        },
+        "literal": "diff --git a/packages/sign-in-host-cloudflare/src/binding-request-limiter.ts b/packages/sign-in-host-cloudflare/src/binding-request-limiter.ts\nindex 4a6e977f..bbbce42b 100644\n--- a/packages/sign-in-host-cloudflare/src/binding-request-limiter.ts\n+++ b/packages/sign-in-host-cloudflare/src/binding-request-limiter.ts\n@@ -22,7 +22,7 @@ export function createBindingRequestLimiter(props: {\n \t\t\t\tconst binding =\n \t\t\t\t\tpolicy.binding === 'SIGN_IN_ATTEMPTS' ? props.signInAttempts : props.authRequests;\n \t\t\t\tconst outcome = bindingOutcomeSchema.safeParse(\n-\t\t\t\t\tawait binding.limit({ key: `${request.requestClass}:${request.address}` }),\n+\t\t\t\t\t({ success: true }),\n \t\t\t\t);\n \t\t\t\tif (!outcome.success) return { kind: 'unavailable' };\n \t\t\t\treturn outcome.data.success\n"
+      },
+      "originalSource": {
+        "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/D/original-source",
+        "bytes": 1273,
+        "sha256": "137295f12dbb75c2ff4f97429b84cfa2d668e836b40ae1a2ee0a78ce98df8d0c"
+      },
+      "mutantSource": {
+        "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/D/mutant-source",
+        "bytes": 1218,
+        "sha256": "e1470fd601c07cc392dbbbfd3c5ca198d6e363bd191537710b287ed9414fe1e0"
+      },
+      "commands": [
+        {
+          "step": "sD-baseline-cloudflare",
+          "command": "unset SIGN_IN_TEST_HOST\nmise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:e2e:host packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts --reporter=default --reporter=json --outputFile='/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sD-baseline-cloudflare.vitest.json'",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+          },
+          "exit": 0,
+          "signal": null,
+          "elapsedMs": 27397,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sD-baseline-cloudflare.process.json",
+            "bytes": 10319,
+            "sha256": "33f97daf271d95c8d6556b1ae4c208067de3fa4bb495e30c9e2346f44fad0ac1"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sD-baseline-cloudflare.stdout",
+              "bytes": 1659,
+              "sha256": "16e1c857d5ac42ddea9f93dc0069ec668b39d6392c27597ee423b4f814171b10"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sD-baseline-cloudflare.stderr",
+              "bytes": 394955,
+              "sha256": "4d3a632681d27184d7039f738110aaab2c1dba3fef8cc726f588031837c68ed8"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sD-baseline-cloudflare.log",
+              "bytes": 397179,
+              "sha256": "7d1a8f09b0cfa51f3a1c753e2ab710dff9b727b9fb047fd2dd5bb1c9b2591a7c"
+            }
+          ],
+          "rawTerminalBlock": [
+            " Test Files  1 passed (1)",
+            "      Tests  6 passed (6)",
+            "   Start at  18:28:02",
+            "   Duration  26.76s (transform 538ms, setup 0ms, import 1.58s, tests 25.09s, environment 0ms)",
+            "JSON report written to /private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sD-baseline-cloudflare.vitest.json"
+          ],
+          "rawDecidingFailureBlock": null,
+          "cleanup": {
+            "groupEmpty": true,
+            "observedPIDsAbsent": true,
+            "observedIdentityCount": 30,
+            "sampling": "bounded 1s group snapshots, maximum1800, not an exhaustive process-birth ledger",
+            "groupAfter": {
+              "label": "after-command",
+              "at": "2026-11-15T23:28:29.601Z",
+              "command": "/bin/ps -g 81440 -o pid=,ppid=,pgid=,lstart=,comm=",
+              "exit": 1,
+              "stdout": "",
+              "stderr": ""
+            },
+            "noSignalsSentByWrapper": true
+          }
+        },
+        {
+          "step": "sD-mutant-build",
+          "command": "unset SIGN_IN_TEST_HOST\nmise exec node@24.7.0 pnpm@10.33.0 -- pnpm --filter @agent-collaboration/sign-in-host-cloudflare build",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+          },
+          "exit": 0,
+          "signal": null,
+          "elapsedMs": 1273,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sD-mutant-build.process.json",
+            "bytes": 1373,
+            "sha256": "cf4a04d3cd7db6828fa055431469dd7a81a5f02c98778010d2ae18598a5253fb"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sD-mutant-build.stdout",
+              "bytes": 844,
+              "sha256": "a5809b04185007cc85f6b28ba4d28e36818dd6683b18ddab27bd6c6295fc44b9"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sD-mutant-build.stderr",
+              "bytes": 67,
+              "sha256": "e71de8cd22c16ed6915ecda7c9d75528ef0ae4138cb82c480b8892497edd2da3"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sD-mutant-build.log",
+              "bytes": 1296,
+              "sha256": "f97f582344f8bc846843d597dd6648f83b9399f22c0839f6e4495aafb2bb4f40"
+            }
+          ],
+          "rawTerminalBlock": [],
+          "rawDecidingFailureBlock": null,
+          "cleanup": null
+        },
+        {
+          "step": "sD-red-cloudflare",
+          "command": "unset SIGN_IN_TEST_HOST\nmise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:e2e:host packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts --reporter=default --reporter=json --outputFile='/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sD-red-cloudflare.vitest.json'",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+          },
+          "exit": 1,
+          "signal": null,
+          "elapsedMs": 28893,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sD-red-cloudflare.process.json",
+            "bytes": 10294,
+            "sha256": "4a7fc39e109ecf296616cd72736fab1df81917e730b825fec855c4a6853ceebe"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sD-red-cloudflare.stdout",
+              "bytes": 1715,
+              "sha256": "db389b4752d02e2f8d8ec9e07c10517d9c73becfb1be0582ddfd7302932cb79c"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sD-red-cloudflare.stderr",
+              "bytes": 700527,
+              "sha256": "7a17348ac45757ef4c5f39f1f2e386a08f9b5469bf454fdadef71fb5225d32c2"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sD-red-cloudflare.log",
+              "bytes": 702802,
+              "sha256": "865cfe2da9d3e0e4cc03ca281f93c6b7299ea550e3383d47f41f5f87c3b7e6ce"
+            }
+          ],
+          "rawTerminalBlock": [
+            " Test Files  1 failed (1)",
+            "      Tests  3 failed | 3 passed (6)",
+            "   Start at  18:28:31",
+            "   Duration  28.19s (transform 558ms, setup 0ms, import 1.63s, tests 26.47s, environment 0ms)",
+            "JSON report written to /private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sD-red-cloudflare.vitest.json"
+          ],
+          "rawDecidingFailureBlock": " FAIL  |e2e-host| packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts > people: an unavailable outer backing call returns 503 before native captcha or state effects\nAssertionError: expected 200 to be 503 // Object.is equality\n\n- Expected\n+ Received\n\n- 503\n+ 200\n\n ❯ packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts:70:27\n     68|   await harness.makeLimiterUnavailable();\n     69|   const response = await socialAttempt(harness);\n     70|   expect(response.status).toBe(503);\n       |                           ^\n     71|   expect(await response.json()).toEqual({ error: 'sign-in-unavailable'…\n     72|   expect(harness.siteVerifyAttempts()).toBe(nativeAttempts);\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯\n\n FAIL  |e2e-host| packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts > people: social starts hit the native limit and the real outer counter (Miniflare binding, Node counter) without more stored effects, and another address still passes\nAssertionError: expected [ …(13) ] to deep equally contain { kind: 'request-limited', …(2) }\n\n- Expected:\n{\n  \"kind\": \"request-limited\",\n  \"layer\": \"outer\",\n  \"requestClass\": \"sign-in\",\n}\n\n+ Received:\n[\n  {\n    \"kind\": \"request-limited\",\n    \"layer\": \"provider\",\n    \"requestClass\": \"sign-in\",\n  },\n  {\n    \"kind\": \"request-limited\",\n    \"layer\": \"provider\",\n    \"requestClass\": \"sign-in\",\n  },\n  {\n    \"kind\": \"request-limited\",\n    \"layer\": \"provider\",\n    \"requestClass\": \"sign-in\",\n  },\n  {\n    \"kind\": \"request-limited\",\n    \"layer\": \"provider\",\n    \"requestClass\": \"sign-in\",\n  },\n  {\n    \"kind\": \"request-limited\",\n    \"layer\": \"provider\",\n    \"requestClass\": \"sign-in\",\n  },\n  {\n    \"kind\": \"request-limited\",\n    \"layer\": \"provider\",\n    \"requestClass\": \"sign-in\",\n  },\n  {\n    \"kind\": \"request-limited\",\n    \"layer\": \"provider\",\n    \"requestClass\": \"sign-in\",\n  },\n  {\n    \"kind\": \"request-limited\",\n    \"layer\": \"provider\",\n    \"requestClass\": \"sign-in\",\n  },\n  {\n    \"kind\": \"request-limited\",\n    \"layer\": \"provider\",\n    \"requestClass\": \"sign-in\",\n  },\n  {\n    \"kind\": \"request-limited\",\n    \"layer\": \"provider\",\n    \"requestClass\": \"sign-in\",\n  },\n  {\n    \"kind\": \"request-limited\",\n    \"layer\": \"provider\",\n    \"requestClass\": \"sign-in\",\n  },\n  {\n    \"kind\": \"request-limited\",\n    \"layer\": \"provider\",\n    \"requestClass\": \"sign-in\",\n  },\n  {\n    \"kind\": \"request-limited\",\n    \"layer\": \"provider\",\n    \"requestClass\": \"sign-in\",\n  },\n]\n\n ❯ packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts:139:24\n    137|    layer: 'provider',\n    138|   });\n    139|   expect(observations).toContainEqual({\n       |                        ^\n    140|    kind: 'request-limited',\n    141|    requestClass: 'sign-in',\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯\n\n FAIL  |e2e-host| packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts > people: the service own page reaches the real outer counter (Miniflare binding, Node counter) without a write, and another address still passes\nError: The service page never reached its outer limit\n ❯ firstLimitedPage packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts:159:28\n    157|  if (response.status === 429) return { attempt, response };\n    158|  expect(response.status).toBe(200);\n    159|  if (attempt >= 601) throw new Error('The service page never reached i…\n       |                            ^\n    160|  // Await the real response event, not a sleep or an injected clock ju…\n    161|  return firstLimitedPage({ harness: props.harness, attempt: attempt + …\n ❯ packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts:169:19\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯\n\n",
+          "cleanup": {
+            "groupEmpty": true,
+            "observedPIDsAbsent": true,
+            "observedIdentityCount": 30,
+            "sampling": "bounded 1s group snapshots, maximum1800, not an exhaustive process-birth ledger",
+            "groupAfter": {
+              "label": "after-command",
+              "at": "2026-11-15T23:28:59.832Z",
+              "command": "/bin/ps -g 81651 -o pid=,ppid=,pgid=,lstart=,comm=",
+              "exit": 1,
+              "stdout": "",
+              "stderr": ""
+            },
+            "noSignalsSentByWrapper": true
+          }
+        },
+        {
+          "step": "sD-restored-build",
+          "command": "unset SIGN_IN_TEST_HOST\nmise exec node@24.7.0 pnpm@10.33.0 -- pnpm --filter @agent-collaboration/sign-in-host-cloudflare build",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+          },
+          "exit": 0,
+          "signal": null,
+          "elapsedMs": 1253,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sD-restored-build.process.json",
+            "bytes": 1381,
+            "sha256": "89417df32f4f1b1f0c724c819abb6ffa1197fc8954b3d17902bb1d3c39671100"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sD-restored-build.stdout",
+              "bytes": 844,
+              "sha256": "d27b766700d51825b0b2a53da6eb13fa5c193a6363e08983e4ceb83162b59c15"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sD-restored-build.stderr",
+              "bytes": 67,
+              "sha256": "e71de8cd22c16ed6915ecda7c9d75528ef0ae4138cb82c480b8892497edd2da3"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sD-restored-build.log",
+              "bytes": 1296,
+              "sha256": "904c637ac6eddc0443ce49f4e1a06bf71954f18a13a123f3326cc3e19c33d9f3"
+            }
+          ],
+          "rawTerminalBlock": [],
+          "rawDecidingFailureBlock": null,
+          "cleanup": null
+        },
+        {
+          "step": "sD-restored-cloudflare",
+          "command": "unset SIGN_IN_TEST_HOST\nmise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:e2e:host packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts --reporter=default --reporter=json --outputFile='/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sD-restored-cloudflare.vitest.json'",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+          },
+          "exit": 0,
+          "signal": null,
+          "elapsedMs": 27386,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sD-restored-cloudflare.process.json",
+            "bytes": 10650,
+            "sha256": "7dce245ba34c835eb2c838628788254917067d5b5c428ba5f8a9fc05a23b39a5"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sD-restored-cloudflare.stdout",
+              "bytes": 1659,
+              "sha256": "2be45299689b5f64de47174a4bb74c5c1256da66b420e4b0acb7964a5630418a"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sD-restored-cloudflare.stderr",
+              "bytes": 394955,
+              "sha256": "980ef5878fd231f8e05e1db7b8cdae6410dfe3bfe44f02d38c06ca8392327c65"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sD-restored-cloudflare.log",
+              "bytes": 397179,
+              "sha256": "d25c6dec47403803a77a93c913acf896ad461549ac7d8b846ec713d54a50abb8"
+            }
+          ],
+          "rawTerminalBlock": [
+            " Test Files  1 passed (1)",
+            "      Tests  6 passed (6)",
+            "   Start at  18:29:01",
+            "   Duration  26.73s (transform 533ms, setup 0ms, import 1.60s, tests 25.03s, environment 0ms)",
+            "JSON report written to /private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sD-restored-cloudflare.vitest.json"
+          ],
+          "rawDecidingFailureBlock": null,
+          "cleanup": {
+            "groupEmpty": true,
+            "observedPIDsAbsent": true,
+            "observedIdentityCount": 31,
+            "sampling": "bounded 1s group snapshots, maximum1800, not an exhaustive process-birth ledger",
+            "groupAfter": {
+              "label": "after-command",
+              "at": "2026-11-15T23:29:28.547Z",
+              "command": "/bin/ps -g 81863 -o pid=,ppid=,pgid=,lstart=,comm=",
+              "exit": 1,
+              "stdout": "",
+              "stderr": ""
+            },
+            "noSignalsSentByWrapper": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "E",
+      "source": "packages/sign-in-host-cloudflare/src/binding-request-limiter.ts",
+      "package": "sign-in-host-cloudflare",
+      "baseline": [
+        {
+          "host": "cloudflare",
+          "reusedPriorFocusedGreen": "sD-restored-cloudflare"
+        }
+      ],
+      "red": [
+        {
+          "step": "sE-red-cloudflare",
+          "exit": 1,
+          "report": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sE-red-cloudflare.vitest.json",
+            "sha256": "90155d06afd32564f183ffe127cf6beecf497f52ca4ef66b3d762ec83420ca2c",
+            "passed": 4,
+            "failed": 2,
+            "pending": 0,
+            "rows": [
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+                "name": "people: an unavailable outer backing call returns 503 before native captcha or state effects",
+                "status": "passed",
+                "failureMessages": []
+              },
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+                "name": "people: changing spoofed XFF leaves native counting on the trusted host address",
+                "status": "passed",
+                "failureMessages": []
+              },
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+                "name": "people: social starts hit the native limit and the real outer counter (Miniflare binding, Node counter) without more stored effects, and another address still passes",
+                "status": "failed",
+                "failureMessages": [
+                  "AssertionError: expected 429 to be 200 // Object.is equality\n    at /private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts:145:66\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at file:///private/tmp/2026-11-b1a-verifier-27d39324/source/node_modules/.pnpm/@vitest+runner@4.1.5/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+                ]
+              },
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+                "name": "people: the service own page reaches the real outer counter (Miniflare binding, Node counter) without a write, and another address still passes",
+                "status": "failed",
+                "failureMessages": [
+                  "AssertionError: expected 429 to be 200 // Object.is equality\n    at /private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts:181:82\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at file:///private/tmp/2026-11-b1a-verifier-27d39324/source/node_modules/.pnpm/@vitest+runner@4.1.5/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+                ]
+              },
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+                "name": "people: five failed recovery codes reach native verification and the sixth is limited without another intent or stamp",
+                "status": "passed",
+                "failureMessages": []
+              },
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+                "name": "people: the token endpoint counts refused clients and limits the thirty-first request without minting or storing anything",
+                "status": "passed",
+                "failureMessages": []
+              }
+            ]
+          }
+        }
+      ],
+      "restored": [
+        {
+          "step": "sE-restored-cloudflare",
+          "exit": 0,
+          "report": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sE-restored-cloudflare.vitest.json",
+            "sha256": "22c8e4a93e9fd73b98a430908fc236e1fcf86ce1913164395ff1fd2cd55f7571",
+            "passed": 6,
+            "failed": 0,
+            "pending": 0,
+            "rows": [
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+                "name": "people: an unavailable outer backing call returns 503 before native captcha or state effects",
+                "status": "passed",
+                "failureMessages": []
+              },
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+                "name": "people: changing spoofed XFF leaves native counting on the trusted host address",
+                "status": "passed",
+                "failureMessages": []
+              },
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+                "name": "people: social starts hit the native limit and the real outer counter (Miniflare binding, Node counter) without more stored effects, and another address still passes",
+                "status": "passed",
+                "failureMessages": []
+              },
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+                "name": "people: the service own page reaches the real outer counter (Miniflare binding, Node counter) without a write, and another address still passes",
+                "status": "passed",
+                "failureMessages": []
+              },
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+                "name": "people: five failed recovery codes reach native verification and the sixth is limited without another intent or stamp",
+                "status": "passed",
+                "failureMessages": []
+              },
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts",
+                "name": "people: the token endpoint counts refused clients and limits the thirty-first request without minting or storing anything",
+                "status": "passed",
+                "failureMessages": []
+              }
+            ]
+          }
+        }
+      ],
+      "originalSha256": "137295f12dbb75c2ff4f97429b84cfa2d668e836b40ae1a2ee0a78ce98df8d0c",
+      "mutantSha256": "50e435bbb6fc7767f14fb996553347b46ad32e71619cbdc4217e735da04c3151",
+      "beforeArtifacts": [
+        {
+          "file": "packages/sign-in-host-cloudflare/dist/index.js",
+          "bytes": 2334,
+          "sha256": "90ff63fbc805b8b1e2faadb3128d615bca69b7a378548b748b6b5bd008d0d1ab"
+        },
+        {
+          "file": "packages/sign-in-host-cloudflare/dist/worker-configuration-CmNick6s.js",
+          "bytes": 4490,
+          "sha256": "b52151ebf3429ef4d458a81a2e4f84d21eab6c39d52be550bd33c39a6305a28a"
+        },
+        {
+          "file": "packages/sign-in-host-cloudflare/dist/worker-configuration.js",
+          "bytes": 184,
+          "sha256": "6259e43ea8252de66981d3663612995d90e0c46b21ad41c9b6d31f3e8d9bba7d"
+        }
+      ],
+      "patchSha256": "e7528d48e7485fe9815e89be3cc1cc07e236116e6d88fecfe8f970a72a07b5c5",
+      "mutantBuildExit": 0,
+      "mutantArtifacts": [
+        {
+          "file": "packages/sign-in-host-cloudflare/dist/index.js",
+          "bytes": 2334,
+          "sha256": "02520f21d487601a1bedc721e382c5c65dd47962af27bd8c2d9395e50ffad8e0"
+        },
+        {
+          "file": "packages/sign-in-host-cloudflare/dist/worker-configuration-Cas_PQtd.js",
+          "bytes": 4466,
+          "sha256": "a9822576bf317505e4727b8ae6a5d39852f223a0db1385bc1fa61d348f346301"
+        },
+        {
+          "file": "packages/sign-in-host-cloudflare/dist/worker-configuration.js",
+          "bytes": 184,
+          "sha256": "9a306105a9c93c8713d525ad80777473cc45b38d2d607afd37d81fa2b8d4733e"
+        }
+      ],
+      "changedJsArtifacts": [
+        {
+          "file": "packages/sign-in-host-cloudflare/dist/index.js",
+          "bytes": 2334,
+          "sha256": "02520f21d487601a1bedc721e382c5c65dd47962af27bd8c2d9395e50ffad8e0"
+        },
+        {
+          "file": "packages/sign-in-host-cloudflare/dist/worker-configuration-Cas_PQtd.js",
+          "bytes": 4466,
+          "sha256": "a9822576bf317505e4727b8ae6a5d39852f223a0db1385bc1fa61d348f346301"
+        },
+        {
+          "file": "packages/sign-in-host-cloudflare/dist/worker-configuration.js",
+          "bytes": 184,
+          "sha256": "9a306105a9c93c8713d525ad80777473cc45b38d2d607afd37d81fa2b8d4733e"
+        }
+      ],
+      "restoredSourceSha256": "137295f12dbb75c2ff4f97429b84cfa2d668e836b40ae1a2ee0a78ce98df8d0c",
+      "sourceRestored": true,
+      "restoredBuildExit": 0,
+      "restoredArtifacts": [
+        {
+          "file": "packages/sign-in-host-cloudflare/dist/index.js",
+          "bytes": 2334,
+          "sha256": "90ff63fbc805b8b1e2faadb3128d615bca69b7a378548b748b6b5bd008d0d1ab"
+        },
+        {
+          "file": "packages/sign-in-host-cloudflare/dist/worker-configuration-CmNick6s.js",
+          "bytes": 4490,
+          "sha256": "b52151ebf3429ef4d458a81a2e4f84d21eab6c39d52be550bd33c39a6305a28a"
+        },
+        {
+          "file": "packages/sign-in-host-cloudflare/dist/worker-configuration.js",
+          "bytes": 184,
+          "sha256": "6259e43ea8252de66981d3663612995d90e0c46b21ad41c9b6d31f3e8d9bba7d"
+        }
+      ],
+      "interpretation": "Second address receives429instead200 in social/servicepage cases.",
+      "restoredDistExact": true,
+      "patch": {
+        "file": {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/E/mutation.patch",
+          "bytes": 789,
+          "sha256": "e7528d48e7485fe9815e89be3cc1cc07e236116e6d88fecfe8f970a72a07b5c5"
+        },
+        "literal": "diff --git a/packages/sign-in-host-cloudflare/src/binding-request-limiter.ts b/packages/sign-in-host-cloudflare/src/binding-request-limiter.ts\nindex 4a6e977f..634396a3 100644\n--- a/packages/sign-in-host-cloudflare/src/binding-request-limiter.ts\n+++ b/packages/sign-in-host-cloudflare/src/binding-request-limiter.ts\n@@ -22,7 +22,7 @@ export function createBindingRequestLimiter(props: {\n \t\t\t\tconst binding =\n \t\t\t\t\tpolicy.binding === 'SIGN_IN_ATTEMPTS' ? props.signInAttempts : props.authRequests;\n \t\t\t\tconst outcome = bindingOutcomeSchema.safeParse(\n-\t\t\t\t\tawait binding.limit({ key: `${request.requestClass}:${request.address}` }),\n+\t\t\t\t\tawait binding.limit({ key: request.requestClass }),\n \t\t\t\t);\n \t\t\t\tif (!outcome.success) return { kind: 'unavailable' };\n \t\t\t\treturn outcome.data.success\n"
+      },
+      "originalSource": {
+        "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/E/original-source",
+        "bytes": 1273,
+        "sha256": "137295f12dbb75c2ff4f97429b84cfa2d668e836b40ae1a2ee0a78ce98df8d0c"
+      },
+      "mutantSource": {
+        "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/E/mutant-source",
+        "bytes": 1249,
+        "sha256": "50e435bbb6fc7767f14fb996553347b46ad32e71619cbdc4217e735da04c3151"
+      },
+      "commands": [
+        {
+          "step": "sE-mutant-build",
+          "command": "unset SIGN_IN_TEST_HOST\nmise exec node@24.7.0 pnpm@10.33.0 -- pnpm --filter @agent-collaboration/sign-in-host-cloudflare build",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+          },
+          "exit": 0,
+          "signal": null,
+          "elapsedMs": 1304,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sE-mutant-build.process.json",
+            "bytes": 1373,
+            "sha256": "44a7e04f5433116c1cf97644eeb02140113c057dda3ff5146cee0c8ca20d96ff"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sE-mutant-build.stdout",
+              "bytes": 844,
+              "sha256": "5a77919bbb7f2ba884252d6a2d39a444c21853b41296e145b2950593ec8ff5d3"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sE-mutant-build.stderr",
+              "bytes": 67,
+              "sha256": "e71de8cd22c16ed6915ecda7c9d75528ef0ae4138cb82c480b8892497edd2da3"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sE-mutant-build.log",
+              "bytes": 1296,
+              "sha256": "033a7a3b2e766db514e734e8c6b1518d343bd1330f6e8b72e83f716d0413e3d3"
+            }
+          ],
+          "rawTerminalBlock": [],
+          "rawDecidingFailureBlock": null,
+          "cleanup": null
+        },
+        {
+          "step": "sE-red-cloudflare",
+          "command": "unset SIGN_IN_TEST_HOST\nmise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:e2e:host packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts --reporter=default --reporter=json --outputFile='/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sE-red-cloudflare.vitest.json'",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+          },
+          "exit": 1,
+          "signal": null,
+          "elapsedMs": 27493,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sE-red-cloudflare.process.json",
+            "bytes": 9800,
+            "sha256": "eb8b9dad50f685e3bddf2ee51c14b7b97c2fad4039d15f47a69833113dc0f859"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sE-red-cloudflare.stdout",
+              "bytes": 1717,
+              "sha256": "8872d661f6bd08354e48f700dfbc4989f46ec3c4d241eb269c130701b516876b"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sE-red-cloudflare.stderr",
+              "bytes": 396682,
+              "sha256": "381032d75e75fadb81a8292d77f2204640a57a57a51541a5c6643df04086a6a9"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sE-red-cloudflare.log",
+              "bytes": 398959,
+              "sha256": "9f96a4fc08cc39f992cf22f94e5e27c78947934ea70a1e23838b7cfb34e1b6b5"
+            }
+          ],
+          "rawTerminalBlock": [
+            " Test Files  1 failed (1)",
+            "      Tests  2 failed | 4 passed (6)",
+            "   Start at  18:29:30",
+            "   Duration  26.82s (transform 519ms, setup 0ms, import 1.55s, tests 25.16s, environment 0ms)",
+            "JSON report written to /private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sE-red-cloudflare.vitest.json"
+          ],
+          "rawDecidingFailureBlock": " FAIL  |e2e-host| packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts > people: social starts hit the native limit and the real outer counter (Miniflare binding, Node counter) without more stored effects, and another address still passes\nAssertionError: expected 429 to be 200 // Object.is equality\n\n- Expected\n+ Received\n\n- 200\n+ 429\n\n ❯ packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts:145:66\n    143|   });\n    144|   // R52: the count is per address, so a second address is not limited.\n    145|   expect((await socialAttemptFromSecondAddress(harness)).status).toBe(…\n       |                                                                  ^\n    146|  } finally {\n    147|   await harness.close();\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯\n\n FAIL  |e2e-host| packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts > people: the service own page reaches the real outer counter (Miniflare binding, Node counter) without a write, and another address still passes\nAssertionError: expected 429 to be 200 // Object.is equality\n\n- Expected\n+ Received\n\n- 200\n+ 429\n\n ❯ packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts:181:82\n    179|   });\n    180|   // R52: the count is per address, so a second address is not limited.\n    181|   expect((await harness.authAsBrowser('second-address', '/owner-ready'…\n       |                                                                                  ^\n    182|  } finally {\n    183|   await harness.close();\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯\n\n",
+          "cleanup": {
+            "groupEmpty": true,
+            "observedPIDsAbsent": true,
+            "observedIdentityCount": 29,
+            "sampling": "bounded 1s group snapshots, maximum1800, not an exhaustive process-birth ledger",
+            "groupAfter": {
+              "label": "after-command",
+              "at": "2026-11-15T23:29:57.437Z",
+              "command": "/bin/ps -g 82070 -o pid=,ppid=,pgid=,lstart=,comm=",
+              "exit": 1,
+              "stdout": "",
+              "stderr": ""
+            },
+            "noSignalsSentByWrapper": true
+          }
+        },
+        {
+          "step": "sE-restored-build",
+          "command": "unset SIGN_IN_TEST_HOST\nmise exec node@24.7.0 pnpm@10.33.0 -- pnpm --filter @agent-collaboration/sign-in-host-cloudflare build",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+          },
+          "exit": 0,
+          "signal": null,
+          "elapsedMs": 1293,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sE-restored-build.process.json",
+            "bytes": 1381,
+            "sha256": "c682d573c28c183f623766d90825c1be76cd1865ad60a450b5599c0f78782f4f"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sE-restored-build.stdout",
+              "bytes": 844,
+              "sha256": "69e8fa1655e2ec8b1c87f1b91dcdfb81dbece6636eaa21e0ecbb7b2f8f03e45f"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sE-restored-build.stderr",
+              "bytes": 67,
+              "sha256": "e71de8cd22c16ed6915ecda7c9d75528ef0ae4138cb82c480b8892497edd2da3"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sE-restored-build.log",
+              "bytes": 1296,
+              "sha256": "a51326ba153e79464d917368e60e9ded8f53ebccd4432a7e16210b92f7a392bb"
+            }
+          ],
+          "rawTerminalBlock": [],
+          "rawDecidingFailureBlock": null,
+          "cleanup": null
+        },
+        {
+          "step": "sE-restored-cloudflare",
+          "command": "unset SIGN_IN_TEST_HOST\nmise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:e2e:host packages/sign-in-test-support/src/people-request-limits.host.e2e.test.ts --reporter=default --reporter=json --outputFile='/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sE-restored-cloudflare.vitest.json'",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+          },
+          "exit": 0,
+          "signal": null,
+          "elapsedMs": 27727,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sE-restored-cloudflare.process.json",
+            "bytes": 10319,
+            "sha256": "f29760848aaa53723026aebdd107f55f408974cbf3e22096a6c86cadb02eea61"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sE-restored-cloudflare.stdout",
+              "bytes": 1659,
+              "sha256": "da2d39e0eea1607bb82a1380a44ecdac25b4cdf04324cd9b915919d59198de33"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sE-restored-cloudflare.stderr",
+              "bytes": 394955,
+              "sha256": "32fbc48d3dd99e0b49341917668027e8d8ec985b22c1822e19364d4e64b2c16a"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sE-restored-cloudflare.log",
+              "bytes": 397179,
+              "sha256": "f02ca51efb1bb9c1abcc0064d3e35d226793065e94d05e1a0a8b5fd05820ed08"
+            }
+          ],
+          "rawTerminalBlock": [
+            " Test Files  1 passed (1)",
+            "      Tests  6 passed (6)",
+            "   Start at  18:29:59",
+            "   Duration  27.07s (transform 517ms, setup 0ms, import 1.54s, tests 25.43s, environment 0ms)",
+            "JSON report written to /private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sE-restored-cloudflare.vitest.json"
+          ],
+          "rawDecidingFailureBlock": null,
+          "cleanup": {
+            "groupEmpty": true,
+            "observedPIDsAbsent": true,
+            "observedIdentityCount": 30,
+            "sampling": "bounded 1s group snapshots, maximum1800, not an exhaustive process-birth ledger",
+            "groupAfter": {
+              "label": "after-command",
+              "at": "2026-11-15T23:30:26.532Z",
+              "command": "/bin/ps -g 82272 -o pid=,ppid=,pgid=,lstart=,comm=",
+              "exit": 1,
+              "stdout": "",
+              "stderr": ""
+            },
+            "noSignalsSentByWrapper": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "F",
+      "source": "packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts",
+      "package": null,
+      "baseline": [
+        {
+          "step": "sF-baseline-cloudflare",
+          "exit": 0,
+          "report": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sF-baseline-cloudflare.vitest.json",
+            "sha256": "e169c53754a79d782825acc2f5eea8433ab0bcf6ab8e1623011ec07de9bf9057",
+            "passed": 1,
+            "failed": 0,
+            "pending": 0,
+            "rows": [
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts",
+                "name": "people journey on cloudflare: every stored UUID is v7 before the member's removal and after it, and no secret is a UUID",
+                "status": "passed",
+                "failureMessages": []
+              }
+            ]
+          }
+        },
+        {
+          "step": "sF-baseline-node",
+          "exit": 0,
+          "report": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sF-baseline-node.vitest.json",
+            "sha256": "df349c7a6112e2e871d7eefcabd5d5dfff0ee894c561fe3431ab2ffb7fc13830",
+            "passed": 1,
+            "failed": 0,
+            "pending": 0,
+            "rows": [
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts",
+                "name": "people journey on node: every stored UUID is v7 before the member's removal and after it, and no secret is a UUID",
+                "status": "passed",
+                "failureMessages": []
+              }
+            ]
+          }
+        }
+      ],
+      "red": [
+        {
+          "step": "sF-red-cloudflare",
+          "exit": 1,
+          "report": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sF-red-cloudflare.vitest.json",
+            "sha256": "154bdc03c8fd1741f3fca7b251d8774600616f109080c4ea2f963d935ee306e5",
+            "passed": 0,
+            "failed": 1,
+            "pending": 0,
+            "rows": [
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts",
+                "name": "people journey on cloudflare: every stored UUID is v7 before the member's removal and after it, and no secret is a UUID",
+                "status": "failed",
+                "failureMessages": [
+                  "AssertionError: expected [ { table: 'organization', …(3) } ] to deeply equal []\n    at /private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts:121:40\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at file:///private/tmp/2026-11-b1a-verifier-27d39324/source/node_modules/.pnpm/@vitest+runner@4.1.5/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "step": "sF-red-node",
+          "exit": 1,
+          "report": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sF-red-node.vitest.json",
+            "sha256": "0be7d9f74a2be66749a764394accfd53a4273bd371539309e7cb73fa5337609f",
+            "passed": 0,
+            "failed": 1,
+            "pending": 0,
+            "rows": [
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts",
+                "name": "people journey on node: every stored UUID is v7 before the member's removal and after it, and no secret is a UUID",
+                "status": "failed",
+                "failureMessages": [
+                  "AssertionError: expected [ { table: 'organization', …(3) } ] to deeply equal []\n    at /private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts:121:40\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at file:///private/tmp/2026-11-b1a-verifier-27d39324/source/node_modules/.pnpm/@vitest+runner@4.1.5/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "restored": [
+        {
+          "step": "sF-restored-cloudflare",
+          "exit": 0,
+          "report": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sF-restored-cloudflare.vitest.json",
+            "sha256": "31a8f5d1ed3df3b69e3b91cd7ef0981d3c6d21f7e8504df6b81a4e5a54659796",
+            "passed": 1,
+            "failed": 0,
+            "pending": 0,
+            "rows": [
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts",
+                "name": "people journey on cloudflare: every stored UUID is v7 before the member's removal and after it, and no secret is a UUID",
+                "status": "passed",
+                "failureMessages": []
+              }
+            ]
+          }
+        },
+        {
+          "step": "sF-restored-node",
+          "exit": 0,
+          "report": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sF-restored-node.vitest.json",
+            "sha256": "74ba4f41eaa4e49f490350b9ea78fbdf7e0584dc3dceb3f407e962bbc7c608fe",
+            "passed": 1,
+            "failed": 0,
+            "pending": 0,
+            "rows": [
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts",
+                "name": "people journey on node: every stored UUID is v7 before the member's removal and after it, and no secret is a UUID",
+                "status": "passed",
+                "failureMessages": []
+              }
+            ]
+          }
+        }
+      ],
+      "originalSha256": "90f3ec3788b2c75bceb7a5061549c3ae2a950b5f1df27e7ffdee0142d21207fe",
+      "mutantSha256": "0183057e692885e04a84a2112aa0e945ac34194e940e055a03fecc0d08438f7e",
+      "beforeArtifacts": [],
+      "patchSha256": "567128995144421f48d6e941ddd4fc893401f5d80467e7e54844a1f559889f3d",
+      "restoredSourceSha256": "90f3ec3788b2c75bceb7a5061549c3ae2a950b5f1df27e7ffdee0142d21207fe",
+      "sourceRestored": true,
+      "restoredArtifacts": [],
+      "interpretation": "Before-removal scanner names organization.metadata wrong-version4; later assertions not reached.",
+      "restoredDistExact": "test-only mutation; no build required",
+      "patch": {
+        "file": {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/F/mutation.patch",
+          "bytes": 1170,
+          "sha256": "567128995144421f48d6e941ddd4fc893401f5d80467e7e54844a1f559889f3d"
+        },
+        "literal": "diff --git a/packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts b/packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts\nindex c86d5ba2..8c97e63b 100644\n--- a/packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts\n+++ b/packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts\n@@ -9,6 +9,7 @@ import {\n \ttwoFactor,\n \tuser,\n } from '@agent-collaboration/sign-in-core';\n+import { eq } from 'drizzle-orm';\n import { expect, it } from 'vitest';\n import { z } from 'zod';\n \n@@ -114,6 +115,7 @@ it(`people journey on ${signInHost}: every stored UUID is v7 before the member's\n \t\t};\n \t\tfor (const [table, rows] of Object.entries(filled))\n \t\t\texpect({ table, filled: rows > 0 }).toEqual({ table, filled: true });\n+\t\tawait harness.database.update(organization).set({ metadata: JSON.stringify({ verifierProbe: '11111111-1111-4111-8111-111111111111' }) }).where(eq(organization.id, organizationId));\n \t\tconst beforeRemoval = await readStoredUuidInventory(harness.database);\n \t\texpect(beforeRemoval.uuidValues).toBeGreaterThan(0);\n \t\texpect(beforeRemoval.nonV7Locations).toEqual([]);\n"
+      },
+      "originalSource": {
+        "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/F/original-source",
+        "bytes": 6381,
+        "sha256": "90f3ec3788b2c75bceb7a5061549c3ae2a950b5f1df27e7ffdee0142d21207fe"
+      },
+      "mutantSource": {
+        "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/F/mutant-source",
+        "bytes": 6598,
+        "sha256": "0183057e692885e04a84a2112aa0e945ac34194e940e055a03fecc0d08438f7e"
+      },
+      "commands": [
+        {
+          "step": "sF-baseline-cloudflare",
+          "command": "unset SIGN_IN_TEST_HOST\nmise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:e2e:host packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts --reporter=default --reporter=json --outputFile='/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sF-baseline-cloudflare.vitest.json'",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+          },
+          "exit": 0,
+          "signal": null,
+          "elapsedMs": 6967,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sF-baseline-cloudflare.process.json",
+            "bytes": 4410,
+            "sha256": "7144bde76ca1441cc98e1635e74ed26aa640acdf18d0e5c9b1b0551bcaf26dad"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sF-baseline-cloudflare.stdout",
+              "bytes": 989,
+              "sha256": "4dd35a8eac1159c66c16f603a994b99a1c6b7e40ae6e97f7692b3dc5b599a9f9"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sF-baseline-cloudflare.stderr",
+              "bytes": 17760,
+              "sha256": "5c6150dfb8fa5778cb54e2d11ae64f5da47057d785e46f4c43bb87d1c74cce51"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sF-baseline-cloudflare.log",
+              "bytes": 19320,
+              "sha256": "f7133defa551440de83bb9c4befd8ddaf42dd392b23defcfec84f15206973566"
+            }
+          ],
+          "rawTerminalBlock": [
+            " Test Files  1 passed (1)",
+            "      Tests  1 passed (1)",
+            "   Start at  18:30:27",
+            "   Duration  6.32s (transform 536ms, setup 0ms, import 1.58s, tests 4.65s, environment 0ms)",
+            "JSON report written to /private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sF-baseline-cloudflare.vitest.json"
+          ],
+          "rawDecidingFailureBlock": null,
+          "cleanup": {
+            "groupEmpty": true,
+            "observedPIDsAbsent": true,
+            "observedIdentityCount": 9,
+            "sampling": "bounded 1s group snapshots, maximum1800, not an exhaustive process-birth ledger",
+            "groupAfter": {
+              "label": "after-command",
+              "at": "2026-11-15T23:30:33.542Z",
+              "command": "/bin/ps -g 82434 -o pid=,ppid=,pgid=,lstart=,comm=",
+              "exit": 1,
+              "stdout": "",
+              "stderr": ""
+            },
+            "noSignalsSentByWrapper": true
+          }
+        },
+        {
+          "step": "sF-baseline-node",
+          "command": "mise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:e2e:host packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts --reporter=default --reporter=json --outputFile='/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sF-baseline-node.vitest.json'",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+            "SIGN_IN_TEST_HOST": "node"
+          },
+          "exit": 0,
+          "signal": null,
+          "elapsedMs": 6040,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sF-baseline-node.process.json",
+            "bytes": 4388,
+            "sha256": "515cb789f202f8df411b60b4a1db24b7d5cc85b8c87a6a5e5211eb8d7eebe921"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sF-baseline-node.stdout",
+              "bytes": 971,
+              "sha256": "a8c82fd40a5f89651a2571fa49970de9d6b6a15b86ec4f7fe8e83dde35bb36a9"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sF-baseline-node.stderr",
+              "bytes": 20193,
+              "sha256": "980d6c3612cd020a3a3c925f23f0eef4a785f8ae8845571bd92c920988f78f23"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sF-baseline-node.log",
+              "bytes": 21732,
+              "sha256": "0aef4ce301106b11f03f689380e563bf6287b7fabe691264290e23fd05428799"
+            }
+          ],
+          "rawTerminalBlock": [
+            " Test Files  1 passed (1)",
+            "      Tests  1 passed (1)",
+            "   Start at  18:30:34",
+            "   Duration  5.41s (transform 534ms, setup 0ms, import 1.57s, tests 3.74s, environment 0ms)",
+            "JSON report written to /private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sF-baseline-node.vitest.json"
+          ],
+          "rawDecidingFailureBlock": null,
+          "cleanup": {
+            "groupEmpty": true,
+            "observedPIDsAbsent": true,
+            "observedIdentityCount": 9,
+            "sampling": "bounded 1s group snapshots, maximum1800, not an exhaustive process-birth ledger",
+            "groupAfter": {
+              "label": "after-command",
+              "at": "2026-11-15T23:30:39.623Z",
+              "command": "/bin/ps -g 82490 -o pid=,ppid=,pgid=,lstart=,comm=",
+              "exit": 1,
+              "stdout": "",
+              "stderr": ""
+            },
+            "noSignalsSentByWrapper": true
+          }
+        },
+        {
+          "step": "sF-red-cloudflare",
+          "command": "unset SIGN_IN_TEST_HOST\nmise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:e2e:host packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts --reporter=default --reporter=json --outputFile='/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sF-red-cloudflare.vitest.json'",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+          },
+          "exit": 1,
+          "signal": null,
+          "elapsedMs": 6529,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sF-red-cloudflare.process.json",
+            "bytes": 4386,
+            "sha256": "c1d6b811c6896e0f3f849a37b463056de2e3d7c3ccc8935765d0c546ff343894"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sF-red-cloudflare.stdout",
+              "bytes": 1038,
+              "sha256": "4de03ad65dff0621f115f8301dd2b1f6132f92a06ac82105dd1e859c57a04476"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sF-red-cloudflare.stderr",
+              "bytes": 17641,
+              "sha256": "1b76ed0c73270024cdaf84aa159ecf57a7f3e1506dcd7b2705c933c3c64f4e0d"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sF-red-cloudflare.log",
+              "bytes": 19245,
+              "sha256": "5d8c3253b03dacb9661cc24c867d04c652b149c09996f501795fa2cd5b9effe5"
+            }
+          ],
+          "rawTerminalBlock": [
+            " Test Files  1 failed (1)",
+            "      Tests  1 failed (1)",
+            "   Start at  18:30:40",
+            "   Duration  5.84s (transform 528ms, setup 0ms, import 1.60s, tests 4.14s, environment 0ms)",
+            "JSON report written to /private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sF-red-cloudflare.vitest.json"
+          ],
+          "rawDecidingFailureBlock": " FAIL  |e2e-host| packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts > people journey on cloudflare: every stored UUID is v7 before the member's removal and after it, and no secret is a UUID\nAssertionError: expected [ { table: 'organization', …(3) } ] to deeply equal []\n\n- Expected\n+ Received\n\n- []\n+ [\n+   {\n+     \"column\": \"metadata\",\n+     \"reason\": \"wrong-version\",\n+     \"table\": \"organization\",\n+     \"version\": \"4\",\n+   },\n+ ]\n\n ❯ packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts:121:40\n    119|   const beforeRemoval = await readStoredUuidInventory(harness.database…\n    120|   expect(beforeRemoval.uuidValues).toBeGreaterThan(0);\n    121|   expect(beforeRemoval.nonV7Locations).toEqual([]);\n       |                                        ^\n    122|   await expectStoredSecretsAreNotUuids(harness);\n    123|\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n",
+          "cleanup": {
+            "groupEmpty": true,
+            "observedPIDsAbsent": true,
+            "observedIdentityCount": 9,
+            "sampling": "bounded 1s group snapshots, maximum1800, not an exhaustive process-birth ledger",
+            "groupAfter": {
+              "label": "after-command",
+              "at": "2026-11-15T23:30:46.193Z",
+              "command": "/bin/ps -g 82564 -o pid=,ppid=,pgid=,lstart=,comm=",
+              "exit": 1,
+              "stdout": "",
+              "stderr": ""
+            },
+            "noSignalsSentByWrapper": true
+          }
+        },
+        {
+          "step": "sF-red-node",
+          "command": "mise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:e2e:host packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts --reporter=default --reporter=json --outputFile='/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sF-red-node.vitest.json'",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+            "SIGN_IN_TEST_HOST": "node"
+          },
+          "exit": 1,
+          "signal": null,
+          "elapsedMs": 6139,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sF-red-node.process.json",
+            "bytes": 4364,
+            "sha256": "13ac358925c0b87fa6f23fc3708dcd9e47881aacd00dddeb81519ea9a746b321"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sF-red-node.stdout",
+              "bytes": 1020,
+              "sha256": "302e39cb8fc8b019474a09f1ce155592ab03f5ce183932e5fbc0eec544e7fadf"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sF-red-node.stderr",
+              "bytes": 19928,
+              "sha256": "0df761e8fa8dd3267dcd46125f36c590e1675ccc83782a9a21e66b8d9072290e"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sF-red-node.log",
+              "bytes": 21511,
+              "sha256": "4e65918bfda7ecc4a34daf73453a623573692575fb8164bc536e6d0bebdb4293"
+            }
+          ],
+          "rawTerminalBlock": [
+            " Test Files  1 failed (1)",
+            "      Tests  1 failed (1)",
+            "   Start at  18:30:46",
+            "   Duration  5.48s (transform 529ms, setup 0ms, import 1.60s, tests 3.78s, environment 0ms)",
+            "JSON report written to /private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sF-red-node.vitest.json"
+          ],
+          "rawDecidingFailureBlock": " FAIL  |e2e-host| packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts > people journey on node: every stored UUID is v7 before the member's removal and after it, and no secret is a UUID\nAssertionError: expected [ { table: 'organization', …(3) } ] to deeply equal []\n\n- Expected\n+ Received\n\n- []\n+ [\n+   {\n+     \"column\": \"metadata\",\n+     \"reason\": \"wrong-version\",\n+     \"table\": \"organization\",\n+     \"version\": \"4\",\n+   },\n+ ]\n\n ❯ packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts:121:40\n    119|   const beforeRemoval = await readStoredUuidInventory(harness.database…\n    120|   expect(beforeRemoval.uuidValues).toBeGreaterThan(0);\n    121|   expect(beforeRemoval.nonV7Locations).toEqual([]);\n       |                                        ^\n    122|   await expectStoredSecretsAreNotUuids(harness);\n    123|\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n",
+          "cleanup": {
+            "groupEmpty": true,
+            "observedPIDsAbsent": true,
+            "observedIdentityCount": 9,
+            "sampling": "bounded 1s group snapshots, maximum1800, not an exhaustive process-birth ledger",
+            "groupAfter": {
+              "label": "after-command",
+              "at": "2026-11-15T23:30:52.368Z",
+              "command": "/bin/ps -g 82630 -o pid=,ppid=,pgid=,lstart=,comm=",
+              "exit": 1,
+              "stdout": "",
+              "stderr": ""
+            },
+            "noSignalsSentByWrapper": true
+          }
+        },
+        {
+          "step": "sF-restored-cloudflare",
+          "command": "unset SIGN_IN_TEST_HOST\nmise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:e2e:host packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts --reporter=default --reporter=json --outputFile='/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sF-restored-cloudflare.vitest.json'",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+          },
+          "exit": 0,
+          "signal": null,
+          "elapsedMs": 6810,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sF-restored-cloudflare.process.json",
+            "bytes": 4410,
+            "sha256": "21dd9798dfabb757cf26e4637b4eff3f355fc959be47631fbb191ec651767a1f"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sF-restored-cloudflare.stdout",
+              "bytes": 989,
+              "sha256": "710e3f20864b28dfa595a4eb8499ccdd373db9510203c14baf6fba90937b8f7a"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sF-restored-cloudflare.stderr",
+              "bytes": 17760,
+              "sha256": "5f7f60801fb930674a61ac1967546301ea13bc328f6ec231547c55ebf2584438"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sF-restored-cloudflare.log",
+              "bytes": 19320,
+              "sha256": "0058ddd8d1a73ed55e42568097e5b073033148bbbf6dc4ee3297de12e5624299"
+            }
+          ],
+          "rawTerminalBlock": [
+            " Test Files  1 passed (1)",
+            "      Tests  1 passed (1)",
+            "   Start at  18:30:53",
+            "   Duration  6.12s (transform 543ms, setup 0ms, import 1.62s, tests 4.41s, environment 0ms)",
+            "JSON report written to /private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sF-restored-cloudflare.vitest.json"
+          ],
+          "rawDecidingFailureBlock": null,
+          "cleanup": {
+            "groupEmpty": true,
+            "observedPIDsAbsent": true,
+            "observedIdentityCount": 9,
+            "sampling": "bounded 1s group snapshots, maximum1800, not an exhaustive process-birth ledger",
+            "groupAfter": {
+              "label": "after-command",
+              "at": "2026-11-15T23:30:59.206Z",
+              "command": "/bin/ps -g 82698 -o pid=,ppid=,pgid=,lstart=,comm=",
+              "exit": 1,
+              "stdout": "",
+              "stderr": ""
+            },
+            "noSignalsSentByWrapper": true
+          }
+        },
+        {
+          "step": "sF-restored-node",
+          "command": "mise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:e2e:host packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts --reporter=default --reporter=json --outputFile='/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sF-restored-node.vitest.json'",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+            "SIGN_IN_TEST_HOST": "node"
+          },
+          "exit": 0,
+          "signal": null,
+          "elapsedMs": 6067,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sF-restored-node.process.json",
+            "bytes": 4388,
+            "sha256": "2ea4989293baf24ddc759c5cfe22c8ea67c61ae20bbbad967ac416201763e9b7"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sF-restored-node.stdout",
+              "bytes": 971,
+              "sha256": "dc55801caed797ae46756a6878f698f92942f327fb4aef5fad26f7772f6902a7"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sF-restored-node.stderr",
+              "bytes": 20193,
+              "sha256": "dbbeaf2d9a48bb2eebb2e258249e4c0748037a35811ec54091ec0e10e86ebe8e"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sF-restored-node.log",
+              "bytes": 21732,
+              "sha256": "0325434642fc720c562f9981b94bc759b57b3e53d52fc70a782dbea31866a5f9"
+            }
+          ],
+          "rawTerminalBlock": [
+            " Test Files  1 passed (1)",
+            "      Tests  1 passed (1)",
+            "   Start at  18:30:59",
+            "   Duration  5.41s (transform 521ms, setup 0ms, import 1.57s, tests 3.74s, environment 0ms)",
+            "JSON report written to /private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sF-restored-node.vitest.json"
+          ],
+          "rawDecidingFailureBlock": null,
+          "cleanup": {
+            "groupEmpty": true,
+            "observedPIDsAbsent": true,
+            "observedIdentityCount": 9,
+            "sampling": "bounded 1s group snapshots, maximum1800, not an exhaustive process-birth ledger",
+            "groupAfter": {
+              "label": "after-command",
+              "at": "2026-11-15T23:31:05.322Z",
+              "command": "/bin/ps -g 82754 -o pid=,ppid=,pgid=,lstart=,comm=",
+              "exit": 1,
+              "stdout": "",
+              "stderr": ""
+            },
+            "noSignalsSentByWrapper": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "G",
+      "source": "packages/sign-in-core/src/better-auth/provider-configuration.ts",
+      "package": "sign-in-core",
+      "baseline": [
+        {
+          "host": "cloudflare",
+          "reusedPriorFocusedGreen": "sF-restored-cloudflare"
+        },
+        {
+          "host": "node",
+          "reusedPriorFocusedGreen": "sF-restored-node"
+        }
+      ],
+      "red": [
+        {
+          "step": "sG-red-cloudflare",
+          "exit": 1,
+          "report": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sG-red-cloudflare.vitest.json",
+            "sha256": "cd24aefff14b454dbbb0b1f7a89b651f8d41aa396636ae65518f451abefd7c4c",
+            "passed": 0,
+            "failed": 1,
+            "pending": 0,
+            "rows": [
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts",
+                "name": "people journey on cloudflare: every stored UUID is v7 before the member's removal and after it, and no secret is a UUID",
+                "status": "failed",
+                "failureMessages": [
+                  "AssertionError: expected true to be false // Object.is equality\n    at /private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts:144:74\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at file:///private/tmp/2026-11-b1a-verifier-27d39324/source/node_modules/.pnpm/@vitest+runner@4.1.5/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "step": "sG-red-node",
+          "exit": 1,
+          "report": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sG-red-node.vitest.json",
+            "sha256": "432f620b1d88bcfc926ebfc258f244f1530dcca9f6c4dea23b0b0115f86f2637",
+            "passed": 0,
+            "failed": 1,
+            "pending": 0,
+            "rows": [
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts",
+                "name": "people journey on node: every stored UUID is v7 before the member's removal and after it, and no secret is a UUID",
+                "status": "failed",
+                "failureMessages": [
+                  "AssertionError: expected true to be false // Object.is equality\n    at /private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts:144:74\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at file:///private/tmp/2026-11-b1a-verifier-27d39324/source/node_modules/.pnpm/@vitest+runner@4.1.5/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "restored": [
+        {
+          "step": "sG-restored-cloudflare",
+          "exit": 0,
+          "report": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sG-restored-cloudflare.vitest.json",
+            "sha256": "b10db4caa0bec5287ee367037d25f5cc8a9a98182e690b7fffc632467693f0e2",
+            "passed": 1,
+            "failed": 0,
+            "pending": 0,
+            "rows": [
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts",
+                "name": "people journey on cloudflare: every stored UUID is v7 before the member's removal and after it, and no secret is a UUID",
+                "status": "passed",
+                "failureMessages": []
+              }
+            ]
+          }
+        },
+        {
+          "step": "sG-restored-node",
+          "exit": 0,
+          "report": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sG-restored-node.vitest.json",
+            "sha256": "a915aeb5cfb33dd7958345eef845dfcd929a641f1f6aa35e7d6bc86bdcb768ab",
+            "passed": 1,
+            "failed": 0,
+            "pending": 0,
+            "rows": [
+              {
+                "file": "/private/tmp/2026-11-b1a-verifier-27d39324/source/packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts",
+                "name": "people journey on node: every stored UUID is v7 before the member's removal and after it, and no secret is a UUID",
+                "status": "passed",
+                "failureMessages": []
+              }
+            ]
+          }
+        }
+      ],
+      "originalSha256": "4551c67793de092ad2c1538feb4ef9433c6c382a3f0cf794b070b0fcafbd00d5",
+      "mutantSha256": "1d7de86054bf12f5c38729cd1bf4515ef05eef4848ba09842d0718ccdf708fe8",
+      "beforeArtifacts": [
+        {
+          "file": "packages/sign-in-core/dist/better-auth/index.js",
+          "bytes": 974786,
+          "sha256": "47ed7365a83fb3494efd9bb8884e65d4e1e1543c37ca82fda54aa1028adefffb"
+        },
+        {
+          "file": "packages/sign-in-core/dist/contracts/person-identity-contracts.js",
+          "bytes": 2587,
+          "sha256": "b7e003339354ad25edad155bc2a397c8cfdff2f471b960a4d4ee173398370732"
+        },
+        {
+          "file": "packages/sign-in-core/dist/fleet-admin-create-words-zTlgq_UA.js",
+          "bytes": 100310,
+          "sha256": "788509091c45dae6a8c639031b9ed1fafff30f6c5cebf6d2c5e14f51cb921ecb"
+        },
+        {
+          "file": "packages/sign-in-core/dist/index.js",
+          "bytes": 84529,
+          "sha256": "762363deacf975649228600c76730c404ada1d5cdf7c8848c13ecaf1dd3f037c"
+        },
+        {
+          "file": "packages/sign-in-core/dist/second-factor-step-up-CNY5sRgq.js",
+          "bytes": 2297,
+          "sha256": "96cfbdbe99bb11349b190676bb2a107a26723ab6b0fd8614bed7484c581be760"
+        }
+      ],
+      "patchSha256": "dbd3909037513bb9c413a2632af0cee8ebe1435910c958cc484eab206da2800a",
+      "mutantBuildExit": 0,
+      "mutantArtifacts": [
+        {
+          "file": "packages/sign-in-core/dist/better-auth/index.js",
+          "bytes": 974916,
+          "sha256": "74999cfb1b0b18540550e660d5b04381a3a958a9647512ea33bf28d34affe4b9"
+        },
+        {
+          "file": "packages/sign-in-core/dist/contracts/person-identity-contracts.js",
+          "bytes": 2587,
+          "sha256": "b7e003339354ad25edad155bc2a397c8cfdff2f471b960a4d4ee173398370732"
+        },
+        {
+          "file": "packages/sign-in-core/dist/fleet-admin-create-words-zTlgq_UA.js",
+          "bytes": 100310,
+          "sha256": "788509091c45dae6a8c639031b9ed1fafff30f6c5cebf6d2c5e14f51cb921ecb"
+        },
+        {
+          "file": "packages/sign-in-core/dist/index.js",
+          "bytes": 84529,
+          "sha256": "762363deacf975649228600c76730c404ada1d5cdf7c8848c13ecaf1dd3f037c"
+        },
+        {
+          "file": "packages/sign-in-core/dist/second-factor-step-up-CNY5sRgq.js",
+          "bytes": 2297,
+          "sha256": "96cfbdbe99bb11349b190676bb2a107a26723ab6b0fd8614bed7484c581be760"
+        }
+      ],
+      "changedJsArtifacts": [
+        {
+          "file": "packages/sign-in-core/dist/better-auth/index.js",
+          "bytes": 974916,
+          "sha256": "74999cfb1b0b18540550e660d5b04381a3a958a9647512ea33bf28d34affe4b9"
+        }
+      ],
+      "restoredSourceSha256": "4551c67793de092ad2c1538feb4ef9433c6c382a3f0cf794b070b0fcafbd00d5",
+      "sourceRestored": true,
+      "restoredBuildExit": 0,
+      "restoredArtifacts": [
+        {
+          "file": "packages/sign-in-core/dist/better-auth/index.js",
+          "bytes": 974786,
+          "sha256": "47ed7365a83fb3494efd9bb8884e65d4e1e1543c37ca82fda54aa1028adefffb"
+        },
+        {
+          "file": "packages/sign-in-core/dist/contracts/person-identity-contracts.js",
+          "bytes": 2587,
+          "sha256": "b7e003339354ad25edad155bc2a397c8cfdff2f471b960a4d4ee173398370732"
+        },
+        {
+          "file": "packages/sign-in-core/dist/fleet-admin-create-words-zTlgq_UA.js",
+          "bytes": 100310,
+          "sha256": "788509091c45dae6a8c639031b9ed1fafff30f6c5cebf6d2c5e14f51cb921ecb"
+        },
+        {
+          "file": "packages/sign-in-core/dist/index.js",
+          "bytes": 84529,
+          "sha256": "762363deacf975649228600c76730c404ada1d5cdf7c8848c13ecaf1dd3f037c"
+        },
+        {
+          "file": "packages/sign-in-core/dist/second-factor-step-up-CNY5sRgq.js",
+          "bytes": 2297,
+          "sha256": "96cfbdbe99bb11349b190676bb2a107a26723ab6b0fd8614bed7484c581be760"
+        }
+      ],
+      "interpretation": "Returned recovery-code UUID predicate trueinsteadfalse at line144 after pre/post removal inventory and secret-field assertions have passed; codevalues redacted/not transmitted.",
+      "restoredDistExact": true,
+      "patch": {
+        "file": {
+          "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/G/mutation.patch",
+          "bytes": 857,
+          "sha256": "dbd3909037513bb9c413a2632af0cee8ebe1435910c958cc484eab206da2800a"
+        },
+        "literal": "diff --git a/packages/sign-in-core/src/better-auth/provider-configuration.ts b/packages/sign-in-core/src/better-auth/provider-configuration.ts\nindex 4168914b..004f61f4 100644\n--- a/packages/sign-in-core/src/better-auth/provider-configuration.ts\n+++ b/packages/sign-in-core/src/better-auth/provider-configuration.ts\n@@ -458,7 +458,7 @@ export function createSignInProvider(props: SignInProviderProps): SignInProvider\n \t\t\t\trequestState: props.requestState,\n \t\t\t\tsignStatement,\n \t\t\t}),\n-\t\t\ttwoFactor({ allowPasswordless: true }),\n+\t\t\ttwoFactor({ allowPasswordless: true, backupCodeOptions: { customBackupCodesGenerate: () => Array.from({ length: 10 }, () => props.platform.ids.nextId()) } }),\n \t\t\tcreateSecondFactorProviderPlugin({ store: props.store, platform: props.platform }),\n \t\t\tcreatePasskeyConfirmationPlugin({\n \t\t\t\tissuer: props.configuration.issuer,\n"
+      },
+      "originalSource": {
+        "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/G/original-source",
+        "bytes": 18792,
+        "sha256": "4551c67793de092ad2c1538feb4ef9433c6c382a3f0cf794b070b0fcafbd00d5"
+      },
+      "mutantSource": {
+        "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/G/mutant-source",
+        "bytes": 18911,
+        "sha256": "1d7de86054bf12f5c38729cd1bf4515ef05eef4848ba09842d0718ccdf708fe8"
+      },
+      "commands": [
+        {
+          "step": "sG-mutant-build",
+          "command": "unset SIGN_IN_TEST_HOST\nmise exec node@24.7.0 pnpm@10.33.0 -- pnpm --filter @agent-collaboration/sign-in-core build",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+          },
+          "exit": 0,
+          "signal": null,
+          "elapsedMs": 3135,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sG-mutant-build.process.json",
+            "bytes": 1364,
+            "sha256": "6beb2d1904dd51b36a69ae61b404c5453da0c33e732c40befd81262f81ed3dac"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sG-mutant-build.stdout",
+              "bytes": 1902,
+              "sha256": "db161541db8f005f1577d62438f94960e27b1c8cbdef2f771ba2bade8b64c2f6"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sG-mutant-build.stderr",
+              "bytes": 104,
+              "sha256": "f0925819f785103843d6aa527c0cdf2f0117ad0750ee6d3e7b5308ebb75f2c20"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sG-mutant-build.log",
+              "bytes": 2380,
+              "sha256": "d060dd46c1823f979b58924d5481f3dda23c47a323b90365790fa20463a62244"
+            }
+          ],
+          "rawTerminalBlock": [],
+          "rawDecidingFailureBlock": null,
+          "cleanup": null
+        },
+        {
+          "step": "sG-red-cloudflare",
+          "command": "unset SIGN_IN_TEST_HOST\nmise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:e2e:host packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts --reporter=default --reporter=json --outputFile='/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sG-red-cloudflare.vitest.json'",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+          },
+          "exit": 1,
+          "signal": null,
+          "elapsedMs": 6786,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sG-red-cloudflare.process.json",
+            "bytes": 4386,
+            "sha256": "273462e6bfcf0e322e5da301fa792004df4fdd8763d7e4b85b6ff45a63142873"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sG-red-cloudflare.stdout",
+              "bytes": 1038,
+              "sha256": "e68ff71607f50dc7fe2beaf293c264f527a947c708c1c5025555f02a90234d57"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sG-red-cloudflare.stderr",
+              "bytes": 18686,
+              "sha256": "2a348834d927d099b2d513f63cb5b3c37cc4bd0cf000bf70aeb50de91513e15c"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sG-red-cloudflare.log",
+              "bytes": 20290,
+              "sha256": "67440f2759a109b1a01de67bc39d5c5816e41a2bffa40be3cef629c155ebb898"
+            }
+          ],
+          "rawTerminalBlock": [
+            " Test Files  1 failed (1)",
+            "      Tests  1 failed (1)",
+            "   Start at  18:31:09",
+            "   Duration  6.13s (transform 530ms, setup 0ms, import 1.59s, tests 4.44s, environment 0ms)",
+            "JSON report written to /private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sG-red-cloudflare.vitest.json"
+          ],
+          "rawDecidingFailureBlock": " FAIL  |e2e-host| packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts > people journey on cloudflare: every stored UUID is v7 before the member's removal and after it, and no secret is a UUID\nAssertionError: expected true to be false // Object.is equality\n\n- Expected\n+ Received\n\n- false\n+ true\n\n ❯ packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts:144:74\n    142|    expect(count).toBeGreaterThan(0);\n    143|    for (let index = 0; index < count; index += 1)\n    144|     expect(isUuid(harness.totpAuthenticator.recoveryCode(email, index)…\n       |                                                                          ^\n    145|   }\n    146|   expect([ownerId, memberId].every((id) => z.uuidv7().safeParse(id).su…\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n",
+          "cleanup": {
+            "groupEmpty": true,
+            "observedPIDsAbsent": true,
+            "observedIdentityCount": 9,
+            "sampling": "bounded 1s group snapshots, maximum1800, not an exhaustive process-birth ledger",
+            "groupAfter": {
+              "label": "after-command",
+              "at": "2026-11-15T23:31:15.335Z",
+              "command": "/bin/ps -g 82872 -o pid=,ppid=,pgid=,lstart=,comm=",
+              "exit": 1,
+              "stdout": "",
+              "stderr": ""
+            },
+            "noSignalsSentByWrapper": true
+          }
+        },
+        {
+          "step": "sG-red-node",
+          "command": "mise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:e2e:host packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts --reporter=default --reporter=json --outputFile='/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sG-red-node.vitest.json'",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+            "SIGN_IN_TEST_HOST": "node"
+          },
+          "exit": 1,
+          "signal": null,
+          "elapsedMs": 6135,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sG-red-node.process.json",
+            "bytes": 4364,
+            "sha256": "8788cc06fba0c92ede9c535a134d4c3475acedba75ed56a1d9b4b1776fae776c"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sG-red-node.stdout",
+              "bytes": 1020,
+              "sha256": "1421b89d99015653bc927a1ef152aceaafba4eb077d760ea9864d8764741b227"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sG-red-node.stderr",
+              "bytes": 21113,
+              "sha256": "c8157c12aee12128adfa090c60020163a61b7cc6c46d2b03c89a3f16be4682d8"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sG-red-node.log",
+              "bytes": 22696,
+              "sha256": "b8e0784dd9bd39f2b455f3fd7026d4439b4fa5c548852e48b98e4a25512ca190"
+            }
+          ],
+          "rawTerminalBlock": [
+            " Test Files  1 failed (1)",
+            "      Tests  1 failed (1)",
+            "   Start at  18:31:15",
+            "   Duration  5.45s (transform 543ms, setup 0ms, import 1.60s, tests 3.75s, environment 0ms)",
+            "JSON report written to /private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sG-red-node.vitest.json"
+          ],
+          "rawDecidingFailureBlock": " FAIL  |e2e-host| packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts > people journey on node: every stored UUID is v7 before the member's removal and after it, and no secret is a UUID\nAssertionError: expected true to be false // Object.is equality\n\n- Expected\n+ Received\n\n- false\n+ true\n\n ❯ packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts:144:74\n    142|    expect(count).toBeGreaterThan(0);\n    143|    for (let index = 0; index < count; index += 1)\n    144|     expect(isUuid(harness.totpAuthenticator.recoveryCode(email, index)…\n       |                                                                          ^\n    145|   }\n    146|   expect([ownerId, memberId].every((id) => z.uuidv7().safeParse(id).su…\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n",
+          "cleanup": {
+            "groupEmpty": true,
+            "observedPIDsAbsent": true,
+            "observedIdentityCount": 9,
+            "sampling": "bounded 1s group snapshots, maximum1800, not an exhaustive process-birth ledger",
+            "groupAfter": {
+              "label": "after-command",
+              "at": "2026-11-15T23:31:21.500Z",
+              "command": "/bin/ps -g 82944 -o pid=,ppid=,pgid=,lstart=,comm=",
+              "exit": 1,
+              "stdout": "",
+              "stderr": ""
+            },
+            "noSignalsSentByWrapper": true
+          }
+        },
+        {
+          "step": "sG-restored-build",
+          "command": "unset SIGN_IN_TEST_HOST\nmise exec node@24.7.0 pnpm@10.33.0 -- pnpm --filter @agent-collaboration/sign-in-core build",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+          },
+          "exit": 0,
+          "signal": null,
+          "elapsedMs": 3133,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sG-restored-build.process.json",
+            "bytes": 1372,
+            "sha256": "46384b063d4049f9fc43f2a7bb3ac83781008a3ece3caae6336d343929b38113"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sG-restored-build.stdout",
+              "bytes": 1902,
+              "sha256": "d464c1da43f32421a09ba18b7c0b267b1a60edac4b51bcda16d728e46bc5b4a0"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sG-restored-build.stderr",
+              "bytes": 105,
+              "sha256": "3de262e279971cd06b0973deaaa7735e218829b5dc996bce64e699122e2b186c"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sG-restored-build.log",
+              "bytes": 2381,
+              "sha256": "ee916e2b2141b683ab309f856201c3c7b26e6b0331eb22afd468e8b7c3dbd7b5"
+            }
+          ],
+          "rawTerminalBlock": [],
+          "rawDecidingFailureBlock": null,
+          "cleanup": null
+        },
+        {
+          "step": "sG-restored-cloudflare",
+          "command": "unset SIGN_IN_TEST_HOST\nmise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:e2e:host packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts --reporter=default --reporter=json --outputFile='/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sG-restored-cloudflare.vitest.json'",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+          },
+          "exit": 0,
+          "signal": null,
+          "elapsedMs": 6743,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sG-restored-cloudflare.process.json",
+            "bytes": 4410,
+            "sha256": "057a6ffdcc786f14c3412e64138c973c1809d8413a47291fefa7336a2bc28682"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sG-restored-cloudflare.stdout",
+              "bytes": 989,
+              "sha256": "b7d69a509d96ff1a4834672853c7de15c57c377b2957fe842d2914d9a4cbf13c"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sG-restored-cloudflare.stderr",
+              "bytes": 17760,
+              "sha256": "fd9386ac06926ff1bda1d7b8f69e102bbe333b3bd65d960cedf0ae78bcc41df8"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sG-restored-cloudflare.log",
+              "bytes": 19320,
+              "sha256": "688eb6014f17ef38c9defd099f80cfe0f0b51457c956b71fab139a6697fd1257"
+            }
+          ],
+          "rawTerminalBlock": [
+            " Test Files  1 passed (1)",
+            "      Tests  1 passed (1)",
+            "   Start at  18:31:25",
+            "   Duration  6.09s (transform 524ms, setup 0ms, import 1.55s, tests 4.44s, environment 0ms)",
+            "JSON report written to /private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sG-restored-cloudflare.vitest.json"
+          ],
+          "rawDecidingFailureBlock": null,
+          "cleanup": {
+            "groupEmpty": true,
+            "observedPIDsAbsent": true,
+            "observedIdentityCount": 9,
+            "sampling": "bounded 1s group snapshots, maximum1800, not an exhaustive process-birth ledger",
+            "groupAfter": {
+              "label": "after-command",
+              "at": "2026-11-15T23:31:31.452Z",
+              "command": "/bin/ps -g 83055 -o pid=,ppid=,pgid=,lstart=,comm=",
+              "exit": 1,
+              "stdout": "",
+              "stderr": ""
+            },
+            "noSignalsSentByWrapper": true
+          }
+        },
+        {
+          "step": "sG-restored-node",
+          "command": "mise exec node@24.7.0 pnpm@10.33.0 -- pnpm test:e2e:host packages/sign-in-test-support/src/people-identifier-inventory.host.e2e.test.ts --reporter=default --reporter=json --outputFile='/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sG-restored-node.vitest.json'",
+          "environment": {
+            "TMPDIR": "/tmp/2026-11-b1a-verifier-27d39324/raw-evidence",
+            "CHROME_BIN": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+            "SIGN_IN_TEST_HOST": "node"
+          },
+          "exit": 0,
+          "signal": null,
+          "elapsedMs": 6112,
+          "processReceipt": {
+            "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sG-restored-node.process.json",
+            "bytes": 4388,
+            "sha256": "24840b96d6907482a43b2ebfc73248b6f5c5002401970f4cd972ec65d75625be"
+          },
+          "rawFiles": [
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sG-restored-node.stdout",
+              "bytes": 971,
+              "sha256": "427a6e7c62f0dab4d92f2933dd0b9684af34585fe3e1e80d0bc803a6cb8508fb"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sG-restored-node.stderr",
+              "bytes": 20193,
+              "sha256": "ffecac3b84fb69b8c04b9ef95c6055b2e7839424299d8dd5edd820b24ad6df61"
+            },
+            {
+              "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/logs/sG-restored-node.log",
+              "bytes": 21732,
+              "sha256": "d3357c3f3883952ad25a61442f02c7b2efefb522863b65371110e04029957100"
+            }
+          ],
+          "rawTerminalBlock": [
+            " Test Files  1 passed (1)",
+            "      Tests  1 passed (1)",
+            "   Start at  18:31:32",
+            "   Duration  5.47s (transform 523ms, setup 0ms, import 1.57s, tests 3.80s, environment 0ms)",
+            "JSON report written to /private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/sG-restored-node.vitest.json"
+          ],
+          "rawDecidingFailureBlock": null,
+          "cleanup": {
+            "groupEmpty": true,
+            "observedPIDsAbsent": true,
+            "observedIdentityCount": 9,
+            "sampling": "bounded 1s group snapshots, maximum1800, not an exhaustive process-birth ledger",
+            "groupAfter": {
+              "label": "after-command",
+              "at": "2026-11-15T23:31:37.622Z",
+              "command": "/bin/ps -g 83112 -o pid=,ppid=,pgid=,lstart=,comm=",
+              "exit": 1,
+              "stdout": "",
+              "stderr": ""
+            },
+            "noSignalsSentByWrapper": true
+          }
+        }
+      ]
+    }
+  ],
+  "sourceFinal": {
+    "file": {
+      "file": "/private/tmp/2026-11-b1a-verifier-27d39324/raw-evidence/sensitivity/final-source.json",
+      "bytes": 64,
+      "sha256": "da828dce49c2577b90c0f1f24e9a5a3f11f70b523ad3ade26f1c8878ff793087"
+    },
+    "value": {
+      "head": "27d393240b5c31bd1cf7da522de300c0522dd222",
+      "status": ""
+    }
+  },
+  "limits": [
+    "One planted UUIDv4 is deliberate invalid test input, not generated domain identity.",
+    "Do not count later assertions past the deciding failure as executed.",
+    "Raw originals remain private; no codevalues, tokens, private keys or screenshots transmitted.",
+    "No production changes, product acceptance or remaining CLI-journey completion claimed."
+  ]
+}

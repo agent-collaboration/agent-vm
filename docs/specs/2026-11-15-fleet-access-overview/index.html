@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign-in (auth service)</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="home" src="./navigation.json"></ex-nav>
+<ex-document id="home">
+<h1>Sign-in (auth service)</h1>
+<p id="three">Switchboard owns auth service sign-in, refresh and machine login. It also owns verification of those paths, including the local journeys, security checks, B2 commands, CI and staging proof. Use each deliverable’s Home to find its design, plan and decisions.</p>
+
+<h2 id="picks">Deliverable progress</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th scope="col">Deliverable</th><th scope="col">State</th><th scope="col">Lead</th><th scope="col">Switchboard PR</th></tr></thead>
+<tbody>
+<tr><th scope="row"><a href="../2026-11-15-fleet-access-b1/b1-a-core/index.html">B1-A core sign-in</a></th><td>Merged</td><td>Sign-in Lead</td><td><a href="https://github.com/agent-collaboration/switchboard-history/pull/18">history #18</a></td></tr>
+<tr><th scope="row"><a href="../2026-11-15-fleet-access-b1/b1-b-passkey/index.html">B1-B passkeys</a></th><td>Merged</td><td>Sign-in Lead</td><td><a href="https://github.com/agent-collaboration/switchboard/pull/8">#8</a></td></tr>
+<tr><th scope="row"><a href="../2026-11-15-fleet-access-b1/b1-c-organizations/index.html">B1-C organizations</a></th><td>Merged</td><td>Sign-in Lead</td><td><a href="https://github.com/agent-collaboration/switchboard/pull/1">#1</a></td></tr>
+<tr><th scope="row"><a href="../2026-11-15-fleet-access-b2-central/index.html">B2 central statements</a></th><td>Designed</td><td>Sign-in Lead</td><td>—</td></tr>
+<tr><th scope="row"><a href="../2026-11-15-fleet-access-b2x/index.html">B2x person tokens and revocation</a></th><td>Designed</td><td>Sign-in Lead</td><td>—</td></tr>
+<tr><th scope="row"><a href="../2026-11-15-fleet-access-b3/index.html">B3 machine login</a></th><td>In progress</td><td>Sign-in Lead</td><td>—</td></tr>
+<tr><th scope="row"><a href="../2026-11-15-fleet-access-bg/index.html">BG getting in and staging</a></th><td>Designed. Staging pending</td><td>Sign-in Lead</td><td>—</td></tr>
+<tr><th scope="row"><a href="../2026-11-17-fleet-access-f1-fuzz/index.html">F1 fuzzing</a></th><td>Draft PR</td><td>Sign-in Lead</td><td><a href="https://github.com/agent-collaboration/switchboard/pull/4">#4</a></td></tr>
+<tr><th scope="row"><a href="../2026-11-17-fleet-access-f2-hegel/index.html">F2 Hegel</a></th><td>Merged</td><td>Sign-in Lead</td><td><a href="https://github.com/agent-collaboration/switchboard/pull/3">#3</a></td></tr>
+<tr><th scope="row"><a href="../2026-11-20-sign-in-verification-redesign/index.html">Sign-in verification</a></th><td>Draft PR</td><td>Sign-in Lead</td><td><a href="https://github.com/agent-collaboration/switchboard/pull/10">#10</a></td></tr>
+<tr><th scope="row"><a href="../2026-11-20-sign-in-navigation-ui/index.html">Sign-in navigation UI</a></th><td>In design</td><td>Sign-in Lead</td><td>—</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="order">Planning dependencies</h2>
+<p>The original sequencing view shows which sign-in deliverables depend on one another and where Central’s work enters. The progress table above gives current status.</p>
+<ex-mermaid id="order-pic" label="Fleet access features in order, with blockers" data-width="canvas"><script type="text/plain">
+flowchart TB
+  A["1 · B1-A One sign-in core"]
+  A --> B["2 · B1-B Passkey sign-in"]
+  A --> C["3 · B1-C Organizations"]
+  A --> B2["4 · B2 Central organizations"]
+  LA1["Lead A · directory read, engine 1,<br/>10 s key-fetch slice"] --> B2
+  B2 --> B2X["5 · B2 additions"]
+  B2 --> BG["6 · BG Getting in"]
+  C --> BG
+  B2X --> B3["7 · B3 Machine login"]
+  LA4["Lead A · 4a machine token, door, renewal"] --> B3
+  LA4 --> LA5["Lead A · 5 Agent session tokens at central"]
+  LA5 --> B45
+  B3 --> B45["8 · B4 and B5"]
+  class A,B slot2
+  class C,B2X,BG slot6
+  class B2,B3 slot4
+  class B45 slot1
+  class LA1,LA4,LA5 slot3
+</script></ex-mermaid>
+<p id="check">Use the linked Plans for the deliverable-specific gates and proof. BG supplies the staging boundary for the <a href="../2026-11-20-sign-in-verification-redesign/plan.html">sign-in verification plan</a>. <a href="../2026-11-15-fleet-access-b3/index.html">B3 machine login</a> records the handover of the Mac work.</p>
+<details id="table">
+<summary>Dependencies from the original sequencing plan</summary>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th scope="col">Deliverable</th><th scope="col">Depends on</th><th scope="col">Can run alongside</th><th scope="col">Unblocks</th></tr></thead>
+<tbody>
+<tr><th scope="row">B1-A</th><td>Final verification</td><td>Goes first</td><td>B1-B, B1-C and B2</td></tr>
+<tr><th scope="row">B1-B</th><td>B1-A. BG later covers journey 5 from passkey enrollment onward in staging.</td><td>B1-C and B2</td><td>—</td></tr>
+<tr><th scope="row">B1-C</th><td>B1-A</td><td>B1-B and B2</td><td>BG</td></tr>
+<tr><th scope="row">B2</th><td>B1-A, Central’s directory read, engine deliverable 1 and the bounded 10-second key fetch</td><td>B1-B and B1-C</td><td>B2x and BG</td></tr>
+<tr><th scope="row">B2x</th><td>B2</td><td>BG</td><td>B3</td></tr>
+<tr><th scope="row">BG</th><td>B1-C and B2</td><td>B2x</td><td>Staging proof for B1-B and the switch to the new login</td></tr>
+<tr><th scope="row">B3</th><td>B2x and Central’s 4a</td><td>—</td><td>B4 and B5</td></tr>
+<tr><th scope="row">B4 and B5</th><td>B3 and their own designs. B4 also needs Central’s 4 and 5.</td><td>Each other</td><td>Switch to the new login, then B6 to B9</td></tr>
+</tbody>
+</table></div>
+</details>
+
+<h2 id="earlier">Earlier documents</h2>
+<ul>
+<li><a href="../2026-11-02-fleet-access/index.html">Original fleet-access design</a></li>
+<li><a href="../2026-11-15-fleet-access-b2/audit.html">Earlier B2 audit</a></li>
+</ul>
+</ex-document>
+</body>
+</html>

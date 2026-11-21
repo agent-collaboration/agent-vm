@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B3 · Machine login · Audit</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>B3 · Machine login and the locked link: Audit</h1>
+<p><strong>Half of B3 is built but frozen.</strong> Switchboard PR #11 (<code>item2/b3a-device-grant</code>, <code>d60372cc</code>) logs a machine in by device code and refreshes its token, and PR #14 (<code>item2/b3a-verify-auth</code>, <code>b521a56c</code>, based on #11) adds its verification; independent runs pass on both hosts against real Central. Missing: revoking a machine, choosing and changing its workspaces, its connection through the sign-in service, renewal on the open connection, the Router's own login and secret store, and the UUIDv7 re-key. #11 also has a defect: Deny needs no recent second factor.</p>
+<p><a href="../2026-11-15-fleet-access-overview/index.html">Back to the Fleet access overview.</a> Switchboard <code>f3b2b88b</code> and the two frozen heads; codex-router <code>e7b709f6a</code> and Lead A's C2 branch <code>963f5739d</code>. Source, not runs.</p>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What to check" tone="note" icon="shield-check">
+<ul>
+<li>The <a href="#built">built table</a>: what #11 and #14 hold and what they prove.</li>
+<li>The <a href="#split">split with Lead A</a>: Central's token check, connection door and on-connection renewal are Lead A's 4a.</li>
+<li>The <a href="#missing">missing table</a>: what B3 still has to build.</li>
+</ul>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p>Settled since: #11 is finished and merged whole (my call), and the storage questions are your 9 Nov decisions. See <a href="decisions.html#open">Decisions</a>.</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>The <a href="../2026-11-02-fleet-access/deliverables/b3-machine-login.source.html">approved B3</a> (revision 2026-11-07.1) and your 7 Nov secret-store decision (only the macOS Keychain, injected; others memory-only until a later OIDC design).</p>
+</ex-callout>
+
+<h2 id="today">What exists</h2>
+<ex-mermaid id="today-picture" label="B3 today" data-width="canvas"><script type="text/plain">
+flowchart TB
+  r["Router"] --> code["Device code (frozen #11)"]
+  code --> page["Approval page (frozen #11)"]
+  page --> central["DecideDeviceLogin, DecideMachineToken at Central"]
+  central --> tok["Machine token, refresh (frozen #11)"]
+  tok --> conn["Connection through sign-in: missing"]
+  rev["Revoke a machine: missing"]
+  ws["Pick and change workspaces: missing"]
+  class r,code,page,central,tok slot3
+  class conn,rev,ws slot5
+</script></ex-mermaid>
+
+<h2 id="built">Built on the frozen branches</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Part</th><th>Where (on <code>item2/b3a-device-grant</code>)</th><th>Proof</th></tr></thead>
+<tbody>
+<tr><td>Device grant, user code</td><td><code>sign-in-core/src/better-auth/machine-login-plugin.ts</code>, <code>machine-login/device-user-code.ts</code></td><td>Independent runs, #11 and #14, Node/Tokio and workerd/workerd, each 22 passed, 0 failed, 0 skipped (<code>/private/tmp/2026-11-ws15-verifier/independent-handback.md</code>).</td></tr>
+<tr><td>Approval page</td><td><code>pages/device-page.tsx</code>, <code>pages/device-approval-view.tsx</code>, <code>pages/islands/device-approval-island.tsx</code></td><td>Same runs.</td></tr>
+<tr><td>Approve and Deny</td><td><code>better-auth/machine-device-decisions.ts</code></td><td>Deny writes <code>status = 'denied'</code> only while pending, for the approver, before expiry (:102–124) but <strong>asks for no recent second factor</strong>.</td></tr>
+<tr><td>Central decisions client</td><td><code>central-link/machine-login-decisions-client.ts</code></td><td>Real Central at <code>e7b709f6</code>.</td></tr>
+<tr><td>Machine token, release, revocation hook</td><td><code>machine-token-contributor.ts</code>, <code>machine-token-release.ts</code>, <code>machine-revocation-hook.ts</code></td><td>Same runs; refresh, idle expiry, deadline, BA1.</td></tr>
+</tbody></table></div>
+<p>Both branches sit on an older main and need merging forward onto the current <code>main</code>. They were frozen, not rejected; their tests are worth keeping.</p>
+
+<h2 id="split">The split with Lead A</h2>
+<p>Lead A (push <code>01a1e164-ea38</code>): B3 depends on 4a, “Routers write to Central over the link”, not 4b. What 4a delivers is built on C2 (<code>963f5739d</code>) and keeps its shape:</p>
+<ul>
+<li><strong>Machine token check:</strong> compact JWT, EdDSA, <code>typ at+jwt</code>, nonempty <code>kid</code>, verified against the sign-in issuer's JWKS; exact audience; <code>client_id == azp</code>; no <code>workspace_id</code> claim; expiry <code>min(exp + 60 s, grant_expires_at)</code>, refused at <code>grant_expires_at</code> (<code>collaboration-central-core/src/machine_token.rs:163–176</code>).</li>
+<li><strong>Door:</strong> <code>GET /v1/organizations/{organization}/link</code>, bearer machine token, WebSocket (<code>collaboration-central-tokio/src/workspace_link.rs:52</code>; Worker <code>workspace_link_entry.rs</code>). 401 on a refused token, 503 on admission failure.</li>
+<li><strong>Admission:</strong> the installation resolves to its machine row, which must be in that organization, enrolled, with the active enrollment and matching client; every write re-reads authority and allowed workspaces (<code>machine_connection_admission.rs:12</code>).</li>
+<li><strong>Renewal on the open connection:</strong> 4a adds <code>RenewMachineToken</code>, as you approved (R40), replacing C2's new-socket renewal (Lead A, push <code>01a1e16a-1dc3</code>).</li>
+</ul>
+<p>Which of the enrollment, allowance and command pieces at Central are 4a's and which are B3's is being confirmed with Lead A (Decisions, my calls).</p>
+
+<h2 id="missing">Missing</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Piece</th><th>Approved B3 says</th><th>Today</th></tr></thead>
+<tbody>
+<tr><td>Revoke a machine</td><td>One Central transaction, connection closed, the client disabled, next renewal refused.</td><td>No page or command path.</td></tr>
+<tr><td>Workspaces at approval, allow and withdraw later</td><td>Pick on the approval page; <code>AllowMachine</code>, <code>WithdrawMachineAllowance</code>.</td><td>No picker (no list existed); no commands wired. B2's <code>ListWorkspaces</code> now provides the list.</td></tr>
+<tr><td>Connection through sign-in</td><td>The Router connects only through the sign-in service over the link.</td><td>Not carried.</td></tr>
+<tr><td>Router login</td><td><code>codex-router fleet login</code>, <code>fleet_login</code> and <code>fleet_machine</code> rows, ordered publication.</td><td>Not built for B3.</td></tr>
+<tr><td>Secret store</td><td><code>RefreshCredentialStore</code>, <code>DataKeySource</code>, <code>MacKeychain</code> injected; memory elsewhere.</td><td>Today's <code>cfg</code>-selected keychain access.</td></tr>
+<tr><td>UUIDv7 re-key, link switch (R10/R10a)</td><td>At the first B3 login.</td><td>Not built.</td></tr>
+<tr><td>Deny with a recent second factor</td><td>Changes need step-up (R53).</td><td>Missing on #11.</td></tr>
+</tbody></table></div>
+
+<h2 id="state">States</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>State</th><th>Owner</th><th>B3 treatment</th></tr></thead>
+<tbody>
+<tr><td>Device code: pending, approved, denied, redeemed, expired</td><td>Better Auth's device-code record</td><td>M1 models our approve/deny/redeem decisions over it; single use under concurrent redemption.</td></tr>
+<tr><td>Enrollment: reserved, approved, enrolled, revoked, expired; generation</td><td>Central (Fleet object)</td><td>M2 at Central with BA1.</td></tr>
+<tr><td>Router login: requesting, waiting, redeemed, publishing, logged in, interrupted</td><td>Router host</td><td>M3.</td></tr>
+<tr><td>Machine token renewal on the connection</td><td>Router and Central</td><td>M4.</td></tr>
+</tbody></table></div>
+</ex-document>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B1-B · Passkey sign-in · Requirements</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>B1-B · Passkey sign-in: Requirements</h1>
+<p><strong>The feature:</strong> a person who has added a passkey signs in with it, by fingerprint, face or PIN. That one sign-in counts as both factors, so they can make a protected change straight away. Google and GitHub stay for the first sign-in and for anyone without a passkey.</p>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What you should check" tone="note" icon="shield-check">
+<ul>
+<li><strong>A passkey sign-in without fingerprint, face or PIN is refused,</strong> and no session is created.</li>
+<li><strong>A passkey sign-in counts as both factors from that moment,</strong> so the first protected change isn't asked for a second factor.</li>
+<li><strong>The sign-in still passes Turnstile and the flood limit,</strong> like Google and GitHub.</li>
+<li><strong>Journey 5 runs in a real browser on both hosts:</strong> add a passkey, sign out, sign in with it, make a protected change.</li>
+</ul>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p><strong>The sign-in page gets a "Continue with Passkey" button</strong> under Google and GitHub. That's your OD21.</p>
+<p><strong>Nothing is open for you.</strong> On 15 Nov you chose click only: the button doesn't offer passkeys in the browser's autofill list (<a href="decisions.html#open">Decisions</a>).</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
+<p>From the <a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/requirements.source.html">approved Requirements</a>:</p>
+<ul>
+<li><strong>OD21 (line 270), decided by you on 31 October:</strong> <em>"A passkey with fingerprint, face or PIN signs you in and counts as both factors; Google or GitHub stays for the first sign-in and for anyone without a passkey."</em></li>
+<li><strong>U20 (line 97):</strong> <em>"People sign in with Google, GitHub or a passkey."</em></li>
+<li><strong>U50 journey 5 (line 157):</strong> <em>"Adding a passkey and signing in with it."</em></li>
+</ul>
+<p>You approved that design on 4 Nov (<em>"yes you need anytnhign?"</em>, Fleet transcript lines 71226 and 71230).</p>
+</ex-callout>
+
+<h2 id="who">Who it's for</h2>
+<ex-mermaid id="who-pic" label="Who signs in, and how" data-width="canvas"><script type="text/plain">
+flowchart TB
+  first["A person signing in for the first time"] --> social["Google or GitHub"]
+  social --> setup["Sets up the authenticator app, then may add a passkey"]
+  returning["A returning person with a passkey"] --> pk["Continue with Passkey<br/>fingerprint, face or PIN"]
+  pk --> both["Signed in, both factors confirmed"]
+  noPk["A returning person without a passkey"] --> social
+  class first,returning,noPk slot1
+  class social,setup slot3
+  class pk,both slot2
+</script></ex-mermaid>
+<p><strong>Key:</strong> blue are the people; teal the existing way in; amber what this feature adds.</p>
+
+<h2 id="needs">Needs, your words, what tests prove today, and what's missing</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Need</th><th>Your words, or your approved rule</th><th>What existing tests prove</th><th>What's missing</th></tr></thead>
+<tbody>
+<tr id="U20"><td><strong>U20</strong> people sign in with a passkey</td><td><em>"People sign in with Google, GitHub or a passkey."</em> Rule R5: "a passkey sign-in must verify the person (fingerprint, face or PIN), and then counts as both factors (R53)".</td><td>Adding a passkey requires user verification: a registration without it gets 403 (<code>people-passkey-confirmation.host.e2e.test.ts:92–106</code>).</td><td>Signing in with the passkey: both requests answer 404 today.</td></tr>
+<tr id="OD21"><td><strong>OD21</strong> both factors from one passkey sign-in</td><td>Your decision above. Rule R53: "A passkey sign-in with user verification counts as both factors, so its new session is confirmed from that moment … a passkey without user verification MUST NOT sign in or confirm anything."</td><td>Confirming a change with a passkey on an existing session stamps that session (<code>people-passkey-confirmation.host.e2e.test.ts:30</code>). A confirmation without user verification gets 401 and changes nothing (same file, 116–131).</td><td>A passkey sign-in's own session isn't stamped, and the no-UV refusal at sign-in is never reached.</td></tr>
+<tr id="R52"><td><strong>R52</strong> Turnstile and the flood limit</td><td>Rule R52: "A person's sign-in MUST also pass a Cloudflare Turnstile check … when asking for a passkey sign-in's challenge. A missing, rejected or unreachable check MUST be refused with nothing changed."</td><td>On a Better Auth instance driven directly, not through the public service, a passkey challenge request with a missing, rejected, wrong-action, reused or unreachable Turnstile check is refused and stores no challenge; an accepted one stores a real challenge (<code>turnstile-provider.host.e2e.test.ts:76–167</code>). Passkey requests are in the flood limit's <code>callback-passkey</code> class.</td><td>The same refusals through the public service, where the route is closed today, and a page that sends the token.</td></tr>
+<tr id="J5"><td><strong>U50 journey 5</strong> add a passkey, sign in with it</td><td><em>"Adding a passkey and signing in with it."</em> Rule R67: journey 5's passkey sign-in is checked locally, not on staging.</td><td>Adding and confirming in host tests with a software authenticator, and on the delivered page (<code>people-passkey-page.host.e2e.test.ts:173</code>).</td><td>The whole journey in a real browser, with Chrome's virtual authenticator, on both hosts.</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="not">Not in this feature</h2>
+<ul>
+<li><strong>Staging.</strong> Journey 5 on staging covers adding the passkey onward, under your R65, and that's BG's run. Passkey sign-in itself is checked locally, under R67.</li>
+<li><strong>Physical passkeys</strong> (a phone, a security key, Touch ID). Tests use Chrome's virtual authenticator and a software authenticator. A real device is your approved design's named limit.</li>
+<li><strong>Passkey-only accounts.</strong> A person still signs in with Google or GitHub first, as OD21 says.</li>
+<li><strong>The no-script fallback</strong> for adding and confirming passkeys (<code>passkey-page-script.ts</code>) is unchanged. Passkey sign-in needs the page's script.</li>
+<li><strong>B1-A's crypto and test-time rules</strong> apply here as built by B1-A. B1-B adds no crypto of its own: WebAuthn runs in the browser and in Better Auth.</li>
+</ul>
+</ex-document>
+</body>
+</html>

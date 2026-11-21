@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B1-A · One sign-in core, injected and honestly tested · Requirements</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>B1-A · One sign-in core, injected and honestly tested: Requirements</h1>
+<p><strong>The feature:</strong> the sign-in rules run in one core that takes everything runtime-specific from its host (storage, time, IDs, crypto, outbound calls). Its tests prove that honestly: no wall clock, the flood limit on Cloudflare's real counter, every stored ID checked, and today's agents still working. It's the first B1 deliverable in <a href="../../2026-11-15-fleet-access-overview/index.html">the Fleet access sequence</a>, and the <a href="audit.html">Audit</a> says what was built and what's wrong today.</p>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What you should check" tone="note" icon="shield-check">
+<ul>
+<li><strong>The core never reaches for the runtime itself.</strong> Its crypto comes from the host, like its clock and IDs already do, and the architecture check catches a slip.</li>
+<li><strong>No sign-in test reads the real clock or waits on real time,</strong> and a scan enforces it.</li>
+<li><strong>The flood limit is proven the way your design says:</strong> "limited" on Miniflare's real counter, the window reset on a controlled clock.</li>
+<li><strong>Every identifier the service generates is a UUIDv7,</strong> checked across the eight tables a full people journey fills, on both databases. Derived keys, such as the client-assertion key, stay derived.</li>
+<li><strong>Today's agents still get their token and make one allowed call,</strong> and people still can't get a tool credential.</li>
+</ul>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p><strong>None.</strong> Pages, tokens, limits and the agent path behave exactly as today. This feature makes the existing behaviour structurally sound and honestly proven.</p>
+<p><strong>Nothing is open for you.</strong> On 15 Nov you decided that R30 covers our code, not Better Auth's own crypto, and that capabilities stay injected with no DI library (<a href="decisions.html#owner">Decisions</a>).</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
+<p>Each part is one of your needs in the <a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/requirements.source.html">approved Requirements</a>, with your words:</p>
+<ul>
+<li><strong>U23</strong> (line 174): <em>"it shoudl be runtime seperated like fuckign codex router"</em>; <em>"you inject stukff not pkul out engines"</em>.</li>
+<li><strong>U16</strong> (line 172): <em>"maqke sure clodufalre is one runtiem and we decokuple yes? same design"</em>.</li>
+<li><strong>U25</strong> (line 176): <em>"i dont allow wall clock time ever in tests"</em>; <em>"use hegal"</em>.</li>
+<li><strong>U24</strong> (line 175): <em>"we ony use uuidv7"</em>.</li>
+<li><strong>U42</strong>, flood limits, and the agent path, kept "as today" until step 3, are rows in the same approved design.</li>
+</ul>
+<p>You approved the overall design, B1 and B2 on 4 Nov: I asked "Still waiting on you: approve the overall design, B1 and B2", and you answered "yes you need anytnhign?" (<a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl">Fleet transcript</a> lines 71226 and 71230).</p>
+</ex-callout>
+
+<h2 id="who">Who needs this, and why</h2>
+<ex-mermaid id="who-pic" label="Who this feature serves" data-width="canvas"><script type="text/plain">
+flowchart TB
+  owner["You, the product owner<br/>one design on any host"] --> core["One sign-in core<br/>runtime handed in"]
+  hosts["Cloudflare and Node hosts<br/>and the owner CLI"] --> core
+  core --> tests["Tests that fail on a wrong build<br/>no wall clock"]
+  agents["Today's agents"] --> core
+  class owner slot1
+  class hosts slot3
+  class core slot2
+  class tests slot6
+  class agents slot4
+</script></ex-mermaid>
+<p><strong>Key:</strong> blue is you, teal the hosts, amber the core, green the proof, violet today's agents.</p>
+<ul>
+<li><strong>You:</strong> one sign-in design that runs the same on Cloudflare and on Node, with each runtime plugged in from outside (U23, U16). Tests you can trust because they can't pass by luck or by timing (U25).</li>
+<li><strong>Whoever adds a host later:</strong> everything the core needs from a runtime is in one contract, so nothing is picked up silently.</li>
+<li><strong>Today's agents:</strong> their tokens and tool calls keep working while all this changes underneath (R38).</li>
+</ul>
+
+<h2 id="needs">The needs, with your words and what the tests already prove</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Need</th><th>Your words (approved Requirements)</th><th>What existing tests already prove</th><th>What's missing</th></tr></thead>
+<tbody>
+<tr id="U23"><td><strong>U23</strong> One runtime-free core; each runtime injects storage, clock, IDs, crypto and outbound calls (rule R30)</td><td><em>"you inject stukff not pkul out engines"</em></td><td>Storage, clock, IDs, deadlines and central calls come from the host (<code>SignInPlatform</code>). The architecture check rejects runtime imports and Cloudflare-only names. Both hosts pass the same suite.</td><td><strong>Crypto:</strong> six places in the core use the runtime's crypto directly. The host contract has no crypto capability. The check doesn't see shared globals or <code>.tsx</code> files.</td></tr>
+<tr id="U16"><td><strong>U16</strong> One design on any host</td><td><em>"same design"</em></td><td>The Cloudflare and Node hosts both build their platform from <code>createWebSignInCapabilities</code>.</td><td>Crypto isn't part of that shared builder yet.</td></tr>
+<tr id="U25"><td><strong>U25</strong> Tests never use wall-clock time, include Hegel property tests, and are TypeScript (rule R33)</td><td><em>"i dont allow wall clock time ever in tests"</em>; <em>"use hegal"</em></td><td>Product time runs on a controlled clock. Two Hegel families exist: claims round-trip, and record histories.</td><td>The browser-test helper has five real-time watchdogs. The token-kind dispatch Hegel family doesn't exist. No scan enforces the rule outside unit tests.</td></tr>
+<tr id="U42"><td><strong>U42</strong> Flood limits from one address, slowed, nothing changed (rule R52)</td><td>approved row U42 and journey SO2: "Miniflare's binding keeps its own clock: locally it proves 'limited', the window reset is proven through the core's limiter on a controlled clock"</td><td>Better Auth's own limit and the Node counter refuse past the limit with nothing changed, and reopen on the controlled clock. A forged header is ignored.</td><td>On Cloudflare, "limited" is proven on a hand-made stand-in, not Miniflare's real counter as SO2 says. No case checks that another address still passes.</td></tr>
+<tr id="U24"><td><strong>U24</strong> Only UUIDv7 is used as a UUID (rule R32)</td><td><em>"we ony use uuidv7"</em></td><td>An all-table, all-text UUID inventory runs after the owner-and-agent journey and catches a planted v4. The client-assertion derived key and its replay are proven.</td><td>The people journey isn't inventoried.</td></tr>
+<tr id="R38"><td><strong>R38</strong> People get no tool credential; today's agent path keeps working</td><td>approved rule R38 and journey SO2 ("today's agent path still works")</td><td>The <code>verify-auth</code> <code>agent</code> journey and the people refusals pass on earlier builds.</td><td>It hasn't been re-observed on the final build of these changes.</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="not">Not in this feature</h2>
+<ul>
+<li><strong>Passkey sign-in</strong> is B1-B. <strong>Organization choice and membership lookup</strong> are B1-C.</li>
+<li><strong>The device-code single-use Hegel family,</strong> and the "device-code approval rule is in the core" part of proof row U23: both go to machine login (B3). That's yours: the B1 you approved on 4 Nov lists "machine login and device codes (B3)" as not in B1 (<a href="decisions.html#owner">Decisions</a>). The device-code grant isn't on <code>main</code> either; it's in the frozen PR #11.</li>
+<li><strong>Better Auth's own internal crypto</strong> (its session tokens, sign-in state, two-factor codes): outside R30, as you decided on 15 Nov: <em>"but auth libary is trhe same on al platforms sso wehres the issue here?"</em>, <em>"yes do a."</em> (<a href="decisions.html#open">Decisions</a>).</li>
+<li><strong>Scripts that run in the browser</strong> keep using the browser's own crypto and <code>fetch</code>. They run in the person's browser, not in the service.</li>
+<li><strong>The real counter's reset, and counting across Cloudflare locations,</strong> are checked on the private stack, as your design says, not locally.</li>
+<li><strong>No format change:</strong> no token, proof, digest or page-policy format changes. Some exported function signatures change. Neither package is on the public npm registry, and every switchboard caller is updated in the same PR. Other consumers are unknown (<a href="decisions.html#published">Decisions</a>).</li>
+</ul>
+</ex-document>
+</body>
+</html>

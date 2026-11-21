@@ -1,0 +1,11 @@
+{
+  "id": "M2-browser",
+  "project": "integration",
+  "source": "packages/oauth-broker/src/oauth-login-continuation-store.ts",
+  "file": "packages/oauth-broker/src/oauth-browser-stores.hegel.integration.test.ts",
+  "property": "M2 login continuations bind the browser secret, consume once and enforce capacity and exact expiry",
+  "before": "if (\n\t\t\t\t!/^[A-Za-z0-9_-]{43}$/u.test(request.browserBindingSecret) ||\n\t\t\t\t!oauthBrowserSecretsEqual(entry.browserBindingSecret, request.browserBindingSecret)\n\t\t\t)",
+  "after": "if (false)",
+  "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+  "originalSha256": "13266f5b7aacc3e06e7b2626de3daf94067181594c81c3827a97dda029dca4e9"
+}

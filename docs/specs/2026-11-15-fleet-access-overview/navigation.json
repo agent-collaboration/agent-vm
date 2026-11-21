@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "pages": [
+    {
+      "id": "home",
+      "title": "Home",
+      "href": "index.html",
+      "icon": "book-open"
+    }
+  ],
+  "map": [
+    {
+      "title": "Delivery and planning",
+      "description": "Find current progress and cross-deliverable dependencies.",
+      "icon": "path",
+      "children": [
+        {
+          "title": "Deliverable progress",
+          "description": "Open a deliverable and find its Lead and PR.",
+          "icon": "path",
+          "target": {
+            "page": "home",
+            "fragment": "picks"
+          }
+        },
+        {
+          "title": "Planning dependencies",
+          "description": "See the original sign-in sequencing and Central dependencies.",
+          "icon": "path",
+          "target": {
+            "page": "home",
+            "fragment": "order"
+          }
+        }
+      ]
+    },
+    {
+      "title": "History",
+      "description": "Find the earlier fleet-access design and B2 audit.",
+      "icon": "book-open",
+      "children": [
+        {
+          "title": "Earlier documents",
+          "description": "Open the historical index and audit.",
+          "icon": "book-open",
+          "target": {
+            "page": "home",
+            "fragment": "earlier"
+          }
+        }
+      ]
+    }
+  ]
+}

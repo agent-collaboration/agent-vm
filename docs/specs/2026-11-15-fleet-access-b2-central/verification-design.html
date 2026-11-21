@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B2 · Central organizations · Verification Design</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>B2 · Central organizations: Verification Design</h1>
+<p>How each rule is shown to hold, on the real sign-in hosts paired with the real current Central. Every row names a wrong build that must fail. Nothing has run.</p>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What to check" tone="note" icon="shield-check">
+<p>V4 creates 101+ workspaces and 101+ records and requires every one to appear. V6 moves the clock past a statement's expiry while its send is held, then delivers each kind of answer. V7 withdraws a real key with an idle organization present and delivers a key response from before withdrawal late. The check refuses until withdrawal + 310 s; after that, Central refuses the old key, and every organization reads after it and after a cold start.</p>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p>V7 proves rotation with no pause (your pick). V3's 24-hour case follows S5 A once you confirm it.</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>Each row traces to <a href="specification.html">Specification</a>. The earlier joint runs were on an older Central; all of these run against Central at the merged directory-read slice.</p>
+</ex-callout>
+
+<h2 id="pairings">Where proof runs</h2>
+<ex-mermaid id="pairings-picture" label="Two real pairings and the browser" data-width="canvas"><script type="text/plain">
+flowchart TB
+  a["Local workerd + D1 sign-in ↔ workerd Central Worker"] --> page["Real Chrome on the delivered page"]
+  b["Local Node + better-sqlite3 sign-in ↔ native Tokio Central"] --> page
+  hegel["Hegel: M1–M5 against independent models"] --> a
+  hegel --> b
+  class a,b slot3
+  class page slot1
+  class hegel slot6
+</script></ex-mermaid>
+<p>The joint fixture <code>sign-in-test-support/src/test-fixtures/b2e/</code> starts real Central on both pairings; its pins move to Central's final artifacts. Faults use the existing link fault proxy (<code>b2e/link-fault-proxy.ts</code>: hold, drop a reply) and Lead A's two test-only controls (fail the next change-record insert; corrupt a stored column). Heavy runs on Sunclaw.</p>
+
+<h2 id="V1">V1 · Setup (S1)</h2>
+<p>Create an organization; Central answers provisioned; the row is ready and the stamp record is seeded from Central's facts. Drop the reply: still setting up; Try again sends exactly one request and becomes ready. Reload the page five times: zero sends. <strong>Wrong builds:</strong> mark ready before the answer; send on page load. Kept: <code>people-organization-provisioning.host.e2e.test.ts</code> cases, now against real Central.</p>
+
+<h2 id="V2">V2 · Authority and atomic create (S2, S3)</h2>
+<ul>
+<li>As a member, another organization's owner, and with a body naming another organization: refused, no rows changed in either Central store.</li>
+<li>Fail the next change-record insert: create refused or unavailable, and no workspace exists afterwards.</li>
+<li>Name taken by another workspace: <code>nameInUse</code>; name and description at their byte limits accepted; one byte over refused.</li>
+</ul>
+<p><strong>Wrong builds:</strong> commit the workspace before the record; skip the body-organization check.</p>
+
+<h2 id="V3">V3 · Operation IDs and lost replies (S4, S5)</h2>
+<ul>
+<li>Drop the create reply after Central applied it; resubmit from the page: the same operation ID is sent and the original answer comes back; one workspace.</li>
+<li>After <code>nameInUse</code>, the next attempt uses the server's <code>nextOperationId</code> (a UUIDv7 from the injected source in the test's ID sequence); no browser-made ID appears in any request.</li>
+<li><strong>S5 A (recommended):</strong> at 24 hours on the controlled clock, the replay ends; on <code>nameInUse</code> the one lookup at <code>workspaceId = operationId</code> shows created for this caller's own workspace and duplicate for someone else's. <strong>S5 B:</strong> the original answer still returns at 24 hours and after a Central restart.</li>
+</ul>
+<p><strong>Wrong builds:</strong> mint a new ID after an unknown outcome (duplicate workspace); keep <code>freshOperationId</code> (source and request check).</p>
+
+<h2 id="V4">V4 · Complete directory and history (S6, S7)</h2>
+<ul>
+<li>Create 130 workspaces and enough activity for 230 records. Page both lists to the end through the real page: every workspace and record appears once, in order.</li>
+<li>Produce each of the seven record kinds and three origins on the real Central (machine records through the test fixture's enrollment path); all render.</li>
+<li>Corrupt one stored workspace column with Lead A's control: the directory shows incomplete with that row's ID and column, and nothing is skipped. Fail one history page: incomplete, retryable.</li>
+<li>Client unit cases: unknown kind, unknown origin, extra field, disorder, duplicates, wrong cursor, oversize page, each rejected.</li>
+</ul>
+<p><strong>Wrong builds:</strong> build the list from creation records (workspace 101+ missing); keep the three-kind parser (machine record breaks history); skip corrupt rows.</p>
+
+<h2 id="V5">V5 · The page and status (S8, S9)</h2>
+<ul>
+<li>Real Chrome, both pairings: create with a fresh factor; with a stale factor the shipped confirmation appears, confirming retries once and creates; cancelling sends nothing; a second refusal shows an error with no loop. CSP has no violations.</li>
+<li>Status: for a confirmed organization, an awaiting-answer statement, an expired pending statement, and a refused one, the card shows the right facts; the status reply contains no statement bytes (searched for the compact statement and its digest of bytes). Loading status makes no Central call.</li>
+<li>400 px dark layout; keyboard reachable.</li>
+</ul>
+<p><strong>Wrong builds:</strong> loop on repeated step-up; include the statement in the status reply.</p>
+
+<h2 id="V6">V6 · Renew on use, including late answers (S10)</h2>
+<ex-mermaid id="v6-sequence" label="Expiry during a held send" data-width="canvas"><script type="text/plain">
+sequenceDiagram
+  participant G as Fleet-call guard
+  participant P as Link fault proxy
+  participant C as Real Central
+  G->>P: send statement A (still valid)
+  P->>C: forward
+  C-->>P: answer, Central committed
+  P-->>P: hold the reply
+  Note over G: controlled sign-in clock moves past A's expiry
+  P-->>G: release the exact reply bytes
+  G->>G: settle by A's bytes, not the clock
+</script></ex-mermaid>
+<p>The existing proxy holds requests before forwarding and drops replies (<code>b2e/link-fault-proxy.ts:55–77,150–201</code>); a request held past expiry would be refused by Central (<code>fleet_statement.rs:67–74</code>). So the proxy gains a test-only <code>holdNextReply</code>: Central processes A while valid, the proxy keeps its reply, the sign-in clock alone moves past expiry (the joint fixture's clocks are separated for this case), then the same reply bytes are released. The guard's deadline is controlled so it doesn't time out first. For each answer while A has expired in flight: provisioned → confirmed; unknown → A kept, unanswered +1; non-stale refusal → A cleared, refused +1; stale with differing expired facts → adopted, then the next pass replaces them, and no Fleet call runs under expired facts. A late answer for A after A was replaced by B: the write loses; B untouched. Two callers at once: one statement in doubt. Kept: <code>organization-statement.host.e2e.test.ts:339–622</code>, the R29 joint case.</p>
+<p><strong>Wrong builds:</strong> check expiry in settlement (late answers dropped); settle without the bytes condition.</p>
+
+<h2 id="V7">V7 · Key retirement (S11, S12)</h2>
+<ol>
+<li>Organizations: one active, one idle and not due, one ready with its local record deleted, one setting up.</li>
+<li>Run retirement with real native keys: setting up blocks; the record-less one is seeded from Central and re-signed; idle is re-signed. Try Again on the setting-up one, run again: ready to withdraw.</li>
+<li><strong>Late key response (both pairings, controlled clocks, real responses).</strong>
+<ol>
+<li>Before withdrawal, Central requests sign-in's key set, and the real response (old A and new B) is held in flight.</li>
+<li>Invoke <code>withdraw</code>. It records <code>withdrawnAt</code> = W. The published set then lacks A, and the row is retained.</li>
+<li>Release the held response at W + 9 s. Central stores it, timed from that arrival.</li>
+<li>At W + 300 s, <code>check-after-withdrawal</code> is refused with <code>central-key-cache-window</code>. The harness shows the hazard is real: a statement signed with A is still accepted by Central's verifier at that moment.</li>
+<li>At W + 310 s the check runs, and every organization's authorized read succeeds on B.</li>
+<li>A statement signed with A by key ID is unexpired, carries the right audience and authority, and was accepted by Central's statement verifier before withdrawal. Sent again with every time, profile and authority fact unchanged, it is refused <code>FleetOrganizationStatementRefusal::BadSignature</code>. That is the statement verifier's closed answer when the key is gone (<code>issuer_signature_verifier.rs:44–50</code>, <code>fleet_statement.rs:105–111</code> at Central <code>e7b709f6a</code>). At the key resolver, observed separately, <code>resolve_issuer_key</code> for A returns <code>KeySet(UnknownKey)</code>. With all other facts unchanged and the resolver naming the missing key, the refusal is due to retirement alone.</li>
+<li><strong>Held withdrawal write.</strong> Hold <code>withdraw</code>'s first write before it commits for 20 s, while real key requests are still served. A Central request started 1 s before the commit gets A and B and delivers 9 s later. The check stays closed until that response's lifetime ends (commit + 9 s + 300 s, which is before <code>withdrawnAt + 310 s</code>). Crash after the first write and before the second: the check refuses <code>withdraw-incomplete</code>. Invoking <code>withdraw</code> again records a reading after the commit, and the same late response is still covered.</li>
+<li>On Cloudflare, a response held past 10 s is refused and not stored. That is Lead A's slice test, cited and rerun in the joint fixture.</li>
+</ol>
+Wrong builds:
+<ul>
+<li>The check allowed at W + 300 s: it passes while A is still accepted.</li>
+<li><code>withdraw</code> setting the cutoff 600 s in the past: the check allows at once and A is accepted.</li>
+<li><code>withdraw</code> storing its clock reading from before the first write, in one write: under the held write, the check opens at the pre-write reading + 310 s while the late response still carries A.</li>
+<li>An unbounded Cloudflare fetch: the response held 30 s is stored and A is accepted after W + 310 s.</li>
+</ul>
+Separately, cold-start each Central over preserved data (Tokio: a process restart; workerd: a restart of the local runtime) and every organization still reads.</li>
+<li>Lose one confirmation answer mid-run: that organization is unfinished and withdrawal is refused.</li>
+<li>Three real keys: old A, requested new B, and a different default C. Every replacement statement's header names B.</li>
+<li>Equal keys, an unknown key and an expired new key are refused before any work.</li>
+<li>Interrupt and invoke the same phase again: before the sent-slot claim, after Central committed, after source confirmation, after withdraw's first write and before its second, after the second write and before its report, after withdrawal and before the check, partway through the check's reads. Each re-invocation reaches the same end. A repeated <code>withdraw</code> after the second write is refused <code>already-withdrawn</code> and leaves <code>withdrawnAt</code> unchanged. One after only the first write completes it with a reading taken after the commit. <code>check-after-withdrawal</code> completes only after <code>withdrawnAt + 310 s</code> and every organization's read has been served.</li>
+<li><strong>Hidden endpoint, through the real HTTP handler on both pairings.</strong>
+<ul>
+<li><strong>Concealment:</strong> signed-out, member, other-owner, stale-factor and revoked-session callers send to the page and each operation path:
+<ul>
+<li>a valid request;</li>
+<li>malformed JSON;</li>
+<li>a wrong content type;</li>
+<li>missing or invalid fields;</li>
+<li>a query parameter;</li>
+<li>a wrong method;</li>
+<li>a cross-origin request.</li>
+</ul>
+Every one is compared with the same request to an unknown path: identical status, body bytes and material headers, and zero audit rows and zero effects. A session-store failure at the gate also gives the unknown-path response.</li>
+<li><strong>Owner path:</strong> the owner with a fresh factor runs each phase and sees the report. The owner's malformed body gets the endpoint's 400.</li>
+<li><strong>No link:</strong> no page, menu or error body contains the path, and the gateway's management binding can't reach it.</li>
+<li><strong>Records:</strong> each owner run reads back an intent row and an outcome row with the same run ID, phase and actor. With the intent write failing at the audit store seam, nothing runs and the report says unavailable. With the outcome write failing after effects, the report says applied but not recorded, and a re-invocation records a new run.</li>
+</ul>
+Wrong builds: the concealment check inside the endpoint callback (malformed JSON gets 400, unlike an unknown path); a 403 for non-owners; a link on the admin page; effects run when the intent write fails.</li>
+<li>Key facts: after withdrawal (old row expired, still retained), <code>check-after-withdrawal</code> in a fresh process accepts the state; <code>prepare</code> refuses it; a key with no retained row is refused in both phases.</li>
+<li><strong>Current-key condition, both pairings.</strong> Hold a real ordinary renewal after it signed with A and before its sent-slot claim (barrier in the stamp store seam). Create B and run <code>prepare</code>, then release the held writer. Its claim matches no row, nothing is sent, and its next use signs with B. <strong>Settling still works:</strong> an A statement sent before B existed, with its answer held until after B, still confirms when the answer is released. The next use re-signs with B, and withdrawal waits until it has. A ready organization with no local record seeds from Central's A facts and is then re-signed. <strong>New organizations:</strong> an organization whose setup statement was signed with A just before B either confirms and is moved to B by the loop, or, released after withdrawal, is refused by Central and stays setting up until Try again signs with B. <code>prepare</code> reports blocked while it's setting up. Wrong builds: no condition on the claim (an A statement is claimed and sent after B); the condition also on confirmation or seeding (the held A answer can never settle and the record is stuck).</li>
+<li><strong>No pause, live traffic.</strong> While <code>prepare</code> runs, an owner browser session creates an organization, retries setup and makes a Fleet admin call, and a deferred write runs. All succeed, none is refused with a maintenance error, and every resulting statement names B. After withdrawal, the 310 second window and the check, every organization reads. Wrong build: <code>newKeyId</code> not Better Auth's newest live key (ordinary signers keep using another key; <code>prepare</code> must refuse <code>new-key-not-current</code>).</li>
+</ol>
+<p><strong>Wrong builds:</strong> count the outer loop finishing as success; skip ready organizations with no record; ignore setting-up ones; sign with the default key instead of the requested one.</p>
+
+<h2 id="V8">V8 · Engine permission (S15)</h2>
+<ul>
+<li>Unit: the owner holds <code>organization:repairWork</code>, the member nothing; the digest equals the expected value computed from the map.</li>
+<li>Run the digest roll on both pairings: each organization's revision rises by one with the new digest; a second run changes nothing; deleted organizations are untouched.</li>
+<li>Before Central's ACK: a new token (revision N+1) gets AuthorizationSyncRequired; after: admitted. An old token (revision N) after the ACK: RefreshRequired. An old process (old loaded digest) refuses issuance with <code>policy-mismatch</code>.</li>
+<li>Same revision with different content is Conflict, and no ACK is recorded; drop the ACK, then the next invocation or Fleet call pushes the pending revision.</li>
+<li>Admission order cases on Central: token above a stopped floor → AuthorizationSyncRequired; deleted floor → NotPermitted.</li>
+</ul>
+
+<h2 id="V9">V9 · Removal and gates (S13, S14)</h2>
+<p>Diff read: no history-derived list, no <code>freshOperationId</code>, no three-kind parser, no hand-written page; joint pins moved. B1-A's architecture check over new files with a planted bare crypto call and a non-v7 ID, both failing. Full gates as on <a href="plan.html#gates">Plan</a>.</p>
+
+<h2 id="V10">V10 · The machines (S16)</h2>
+<p>Hegel families in <code>packages/sign-in-test-support/src/core-tests/</code>: <code>organization-setup-transitions.hegel.unit.test.ts</code>, <code>organization-stamp-transitions.hegel.unit.test.ts</code>, <code>key-retirement-transitions.hegel.unit.test.ts</code>, <code>organization-admin-create.hegel.unit.test.ts</code>. Settings <code>{ testCases: 1000, derandomize: true, database: hegel.Database.disabled }</code>. Sequences of 0–40 events from a finite catalogue; clock offsets around expiry; retries and duplicated answers. Each family's reference model is written in the test; after every prefix compare next state and proposed effects in full. Besides random sequences, each family includes one fixed witness sequence per legal transition in its table, so every transition is reached by construction. The M4 page path is also driven in real Chrome on both pairings for success after step-up, retry after an unknown reply, and the 24-hour reconciliation (the existing <code>b2e-joint-journey.host.e2e.test.ts:1021–1063</code> case, retargeted).</p>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Family</th><th>Invariants</th><th>Wrong builds to shrink</th></tr></thead>
+<tbody>
+<tr><td>M1</td><td>ready only after provisioned; no send effect once ready</td><td>ready on unknown → [attempt, signed, answer(unknown)]</td></tr>
+<tr><td>M2</td><td>settlement independent of now; at most one statement in doubt; no send for an expired statement</td><td>clock in settlement → [send A, clock past A, answer(provisioned)]; resend after expiry → [send A, clock past A, use]</td></tr>
+<tr><td>M3</td><td>ready-to-withdraw only when every organization names the new key with nothing pending and Central agrees</td><td>skip record-less → [listed(ready: X with no record)]; ignore setting up → [listed(settingUp: Y)]</td></tr>
+<tr><td>M4</td><td>a new operation ID only after a definite refusal or a reconciliation that found no own workspace; at most one retry after step-up; every forward effect carries the retained operation and content</td><td>new ID after unknown → [submit, reply(unknown), submit]; loop → [submit, step-up, confirmed, step-up]; rotate before reconciling → [submit, reply(nameInUse)]; no resend → [submit, reply(unknown), submit]; drop retrying+applied → [submit, step-up, confirmed, reply(applied)]</td></tr>
+<tr><td>M5 (<code>policy-digest-roll.hegel.unit.test.ts</code>)</td><td>a push only after a won write; finished only when every non-deleted organization is acknowledged; Conflict never counts as done; deleted never touched</td><td>push after a lost write → [roll, write-lost]; Conflict as done → [roll, write-won, conflict]</td></tr>
+</tbody></table></div>
+<p><strong>Runner tests:</strong> with a store whose conditional write loses, the production runner executes zero sends or seeds (recording ports); a runner mutated to send before claiming fails. <strong>Exhaustiveness:</strong> add one literal to each state, event and effect union in turn; <code>pnpm typecheck</code> fails at its <code>satisfies never</code>. <strong>Real races:</strong> two guards claiming the sent slot at once on D1 and better-sqlite3; exactly one wins.</p>
+</ex-document>
+</body>
+</html>

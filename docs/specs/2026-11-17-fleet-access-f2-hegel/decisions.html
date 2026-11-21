@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>F2 · Hegel on critical systems · Decisions</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>F2 · Hegel on critical systems: Decisions</h1>
+<ex-callout title="Nothing open for you" tone="decision" icon="users"><p>You decided the goal. The choice of targets and their order are my calls, listed below.</p></ex-callout>
+<h2 id="decided">Decided by you</h2>
+<ul>
+<li><em>“get hegel working on critical systems too”</em> (17 Nov).</li>
+<li>Testing-tool choices are the Lead's: <em>“these are not important decisions for me to make for now”</em> (17 Nov).</li>
+</ul>
+<h2 id="calls">My calls</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Call</th><th>Why</th><th>Should it have been yours?</th></tr></thead>
+<tbody>
+<tr><td>Fourteen targets: P1–P9 and M1–M5</td><td>Picked from the roughly 100 decisions collected, favouring allow/deny, secret and one-use logic with a pure or stateful seam</td><td>No</td></tr>
+<tr><td>Allow/deny and secrets first</td><td>Highest harm if wrong</td><td>No</td></tr>
+<tr><td>Test code only; findings become separate bug fixes</td><td>Keeps the proof separate from the repair</td><td>No</td></tr>
+<tr><td>M4's Durable Object host test runs 25 cases, not 100; its native core test keeps 100</td><td>At 100 it took 715 s in CI, about 12 minutes on every host run. 99.95% of that is in the generated steps: each always-checked invariant makes up to 10 HTTP→DO round trips per step. Setup isn't the cost. CI is derandomized, so every run explores the same sequences: 25 explores a quarter of them, still 50 steps each, with every invariant checked after every step</td><td>No: test cost is mine. Cost: fewer distinct DO sequences in CI. Undo: raise the count</td></tr>
+<tr><td>M4's Durable Object host test suppresses only Hegel's TooSlow health check</td><td>On Sunclaw, 9 inputs took 33 s against Hegel's 30 s generation threshold. The time is the DO round trips inside each step, not input generation (the F2 cost report). Cases, steps, invariants and oracle are unchanged, and no other check is suppressed</td><td>No: test configuration is mine. Undo: remove the setting</td></tr>
+<tr><td>The service-page "exactly 301" failure on Sunclaw (got 531) is not F2's</td><td>A pre-existing B1-A test hitting Miniflare's real-clock minute window (my Decision 9). B1-B's split fixes it when B1-B is ported to public main</td><td>No</td></tr>
+<tr><td>Fresh review (Opus) of PR #3 not READY: generator gaps (F2) and low test gaps (F3–F8) are fixed in #3; the redaction defect it found (F1) becomes its own bug-fix PR</td><td>The approved Program Design requires adversarial strings for security targets. F1 is real: <code>upstream-response-middleware.ts:26-30</code> replaces exact values in order, so a header value inside or overlapping a longer secret leaves part of that secret visible (e.g. <code>[REDACTED]_live_9f8</code>). Fix: merge all occurrence spans, then replace once, with a P7 multi-value regression</td><td>No: bug fixes and test scope are mine. The product fix is security-relevant and ordered right after #3</td></tr>
+</tbody></table></div>
+</ex-document>
+</body>
+</html>

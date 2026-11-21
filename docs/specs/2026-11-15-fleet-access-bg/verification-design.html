@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BG · Getting in · Verification Design</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>BG · Getting in: Verification Design</h1>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What to check" tone="note" icon="shield-check">
+<p>V2 drives all six journeys in real Chrome on both hosts. V3 races Accept and Decline on both databases. V4 runs every journey on staging after a deploy and tries to enter production from staging.</p>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p>Follows the 30 Oct assumptions you agreed on 15 Nov (S08: Google only for the real release check; S09: virtual authenticator for passkeys).</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>Approved SO14–SO16. Nothing has run.</p>
+</ex-callout>
+
+<h2 id="V1">V1 · The page decision (S1)</h2>
+<p>Hegel family <code>packages/sign-in-test-support/src/core-tests/decide-setup-page.hegel.unit.test.ts</code>, <code>{ testCases: 1000, derandomize: true, database: hegel.Database.disabled }</code>, over every combination of facts, destination and time around the deadline (−1, 0, +1 ms). Independent reference table in the test. Invariants: one page; a pending step always wins except the invitation-as-organization-step case; never a setup step for an enrolled person with memberships; at or past the deadline never continue. Wrong builds: route a stale confirmation to the factor step; continue at the deadline; skip the organization step when an invitation destination is for someone else.</p>
+
+<h2 id="V2">V2 · Six journeys, local (S2–S6, S10)</h2>
+<p>New <code>packages/sign-in-test-support/src/getting-in-journeys.host.e2e.test.ts</code>, both hosts, real Chrome via the local auth harness with provider, Turnstile and Central test peers:</p>
+<ol>
+<li>First-time owner: clean database, CLI started first; QR and text key match; a wrong code then the right one on the same setup; codes shown until Finish (navigation blocked before); reload in a second tab: codes not shown again, the new-codes message shown; create organization (owner offered create, plus a pending invitation offered too); lands on account; CLI receives its code before the deadline.</li>
+<li>Returning person with an old confirmation: goes straight to account or CLI; a protected CLI change gets <code>secondFactorRequired</code>, the CLI opens <code>/account/confirm</code>, the person confirms, and the page continues the CLI's authorization. The CLI's new credential names the same session S0, and its single retry succeeds with the same operation identity.
+<ul>
+<li><strong>Browser signed out:</strong> start with a real CLI credential on S0, and clear the browser's cookie without touching the CLI's stored credential. <code>/account/confirm</code> shows sign-in, which creates S1. The person confirms S1, and the page continues the authorization. The CLI's new credential names S1, its stored credential is replaced, and the retry succeeds.</li>
+<li><strong>S0 ended on the server:</strong> the old credential's refresh stays refused; the same confirm-and-authorize path gives a credential on S1, and the retry succeeds.</li>
+<li><strong>Another person in the browser:</strong> the CLI keeps its old credential, makes no retry, and reports “Signed in as a different person; nothing was changed”. Central saw one refused attempt only.</li>
+<li><strong>Never enrolled:</strong> a person who never enrolled a factor, opening <code>/account/confirm</code>, lands on the authenticator step.</li>
+<li>No caller anywhere opens <code>/owner-ready</code> (it 404s).</li>
+</ul>
+Wrong builds:
+<ul>
+<li>Today's confirm-then-refresh after confirming S1: the retry gets <code>secondFactorRequired</code> again, because of the session mismatch.</li>
+<li>No person check: the other-person case runs the command as them.</li>
+<li><code>/account/confirm</code> without the signed-out case: the step-up dead-ends.</li>
+</ul></li>
+<li>Command line with a member of two organizations: choose, then continue without an approve screen; bootstrap skipped for the member.</li>
+<li>Invited member: Join <em>org</em> as <em>role</em>; Accept → membership; reload → no invitation shown. A second invitee declines. With a CLI carried inside the invitation destination, Accept (and separately Decline) continues the CLI before its deadline, and at the deadline lands on account with the expired notice. A wrong account, a used, an expired and a canceled invitation each show their message and action, with no organization or email shown. A person with two pending invitations and no destination is offered both.</li>
+<li>A sole member whose current choice was cleared through native set-active resumes a CLI: the page input says <code>select-first</code>; the script calls set-active before bootstrap or authorize; the CLI token names that membership, before the original deadline. Holding the set-active reply past the deadline means authorize is never reached. Wrong build: a continuation input without the selection field (the member navigates unselected and the token is refused).</li>
+<li>Signed-in visits to organization admin with no membership, and with memberships but no valid current choice, reach <code>/setup</code> and then the pending step or the chooser; never <code>/owner-ready</code> or the confirmation page.</li>
+<li>Add a passkey on the account page, sign out, sign in with it (CDP virtual authenticator).</li>
+<li>Lost factor: recovery code accepted; another code reused → refused.</li>
+<li>Deadline passed during a pending step: account page with the expired notice; the CLI gets nothing.</li>
+<li>At 400 px dark, keyboard only: one heading, “Switchboard”, no overflow.</li>
+</ol>
+<p>Kept: the real-CLI continuation test, retargeted; the short-name test retargeted to R60 (stop following once edited). Wrong builds: leave <code>/owner-ready</code>; extend the deadline on a prompt; show a used invitation.</p>
+
+<h2 id="V3">V3 · Decline against Accept (S6)</h2>
+<p>Both databases, barriers around the real native Accept claim and our Decline write: Decline first → Accept loses its claim; Accept first → Decline answers already-answered and the membership stands; Decline of an expired invitation → expired; by a non-recipient → not-found with no detail. Rows read back each time. Wrong build: Decline without the <code>status = 'pending'</code> condition overwrites an accepted invitation.</p>
+
+<h2 id="V4">V4 · Staging and production (S7–S9)</h2>
+<ul>
+<li>After a staging deploy: reset (its report lists the test organizations; sign-in rows gone; Central residue listed as open), identities, all six journeys from signed-in test identities, TOTP from the shown key and server Date; staging rows read with Wrangler's remote D1 for the oracle.</li>
+<li>Staging refusals, each with unchanged rows and nothing revealed: Chrome reports no CSP violation and each page carries the policy; a protected change without a recent factor is refused (R53); a member's owner-only action is refused (R13); a setup page reached while a step is pending shows the step (R57).</li>
+<li>Production: <code>/__staging/test-identity</code> → 404; a staging session cookie → signed out; the configured owner isn't <code>.invalid</code>; the production build's metafile, bound to the deployed version, contains no module under the test-utils plugin, the staging folder or test support. Wrong build: include a renamed test-utils plugin; the metafile check fails.</li>
+<li>Release: one real Google sign-in on staging with its real Turnstile check, by the dedicated test account, recorded with the git SHA, both Workers' version IDs and the Turnstile outcome.</li>
+</ul>
+<p>Deadlines, factor windows and expiry are proven locally on controlled time (V2), not on staging.</p>
+
+<h2 id="V5">V5 · Machines and gates (S11)</h2>
+<p>Hegel families for M2 (decline outcomes), M3 (continuation) and M4 (identity lifecycle: reset only removes the test domain). One added literal per union fails <code>pnpm typecheck</code> at its <code>satisfies never</code>. Gates on <a href="plan.html#gates">Plan</a>.</p>
+</ex-document>
+</body>
+</html>

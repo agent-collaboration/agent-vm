@@ -1,0 +1,383 @@
+{
+  "pushId": "01a1eb51-925b-79e1-b670-dad79dee9389",
+  "createdAt": "2026-11-17T21:02:35.700030Z",
+  "checkpoint": "🔧 Independent1d52 A completed40pass0fail0skip/6files exit0, exactinventories/source253output/versions/prepared stable, audit0, owned group/PIDs absent. Exactly1labeled servicepage-exact-budget stand-in +1real CF binding-rejects fault, frozen journey guard0. BUT actual40receipts include13ready:false/none (15jwks11signInSession1personToken). Direct testcase association not retained by shared apparatus, no join invented/no positive none credit. Per packet, full gates/controls HOLD for this own readiness gap; separatelysafe B/C will finish. Earlier author-only waiver01a1eafb is NOT borrowed. Need independent scoped disposition before full-gate qualification; no new observer/replay/repair. Private evidence /private/tmp/2026-11-b1b-verifier-evidence-1d52c99e.\nActual none metadata from retained receipts:",
+  "metadata": {
+    "label": "A",
+    "source": "Own independent1d52 only",
+    "passed": 40,
+    "failed": 0,
+    "exit": 0,
+    "auditExit": 0,
+    "noneCount": 13,
+    "none": [
+      {
+        "receiptId": "01b8dac5-b400-7078-b205-5f228c01e06c",
+        "file": "/private/tmp/2026-11-b1b-verifier-evidence-1d52c99e/A/harness-01b8dac5-b400-7078-b205-5f228c01e06c.json",
+        "ready": false,
+        "readinessEvent": "none",
+        "requestLimits": {
+          "backingFailure": "none",
+          "outerCounter": "cloudflare-real-binding",
+          "observations": []
+        },
+        "actualModuleHashes": {
+          "auth": {
+            "worker.mjs": "58c5e9e2fbe76c1ce6a4211b68ed86c915cdbb576b55f8dff59bde4a31c0a3cf",
+            "controlled-date.mjs": "d188c7383639ffe787de8488979800d94dcd5fc37c1661e983357138e4d1f9b7",
+            "application.mjs": "4848938b23a6c1fc8d5c46dbc2a3931328ad222f50f75ce5da06e6be34670edf",
+            "production-auth.mjs": "1590a3c2a4c9ffeb9f005ebadf92154bbd9e8832dc600d26e73c38e82992aa21",
+            "native-signature-observer.mjs": "bb94f3710c9b848b84dee3d876fd7cf31307b50ea6488fcde4d8cf9070050407"
+          },
+          "gateway": {
+            "worker.mjs": "58c5e9e2fbe76c1ce6a4211b68ed86c915cdbb576b55f8dff59bde4a31c0a3cf",
+            "controlled-date.mjs": "d188c7383639ffe787de8488979800d94dcd5fc37c1661e983357138e4d1f9b7",
+            "application.mjs": "8f6f67d2e50727502aa64a817a60fd6fc03484c52d5f19c09ccf03a3c0b17534",
+            "production-gateway.mjs": "f1f58fd48b71fec3e3427d2510bf10d9971824ff3792814551cffdfed0f5b231",
+            "native-signature-observer.mjs": "bb94f3710c9b848b84dee3d876fd7cf31307b50ea6488fcde4d8cf9070050407"
+          }
+        },
+        "sourceClient": "f30385d36c78331464206d9a20446e8d858c5e72c4d1b4eb0f7c78b25e436598"
+      },
+      {
+        "receiptId": "01b8dac5-b400-712a-a3ec-0437dd2aa963",
+        "file": "/private/tmp/2026-11-b1b-verifier-evidence-1d52c99e/A/harness-01b8dac5-b400-712a-a3ec-0437dd2aa963.json",
+        "ready": false,
+        "readinessEvent": "none",
+        "requestLimits": {
+          "backingFailure": "none",
+          "outerCounter": "cloudflare-real-binding",
+          "observations": []
+        },
+        "actualModuleHashes": {
+          "auth": {
+            "worker.mjs": "58c5e9e2fbe76c1ce6a4211b68ed86c915cdbb576b55f8dff59bde4a31c0a3cf",
+            "controlled-date.mjs": "d188c7383639ffe787de8488979800d94dcd5fc37c1661e983357138e4d1f9b7",
+            "application.mjs": "4848938b23a6c1fc8d5c46dbc2a3931328ad222f50f75ce5da06e6be34670edf",
+            "production-auth.mjs": "1590a3c2a4c9ffeb9f005ebadf92154bbd9e8832dc600d26e73c38e82992aa21",
+            "native-signature-observer.mjs": "bb94f3710c9b848b84dee3d876fd7cf31307b50ea6488fcde4d8cf9070050407"
+          },
+          "gateway": {
+            "worker.mjs": "58c5e9e2fbe76c1ce6a4211b68ed86c915cdbb576b55f8dff59bde4a31c0a3cf",
+            "controlled-date.mjs": "d188c7383639ffe787de8488979800d94dcd5fc37c1661e983357138e4d1f9b7",
+            "application.mjs": "8f6f67d2e50727502aa64a817a60fd6fc03484c52d5f19c09ccf03a3c0b17534",
+            "production-gateway.mjs": "f1f58fd48b71fec3e3427d2510bf10d9971824ff3792814551cffdfed0f5b231",
+            "native-signature-observer.mjs": "bb94f3710c9b848b84dee3d876fd7cf31307b50ea6488fcde4d8cf9070050407"
+          }
+        },
+        "sourceClient": "f30385d36c78331464206d9a20446e8d858c5e72c4d1b4eb0f7c78b25e436598"
+      },
+      {
+        "receiptId": "01b8dac5-b400-72c9-9b46-e0719731ee7b",
+        "file": "/private/tmp/2026-11-b1b-verifier-evidence-1d52c99e/A/harness-01b8dac5-b400-72c9-9b46-e0719731ee7b.json",
+        "ready": false,
+        "readinessEvent": "none",
+        "requestLimits": {
+          "backingFailure": "none",
+          "outerCounter": "cloudflare-real-binding",
+          "observations": []
+        },
+        "actualModuleHashes": {
+          "auth": {
+            "worker.mjs": "58c5e9e2fbe76c1ce6a4211b68ed86c915cdbb576b55f8dff59bde4a31c0a3cf",
+            "controlled-date.mjs": "d188c7383639ffe787de8488979800d94dcd5fc37c1661e983357138e4d1f9b7",
+            "application.mjs": "4848938b23a6c1fc8d5c46dbc2a3931328ad222f50f75ce5da06e6be34670edf",
+            "production-auth.mjs": "1590a3c2a4c9ffeb9f005ebadf92154bbd9e8832dc600d26e73c38e82992aa21",
+            "native-signature-observer.mjs": "bb94f3710c9b848b84dee3d876fd7cf31307b50ea6488fcde4d8cf9070050407"
+          },
+          "gateway": {
+            "worker.mjs": "58c5e9e2fbe76c1ce6a4211b68ed86c915cdbb576b55f8dff59bde4a31c0a3cf",
+            "controlled-date.mjs": "d188c7383639ffe787de8488979800d94dcd5fc37c1661e983357138e4d1f9b7",
+            "application.mjs": "8f6f67d2e50727502aa64a817a60fd6fc03484c52d5f19c09ccf03a3c0b17534",
+            "production-gateway.mjs": "f1f58fd48b71fec3e3427d2510bf10d9971824ff3792814551cffdfed0f5b231",
+            "native-signature-observer.mjs": "bb94f3710c9b848b84dee3d876fd7cf31307b50ea6488fcde4d8cf9070050407"
+          }
+        },
+        "sourceClient": "f30385d36c78331464206d9a20446e8d858c5e72c4d1b4eb0f7c78b25e436598"
+      },
+      {
+        "receiptId": "01b8dac5-b400-73d3-af1e-69651588199e",
+        "file": "/private/tmp/2026-11-b1b-verifier-evidence-1d52c99e/A/harness-01b8dac5-b400-73d3-af1e-69651588199e.json",
+        "ready": false,
+        "readinessEvent": "none",
+        "requestLimits": {
+          "backingFailure": "none",
+          "outerCounter": "cloudflare-real-binding",
+          "observations": []
+        },
+        "actualModuleHashes": {
+          "auth": {
+            "worker.mjs": "58c5e9e2fbe76c1ce6a4211b68ed86c915cdbb576b55f8dff59bde4a31c0a3cf",
+            "controlled-date.mjs": "d188c7383639ffe787de8488979800d94dcd5fc37c1661e983357138e4d1f9b7",
+            "application.mjs": "4848938b23a6c1fc8d5c46dbc2a3931328ad222f50f75ce5da06e6be34670edf",
+            "production-auth.mjs": "1590a3c2a4c9ffeb9f005ebadf92154bbd9e8832dc600d26e73c38e82992aa21",
+            "native-signature-observer.mjs": "bb94f3710c9b848b84dee3d876fd7cf31307b50ea6488fcde4d8cf9070050407"
+          },
+          "gateway": {
+            "worker.mjs": "58c5e9e2fbe76c1ce6a4211b68ed86c915cdbb576b55f8dff59bde4a31c0a3cf",
+            "controlled-date.mjs": "d188c7383639ffe787de8488979800d94dcd5fc37c1661e983357138e4d1f9b7",
+            "application.mjs": "8f6f67d2e50727502aa64a817a60fd6fc03484c52d5f19c09ccf03a3c0b17534",
+            "production-gateway.mjs": "f1f58fd48b71fec3e3427d2510bf10d9971824ff3792814551cffdfed0f5b231",
+            "native-signature-observer.mjs": "bb94f3710c9b848b84dee3d876fd7cf31307b50ea6488fcde4d8cf9070050407"
+          }
+        },
+        "sourceClient": "f30385d36c78331464206d9a20446e8d858c5e72c4d1b4eb0f7c78b25e436598"
+      },
+      {
+        "receiptId": "01b8dac5-b400-7400-be7d-df05b9c42f08",
+        "file": "/private/tmp/2026-11-b1b-verifier-evidence-1d52c99e/A/harness-01b8dac5-b400-7400-be7d-df05b9c42f08.json",
+        "ready": false,
+        "readinessEvent": "none",
+        "requestLimits": {
+          "backingFailure": "none",
+          "outerCounter": "cloudflare-real-binding",
+          "observations": []
+        },
+        "actualModuleHashes": {
+          "auth": {
+            "worker.mjs": "58c5e9e2fbe76c1ce6a4211b68ed86c915cdbb576b55f8dff59bde4a31c0a3cf",
+            "controlled-date.mjs": "d188c7383639ffe787de8488979800d94dcd5fc37c1661e983357138e4d1f9b7",
+            "application.mjs": "4848938b23a6c1fc8d5c46dbc2a3931328ad222f50f75ce5da06e6be34670edf",
+            "production-auth.mjs": "1590a3c2a4c9ffeb9f005ebadf92154bbd9e8832dc600d26e73c38e82992aa21",
+            "native-signature-observer.mjs": "bb94f3710c9b848b84dee3d876fd7cf31307b50ea6488fcde4d8cf9070050407"
+          },
+          "gateway": {
+            "worker.mjs": "58c5e9e2fbe76c1ce6a4211b68ed86c915cdbb576b55f8dff59bde4a31c0a3cf",
+            "controlled-date.mjs": "d188c7383639ffe787de8488979800d94dcd5fc37c1661e983357138e4d1f9b7",
+            "application.mjs": "8f6f67d2e50727502aa64a817a60fd6fc03484c52d5f19c09ccf03a3c0b17534",
+            "production-gateway.mjs": "f1f58fd48b71fec3e3427d2510bf10d9971824ff3792814551cffdfed0f5b231",
+            "native-signature-observer.mjs": "bb94f3710c9b848b84dee3d876fd7cf31307b50ea6488fcde4d8cf9070050407"
+          }
+        },
+        "sourceClient": "f30385d36c78331464206d9a20446e8d858c5e72c4d1b4eb0f7c78b25e436598"
+      },
+      {
+        "receiptId": "01b8dac5-b400-7697-89d5-f6575196a754",
+        "file": "/private/tmp/2026-11-b1b-verifier-evidence-1d52c99e/A/harness-01b8dac5-b400-7697-89d5-f6575196a754.json",
+        "ready": false,
+        "readinessEvent": "none",
+        "requestLimits": {
+          "backingFailure": "none",
+          "outerCounter": "cloudflare-real-binding",
+          "observations": []
+        },
+        "actualModuleHashes": {
+          "auth": {
+            "worker.mjs": "58c5e9e2fbe76c1ce6a4211b68ed86c915cdbb576b55f8dff59bde4a31c0a3cf",
+            "controlled-date.mjs": "d188c7383639ffe787de8488979800d94dcd5fc37c1661e983357138e4d1f9b7",
+            "application.mjs": "4848938b23a6c1fc8d5c46dbc2a3931328ad222f50f75ce5da06e6be34670edf",
+            "production-auth.mjs": "1590a3c2a4c9ffeb9f005ebadf92154bbd9e8832dc600d26e73c38e82992aa21",
+            "native-signature-observer.mjs": "bb94f3710c9b848b84dee3d876fd7cf31307b50ea6488fcde4d8cf9070050407"
+          },
+          "gateway": {
+            "worker.mjs": "58c5e9e2fbe76c1ce6a4211b68ed86c915cdbb576b55f8dff59bde4a31c0a3cf",
+            "controlled-date.mjs": "d188c7383639ffe787de8488979800d94dcd5fc37c1661e983357138e4d1f9b7",
+            "application.mjs": "8f6f67d2e50727502aa64a817a60fd6fc03484c52d5f19c09ccf03a3c0b17534",
+            "production-gateway.mjs": "f1f58fd48b71fec3e3427d2510bf10d9971824ff3792814551cffdfed0f5b231",
+            "native-signature-observer.mjs": "bb94f3710c9b848b84dee3d876fd7cf31307b50ea6488fcde4d8cf9070050407"
+          }
+        },
+        "sourceClient": "f30385d36c78331464206d9a20446e8d858c5e72c4d1b4eb0f7c78b25e436598"
+      },
+      {
+        "receiptId": "01b8dac5-b400-7826-b288-5f3f04b7252d",
+        "file": "/private/tmp/2026-11-b1b-verifier-evidence-1d52c99e/A/harness-01b8dac5-b400-7826-b288-5f3f04b7252d.json",
+        "ready": false,
+        "readinessEvent": "none",
+        "requestLimits": {
+          "backingFailure": "none",
+          "outerCounter": "cloudflare-real-binding",
+          "observations": []
+        },
+        "actualModuleHashes": {
+          "auth": {
+            "worker.mjs": "58c5e9e2fbe76c1ce6a4211b68ed86c915cdbb576b55f8dff59bde4a31c0a3cf",
+            "controlled-date.mjs": "d188c7383639ffe787de8488979800d94dcd5fc37c1661e983357138e4d1f9b7",
+            "application.mjs": "4848938b23a6c1fc8d5c46dbc2a3931328ad222f50f75ce5da06e6be34670edf",
+            "production-auth.mjs": "1590a3c2a4c9ffeb9f005ebadf92154bbd9e8832dc600d26e73c38e82992aa21",
+            "native-signature-observer.mjs": "bb94f3710c9b848b84dee3d876fd7cf31307b50ea6488fcde4d8cf9070050407"
+          },
+          "gateway": {
+            "worker.mjs": "58c5e9e2fbe76c1ce6a4211b68ed86c915cdbb576b55f8dff59bde4a31c0a3cf",
+            "controlled-date.mjs": "d188c7383639ffe787de8488979800d94dcd5fc37c1661e983357138e4d1f9b7",
+            "application.mjs": "8f6f67d2e50727502aa64a817a60fd6fc03484c52d5f19c09ccf03a3c0b17534",
+            "production-gateway.mjs": "f1f58fd48b71fec3e3427d2510bf10d9971824ff3792814551cffdfed0f5b231",
+            "native-signature-observer.mjs": "bb94f3710c9b848b84dee3d876fd7cf31307b50ea6488fcde4d8cf9070050407"
+          }
+        },
+        "sourceClient": "f30385d36c78331464206d9a20446e8d858c5e72c4d1b4eb0f7c78b25e436598"
+      },
+      {
+        "receiptId": "01b8dac5-b400-785b-97d6-6f9563dc8f7b",
+        "file": "/private/tmp/2026-11-b1b-verifier-evidence-1d52c99e/A/harness-01b8dac5-b400-785b-97d6-6f9563dc8f7b.json",
+        "ready": false,
+        "readinessEvent": "none",
+        "requestLimits": {
+          "backingFailure": "none",
+          "outerCounter": "cloudflare-real-binding",
+          "observations": []
+        },
+        "actualModuleHashes": {
+          "auth": {
+            "worker.mjs": "58c5e9e2fbe76c1ce6a4211b68ed86c915cdbb576b55f8dff59bde4a31c0a3cf",
+            "controlled-date.mjs": "d188c7383639ffe787de8488979800d94dcd5fc37c1661e983357138e4d1f9b7",
+            "application.mjs": "4848938b23a6c1fc8d5c46dbc2a3931328ad222f50f75ce5da06e6be34670edf",
+            "production-auth.mjs": "1590a3c2a4c9ffeb9f005ebadf92154bbd9e8832dc600d26e73c38e82992aa21",
+            "native-signature-observer.mjs": "bb94f3710c9b848b84dee3d876fd7cf31307b50ea6488fcde4d8cf9070050407"
+          },
+          "gateway": {
+            "worker.mjs": "58c5e9e2fbe76c1ce6a4211b68ed86c915cdbb576b55f8dff59bde4a31c0a3cf",
+            "controlled-date.mjs": "d188c7383639ffe787de8488979800d94dcd5fc37c1661e983357138e4d1f9b7",
+            "application.mjs": "8f6f67d2e50727502aa64a817a60fd6fc03484c52d5f19c09ccf03a3c0b17534",
+            "production-gateway.mjs": "f1f58fd48b71fec3e3427d2510bf10d9971824ff3792814551cffdfed0f5b231",
+            "native-signature-observer.mjs": "bb94f3710c9b848b84dee3d876fd7cf31307b50ea6488fcde4d8cf9070050407"
+          }
+        },
+        "sourceClient": "f30385d36c78331464206d9a20446e8d858c5e72c4d1b4eb0f7c78b25e436598"
+      },
+      {
+        "receiptId": "01b8dac5-b400-7867-8f03-f93af096c041",
+        "file": "/private/tmp/2026-11-b1b-verifier-evidence-1d52c99e/A/harness-01b8dac5-b400-7867-8f03-f93af096c041.json",
+        "ready": false,
+        "readinessEvent": "none",
+        "requestLimits": {
+          "backingFailure": "none",
+          "outerCounter": "cloudflare-real-binding",
+          "observations": []
+        },
+        "actualModuleHashes": {
+          "auth": {
+            "worker.mjs": "58c5e9e2fbe76c1ce6a4211b68ed86c915cdbb576b55f8dff59bde4a31c0a3cf",
+            "controlled-date.mjs": "d188c7383639ffe787de8488979800d94dcd5fc37c1661e983357138e4d1f9b7",
+            "application.mjs": "4848938b23a6c1fc8d5c46dbc2a3931328ad222f50f75ce5da06e6be34670edf",
+            "production-auth.mjs": "1590a3c2a4c9ffeb9f005ebadf92154bbd9e8832dc600d26e73c38e82992aa21",
+            "native-signature-observer.mjs": "bb94f3710c9b848b84dee3d876fd7cf31307b50ea6488fcde4d8cf9070050407"
+          },
+          "gateway": {
+            "worker.mjs": "58c5e9e2fbe76c1ce6a4211b68ed86c915cdbb576b55f8dff59bde4a31c0a3cf",
+            "controlled-date.mjs": "d188c7383639ffe787de8488979800d94dcd5fc37c1661e983357138e4d1f9b7",
+            "application.mjs": "8f6f67d2e50727502aa64a817a60fd6fc03484c52d5f19c09ccf03a3c0b17534",
+            "production-gateway.mjs": "f1f58fd48b71fec3e3427d2510bf10d9971824ff3792814551cffdfed0f5b231",
+            "native-signature-observer.mjs": "bb94f3710c9b848b84dee3d876fd7cf31307b50ea6488fcde4d8cf9070050407"
+          }
+        },
+        "sourceClient": "f30385d36c78331464206d9a20446e8d858c5e72c4d1b4eb0f7c78b25e436598"
+      },
+      {
+        "receiptId": "01b8dac5-b400-79a0-8349-93551eb4688a",
+        "file": "/private/tmp/2026-11-b1b-verifier-evidence-1d52c99e/A/harness-01b8dac5-b400-79a0-8349-93551eb4688a.json",
+        "ready": false,
+        "readinessEvent": "none",
+        "requestLimits": {
+          "backingFailure": "none",
+          "outerCounter": "cloudflare-real-binding",
+          "observations": []
+        },
+        "actualModuleHashes": {
+          "auth": {
+            "worker.mjs": "58c5e9e2fbe76c1ce6a4211b68ed86c915cdbb576b55f8dff59bde4a31c0a3cf",
+            "controlled-date.mjs": "d188c7383639ffe787de8488979800d94dcd5fc37c1661e983357138e4d1f9b7",
+            "application.mjs": "4848938b23a6c1fc8d5c46dbc2a3931328ad222f50f75ce5da06e6be34670edf",
+            "production-auth.mjs": "1590a3c2a4c9ffeb9f005ebadf92154bbd9e8832dc600d26e73c38e82992aa21",
+            "native-signature-observer.mjs": "bb94f3710c9b848b84dee3d876fd7cf31307b50ea6488fcde4d8cf9070050407"
+          },
+          "gateway": {
+            "worker.mjs": "58c5e9e2fbe76c1ce6a4211b68ed86c915cdbb576b55f8dff59bde4a31c0a3cf",
+            "controlled-date.mjs": "d188c7383639ffe787de8488979800d94dcd5fc37c1661e983357138e4d1f9b7",
+            "application.mjs": "8f6f67d2e50727502aa64a817a60fd6fc03484c52d5f19c09ccf03a3c0b17534",
+            "production-gateway.mjs": "f1f58fd48b71fec3e3427d2510bf10d9971824ff3792814551cffdfed0f5b231",
+            "native-signature-observer.mjs": "bb94f3710c9b848b84dee3d876fd7cf31307b50ea6488fcde4d8cf9070050407"
+          }
+        },
+        "sourceClient": "f30385d36c78331464206d9a20446e8d858c5e72c4d1b4eb0f7c78b25e436598"
+      },
+      {
+        "receiptId": "01b8dac5-b400-7a4b-aeeb-84bf5f8cd4f3",
+        "file": "/private/tmp/2026-11-b1b-verifier-evidence-1d52c99e/A/harness-01b8dac5-b400-7a4b-aeeb-84bf5f8cd4f3.json",
+        "ready": false,
+        "readinessEvent": "none",
+        "requestLimits": {
+          "backingFailure": "none",
+          "outerCounter": "cloudflare-real-binding",
+          "observations": []
+        },
+        "actualModuleHashes": {
+          "auth": {
+            "worker.mjs": "58c5e9e2fbe76c1ce6a4211b68ed86c915cdbb576b55f8dff59bde4a31c0a3cf",
+            "controlled-date.mjs": "d188c7383639ffe787de8488979800d94dcd5fc37c1661e983357138e4d1f9b7",
+            "application.mjs": "4848938b23a6c1fc8d5c46dbc2a3931328ad222f50f75ce5da06e6be34670edf",
+            "production-auth.mjs": "1590a3c2a4c9ffeb9f005ebadf92154bbd9e8832dc600d26e73c38e82992aa21",
+            "native-signature-observer.mjs": "bb94f3710c9b848b84dee3d876fd7cf31307b50ea6488fcde4d8cf9070050407"
+          },
+          "gateway": {
+            "worker.mjs": "58c5e9e2fbe76c1ce6a4211b68ed86c915cdbb576b55f8dff59bde4a31c0a3cf",
+            "controlled-date.mjs": "d188c7383639ffe787de8488979800d94dcd5fc37c1661e983357138e4d1f9b7",
+            "application.mjs": "8f6f67d2e50727502aa64a817a60fd6fc03484c52d5f19c09ccf03a3c0b17534",
+            "production-gateway.mjs": "f1f58fd48b71fec3e3427d2510bf10d9971824ff3792814551cffdfed0f5b231",
+            "native-signature-observer.mjs": "bb94f3710c9b848b84dee3d876fd7cf31307b50ea6488fcde4d8cf9070050407"
+          }
+        },
+        "sourceClient": "f30385d36c78331464206d9a20446e8d858c5e72c4d1b4eb0f7c78b25e436598"
+      },
+      {
+        "receiptId": "01b8dac5-b400-7aef-9df3-aa825bd30924",
+        "file": "/private/tmp/2026-11-b1b-verifier-evidence-1d52c99e/A/harness-01b8dac5-b400-7aef-9df3-aa825bd30924.json",
+        "ready": false,
+        "readinessEvent": "none",
+        "requestLimits": {
+          "backingFailure": "none",
+          "outerCounter": "cloudflare-real-binding",
+          "observations": []
+        },
+        "actualModuleHashes": {
+          "auth": {
+            "worker.mjs": "58c5e9e2fbe76c1ce6a4211b68ed86c915cdbb576b55f8dff59bde4a31c0a3cf",
+            "controlled-date.mjs": "d188c7383639ffe787de8488979800d94dcd5fc37c1661e983357138e4d1f9b7",
+            "application.mjs": "4848938b23a6c1fc8d5c46dbc2a3931328ad222f50f75ce5da06e6be34670edf",
+            "production-auth.mjs": "1590a3c2a4c9ffeb9f005ebadf92154bbd9e8832dc600d26e73c38e82992aa21",
+            "native-signature-observer.mjs": "bb94f3710c9b848b84dee3d876fd7cf31307b50ea6488fcde4d8cf9070050407"
+          },
+          "gateway": {
+            "worker.mjs": "58c5e9e2fbe76c1ce6a4211b68ed86c915cdbb576b55f8dff59bde4a31c0a3cf",
+            "controlled-date.mjs": "d188c7383639ffe787de8488979800d94dcd5fc37c1661e983357138e4d1f9b7",
+            "application.mjs": "8f6f67d2e50727502aa64a817a60fd6fc03484c52d5f19c09ccf03a3c0b17534",
+            "production-gateway.mjs": "f1f58fd48b71fec3e3427d2510bf10d9971824ff3792814551cffdfed0f5b231",
+            "native-signature-observer.mjs": "bb94f3710c9b848b84dee3d876fd7cf31307b50ea6488fcde4d8cf9070050407"
+          }
+        },
+        "sourceClient": "f30385d36c78331464206d9a20446e8d858c5e72c4d1b4eb0f7c78b25e436598"
+      },
+      {
+        "receiptId": "01b8dac5-b400-7e72-b5f6-d564b94e5013",
+        "file": "/private/tmp/2026-11-b1b-verifier-evidence-1d52c99e/A/harness-01b8dac5-b400-7e72-b5f6-d564b94e5013.json",
+        "ready": false,
+        "readinessEvent": "none",
+        "requestLimits": {
+          "backingFailure": "none",
+          "outerCounter": "cloudflare-real-binding",
+          "observations": []
+        },
+        "actualModuleHashes": {
+          "auth": {
+            "worker.mjs": "58c5e9e2fbe76c1ce6a4211b68ed86c915cdbb576b55f8dff59bde4a31c0a3cf",
+            "controlled-date.mjs": "d188c7383639ffe787de8488979800d94dcd5fc37c1661e983357138e4d1f9b7",
+            "application.mjs": "4848938b23a6c1fc8d5c46dbc2a3931328ad222f50f75ce5da06e6be34670edf",
+            "production-auth.mjs": "1590a3c2a4c9ffeb9f005ebadf92154bbd9e8832dc600d26e73c38e82992aa21",
+            "native-signature-observer.mjs": "bb94f3710c9b848b84dee3d876fd7cf31307b50ea6488fcde4d8cf9070050407"
+          },
+          "gateway": {
+            "worker.mjs": "58c5e9e2fbe76c1ce6a4211b68ed86c915cdbb576b55f8dff59bde4a31c0a3cf",
+            "controlled-date.mjs": "d188c7383639ffe787de8488979800d94dcd5fc37c1661e983357138e4d1f9b7",
+            "application.mjs": "8f6f67d2e50727502aa64a817a60fd6fc03484c52d5f19c09ccf03a3c0b17534",
+            "production-gateway.mjs": "f1f58fd48b71fec3e3427d2510bf10d9971824ff3792814551cffdfed0f5b231",
+            "native-signature-observer.mjs": "bb94f3710c9b848b84dee3d876fd7cf31307b50ea6488fcde4d8cf9070050407"
+          }
+        },
+        "sourceClient": "f30385d36c78331464206d9a20446e8d858c5e72c4d1b4eb0f7c78b25e436598"
+      }
+    ],
+    "association": "Not retained; no testcase join invented",
+    "proof": "Count/inventory/identity/counter/cleanup checks passed; no false receipt positive bootstrap credit",
+    "authorWaiver": "Not borrowed; earlier01a1eafb scoped author only"
+  }
+}

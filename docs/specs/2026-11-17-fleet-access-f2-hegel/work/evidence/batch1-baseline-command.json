@@ -1,0 +1,38 @@
+{
+  "cwd": "/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/tmp/2026-11-17-f2-verifier/candidate-78c0a98",
+  "command": [
+    "pnpm",
+    "exec",
+    "vitest",
+    "run",
+    "--project",
+    "unit",
+    "packages/oauth-broker/src/google/google-operation-grants.hegel.unit.test.ts",
+    "packages/oauth-broker-contracts/src/gog-file-arguments.hegel.unit.test.ts",
+    "packages/sign-in-test-support/src/core-tests/sign-in-response-release.hegel.unit.test.ts",
+    "packages/tool-access/src/authorization/cli-allowances/cli-allowance.hegel.unit.test.ts",
+    "packages/tool-access/src/authorization/portal-access-policy.hegel.unit.test.ts",
+    "packages/tool-engine/src/capability-dispatch/capability-dispatcher.hegel.unit.test.ts",
+    "packages/tool-engine/src/mcp-gateway/signed-tokens/approval-token-signing.hegel.unit.test.ts",
+    "packages/tool-engine/src/upstream-mcp-connectors/upstream-response-middleware.hegel.unit.test.ts",
+    "packages/tool-host-node/src/mcp-proxy-server/http-boundaries.hegel.unit.test.ts",
+    "--maxWorkers",
+    "2",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile.json=/Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-17-fleet-access-f2-hegel/work/evidence/batch1-baseline.json"
+  ],
+  "exit": 0,
+  "source": "78c0a98ef3709d4bbd55108944a97d8f3d57f825",
+  "files": [
+    "packages/oauth-broker/src/google/google-operation-grants.hegel.unit.test.ts",
+    "packages/oauth-broker-contracts/src/gog-file-arguments.hegel.unit.test.ts",
+    "packages/sign-in-test-support/src/core-tests/sign-in-response-release.hegel.unit.test.ts",
+    "packages/tool-access/src/authorization/cli-allowances/cli-allowance.hegel.unit.test.ts",
+    "packages/tool-access/src/authorization/portal-access-policy.hegel.unit.test.ts",
+    "packages/tool-engine/src/capability-dispatch/capability-dispatcher.hegel.unit.test.ts",
+    "packages/tool-engine/src/mcp-gateway/signed-tokens/approval-token-signing.hegel.unit.test.ts",
+    "packages/tool-engine/src/upstream-mcp-connectors/upstream-response-middleware.hegel.unit.test.ts",
+    "packages/tool-host-node/src/mcp-proxy-server/http-boundaries.hegel.unit.test.ts"
+  ]
+}

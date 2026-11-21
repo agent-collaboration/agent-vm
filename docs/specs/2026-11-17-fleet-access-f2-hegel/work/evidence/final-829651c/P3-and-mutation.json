@@ -1,0 +1,10 @@
+{
+  "id": "P3-and",
+  "source": "packages/tool-access/src/authorization/cli-allowances/cli-allowance-validator.ts",
+  "file": "packages/tool-access/src/authorization/cli-allowances/cli-allowance.hegel.unit.test.ts",
+  "property": "applies AND predicates, OR alternatives, and deny before ask and baseline",
+  "before": "props.matcher.flags.every((predicate) => flagPredicateApplies(predicate, props.flagOccurrences))",
+  "after": "props.matcher.flags.some((predicate) => flagPredicateApplies(predicate, props.flagOccurrences))",
+  "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+  "originalSha256": "8dd18ba79e315aa624b1d2e22a8c47eae0b6b979b1d290a023b2459d97cbef80"
+}

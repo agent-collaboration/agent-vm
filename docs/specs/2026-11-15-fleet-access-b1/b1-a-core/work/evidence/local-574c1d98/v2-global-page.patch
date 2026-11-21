@@ -1,0 +1,11 @@
+--- packages/sign-in-core/src/contracts/page-nonce.ts
++++ packages/sign-in-core/src/contracts/page-nonce.ts
+@@ -14,7 +14,7 @@
+  * capability returns. Only a response that renders HTML mints one.
+  */
+ export function mintPageNonce(crypto: SignInCrypto): PageNonce {
+-	const bytes = crypto.getRandomValues(new Uint8Array(16));
++	const bytes = globalThis.crypto.getRandomValues(new Uint8Array(16));
+ 	return pageNonceSchema.parse(
+ 		Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join(''),
+ 	);

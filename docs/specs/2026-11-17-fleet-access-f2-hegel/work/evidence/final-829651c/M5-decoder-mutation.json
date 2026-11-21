@@ -1,0 +1,10 @@
+{
+  "id": "M5-decoder",
+  "source": "packages/agent-portal-sdk/src/gateway-runtime-client/gateway-runtime-protocol.ts",
+  "file": "packages/agent-portal-sdk/src/gateway-runtime-client/gateway-runtime-protocol.hegel.unit.test.ts",
+  "property": "M5 decoder rejects bodies above the independently measured UTF-8 limit",
+  "before": "if (contentLength > this.#limits.maxContentBytes)",
+  "after": "if (contentLength > this.#limits.maxContentBytes + 1)",
+  "sourceRevision": "829651c7df1f686a53abf5ca4292f46568a84bce",
+  "originalSha256": "9f9f758b141bf229862216bde22bfa5b666f23e94a113cd9bbd7332ae2ba611d"
+}

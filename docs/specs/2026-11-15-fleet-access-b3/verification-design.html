@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B3 · Machine login · Verification Design</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>B3 · Machine login: Verification Design</h1>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What to check" tone="note" icon="shield-check">
+<p>V6 is the real journey: two Routers on macOS log in by device code through the sign-in page, connect through sign-in, against both Central builds; one is revoked and refused. V1 races two pollers on one code.</p>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p>V3's allowance checks read <code>machine_allowances</code> rows (your 9 Nov decision). Cases:</p>
+<ul>
+<li><strong>active re-login adds:</strong> a machine with W1 and W2 active is approved again for W2 and W3; afterwards W1, W2 and W3 are active (W1 not withdrawn);</li>
+<li><strong>Withdraw is targeted:</strong> withdrawing W2 leaves W1 and W3 active;</li>
+<li><strong>revoke clears:</strong> after revoke none is active, and a fresh approval for W3 activates only W3 (W1 is not restored);</li>
+<li><strong>admission:</strong> a withdrawn or missing row refuses with <code>WorkspaceNotAllowed</code>.</li>
+</ul>
+<p>Fails on: a build that replaces the set at approval (the W1 case); a build that restores old rows after revoke.</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>Approved B3 proof table; Lead A's 4a rows are observed here, built there.</p>
+</ex-callout>
+
+<h2 id="V1">V1 · Login and single use (S1, S2)</h2>
+<ul>
+<li>Kept: #11/#14's tests, merged forward, both hosts against real Central.</li>
+<li>Two pollers redeem one approved code at once, barriers around the conditional write, on D1 and better-sqlite3: exactly one machine token.</li>
+<li>Through the real page, Deny with an old confirmation: confirm the factor, and Deny is retried: the code is denied, no approval call is made, no machine token can be redeemed. Approve with an old confirmation, confirm, Approve: approved. Someone else denying: the code stays for the owner. Wrong build: #11's unconditional <code>decide('approve')</code> after confirmation.</li>
+<li>Repeat approval with changed workspaces: the first stored approval returns; the page shows Central's stored values.</li>
+<li>Hegel family <code>device-approval-rule.hegel.unit.test.ts</code> (M1) over code states, approvers, factor ages and time.</li>
+<li><strong>Redemption family (R33):</strong> <code>device-redemption.hegel.host.e2e.test.ts</code> on D1 and better-sqlite3, <code>{ testCases: 100, derandomize: true, database: hegel.Database.disabled }</code>. Each case approves one code, then generates 2–5 pollers, a release order through barriers placed just before Better Auth's conditional consume (<code>routes.mjs:289–379</code>, <code>consumeOne</code> by code ID, owner and approved status), and optional pollers arriving after expiry on the controlled clock. Invariant: exactly one poller gets a machine-token response (access token, refresh credential, machine client ID, Central address, per <code>machine-login-contracts.ts:167–172</code> on <code>d60372cc</code>), every other poller is refused, the device-code row is absent afterwards (native <code>consumeOne</code> deletes it, <code>@better-auth/drizzle-adapter</code> <code>dist/index.mjs:473–496</code>), and no person's sign-in session is issued. “Redeemed” is the model's logical state, not a stored status. Wrong build: a read-then-update redemption shrinks to two pollers both getting machine-token responses.</li>
+</ul>
+
+<h2 id="V2">V2 · Connection and renewal (S3, S6)</h2>
+<ul>
+<li>A Router connects through the sign-in carrier on both pairings: on Node through the real listener's upgrade handler and the real Unix socket (not an in-process fetch), on workerd through the service binding. Messages flow both ways; closing either end closes the other; shutting the Node listener down closes upgraded sockets. A person token, a stale token, another installation's token and a superseded enrollment's token are refused by Central and that status reaches the Router (4a's check, observed).</li>
+<li>On a controlled clock, a running machine renews many times on the open connection; a machine idle 30 days is refused <code>idleExpired</code>.</li>
+<li>Token at <code>grant_expires_at</code> − 1 ms admitted, at equality refused.</li>
+</ul>
+
+<h2 id="V3">V3 · Workspaces and revoke (S4, S5)</h2>
+<ul>
+<li>Approval with workspaces W1 and W3 picked from the live list: only those allowed. Withdraw W1, W3 stays; a non-owner's withdraw is refused.</li>
+<li>Revoke: connection closed, client disabled, next renewal refused, Router asks for a new code. Drop the close at the fault proxy: the machine still gets nothing and ends at its token's expiry.</li>
+<li>Re-login after revocation: nothing restored; workspaces chosen again.</li>
+</ul>
+
+<h2 id="V4">V4 · BA1, re-key, switch (S7, S9)</h2>
+<ul>
+<li>BA1's six cases from approved B3, as Rust tests on both Central builds, plus a <code>hegeltest</code> family over M2 (enrollment). It draws approvals, first Grants, revocations, re-approvals and clock moves past 30 days, compares against an independent model, and checks after every step that a machine has at most one active enrollment and no approval activates after a generation change. Wrong builds: activate without comparing the generation (shrinks to approve, revoke, first Grant); no idle expiry (shrinks to Grant, clock + 30 days, Grant).</li>
+<li>Re-key from three roots (pre-PR-A, post-PR-A, fresh): the machine ID is exactly the peer UUIDv7; sessions and allowances stay; a lost token answer then a retry with the same mapping is accepted; a different mapping is refused.</li>
+<li>Link switch: hold a notice, a read and an install across the switch and kill the Router at each step; never a mix; same-central and other-central rules each hold after restart.</li>
+</ul>
+
+<h2 id="V5">V5 · Secret store (S8)</h2>
+<ul>
+<li>The login code compiles against <code>RefreshCredentialStore</code> alone; the crate selects no platform.</li>
+<li>Fake-source unit tests: absent then usable picks the second; a locked, denied or damaged first source stops with no later access; all absent with an empty store gives memory only; all absent with existing ciphertext, legacy data, temporary data, a missing key item, a wrong key or damaged metadata is an error, and the store's bytes are unchanged afterwards.</li>
+<li>Kill between credential confirmation, metadata publication and retirement: no inconsistent pair is used. Separately, without killing the Host, make retirement fail after the public row committed: the terminal frame is <code>outcomeUnknown</code> (not “interrupted”), and the stored credential and metadata form a usable pair.</li>
+<li>No plaintext on disk; memory-only restart needs a new code and comes back as the same machine. The Keychain case runs on your Mac with your yes.</li>
+</ul>
+
+<h2 id="V6">V6 · The real journey and step switch (S10, S11)</h2>
+<ul>
+<li>Two Routers on macOS log in by device code through the sign-in page, connect through sign-in, against Central's Worker and Tokio builds; one is revoked and refused. Linux memory-only restart runs in the existing Ubuntu job.</li>
+<li>Step 1 unchanged in production configuration; on a test deployment step 2 refuses the old credential and every bad machine token.</li>
+<li><code>hegeltest</code> families for the Router's two machines, in the codex-router host crate, each with an independent model, full comparison of next state and proposed effects after every step, and the settings fixed so runs repeat:
+<ul>
+<li><strong>M3 (login):</strong> draws code replies, poll results, slow-downs, publication and retirement results, and a stream end with no terminal frame. Invariants: exactly one of the four endings; <code>loggedIn</code> only after the credential is confirmed and <code>fleet_login</code> replaced; an unconfirmable publication or retirement step is <code>outcomeUnknown</code>, never <code>loggedIn</code>; an old code is never resumed. Wrong builds: report <code>loggedIn</code> before retirement is confirmed; resume the old code after an interruption.</li>
+<li><strong>M4 (renewal):</strong> draws refresh results, renewal replies across 4a's closed refusal set, and clock moves around <code>grant_expires_at</code>. Invariants: a refresh always happens before <code>grant_expires_at</code>; one refusal leads to exactly one more refresh; a second refusal or <code>enrollmentNotActive</code> ends in needs-new-code. Wrong builds: retry forever after refusals; renew at or after <code>grant_expires_at</code>.</li>
+</ul>
+<code>hegeltest</code> is a new dev-dependency in codex-router, by your rule, at Lead A's exact pin <code>=0.52.6</code>, with its static native engine (which pins <code>hegeltest-c</code> 0.51.5). Lead A's Implementer checked the published manifests and <code>build.rs</code>: no Python, no <code>uv</code> step (codex-router's <code>AGENTS.md</code> forbids Python), and no network fetch at build time. The offline CI build is still being confirmed for Central first; if either fails, that comes to you, and the families don't silently switch library. The refusal set is drawn from 4a's enum once Lead A delivers it.</li>
+<li>Exhaustiveness: one added variant per TypeScript union fails at <code>satisfies never</code>; one added variant per Rust enum fails <code>cargo check</code> at its wildcard-free match.</li>
+</ul>
+</ex-document>
+</body>
+</html>

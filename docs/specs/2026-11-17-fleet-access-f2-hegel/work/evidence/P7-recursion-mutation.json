@@ -1,0 +1,10 @@
+{
+  "id": "P7-recursion",
+  "source": "packages/tool-engine/src/upstream-mcp-connectors/upstream-response-middleware.ts",
+  "file": "packages/tool-engine/src/upstream-mcp-connectors/upstream-response-middleware.hegel.unit.test.ts",
+  "property": "redacts nested credential keys while retaining ordinary fields",
+  "before": "redactJsonValue(childValue, options, key)",
+  "after": "redactJsonValue(childValue, options)",
+  "sourceRevision": "78c0a98ef3709d4bbd55108944a97d8f3d57f825",
+  "originalSha256": "0d6ec863d551ee842302ef6afd06943aa454ce730c4eaeaf11b0ae37f6f3dff5"
+}

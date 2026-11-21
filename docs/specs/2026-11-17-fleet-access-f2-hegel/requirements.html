@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>F2 · Hegel on critical systems · Requirements</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>F2 · Hegel on critical systems: Requirements</h1>
+<p><strong>Why:</strong> outside sign-in, Switchboard's critical decisions have no property tests today. That covers who may call which tool, which tokens and approvals are valid, which files a command may touch, and what secrets get redacted. The source collection found no Hegel use in the nine packages (<code>tmp/2026-11-17-f2-research/report.md</code>). F2 adds generated-input and generated-sequence tests to the highest-risk ones.</p>
+<p><strong>Your words:</strong> 17 Nov, <em>“get hegel working on critical systems too”</em>; AGENTS.md rule 6, <em>“Property-based testing is the norm.”</em> Lead A confirmed it owns none of these packages, so they're in my lane.</p>
+<ex-mermaid id="req" label="What F2 covers" data-width="canvas"><script type="text/plain">
+flowchart TB
+  u1["U1 · Allow/deny decisions hold for any input<br/>tool policy, CLI allowances, OAuth grants, host checks"]
+  u2["U2 · Secrets and tokens behave for any input<br/>approval tokens, redaction, canonical digests"]
+  u3["U3 · Stateful flows hold for any sequence<br/>token use, OAuth transactions, operations, agents, RPC"]
+  u4["U4 · Every failure is a minimal reproducible case<br/>that becomes a regression test"]
+  class u1,u2,u3,u4 slot5
+</script></ex-mermaid>
+<h2 id="boundary">Boundary</h2>
+<ul>
+<li><strong>In scope:</strong> tool-engine, tool-access, tool-host-core/-cloudflare/-node, oauth-broker, oauth-broker-contracts, config-contracts and agent-portal-sdk, in public Switchboard.</li>
+<li><strong>Out of scope:</strong>
+  <ul>
+  <li>sign-in, which F1 covers;</li>
+  <li>Central's Rust, which is Lead A's (#298);</li>
+  <li>real Google and upstream MCP servers;</li>
+  <li>concurrency;</li>
+  <li>product changes. A finding becomes a separate bug fix with its minimal case as the regression test.</li>
+  </ul></li>
+</ul>
+</ex-document>
+</body>
+</html>

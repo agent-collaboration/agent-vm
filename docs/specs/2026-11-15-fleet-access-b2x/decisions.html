@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B2X · Person tokens and revocation · Decisions</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>B2X · Person tokens and revocation: Decisions</h1>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What to check" tone="note" icon="shield-check">
+<p>The <a href="#calls">calls table</a>: where the sync view appears; how bearer sessions are contained.</p>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p>None open. You picked a real session for <code>--device</code> (<a href="#device">below</a>).</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>Quotes with transcript lines; nothing built.</p>
+</ex-callout>
+
+<h2 id="decided">Already decided by you</h2>
+<ex-card title="Device-code sign-in in the CLI" tone="done" icon="key" tag="7 Nov · Fleet transcript 90948" pick>
+<p><em>“Add device-code sign-in to the CLI, as --device”</em> (review 43c26c14, t15d); earlier <em>“login i want login to work with device codes in codex”</em> (Fleet transcript 12490).</p>
+</ex-card>
+<ex-card title="Refresh bound to the key" tone="done" icon="key" tag="7 Nov · Fleet transcript 90948" pick>
+<p><em>“Add a refresh credential, bound to the key”</em> (t15e).</p>
+</ex-card>
+<ex-card title="Revoke shown only after Central confirms" tone="done" icon="shield-check" tag="6 Nov · approved additions" pick>
+<p>In the approved additions' decided list: “expiry fallback and revoke shown only after central confirms”.</p>
+</ex-card>
+<ex-card title="The admin page's credential stays on the server" tone="done" icon="lock" tag="8 Nov · approved additions" pick>
+<p>“the sign-in server holds the admin page's credential, tied to your web session, and signs each admin request; the browser holds no token or key”.</p>
+</ex-card>
+<ex-card title="No Cloudflare crons" tone="done" icon="clock" tag="8 Nov · Switchboard trace" pick>
+<p><em>“you should have never done cloudflare crons”</em> (Switchboard <code>docs/wip/2026-11-08-b2-sign-in-additions-trace.md:279–289</code>, commit <code>6f94ed4d</code>).</p>
+</ex-card>
+<ex-card title="--device uses Better Auth's device flow with a real session" tone="done" icon="key" tag="15 Nov" pick>
+<p>You picked B: <em>“B · real session (recommended) with key cain doe ssoukdl good”</em>, then <em>“ok lets use real session”</em>. You asked whether it helps later OIDC or automated machine setup. It lays the device-code base that B3's machine login reuses. A person's session is never a machine's identity, though. Unattended machines need the later OIDC grant, which ends in B3's own enrollment; nothing here blocks it.</p>
+</ex-card>
+<ex-card title="Agent session tokens are minted by Central" tone="done" icon="users" tag="15 Nov" pick>
+<p><em>“central must mint the agent sesion tokens”</em>. That's Lead A's deliverable 5, not B2X.</p>
+</ex-card>
+
+<h2 id="calls">My calls, and should they have been yours?</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Call</th><th>Why</th><th>Should it have been yours?</th></tr></thead>
+<tbody>
+<tr><td>The sync view appears on B2's admin page status card and beside a member on B1-C's lookup page</td><td>Those are where an owner looks after changing access.</td><td>Possibly: placement changes what you see.</td></tr>
+<tr><td>Browsers can't call the device routes (requests with browser fetch headers or cookies get 404), and the device session is usable only from a terminal on six paths, converted to Better Auth's own signed cookie before dispatch; no <code>bearer()</code> plugin</td><td>Keeps the session token out of page scripts, matching your B1-B card, and lets our factor hooks see the session.</td><td>No: protection inside the agreed scope.</td></tr>
+<tr><td>The organization card counts every person's row, and a removed person can still be looked up for sync status</td><td>Removals only move person rows; the card would otherwise say “reached” too early.</td><td>No.</td></tr>
+<tr><td>The device session confirms its own second factor in the CLI</td><td>Copying the browser's confirmation would invent a factor event.</td><td>No.</td></tr>
+<tr><td>Delivery stays on use; no new timer</td><td>Your crons rule.</td><td>No.</td></tr>
+</tbody></table></div>
+
+<h2 id="device">How <code>--device</code> keeps a session (decided)</h2>
+<p><strong>How it got here.</strong> On 8 Nov the Implementer stopped: Better Auth's OAuth device grant gives a token with no session, which our token contributor refuses. I deferred <code>--device</code> and promised you a decision page (push <code>01a1ba36-49af</code>). It reached you on 15 Nov, and you picked Better Auth's own device flow with a real session.</p>
+<ex-mermaid id="device-picked" label="Device login with a real session" data-width="canvas"><script type="text/plain">
+flowchart TB
+  code["Device code, approved in your signed-in browser"] --> sess["New native session S"]
+  sess --> pkce["Existing PKCE login with S"]
+  pkce --> tok["Person token carrying S"]
+</script></ex-mermaid>
+<p><strong>What it means in practice.</strong></p>
+<ul>
+<li><strong>A lost or stolen terminal:</strong> sign out its session S. Its refresh fails, and after Central's acknowledgement its token is refused. Ending a session raises your person revision, as r3 §3 requires (<code>storage/authorization-fence-mutations.ts:233–244</code>). So your other sessions stay signed in, but their current tokens are no longer accepted. The CLI refreshes at the start of each command (<code>fleet-credential.ts:154–160</code>), so the next command just works. A command already in flight when the change landed can be refused with <code>refreshRequired</code>, and you rerun it; the CLI doesn't retry that by itself (<code>fleet-admin-command.ts:129–140</code>).</li>
+<li><strong>A protected command</strong> asks for a recent second factor: the CLI asks for your app or recovery code and confirms S, because confirmations belong to a session.</li>
+<li><strong>Central</strong> needs no change: the token has the same shape as a browser-login token.</li>
+<li><strong>On the terminal:</strong> the key, the refresh credential and S's secret. All three go in Keychain on macOS, otherwise memory only, never a file.</li>
+</ul>
+</ex-document>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>F1 · Fuzz testing · Requirements</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>F1 · Fuzz testing for sign-in: Requirements</h1>
+<p><strong>Why:</strong> sign-in is the front door. Hand-written tests check the cases someone thought of. F1 adds machine-generated inputs, action sequences and UI exploration, so the cases nobody thought of get tried too. They run against the real sign-in service on both hosts (workerd and Node), and every failure comes back as a small reproducible case.</p>
+<p><strong>Your words, which these requirements rest on:</strong></p>
+<ul>
+<li>17 Nov: <em>“yes i hegel is fuzz testing we hsoudld use it”</em>; <em>“and ui fuzz testing with bombardil if we need it as a later step”</em>; <em>“did you add diesgns and paln out and execute fuzz testing? for heagel ts and bombardil ts?”</em></li>
+<li>17 Nov, the AGENTS.md test rules (PR #297, relayed by Lead A): <em>“Property-based testing is the norm. Use fuzz testing with Hegel and with Turmoil as well.”</em>; <em>“Proof never changes in a move.”</em></li>
+</ul>
+<ex-mermaid id="req-pic" label="What F1 adds, around what exists" data-width="canvas"><script type="text/plain">
+flowchart TB
+  today["Today: hand-written tests plus Hegel on state machines<br/>WORKS"]
+  u1["U1 · Generated request bodies at every sign-in endpoint<br/>MISSING"]
+  u2["U2 · Generated sequences of storage operations<br/>MISSING"]
+  u3["U3 · Bombadil exploring the sign-in and People pages in real Chrome<br/>MISSING"]
+  today --> u1
+  today --> u2
+  today --> u3
+  class today slot6
+  class u1,u2,u3 slot5
+</script></ex-mermaid>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Id</th><th>Need</th><th>Who benefits</th></tr></thead>
+<tbody>
+<tr><td>U1</td><td>Every endpoint a browser or CLI can reach on the sign-in service gets random, malformed and boundary request bodies. It answers only with its documented success or a documented refusal: never a crash (5xx), never someone else's data, never a session token in the body.</td><td>Every person signing in; you, as the operator</td></tr>
+<tr><td>U2</td><td>Long random sequences of real storage operations, through the same Drizzle stores the service uses on both storage engines, never break the organization rules. Those rules: every organization keeps an owner; a person's chosen organization is one they belong to; a removed member keeps no session; the authorization fence only moves forward.</td><td>Organizations and their members</td></tr>
+<tr><td>U3</td><td>Bombadil, Antithesis's UI fuzzer, explores the sign-in page (signed out) and the owner and People pages (signed in) in real Chrome, on both hosts. It checks rules a person would notice:
+  <ul>
+  <li>no crash or console error;</li>
+  <li>no secret on screen;</li>
+  <li>passkey stays click-only;</li>
+  <li>a member never sees the People list.</li>
+  </ul></td><td>People using the pages</td></tr>
+<tr><td>U4</td><td>Every failure comes back as a minimal reproducible case (Hegel's shrunk input or sequence; Bombadil's trace plus its reproduce command) that becomes a permanent regression test once fixed.</td><td>Whoever fixes it</td></tr>
+</tbody></table></div>
+<h2 id="boundary">Boundary</h2>
+<ul>
+<li><strong>In scope:</strong> the TypeScript sign-in service in the public Switchboard repo, on its local test hosts (workerd and Node), with software authenticators and controlled providers, as today's tests use.</li>
+<li><strong>Not in scope:</strong>
+  <ul>
+  <li>Rust crates and Turmoil: Central is Lead A's lane;</li>
+  <li>real Google or GitHub, physical authenticators, hosted Cloudflare;</li>
+  <li>performance or load testing;</li>
+  <li>changing CI gates. That's yours to approve (Decision F1-1).</li>
+  </ul></li>
+<li><strong>Proof limits</strong> are the same as the existing local tests: what F1 proves holds on the local hosts, not on production.</li>
+</ul>
+</ex-document>
+</body>
+</html>

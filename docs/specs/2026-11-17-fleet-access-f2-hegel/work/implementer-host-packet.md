@@ -1,0 +1,13 @@
+F2 host execution packet (existing owner test agent; test execution only)
+
+Authority: owner decisions at agent-vm 0446841f, docs/specs/2026-11-02-fleet-access/plans/2026-11-12-sign-in-owner-decisions.md:568, "Owner decisions, 13 Nov", item 2: Switchboard source and verification packets may be sent to the owner's Sunclaw test agent for runs. F2 commission 17 Nov delegates live inventory, both hosts and both engines to this agent. Nothing secret is included.
+
+Target: public https://github.com/agent-collaboration/switchboard, branch f2/hegel-critical, exact commit 829651c7df1f686a53abf5ca4292f46568a84bce from public main b03d35ffeea00f79061353dce1db6231a670c62f. Clone that URL into isolated task scratch; do not use private Switchboard history. Confirm exact HEAD and clean source. No product, test, workflow, dependency or config edits. Retain raw private logs outside Git; no credentials or private account details in receipts. No publishing, commits, merges, global installs or services.
+
+Preparation from repo root: Node >=24 and pinned pnpm10.33.0; pnpm install --frozen-lockfile; pnpm python:sync before Python tests; pnpm build. Use repo oxfmt0.75.0. Canonicalize temp roots (/tmp vs /private/tmp) before any manifest setup.
+
+Required execution: collect current host inventory (complete packages/**/*.host.e2e.test.ts list from source; compare it to executed positive file list), then run existing pnpm test:e2e:host lane including both Node and workerd and existing Hegel/Bombardil tests. On Darwin only, exclude exactly packages/sign-in-owner-cli/src/fleet/macos-keychain-proof-key-store.host.e2e.test.ts by passing the full positive list minus that file (Vitest4.1.5 inline project ignores CLI exclude); prove equality. On Linux run full default lane. Run pnpm python:test:host after sync. Report platform prerequisites and all skips explicitly, don't disable assertions.
+
+New host target files that must execute: packages/tool-host-cloudflare/src/durable-workspace-authority/agent-removal.hegel.host.e2e.test.ts (M4 real DO adapter) and packages/agent-portal-sdk/src/gateway-runtime-client/node-gateway-runtime-transport.hegel.host.e2e.test.ts (M5 real Unix socket). Hegel seed20261117, derandomize true, database disabled. The independent Verifier owns mutation apparatus separately; do not mutate candidate source.
+
+Return source SHA + actual Node/pnpm/Vitest/Vite/Hegel versions, exact commands, exit codes, file/test pass/fail/skip counts, inventory equality, raw-log paths, any minimal unexpected failure, and unverified prerequisites. If blocked, keep the exact failure and stop affected execution without changing source; successful independent lanes can continue. Reply directly to originating Implementer; the Lead retains acceptance.

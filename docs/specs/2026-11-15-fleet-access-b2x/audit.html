@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B2X · Person tokens and revocation · Audit</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>B2X · Person tokens and revocation: Audit</h1>
+<p><strong>The token and revocation machinery is mostly built and merged; three things are missing.</strong> A person gets a key-bound Fleet token from one snapshot of their authority, refreshes it with the same key, and every role, membership or session change bumps a revision that is pushed to Central. Missing: the CLI's <code>--device</code> login you chose on 7 Nov (it exits with “not available”), any place where the owner can see whether a revocation has reached Central, and the pure-machine and full-proof treatment the approved design requires.</p>
+<p><a href="../2026-11-15-fleet-access-overview/index.html">Back to the Fleet access overview.</a> Switchboard read at <code>f3b2b88b</code>; Better Auth and its OAuth provider at 1.7.11; Central at codex-router <code>e7b709f6a</code>. Source, not runs.</p>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What to check" tone="note" icon="shield-check">
+<ul>
+<li>The <a href="#built">built table</a>: what's merged and stays.</li>
+<li>The <a href="#device">device finding</a>: Better Auth's OAuth device grant issues tokens with no sign-in session, and our tokens require one. That is why <code>--device</code> was deferred on 8 Nov.</li>
+<li>The <a href="#status">status finding</a>: the store can already answer “pending or synced”, but nothing shows it.</li>
+</ul>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p>Decided 15 Nov: <code>--device</code> uses Better Auth's device flow with a real session (<a href="decisions.html#device">Decisions</a>).</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>The <a href="../2026-11-02-fleet-access/deliverables/b2-additions.source.html">approved B2 additions</a> (approved by you on 8 Nov per that page, and with the overall design on 4 Nov), the r3 design it adopts (<code>tmp/2026-11-06-push-revision-replay/advisor-design-r3.md</code>), and your 7 Nov selections in review <code>43c26c14</code> (<a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl">Fleet transcript 90948</a>).</p>
+</ex-callout>
+
+<h2 id="today">What exists</h2>
+<ex-mermaid id="today-picture" label="Tokens and revocation today" data-width="canvas"><script type="text/plain">
+flowchart TB
+  cli["CLI, browser login"] --> issue["Issuance from one snapshot"]
+  issue --> token["Key-bound token, refresh with same key"]
+  token --> central["Central admits or refuses"]
+  change["Role, membership or session change"] --> fence["Revision bump in the same batch"]
+  fence --> drain["Drained before the next Fleet call"]
+  drain --> central
+  device["CLI --device"] --> stub["Exits: not available"]
+  owner["Owner wants to know: did it reach Central?"] --> none["Nothing shown"]
+  class cli,issue,token,change,fence,drain,central slot3
+  class device,stub,owner,none slot5
+</script></ex-mermaid>
+
+<h2 id="built">Built and kept</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Part</th><th>Where</th><th>What it does</th></tr></thead>
+<tbody>
+<tr><td>Issuance</td><td><code>organizations/person-fleet-issuance.ts</code> (commit <code>76dff037</code>, 8 Nov); <code>storage/person-fleet-authorization-store.ts:46–114</code>; <code>better-auth/person-fleet-token-claims.ts</code></td><td>One joined read of session, member, subject and organization fence; refuses on missing session, membership, subject or fence, inactive authority, policy mismatch (:76–78), unknown role, bad lifetime; fixed snapshot bounds.</td></tr>
+<tr><td>Token profile and release</td><td><code>contracts/person-fleet-token.ts:14–61</code>; <code>response-release/person-fleet-release.ts:25–46</code></td><td>Requires the session and key binding; refuses at the snapshot, session or native deadline, equality included.</td></tr>
+<tr><td>Session required</td><td><code>better-auth/person-access-token-claims.ts:45</code></td><td>No session ID → <code>invalid_grant</code>. This is what blocks the OAuth device grant.</td></tr>
+<tr><td>Refresh</td><td><code>response-release/sign-in-response-release.ts:118–134</code></td><td>Refresh credential only for the Fleet CLI's person token.</td></tr>
+<tr><td>Fence</td><td><code>better-auth/authorization-fenced-adapter.ts:19–109</code>; <code>storage/authorization-fence-mutations.ts:233–244,356–408</code></td><td>Better Auth's member, organization and session writes and the revision bumps commit in one batch; ending a session bumps every retained pair for that person.</td></tr>
+<tr><td>Delivery</td><td><code>organizations/authorization-revision-drainer.ts</code>; <code>storage/authorization-revision-delivery-store.ts:229–291</code></td><td>Before a Fleet call, push every pending row of that organization, organization first; record only a newer ACK at most the current revision; stale defer can't delay a newer one.</td></tr>
+<tr><td>Admin page credential</td><td><code>better-auth/fleet-admin-forwarding.ts:48–108,145–221</code></td><td>The server holds the key-bound credential for the web session; the browser holds none (your 8 Nov decision).</td></tr>
+</tbody></table></div>
+
+<h2 id="device">Why <code>--device</code> doesn't exist</h2>
+<p><code>sign-in-owner-cli/src/owner-cli.ts:43–46</code> exits 1 with “not available”, citing the 8 Nov deferral (push <code>01a1ba36-49af</code>). The cause, from the pinned library:</p>
+<ul>
+<li>The OAuth provider's device grant redeems a code and issues tokens with user, scopes and key confirmation but <strong>no session ID</strong> (<code>@better-auth/oauth-provider</code> <code>dist/index.mjs:50–99</code>). Our contributor refuses that (<code>person-access-token-claims.ts:45</code>).</li>
+<li>Better Auth's own first-party device flow (<code>deviceAuthorization()</code>) creates a real session when the code is redeemed and returns it as a bearer session token (<code>dist/plugins/device-authorization/routes.mjs:433–475</code>); approval only records the user (:616–627). The OAuth wrapper refuses first-party redemption of its own codes (<code>oauth-provider dist/index.mjs:176–181</code>).</li>
+<li>Better Auth's <code>bearer()</code> plugin turns a bearer session token into the session cookie for a request (<code>dist/plugins/bearer/index.mjs:24–47</code>); it isn't configured today. Its after-hook exposes session cookies as a <code>set-auth-token</code> header on every response (:54–66).</li>
+<li>OAuth <code>authorize</code> reads the session with <code>getSessionFromCtx</code> (<code>oauth-provider dist/authorize-*.mjs:59</code>) and for a client that skips consent issues a code tied to that session. Our Fleet CLI client is PKCE and skips consent (<code>better-auth/owner-client-bootstrap.ts</code>).</li>
+</ul>
+<p>So a device login that keeps a real session is possible with Better Auth's own parts: first-party device code → session → OAuth authorize with that session → the existing token exchange. It has costs, set out on Decisions.</p>
+
+<h2 id="status">Nothing shows revocation status</h2>
+<p><code>authorization-revision-delivery-store.ts:316–370</code> has <code>readSynchronization</code> for three scopes (a person in an organization, a person everywhere, an organization), answering <code>synced</code> or <code>pending</code>, with missing rows pending and storage failure unavailable. The only callers are the store composition and tests. The approved additions require “revoked everywhere” to be shown only with Central's acknowledgements.</p>
+
+<h2 id="delivery">Delivery changed after the approved text</h2>
+<p>The approved additions say the drainer runs “after commit, on startup, periodically”. Commit <code>6f94ed4d</code> removed the cron and timers; its trace (<code>docs/wip/2026-11-08-b2-sign-in-additions-trace.md:279–289</code> in Switchboard) records your words <em>“you should have never done cloudflare crons”</em>. Today: a hint after each committed change, and a full drain before every Fleet call. The comment at <code>authorization-revision-drainer.ts:21</code> still says “the periodic drain finds it”; it is stale.</p>
+
+<h2 id="machines">States our code moves</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>State</th><th>Where</th><th>B2X treatment</th></tr></thead>
+<tbody>
+<tr><td>Issuance decision</td><td><code>person-fleet-issuance.ts</code>, already pure</td><td>Kept; exhaustive refusal union checked; Hegel family over snapshots and time.</td></tr>
+<tr><td>A revision row's delivery: pending, pushed, acknowledged, deferred, discrepancy</td><td>Rows in the two revision tables; logic in the drainer</td><td>M1: pure transition with effects (push), runner keeps the conditional writes.</td></tr>
+<tr><td>Owner's sync view: loading, pending, synced, unavailable</td><td>New</td><td>M2 in the browser.</td></tr>
+<tr><td>Device login: code pending, approved, denied, redeemed once, expired</td><td>Better Auth's device-code table</td><td>Better Auth owns the code; M3 models the CLI's side.</td></tr>
+</tbody></table></div>
+
+<h2 id="tests">Existing proof</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Test</th><th>Asserts</th><th>Doesn't cover</th></tr></thead>
+<tbody>
+<tr><td><code>sign-in-test-support/src/person-fleet-token.host.e2e.test.ts:198–344</code></td><td>Real token verifies; names session, subject, revisions, bounds, factor; member has no permissions; refusals.</td><td>Device login; status.</td></tr>
+<tr><td><code>fleet-cli.host.e2e.test.ts:173–243</code></td><td>Wrong key can't refresh; right key can; sign-out makes refresh invalid; custody cleared.</td><td>Real Rust Central.</td></tr>
+<tr><td><code>storage-cases/authorization-revision-delivery-cases.ts:63–130</code></td><td>ACK rules on both stores.</td><td>Owner view.</td></tr>
+<tr><td><code>authorization-revision-drain.host.e2e.test.ts:168–257</code></td><td>Removal hints a push; lost ACK stays pending; next Fleet call delivers first.</td><td>Uses a recording Central peer.</td></tr>
+<tr><td><code>b2e-joint-journey.host.e2e.test.ts:1245–1344</code> (gated)</td><td>Sign-out, real drain, Rust refusal, no new rows.</td><td>Pinned to older Central <code>ea030e51</code>.</td></tr>
+</tbody></table></div>
+
+<h2 id="removes">Removed and kept</h2>
+<ul>
+<li><strong>Removed:</strong> the <code>--device</code> “not available” exit and its test, once device login is built; the drainer's inline decision branches, replaced by M1; the stale periodic comment.</li>
+<li><strong>Kept:</strong> issuance, release, refresh, the fence, delivery rules, admin-page forwarding, every existing test.</li>
+<li><strong>Not B2X:</strong> agent session tokens (Lead A's deliverable 5); machine login (B3); Central's own DPoP, used-request table, watermark and backup recovery (Lead A), which B2X observes but doesn't build.</li>
+</ul>
+</ex-document>
+</body>
+</html>

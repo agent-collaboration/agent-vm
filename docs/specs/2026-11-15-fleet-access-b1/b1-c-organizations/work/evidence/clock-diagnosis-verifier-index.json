@@ -1,0 +1,85 @@
+{
+  "rawReport": "/private/tmp/2026-11-b1c-implementer/clock-diagnosis-safe-report.json",
+  "rawReportBytes": 745662,
+  "rawReportSha256": "56a6ab92bc3b75d2e6337fbe334ac6d497c0db73e432117354c44bc967e43411",
+  "scope": "Diagnostic only: exact91 base plus three-wrapper overlay and original immutable production references; not clean-commit feature proof",
+  "sourceHead": "91bfdc5a3bf1632f0ffc70f22a2c34f3a9b469b5",
+  "sourceTree": "32225ad42586237dee4fdf3eb538e430db1a2ec0",
+  "patch": {
+    "bytes": 2902,
+    "sha256": "86f2db7ad28da6fb1bec56b5eb7ab656d1ab6a02fb2ca26f7b7629c54806eb3a"
+  },
+  "counts": {
+    "passed": 0,
+    "failed": 1,
+    "nameFilterSkipped": 6,
+    "selectedCases": 1,
+    "selectedFailed": 1
+  },
+  "numericEvents": [
+    {
+      "event": "organization-clock-set",
+      "controlledMilliseconds": 1893456001001,
+      "dateNow": 1893456001001,
+      "constructedNow": 1893456001001,
+      "explicitTime": 1893456001001
+    },
+    {
+      "event": "organization-native-clock",
+      "phase": "before",
+      "controlledMilliseconds": 1893456001001,
+      "dateNow": 1893456001001,
+      "constructedNow": 1893456001001
+    },
+    {
+      "event": "organization-native-clock",
+      "phase": "after",
+      "controlledMilliseconds": 1893456001001,
+      "dateNow": 1893456001001,
+      "constructedNow": 1893456001001,
+      "status": 200,
+      "clearsSessionCookie": false
+    },
+    {
+      "event": "organization-clock-set",
+      "controlledMilliseconds": 1893456000000,
+      "dateNow": 1893456000000,
+      "constructedNow": 1893456000000,
+      "explicitTime": 1893456000000
+    }
+  ],
+  "runtimeExit": 1,
+  "failedRebundleComparisonExit": 1,
+  "correctedCompositionComparisonExit": 0,
+  "immutableModulesEqualPhaseA": [
+    "gateway",
+    "productionAuth",
+    "productionGateway",
+    "signingObserver",
+    "clock",
+    "startup"
+  ],
+  "protectedSourceCount": 278,
+  "protectedDistGeneratedCount": 253,
+  "workerReceiptCount": 1,
+  "conclusion": "Parity observed at sampled wrapper boundaries; original200-vs401 assertion remains failed. Stored expiry/driver cells and causal explanation remain unknown.",
+  "notRun": [
+    "Any second diagnostic test/retry",
+    "Product install/build/fix",
+    "Node/browser/full sweeps",
+    "Architecture/checker gate (overlay deliberately not feature eligible)",
+    "Any corrected-head smoke",
+    "CI/real provider/secret/physical-authenticator/staging/deployment/production/acceptance"
+  ],
+  "limits": [
+    "Pure diagnostic composition, not a clean commit: exact91base+three test-wrapper edits+286 declared read-use symlinks; unchanged production references come directly from original immutable artifacts per explicit correction.",
+    "The initial rebundle failed byte-equality gate. It was preserved; corrected manifest uses exact old entries instead of normalizing differences or claiming all new rebundle differences were harmless.",
+    "First differing lines are path annotation contexts; only literal first-difference shapes are classified, not a complete semantic comparison or root-cause conclusion.",
+    "Observed Date parity is limited to the logged before/after wrapper boundaries; native response remains200, and no product fix, cached-session explanation or internal library-clock behavior is inferred.",
+    "One selected failed case and six unrelated name-filter skips are retained in full. No assertion changed or request retried to get green.",
+    "Reused dependencies/dist/generated are read-use links; node_modules containers and mutable caches are local, old caches not linked. All278old source inputs and253dist/generated protected hashes unchanged; no original permission/content edit, install or build.",
+    "No credentials, cookies, token values, authURI, raw private runtime rows, input parameters, JSON session strings or Chrome/profile data forwarded. Clock events contain numeric epoch/status/boolean fields only.",
+    "No Node/browser/manual attachment or new observer beyond exact patch. No signals sent for this diagnosis; owned runtime process group and observed PID readback are absent.",
+    "Requester has explicitly withheld any further diagnostic runtime until a separate exact patch/source/commands packet."
+  ]
+}

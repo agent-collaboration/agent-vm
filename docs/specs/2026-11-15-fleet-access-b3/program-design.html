@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B3 · Machine login · Program Design</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>B3 · Machine login: Program Design</h1>
+<p>Three code homes: Switchboard (sign-in), codex-router's Central core, and codex-router's Router host. Lead A's 4a owns Central's token check, door, admission and <code>RenewMachineToken</code>; B3 consumes them.</p>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What to check" tone="note" icon="shield-check">
+<p><a href="#ownership">Ownership table</a>: who builds each part. <a href="#signin">Sign-in</a> starts from #11, merged forward, with Deny fixed. <a href="#allowances">Allowances</a> live in a <code>machine_allowances</code> table, as you approved on 9 Nov.</p>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p>B3 is finished on #11 and merged whole (my call; you handed merging and sequencing to me on 16 Nov). Storage is decided by you (9 Nov B3 SQL review, option A): one row per login, a <code>machine_allowances</code> table, and a former-ID column.</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>Boundary from Lead A, push <code>01a1e199-bf63</code>, checked against Central main <code>e7b709f6a</code> and C2 <code>963f5739d</code>.</p>
+</ex-callout>
+
+<h2 id="ownership">Who builds what</h2>
+<ex-mermaid id="ownership-picture" label="B3 and 4a" data-width="canvas"><script type="text/plain">
+flowchart TB
+  router["Router host: login, secret store, re-key, when to switch (B3)"] --> signin["Sign-in: device grant, approval page, revoke, carry the connection (B3)"]
+  signin --> decisions["Central: DecideDeviceLogin, DecideMachineToken (main #281; B3 checks)"]
+  signin --> commands["Central: AllowMachine, Withdraw, Revoke (B3 builds)"]
+  router --> door["Central: token check, door, admission, RenewMachineToken (Lead A 4a)"]
+  class router,signin,commands slot2
+  class decisions slot3
+  class door slot4
+</script></ex-mermaid>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Part</th><th>Owner</th><th>Path</th></tr></thead>
+<tbody>
+<tr><td>DecideDeviceLogin, DecideMachineToken</td><td>On Central main (#281); B3 checks against approved B3 and extends</td><td><code>collaboration-central-core/src/organization_authority/machine_login/</code></td></tr>
+<tr><td>Enrollment, idle expiry, BA1</td><td>On main; B3 confirms or changes</td><td><code>machine_enrollment.rs</code>, <code>machine_enrollment/admission.rs</code></td></tr>
+<tr><td>Machine token check, door, admission, close, <code>RenewMachineToken</code></td><td>Lead A 4a</td><td><code>machine_token.rs</code>, <code>machine_connection_admission.rs</code>, <code>machine_connection.rs</code>, <code>workspace_link.rs</code></td></tr>
+<tr><td>Allow, withdraw, revoke commands</td><td>B3</td><td><code>organization_authority/machine_commands.rs</code></td></tr>
+<tr><td>Device grant, approval page, decisions client, token contributor, revocation hook</td><td>B3 (from #11)</td><td><code>packages/sign-in-core/src/better-auth/machine-*.ts</code>, <code>pages/device-*.tsx</code></td></tr>
+<tr><td>Carrying the connection</td><td>B3</td><td><code>packages/sign-in-host-cloudflare</code>, <code>packages/sign-in-host-node</code></td></tr>
+<tr><td>Router login, rows, publication</td><td>B3</td><td>codex-router host, <code>message-board-storage</code></td></tr>
+<tr><td>Secret store</td><td>B3</td><td>codex-router secret-store crate</td></tr>
+<tr><td>Link client reconnect</td><td>Lead A 4a; B3 calls its re-enrolled entry</td><td><code>central-link-client/src/link_state.rs:344</code></td></tr>
+</tbody></table></div>
+
+<h2 id="signin">Sign-in</h2>
+<ul>
+<li><strong>Start from #11.</strong> Merge <code>item2/b3a-device-grant</code> forward onto current <code>main</code> (after B1-A, B1-C, B2, B2X), keeping its tests; bring #14's verification with it.</li>
+<li><strong>Approval rule in the core:</strong> <code>machine-login/device-approval-rule.ts</code>, a pure function over the code record, the approver's live permission, factor recency and now, returning <code>approve | deny | refuse(reason)</code>; both endpoints call it. Deny now requires a recent second factor, like Approve.</li>
+<li><strong>The page keeps the chosen action through step-up.</strong> On #11, <code>ConfirmSecondFactorStep.onConfirmed</code> always calls <code>decide('approve')</code> (<code>pages/islands/device-approval-island.tsx:144–172</code> on <code>d60372cc</code>). The island's state gains <code>pendingDecision: 'approve' | 'deny'</code>, set when the person clicks, and <code>onConfirmed</code> retries exactly that decision once.</li>
+<li><strong>Workspace picker:</strong> the approval page calls B2's <code>ListWorkspaces</code> (permission <code>organization:view</code>, which owners hold) and sends the chosen IDs in <code>DecideDeviceLogin</code>.</li>
+<li><strong>Revoke:</strong> a “Machines” section on B2's admin page lists enrollments (from the machine lookup) with Revoke, Allow and Withdraw; each forwards the command with the person token and a recent factor; on revoke, the sign-in service disables that enrollment's client.</li>
+<li><strong>Carrying the connection</strong> is host-owned, because today's core link (<code>central-link/central-transport.ts:1–4</code>) is fetch-only. Public path <code>GET /api/fleet/link/{organization}</code> with <code>Upgrade: websocket</code> and the bearer machine token; Central path <code>GET /v1/organizations/{organization}/link</code> (4a's door, <code>workspace_link.rs:50–54</code>); the token header is passed unchanged and only Central verifies it.
+<ul>
+<li><strong>Cloudflare:</strong> the Worker matches the path and returns <code>env.CENTRAL.fetch(rewrittenRequest)</code>; Workers carry a 101 response with its WebSocket through a service binding, and Central's Worker entry (<code>workspace_link_entry.rs:6–54</code>) answers it.</li>
+<li><strong>Node:</strong> <code>sign-in-http-listener.ts</code> (today request-only, :76–107) adds an <code>upgrade</code> listener for that path. It opens a Unix-socket connection to Central (the path the existing <code>central-unix-transport.ts</code> uses), writes the rewritten upgrade request with the unchanged Authorization header, and reads Central's status line. On 101 it writes Central's 101 headers to the client, writes any bytes already read past the headers in each direction, and pipes the two sockets both ways until either closes. On any other status it writes that status and body to the client and closes both. The listener keeps a set of upgraded socket pairs and destroys them on shutdown.</li>
+</ul></li>
+</ul>
+
+<h3 id="m1">M1 · Device-code decisions</h3>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Code state</th><th>Event</th><th>Next and effects</th></tr></thead>
+<tbody>
+<tr><td>pending</td><td><code>approve(approver, workspaces)</code> allowed by the rule</td><td>pending; [decide-device-login]; on Approved → approved (conditional write on pending)</td></tr>
+<tr><td>pending</td><td><code>deny(approver)</code> allowed</td><td>denied (conditional write on pending)</td></tr>
+<tr><td>approved</td><td><code>redeem</code></td><td>redeemed (logical: Better Auth's <code>consumeOne</code> deletes the row on an approved, owned, unexpired code, <code>routes.mjs:350–378</code>); [create-client, decide-machine-token, issue machine tokens]</td></tr>
+<tr><td>approved</td><td><code>redeem</code> losing the race</td><td>refused (<code>already-redeemed</code>)</td></tr>
+<tr><td>any</td><td><code>expired(now)</code></td><td>expired</td></tr>
+<tr><td>denied, redeemed, expired</td><td>any</td><td>refused</td></tr>
+</tbody></table></div>
+
+<h2 id="central">Central</h2>
+<ul>
+<li><strong>Check the decisions on main</strong> against approved B3: request ID idempotency, <code>codeExpiresAt</code> passed through, first Grant activation with BA1, repeat Grants reading live, re-key once.</li>
+<li><strong>M2 · Enrollment:</strong> reserved → approved → enrolled (first Grant, generation unchanged; bump) → revoked (bump) | expired (30 days without a Grant). Stale approval at first Grant → refused, never activates.</li>
+<li><strong>The re-key, end to end.</strong> The Router sends <code>formerServiceId</code> (optional; a UUID v4 or v7, its former routing ID) in the device authorization; the machine-login plugin stores it as an extra field on the device-code record (beside installation, peer, label and organization, <code>machine-login-plugin.ts:32–52,78–85</code> on <code>d60372cc</code>); sign-in's strict <code>DecideDeviceLogin</code> schema (<code>machine-login/machine-login-contracts.ts:33–44</code>) and Central's (<code>identity_contract/identity_decisions.rs:9–29</code>, <code>deny_unknown_fields</code>) both gain <code>formerInstallation: Option&lt;string&gt;</code> accepting v4 or v7. In <code>device_login_decision.rs</code>'s one transaction: if no machine exists under the new UUIDv7 installation, and a machine in this organization exists under the former ID, that row takes the new ID, every reference to it is repointed in the same transaction (its sessions, the board relationships keyed by installation, and queued mail: <code>messages.target_machine_id</code> references <code>machines(installation_id)</code>, <code>migrations/central/0002_mail_notices_timers.sql:3–4</code> on 4a's base; the new ID can't already exist because <code>machines_installation</code> is unique, <code>0001:4</code>), its routing and watches under the former ID are retired, and the former ID is recorded on the row; if the same mapping is already recorded, it is a repeat and succeeds; if the former ID is recorded against a different UUIDv7, it is refused (<code>formerInstallationMismatch</code>). Recording the former ID needs a column on Central's <code>machines</code> table, <code>former_installation_id</code>, which you approved on 9 Nov (<a href="decisions.html#rekey">Decisions</a>); its SQL is in <a href="#allowances">Allowances</a>.</li>
+<li><strong>Commands</strong> in <code>machine_commands.rs</code>, each one transaction in the organization's central store (the organization object's <code>WorkspaceRuntime</code> store, not the legacy Fleet object) with a change record: <code>AllowMachine</code> and <code>WithdrawMachineAllowance</code> set one <code>machine_allowances</code> row to <code>active</code> or <code>withdrawn</code>; <code>RevokeMachineEnrollment</code> does S5's steps and records the close.</li>
+</ul>
+
+<h3 id="allowances">Allowances: the <code>machine_allowances</code> table (your 9 Nov decision)</h3>
+<p><strong>What changes.</strong> Today Central (#281) keeps a machine's current workspaces as a JSON list in <code>machines.allowed_workspaces</code>. B3 moves that truth into its own table, one row per machine and workspace, as you approved. <strong>Behaviour stays exactly as today:</strong> an approval <em>adds</em>: it makes the picked workspaces' rows <code>active</code> and leaves every other active row alone (<code>device_login_decision.rs:75</code>, “Approval adds allowances; it does not withdraw existing ones”, B3/R39). Allow and Withdraw change one row. Revoke withdraws every row, so an approval after a revoke starts from nothing; all in the same transaction as today, each with its change record. <code>machine_approvals.allowed_workspaces</code> stays as that approval's record of what was approved then. It's history, never read for admission.</p>
+<p><strong>SQL.</strong> These are edits to Central's <code>0001_workspace_requests.sql</code> in place, per the owner's 17 Nov choice for Central migrations. They land with Lead A's 0001/0002 fixes in one change and one staging reset. Names follow Central's current tables; timestamps are TEXT like the rest of <code>machines</code>.</p>
+<pre><code>-- machines: allowed_workspaces removed; former_installation_id added (the re-key, set once)
+CREATE TABLE machines (machine_id TEXT PRIMARY KEY, installation_id TEXT NOT NULL,
+  former_installation_id TEXT UNIQUE, label TEXT NOT NULL, state TEXT NOT NULL,
+  enrollment_generation INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+
+-- new: which workspaces each machine may serve
+CREATE TABLE machine_allowances (
+  allowance_id TEXT PRIMARY KEY,                         -- UUIDv7 from the injected ID source
+  machine_id   TEXT NOT NULL REFERENCES machines(machine_id),
+  workspace_id TEXT NOT NULL,
+  state        TEXT NOT NULL,                            -- active | withdrawn
+  created_at   TEXT NOT NULL,
+  updated_at   TEXT NOT NULL,
+  UNIQUE (machine_id, workspace_id));</code></pre>
+<p><strong>Admission read</strong> (<code>workspace_admission.rs:16</code>, Lead A's 4a). The query drops <code>m.allowed_workspaces</code> and instead reads this one workspace's row:</p>
+<pre><code>SELECT m.machine_id, m.state, c.expires_at, w.state AS workspace_state,
+       (SELECT a.state FROM machine_allowances a
+         WHERE a.machine_id = m.machine_id AND a.workspace_id = ?1) AS allowance_state
+FROM machines m JOIN machine_credentials c ON c.machine_id = m.machine_id
+LEFT JOIN workspaces w ON w.workspace_id = ?1
+WHERE m.machine_id = ?2 AND c.token_hash = ?3</code></pre>
+<p>With a workspace: <code>allowance_state = 'active'</code> admits; <code>'withdrawn'</code> or NULL refuses with <code>WorkspaceNotAllowed</code>; any other value is a corrupt row. Without a workspace, the allowance isn't read. Refusals are unchanged. The JSON decode at <code>:33–36</code> goes away.</p>
+<p><strong>Who changes what.</strong> Lead A owns Central: the schema edit, the admission read, and the machine-login reads and writes (<code>machine_login_reads.rs</code>, <code>machine_login_writes.rs</code>, <code>machine_login_rows.rs</code>, <code>machine_token_decision.rs</code>, <code>revoke_enrollment.rs</code>), plus the Central tests that seed <code>allowed_workspaces</code> directly. B3's Central commands use the table. The pure decisions keep their <code>AllowedWorkspaces</code> type; only the storage mapping changes.</p>
+
+<h2 id="router">Router host</h2>
+<ul>
+<li><code>FleetLogin</code> operator request with public inputs only; the device flow; polling with an injected wait.</li>
+<li><strong>M3 · Router login:</strong> requesting → waiting → redeemed → publishing (confirm credential, replace <code>fleet_login</code>, retire older) → one of four endings, kept distinct and bound to the existing F11 contract (<code>codex-router-host/src/fleet_machine_login/login_contract.rs:97–122,152–161</code>, <code>login_publication.rs:20–44</code>): <code>loggedIn</code>; <code>refused { reason }</code>; <code>outcomeUnknown</code> when a publication or retirement step can't be confirmed (the terminal frame says so, with public context); and, only in the attached CLI, “login interrupted, run it again” when the stream ends with no terminal frame (the Host died). Never resume an old code.</li>
+<li><strong>M4 · Renewal:</strong> connected → refreshing (before <code>grant_expires_at</code>) → renewing (<code>RenewMachineToken</code>) → connected; refused once → refreshing; refused twice or <code>enrollmentNotActive</code> → needs-new-code. Pinned 17 Nov to Lead A's seam (codex-router <code>d23724feb</code>):
+<ul>
+<li><strong>Interface.</strong> B3's Router host implements <code>MachineTokenSource</code> (<code>crates/collaboration-runtime/src/central_link_driver/link_transport.rs:50</code>): <code>availability() → TokenAvailability</code>, which is <code>Ready</code>, <code>RefreshPending</code> or <code>NeedsNewCode</code> (<code>:37</code>); a cancel-safe <code>changed()</code> backed by a <code>watch</code> it owns; and <code>report_renewal(&amp;TokenRenewalResult)</code>. The link driver sends <code>RenewMachineToken</code> and passes every answer back.</li>
+<li><strong>Refusal handling.</strong> M4's switch is exhaustive over <code>TokenRenewalRefusal</code> (<code>crates/central-link-protocol/src/link_renewal.rs:65</code>), my call:
+<ul>
+<li><code>Renewed</code>: back to connected.</li>
+<li><code>TokenRejected</code> and <code>DifferentEnrollment</code>: refresh once more. A second refusal leads to <code>NeedsNewCode</code>.</li>
+<li><code>EnrollmentNotActive</code> and <code>DifferentMachine</code>: straight to <code>NeedsNewCode</code>. An identity mismatch is never auto-healed.</li>
+<li><code>CentralUnavailable</code>: transient. It does not count toward <code>NeedsNewCode</code>; the token stays <code>Ready</code> and the next connection retries, so a Central outage never asks a person for a new code.</li>
+</ul></li>
+</ul></li>
+<li><strong>Secret store:</strong> the <code>RefreshCredentialStore</code> and <code>DataKeySource</code> traits; <code>EncryptedEnvelopeStore</code>, <code>MemoryOnlyStore</code>, <code>MacKeychain</code>; the composition root injects <code>[MacKeychain]</code> on macOS, <code>[]</code> elsewhere; today's <code>cfg</code>-selected access is removed. Classification generalizes the existing read-only classifier (<code>codex-router-secret-store/src/classified_store_open.rs:54–73,91–131</code>) to the injected list: it creates and overwrites nothing; only <code>BackendAbsent</code> moves to the next source; memory-only is chosen only when every source is absent <em>and</em> the store holds no encrypted, legacy or temporary credential data; existing data with no usable key is an error. Creating a fresh data key is a separate, explicit startup step.</li>
+<li><strong>Re-key and switch:</strong> send the former service ID with the login; on a new enrollment replacing an active one, run R10/R10a and call the link client's re-enrolled entry.</li>
+</ul>
+
+<h2 id="trace">Rule homes</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Rule</th><th>Home</th></tr></thead>
+<tbody>
+<tr><td>S1, S2</td><td>Sign-in from #11, approval rule, M1</td></tr>
+<tr><td>S3</td><td>Sign-in link carrier; 4a door</td></tr>
+<tr><td>S4, S5</td><td>Approval page picker; admin Machines section; Central commands</td></tr>
+<tr><td>S6</td><td>Router M4; 4a renewal</td></tr>
+<tr><td>S7</td><td>Central M2</td></tr>
+<tr><td>S8, S9</td><td>Router host, secret store</td></tr>
+<tr><td>S10, S11</td><td>Central setting; machines</td></tr>
+</tbody></table></div>
+</ex-document>
+</body>
+</html>

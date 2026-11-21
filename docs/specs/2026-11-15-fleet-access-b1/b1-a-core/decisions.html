@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B1-A · One sign-in core, injected and honestly tested · Decisions</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>B1-A · One sign-in core, injected and honestly tested: Decisions</h1>
+<p>Every assumption this design makes, every decision behind it (yours in your words, mine with whether it should have been yours), and what was there before.</p>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What you should check" tone="note" icon="shield-check">
+<ul>
+<li><strong><a href="#assumptions">The assumptions</a>:</strong> if one is wrong, part of the design is wrong.</li>
+<li><strong><a href="#mine">My calls</a>:</strong> each says whether it should have been yours.</li>
+<li><strong><a href="#flood-clock">The one recorded risk</a>:</strong> Miniflare's counter keeps its own real-clock window.</li>
+</ul>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p><strong>Nothing changes what a person sees or can do, and nothing is open for you.</strong> On 15 Nov you decided three things (<a href="#owner">cards below</a>):</p>
+<ul>
+<li>R30 covers our code, not Better Auth's own crypto;</li>
+<li>capabilities stay injected, with no DI library;</li>
+<li>no UUID other than v7, tests included.</li>
+</ul>
+<p>Where the device-code parts of R33 and U23 go is already yours: B3, from the B1 scope you approved on 4 Nov (<a href="#owner">card below</a>).</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="done" icon="book-open">
+<p>Every decision of yours below is quoted with where you said it. The design rests on your approval of 4 Nov: <em>"yes you need anytnhign?"</em>, answering my request to approve the overall design, B1 and B2 (<a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl">Fleet transcript</a> lines 71226 and 71230). Lines marked <strong>unconfirmed</strong> are ones I couldn't find in a transcript, and each has another line of yours that backs it up.</p>
+</ex-callout>
+
+<ex-mermaid id="decisions-pic" label="Where B1-A's decisions come from" data-width="canvas"><script type="text/plain">
+flowchart TB
+  words["Your words<br/>U16, U23, U24, U25"] --> design["Your approved design<br/>R30, R32, R33, R38, R52, SO2"]
+  design --> b1a["B1-A design"]
+  mine["My calls<br/>each marked: should it have been yours?"] --> b1a
+  assume["Assumptions<br/>each with: if it's wrong"] --> b1a
+  b1a --> open["Open for you: nothing"]
+  class words,design slot1
+  class mine slot2
+  class assume slot3
+  class b1a slot6
+  class open slot4
+</script></ex-mermaid>
+<p><strong>Key:</strong> blue is yours, amber is mine, teal the assumptions, green the design, violet what's open.</p>
+
+<h2 id="owner">Your decisions</h2>
+<p>Transcripts: <strong>F</strong> is the <a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portal-remediation/cd5902e2-2105-4472-adde-031ae6496e30.jsonl">Fleet access session</a>; <strong>P</strong> is the <a href="file:///Users/shravansunder/.claude/projects/-Users-shravansunder-code-projects-agent-vm-design-portable-tool-portal-hosts/2febb449-db01-4859-8fdb-fdc41a74abfc.jsonl">earlier portal session</a>. The approved Requirements are <a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/requirements.source.html"><code>requirements.source.html</code></a>.</p>
+<ex-grid cols="2" data-width="canvas">
+<ex-card title="The design and B1 are approved" tone="done" icon="book-open" tag="F 71226, 71230 · 4 Nov" pick>
+<p><em>"yes you need anytnhign?"</em>, answering <em>"Still waiting on you: approve the overall design, B1 and B2"</em>.</p>
+<p><strong>Decides here:</strong> the approved rows are the yardstick.</p>
+</ex-card>
+<ex-card title="R30 covers our code, not Better Auth's own crypto" tone="done" icon="code" tag="Fleet session · 15 Nov" pick>
+<p><em>"but auth libary is trhe same on al platforms sso wehres the issue here?"</em>; <em>"yes do a."</em>; <em>"why shoudl we care if better auth does if its suspeod to work in durable objects?"</em></p>
+<p><strong>Decides here:</strong> B1-A routes all of our code's crypto through the host. Better Auth stays as shipped (<a href="#open">the choice, kept below</a>).</p>
+</ex-card>
+<ex-card title="Capabilities stay injected; no DI library" tone="done" icon="plug" tag="Fleet session · 15 Nov" pick>
+<p><em>"no tsyringe o rlibrary please"</em>; <em>"inejcted is fine"</em>.</p>
+<p><strong>Decides here:</strong> functions receive <code>platform</code> (or a slice of it) as today. No container, no service locator, no request-scoped getter (<a href="program-design.html#choice">Program Design</a>).</p>
+</ex-card>
+<ex-card title="UUIDv7 only, tests included" tone="done" icon="key" tag="Fleet session · 15 Nov; U24" pick>
+<p><em>"also said enver use uuid ony kuuidv7?"</em>, restating U24 (<em>"we ony use uuidv7"</em>).</p>
+<p><strong>Decides here:</strong> the v4 nonce goes, the keychain test's v4 goes, and a new check rejects any non-v7 UUID mint in the sign-in packages, tests included (<a href="specification.html#S12">S12</a>).</p>
+</ex-card>
+<ex-card title="Device codes are built with machine login (B3)" tone="done" icon="key" tag="Same approval · B1 doc at ac83966c" pick>
+<p>The B1 you approved said, under "Not in B1": <em>"machine login and device codes (B3)"</em> (<a href="file:///Users/shravansunder/code/projects/agent-vm.design-portal-remediation/docs/specs/2026-11-02-fleet-access/deliverables/b1-people-roles-sign-in.source.html#b1-scope">B1 scope</a>, unchanged since commit <code>ac83966c</code>, the version standing when you said yes).</p>
+<p><strong>Decides here:</strong> R33's device-code single-use Hegel family and U23's "device-code approval in the core" go to B3, where the device-code grant is built. The grant isn't on <code>main</code> today (only the <code>deviceCode</code> table; the code is in the frozen PR #11).</p>
+</ex-card>
+<ex-card title="One runtime-free core, runtimes injected (U23, R30)" tone="done" icon="stack" tag="Requirements line 174" pick>
+<p><em>"you inject stukff not pkul out engines"</em>; <em>"it shoudl be runtime seperated like fuckign codex router"</em>.</p>
+<p><strong>Decides here:</strong> crypto comes from the host.</p>
+</ex-card>
+<ex-card title="One design on any host (U16)" tone="done" icon="cloud" tag="Requirements line 172" pick>
+<p><em>"maqke sure clodufalre is one runtiem and we decokuple yes? same design"</em>.</p>
+<p><strong>Decides here:</strong> both hosts and the CLI use one shared builder.</p>
+</ex-card>
+<ex-card title="No wall clock in tests (U25, R33)" tone="done" icon="clock" tag="Requirements 176 · P 143821" pick>
+<p><em>"i dont allow wall clock time ever in tests"</em>; <em>"use hegal"</em>.</p>
+<p><strong>Decides here:</strong> event waits only, controlled-clock fixtures, the dispatch Hegel family.</p>
+</ex-card>
+<ex-card title="Only UUIDv7 (U24, R32)" tone="done" icon="key" tag="Requirements line 175" pick>
+<p><em>"we ony use uuidv7"</em>.</p>
+<p><strong>Decides here:</strong> the people-journey UUID inventory.</p>
+</ex-card>
+<ex-card title="How flood limits are proven (journey SO2)" tone="done" icon="shield-check" tag="Approved Verification Design" pick>
+<p><em>"Miniflare's binding keeps its own clock: locally it proves 'limited', the window reset is proven through the core's limiter on a controlled clock, and the binding's reset is checked once on the private stack."</em></p>
+<p><strong>Decides here:</strong> "limited" on Miniflare's real binding; the stand-in removed.</p>
+</ex-card>
+<ex-card title="A deliverable is a whole feature" tone="done" icon="package" tag="Relayed by Lead A · 15 Nov" pick>
+<p><em>"when I see deliverable it means a feature done properly"</em>; <em>"the work cannot be some bite size nonsense"</em>.</p>
+<p><strong>Decides here:</strong> one feature, with its old code removed.</p>
+</ex-card>
+<ex-card title="Heavy test runs go to Sunclaw" tone="done" icon="hard-drives" tag="F 122302 · 13 Nov" pick>
+<p><em>"yes run thsi stuff"</em>.</p>
+<p><strong>Decides here:</strong> where the Verifier's heavy runs go.</p>
+</ex-card>
+</ex-grid>
+<p><strong>Backed but not found in a transcript:</strong> the 31 Oct "no real clock and only events, mock timers in tests" (<strong>unconfirmed</strong>; in my memory record only). R33 itself already requires event waits, so nothing depends on that line.</p>
+
+<h2 id="mine">My calls, and whether they should have been yours</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>My call</th><th>Why</th><th>Should it have been yours?</th></tr></thead>
+<tbody>
+<tr><td>Pass <code>crypto</code> explicitly, not through a helper object</td><td>It's how the core already passes the clock; no new abstraction (<a href="program-design.html#choice">Program Design</a>)</td><td>No. It's reversible, inside R30.</td></tr>
+<tr><td>The new core check also covers <code>better-auth/</code></td><td>R30 governs our code there. U23's exemption is for importing Better Auth.</td><td>No. It's stricter than U23's wording, but within R30.</td></tr>
+<tr><td>The nonce helper lives in <code>contracts/</code></td><td>The package's import map sends <code>pages/*</code> to <code>.tsx</code></td><td>No.</td></tr>
+<tr><td>The time scan is a syntax check, so tests read time only through the controlled clock by name, even where <code>Date</code> is already mocked</td><td>A scan can't tell a mocked <code>Date.now()</code> from a real one. Requiring the named controlled clock is the only way a scan can enforce U25's "no real-clock read". The cost is a few explicit reads, for example in <code>authorization-fence.host.e2e.test.ts</code>.</td><td>No. It's within U25, which asks for a scan. If you'd rather allow mocked <code>Date</code> calls, the scan becomes a weaker check.</td></tr>
+<tr><td>SO2's "the core's limiter" means Better Auth's own provider-layer limit plus the Node host's counter</td><td>The core has no counter; it hands each request to the host's limiter (<code>sign-in-request-admission.ts:23–34</code>). The layers that reset on a controlled clock are Better Auth's limit and Node's counter.</td><td>No. It maps your approved wording onto the real code without changing what's proven.</td></tr>
+<tr><td>Delete the flood stand-in</td><td>No test needs it after the change; your feature rule says old code goes</td><td>No: it follows your rule.</td></tr>
+<tr><td>The test-time scan covers <code>sign-in-test-support</code>, the sign-in <code>*.test.ts</code> files, and <code>scripts/verify-auth/</code></td><td>Proof row U25 names "the sign-in tests, helpers or harness"</td><td>No. It's what U25 asks.</td></tr>
+<tr><td>Treat U25's "<code>auth-proof-process.ts</code> kill deadlines" as already done</td><td>The file already waits on an <code>AbortController</code> and the controlled clock</td><td>No. It's a fact from the code.</td></tr>
+<tr><td>The design is written as if Better Auth's own internal crypto (its session tokens, sign-in state, two-factor codes) is outside R30</td><td>R30 governs "every sign-in rule … in one runtime-free core", our code. Better Auth is the library that code is built on (R29), and changing its internals would mean patching it, which your rule on following Better Auth's own way avoids.</td><td><strong>Yes, and you decided it on 15 Nov:</strong> option A (<a href="#open">below</a>).</td></tr>
+<tr><td>Regroup B1's nine slivers into three features (B1-A, B1-B, B1-C)</td><td>Your rules: "a feature done properly", "cannot be some bite size nonsense"</td><td>The grouping is mine; the rule is yours. Correct it on the overview if it's wrong.</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="assumptions">Every assumption this design makes</h2>
+<table>
+<thead><tr><th>Assumption</th><th>Basis</th><th>If it's wrong</th></tr></thead>
+<tbody>
+<tr><td>Both runtimes provide the standard Web Crypto (<code>getRandomValues</code>, <code>subtle.digest</code>, ECDSA P-256 <code>generateKey</code>, <code>sign</code>, <code>importKey</code>, <code>exportKey</code>)</td><td>The six sites already use exactly these on both hosts today</td><td>A host would need its own adapter. The contract doesn't change.</td></tr>
+<tr><td>The harness's controlled clock is the clock Better Auth reads in that harness</td><td>The harness passes <code>authenticatorClock</code> (<code>fleet-cli-fixture.ts:81–85</code> pattern)</td><td>The fence rows' expiry would still be off. Fix it in the harness.</td></tr>
+<tr><td><code>pnpm typecheck</code> flags every caller that needs the new <code>crypto</code></td><td>The field and parameters are required, and the core's source is type-checked</td><td>A caller in an excluded test file would fail at run time. The unit and host lanes would catch it.</td></tr>
+<tr><td>Hegel 0.4.10 generates the dispatch combinations</td><td>The existing families use its generators</td><td>Enumerate the small combination space exhaustively instead; same model.</td></tr>
+<tr><td>The test runner's own limit ends a genuinely hung browser run</td><td>Runner configuration, outside test code</td><td>A hang would run until CI's job timeout. That's visible and not a false pass.</td></tr>
+<tr><td>No consumer of these packages exists outside switchboard</td><td>Bounded: the public npm registry returns 404 for both, and codex-router and agent-vm don't depend on them. A consumer using a git, tarball or private-registry dependency wasn't checked, so outside consumers are <strong>unknown</strong>.</td><td>That consumer would need to pass <code>crypto</code> when it upgrades.</td></tr>
+<tr><td>Browser scripts written as text are out of R30's scope</td><td>They run in the person's browser, not the service</td><td>They'd need a separate rule. None is asked for.</td></tr>
+</tbody>
+</table>
+
+<h2 id="published">The signature change: not on public npm; other consumers unknown</h2>
+<p>Meeting R30 changes some exported signatures:</p>
+<ul>
+<li><strong><code>@agent-collaboration/sign-in-core</code>:</strong> eight functions gain a <code>crypto</code> parameter, and <code>SignInPlatform</code> and <code>OrganizationStampRenewalProps</code> gain a required <code>crypto</code>.</li>
+<li><strong><code>@agent-collaboration/sign-in-owner-cli</code>:</strong> <code>FleetCliIo</code> and its three key-store constructors gain a required <code>crypto</code>.</li>
+</ul>
+<p>Both packages have <code>publishConfig</code> set to public, but <strong>neither is on the public npm registry</strong>: on 15 Nov it returned 404 for both. codex-router and agent-vm don't depend on them. Every caller inside switchboard is updated in the same PR.</p>
+<p>Consumers that use a git, tarball or private-registry dependency weren't checked, so they're <strong>unknown</strong>. If one exists, it would need to pass <code>crypto</code> when it upgrades.</p>
+<p>If you publish later, these become the published signatures. Your deferred repository-visibility decision is where that gets settled.</p>
+
+<h2 id="flood-clock">Recorded risk: Miniflare's counter keeps its own real-clock window</h2>
+<p>Your journey SO2 accepted that "Miniflare's binding keeps its own clock". I read its source (miniflare 5.20260815.0-alpha, <code>ratelimit-object.worker.js</code>): it counts in windows of <code>Math.floor(Date.now() / (period * 1000))</code>, 10 or 60 seconds, aligned to the real clock. The test never reads that clock or waits on it.</p>
+<p><strong>The risk:</strong> if the requests in a "limited" case happen to cross a window boundary, the count resets and the case can't reach its 429 when expected. It would then fail: a false alarm, never a false pass.</p>
+<p><strong>How likely:</strong> roughly the case's duration divided by 60 seconds.</p>
+<ul>
+<li>The social-sign-in case sends about 13 requests (outer limit 10 per 60 s), taking milliseconds, so it's very rare.</li>
+<li>The page case sends up to about 301 requests (outer limit 300 per 60 s), one after another. If it takes a second or two, that's about one run in 30 to 60.</li>
+</ul>
+<p>The Verifier records how long each case takes, so the real figure is known after the first run.</p>
+<p><strong>If it ever happens:</strong> the failure says the request wasn't limited. A rerun decides it. Nothing is waited on, and nothing passes wrongly.</p>
+
+<h2 id="was-there">What was there before, and what each change replaces or keeps</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Before (switchboard <code>f3b2b88b</code>)</th><th>After B1-A</th><th>Replaced or kept</th></tr></thead>
+<tbody>
+<tr><td>Host contract with clock, IDs, deadlines, storage and central; no crypto</td><td>The same, plus a required <code>crypto</code></td><td>Kept and extended</td></tr>
+<tr><td>Six core sites calling the runtime's crypto</td><td>Each uses the handed-in <code>crypto</code></td><td>Replaced</td></tr>
+<tr><td><code>page-document.tsx</code> minting a version-4-UUID nonce</td><td><code>mintPageNonce</code> from 16 host bytes, only for rendered pages</td><td>Replaced</td></tr>
+<tr><td>The architecture check: runtime imports and Cloudflare names, <code>.ts</code> only</td><td>The same rules, plus <code>.tsx</code> in the core, a core runtime-global rule, and a test-time rule</td><td>Kept and extended</td></tr>
+<tr><td>Five real-time bounds in the browser-test protocol helper</td><td>Event waits only</td><td>Replaced</td></tr>
+<tr><td>Rows in <code>authorization-fence.host.e2e.test.ts</code> that read time through the mocked <code>Date</code></td><td>The same rows, reading the controlled clock by name</td><td>Replaced</td></tr>
+<tr><td>Hegel: claims round trip, record histories</td><td>The same, plus token-kind dispatch</td><td>Kept and extended</td></tr>
+<tr><td>Flood "limited" on a stand-in; the stand-in option and switch</td><td>"Limited" on Miniflare's binding; the stand-in deleted</td><td>Replaced</td></tr>
+<tr><td>The all-table UUID inventory, run over the owner-and-agent journey</td><td>The same inventory, also run over the people journey on both databases, plus named non-UUID checks on stored secrets</td><td>Kept and extended</td></tr>
+<tr><td>The agent journey</td><td>Unchanged, re-run on the final build</td><td>Kept</td></tr>
+<tr><td>The existing known-answer tests (digests, thumbprint, DPoP)</td><td>Unchanged except for passing a crypto</td><td>Kept</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="open">Decided by you on 15 Nov: R30 covers our code, not Better Auth's own crypto</h2>
+<p><strong>Open for you: nothing.</strong> This was the one open question, and you answered it: <em>"but auth libary is trhe same on al platforms sso wehres the issue here?"</em> and <em>"yes do a."</em> (Fleet session, 15 Nov). It's kept here so the choice and what it gave up stay visible.</p>
+
+<h3 id="d-ba">What the question was</h3>
+<p><strong>Before:</strong> R30 says "every sign-in rule … MUST live in one runtime-free core" that reaches crypto "only through capabilities its host supplies". B1-A routes all of our code's crypto through the host. Better Auth, the library our code is built on (R29), also does its own crypto inside: session tokens, sign-in state, two-factor codes. No decision of yours says whether R30 reaches inside the library.</p>
+<ex-mermaid id="d-ba-now" label="Whose crypto goes through the host" data-width="canvas"><script type="text/plain">
+flowchart TB
+  host["Host crypto capability"] --> ours["Our sign-in code<br/>B1-A routes it all here"]
+  lib["Better Auth inside the service"] --> own["Its own crypto<br/>session tokens, state, 2FA codes"]
+  class host slot6
+  class ours slot2
+  class lib slot1
+  class own slot4
+</script></ex-mermaid>
+<p><strong>Key:</strong> green the host's capability, amber our code, blue Better Auth, violet the library's own crypto.</p>
+<ex-compare label="How far R30 reaches" data-width="canvas">
+  <section id="d-ba-a" label="A · Our code only" icon="code">
+    <section data-compare-row="changes"><p><strong>What changes</strong></p><p>Nothing beyond B1-A: our code's crypto goes through the host. Better Auth keeps doing its own.</p></section>
+    <section data-compare-row="improves"><p><strong>What it improves</strong></p><p>Better Auth stays as shipped, matching your rule of following Better Auth's own way. No patches.</p></section>
+    <section data-compare-row="costs"><p><strong>What it costs</strong></p><p>Some crypto inside the service doesn't go through the host, so a recording run can't see it.</p></section>
+    <section data-compare-row="payer"><p><strong>Who bears it</strong></p><p>The proof: U23's "every crypto call is recorded" covers our code, not the library's.</p></section>
+    <section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="d-ba-a-pic" label="Option A"><script type="text/plain">
+flowchart TB
+  aa1["Host crypto"] --> aa2["Our code"]
+  aa3["Better Auth"] --> aa4["Its own crypto"]
+  class aa1 slot6
+  class aa2 slot2
+  class aa3 slot1
+  class aa4 slot4
+</script></ex-mermaid></section>
+  </section>
+  <section id="d-ba-b" label="B · Better Auth's too" icon="gear">
+    <section data-compare-row="changes"><p><strong>What changes</strong></p><p>Better Auth's crypto is also routed through the host, through whatever hooks it offers, or by patching it where it offers none.</p></section>
+    <section data-compare-row="improves"><p><strong>What it improves</strong></p><p>Every crypto call in the service goes through the host and can be recorded.</p></section>
+    <section data-compare-row="costs"><p><strong>What it costs</strong></p><p>A larger feature, likely a patch or a fork of library internals, re-applied on every Better Auth upgrade.</p></section>
+    <section data-compare-row="payer"><p><strong>Who bears it</strong></p><p>Every later Better Auth upgrade.</p></section>
+    <section data-compare-row="picture"><p><strong>Picture</strong></p><ex-mermaid id="d-ba-b-pic" label="Option B"><script type="text/plain">
+flowchart TB
+  bb1["Host crypto"] --> bb2["Our code"]
+  bb1 --> bb3["Better Auth, patched"]
+  class bb1 slot6
+  class bb2 slot2
+  class bb3 slot5
+</script></ex-mermaid></section>
+  </section>
+</ex-compare>
+<ex-grid cols="2" data-width="canvas">
+<ex-card title="A · Our code only" tone="done" icon="code" tag="Your choice, 15 Nov" pick>
+<p><em>"yes do a."</em> Better Auth is the same library on both hosts and stays as shipped.</p>
+<p><strong>What it gave up:</strong> the crypto Better Auth does inside itself isn't recorded by tests. Ours is.</p>
+</ex-card>
+<ex-card title="B · Better Auth's too" tone="planned" icon="gear" tag="Not chosen">
+<p><strong>Would have cost:</strong> patching Better Auth and carrying the patch through upgrades.</p>
+</ex-card>
+</ex-grid>
+</ex-document>
+</body>
+</html>

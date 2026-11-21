@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B2X · Person tokens and revocation · Specification</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>B2X · Person tokens and revocation: Specification</h1>
+<p>What must be observably true.</p>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What to check" tone="note" icon="shield-check">
+<p>S3: a device-login token carries a real session and dies with it. S6: “reached Central” appears only from a fresh read after Central's acknowledgement. S8: every r3 counterexample has an owner.</p>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p>S3 follows your 15 Nov pick: <code>--device</code> uses Better Auth's device flow with a real session.</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>Sources on <a href="requirements.html">Requirements</a>. Nothing built.</p>
+</ex-callout>
+
+<h2 id="terms">Things</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Thing</th><th>Same thing when</th><th>Rules</th></tr></thead>
+<tbody>
+<tr><td>Person token</td><td>The exact signed bytes.</td><td>Immutable; bound to a key, a session, one organization and one snapshot. Never “revoked” in place: Central refuses it.</td></tr>
+<tr><td>Authorization subject</td><td>One person within one organization; survives remove and rejoin.</td><td>Has a person revision; never reset.</td></tr>
+<tr><td>Organization fence</td><td>One organization.</td><td>Active, stopped or deleted; revision and policy digest.</td></tr>
+<tr><td>Revision row delivery</td><td>One fence or subject row at one revision.</td><td>Pending until Central's ACK of that revision or higher.</td></tr>
+<tr><td>Device code</td><td>Better Auth's device-code record.</td><td>Pending, approved, denied, redeemed once, or expired.</td></tr>
+</tbody></table></div>
+
+<h2 id="tokens">Tokens</h2>
+<h3 id="S1">S1 · Issuance stays as built</h3>
+<p>From X1, X2. Issuance MUST keep its one-snapshot read and every refusal in <code>person-fleet-issuance.ts</code>, the fixed snapshot bound S+L (L ≤ 300,000 ms), the session and native bounds with equality expired, and the policy-mismatch refusal. A token never outlives the minimum of the three.</p>
+<h3 id="S2">S2 · Refresh with the same key</h3>
+<p>From X3. Refresh MUST need the same key; another key fails without consuming the valid refresh. Each refresh is a fresh issuance from a fresh snapshot. A failed refresh clears the CLI's stored key and refresh credential.</p>
+<h3 id="S3">S3 · <code>--device</code> login (your pick: a real session)</h3>
+<p>From X4 and your 15 Nov pick (“ok lets use real session”). <strong>Better Auth's own device flow with a real session:</strong> <code>--device</code> prints a code and URL; the person approves it in a signed-in browser; the CLI polls, redeems the code once and receives a new native session; it then completes the existing PKCE authorization with that session and exchanges as today, so the token carries that session's ID. A redeemed, denied or expired code can't be redeemed again. The new session starts with no second-factor confirmation; protected actions ask for it in the CLI. With several memberships the CLI asks which organization. The session secret is kept like the refresh credential (Keychain, else memory only). A browser can't call the device code or token routes, so no page script ever receives a session token; only the terminal can use the device session, on six named paths.</p>
+<h3 id="S4">S4 · Ending the session ends the device token</h3>
+<p>Signing out or deleting the device session MUST bump the person's revisions exactly as for a browser session; Central refuses the old token after the ACK; refresh fails.</p>
+
+<h2 id="revocation">Revocation</h2>
+<h3 id="S5">S5 · Revocation follows the real change</h3>
+<p>From X6. A role change, removal or session end MUST bump the right revisions in the same batch as Better Auth's write. A failed or zero-row write bumps nothing and claims no revoke. Rejoining keeps the same subject with a higher revision. Ending one session bumps every retained pair of that person.</p>
+<h3 id="S6">S6 · The owner sees when Central has caught up</h3>
+<p>From X7. The owner (permission <code>organization:view</code>) MUST be able to see, for their organization, either “all access changes have reached Central” or “waiting for Central”, counting the organization's own row and every person's row in it; and for a looked-up person, including one already removed, the same for that person. The answer comes from one fresh read; missing rows count as pending; a storage failure shows unavailable. Reading changes nothing and starts no delivery. Nothing anywhere says “revoked everywhere” while pending. The view reveals no token, key or statement.</p>
+<h3 id="S7">S7 · Delivery: on use, retried, no timers</h3>
+<p>From X8. After a committed change, a hint asks for delivery; before every Fleet call, all pending rows of that organization are pushed, organization row first. Only Central's acknowledgement after its commit is recorded, and only if it is newer and not above the current revision; an ACK higher than the revision pushed is valid when the source has reached it. A lost ACK stays pending. A row that moved on during an ACK is pushed again at its new revision. A discrepancy (Central acknowledged more than the source has) is reported, never repaired by lowering the source. No cron, timer or startup job.</p>
+<h3 id="S8">S8 · Central's side, observed</h3>
+<p>From X9. Every r3 §9 counterexample MUST be observed on the real issuer → Rust Central path, controlled time and barriers, both pairings. The sign-in rows are B2X's to build and prove; the Central rows (DPoP, used requests, watermark, backup recovery) are Lead A's to build and B2X's to observe. The <a href="verification-design.html#r3">r3 table</a> lists each with its owner.</p>
+
+<h2 id="quality">Code and proof</h2>
+<h3 id="S9">S9 · Old code removed</h3>
+<p>Remove the “not available” exit for <code>--device</code> when the device path ships; replace the drainer's inline decisions with M1; correct the stale periodic comment.</p>
+<h3 id="S10">S10 · Machines and Hegel</h3>
+<p>Row delivery (M1), the owner's sync view (M2) and the CLI's device login (M3) MUST be closed unions with pure transitions, inline <code>x satisfies never</code>, effects as data run after commit, and Hegel families. Issuance's existing pure decision gets its own Hegel family. Real conditional-write races run on D1 and better-sqlite3.</p>
+
+<h2 id="trace">Rules to proof</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Rules</th><th>Need</th><th>Decided by</th></tr></thead>
+<tbody>
+<tr><td>S1, S2</td><td>X1–X3</td><td><a href="verification-design.html#V1">V1</a></td></tr>
+<tr><td>S3, S4</td><td>X4</td><td><a href="verification-design.html#V2">V2</a></td></tr>
+<tr><td>S5, S7</td><td>X6, X8</td><td><a href="verification-design.html#V3">V3</a></td></tr>
+<tr><td>S6</td><td>X7</td><td><a href="verification-design.html#V4">V4</a></td></tr>
+<tr><td>S8</td><td>X9</td><td><a href="verification-design.html#r3">r3 table</a></td></tr>
+<tr><td>S9, S10</td><td>Whole-feature rule; 15 Nov rule</td><td><a href="verification-design.html#V5">V5</a></td></tr>
+</tbody></table></div>
+</ex-document>
+</body>
+</html>

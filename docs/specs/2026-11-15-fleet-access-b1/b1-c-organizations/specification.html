@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B1-C · Organizations finished · Specification</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>B1-C · Organizations finished: Specification</h1>
+<p>What must be observably true when B1-C is done. Each rule names the need it serves and is decided by an observation in the <a href="verification-design.html">Verification Design</a>. Your three 15 Nov picks set the page, the input and the chooser component. The list you picked adds one owner-only read (S8). No other permission or privacy rule changed.</p>
+
+<h2 id="three">The three things for you</h2>
+<ex-callout title="1 · What to check" tone="note" icon="shield-check">
+<p>S2: switching stays available and the CLI Continue still works once a choice exists. S5: the lookup checks permission before it reads and again before it answers. S6: “elsewhere” and “nowhere” give byte-identical answers. S1 and the failure table: a database failure is never reported as “signed out” or “not a member”.</p>
+</ex-callout>
+<ex-callout title="2 · Decisions that change what people see or do" tone="decision" icon="users">
+<p>S8, S9 and S10 follow your 15 Nov picks: its own page in shadcn like Better Auth UI, a list with email fallback, and today's card. After a refused switch, S3 keeps Better Auth's behaviour and the page re-renders so you pick again (your pick on <a href="decisions.html#foreign-switch">Decisions</a>).</p>
+</ex-callout>
+<ex-callout title="3 · Is this what you agreed, and is it real?" tone="note" icon="book-open">
+<p>Sources are U9, U21/U46, U27, U43, U51 and OD25/OD26 on <a href="requirements.html#needs">Requirements</a>, with the approved R13, R14, R53, R58 and R62. Nothing here has been built or run.</p>
+</ex-callout>
+
+<h2 id="entities">The things the rules talk about</h2>
+<ex-mermaid id="entities-picture" label="People, organizations, memberships, sessions and invitations" data-width="canvas"><script type="text/plain">
+erDiagram
+  PERSON ||--o{ MEMBERSHIP : has
+  ORGANIZATION ||--o{ MEMBERSHIP : contains
+  PERSON ||--o{ SESSION : holds
+  ORGANIZATION o|--o{ SESSION : current_in
+  ORGANIZATION ||--o{ INVITATION : sends
+</script></ex-mermaid>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Thing</th><th>Same thing when</th><th>States and rules</th></tr></thead>
+<tbody>
+<tr><td>Organization (E1)</td><td>Same organization ID.</td><td>Switching creates no organization or membership.</td></tr>
+<tr><td>Person (E3)</td><td>Same sign-in account ID; not a matching name or email.</td><td>Zero, one or several memberships.</td></tr>
+<tr><td>Membership (E19)</td><td>One person in one organization. Rejoining after removal is a new membership.</td><td>Role owner or member. A pending invitation is not a membership.</td></tr>
+<tr><td>Invitation (E31)</td><td>Same invitation ID: one organization inviting one email.</td><td>Stored status pending, accepted, canceled or rejected. It counts as <em>invited</em> only when pending and its expiry is after the injected clock's now.</td></tr>
+<tr><td>Session</td><td>Same session ID.</td><td>Current, expired or ended. Holds zero or one current organization, which is never a permission.</td></tr>
+</tbody></table></div>
+
+<h2 id="choice">Your organizations and switching</h2>
+<ex-mermaid id="switch-sequence" label="Switching is checked by Better Auth, then read back" data-width="canvas"><script type="text/plain">
+sequenceDiagram
+  participant P as Person's page
+  participant BA as Better Auth set-active
+  participant R as Self-context read
+  P->>BA: switch to organization O2
+  alt member of O2
+    BA-->>P: 200, session now O2
+  else not a member
+    BA-->>P: 403, session current choice cleared
+  else reply lost
+    BA--xP: no reply, write may have landed
+  end
+  P->>R: read my organizations again
+  R-->>P: stored choice and memberships
+</script></ex-mermaid>
+<h3 id="S1">S1 · You read only your own organizations</h3>
+<p>From U27, U51, R62. A current, verified person MUST be able to read their memberships, each with organization ID, name and their role, plus the session's current organization if it is still one of those memberships. The read takes no person ID from the caller, returns no tokens, no other person's data and no organization roster. It has exactly three endings: signed out, available, unavailable. Zero memberships is an empty available answer. A stored choice that is no longer a membership reads as no current choice, without rewriting the session. <strong>A database failure while reading the session or the memberships MUST be unavailable, never signed out.</strong></p>
+<h3 id="S2">S2 · Switching stays available, and Continue still works</h3>
+<p>From U51, R58, R62. Whenever a person has two or more memberships, the card MUST offer switching, including after a valid choice exists. A person in O1 and O2 can choose O1, then O2, in the same session without signing in again. The page MUST treat two facts separately: <em>“these are your memberships”</em> (always shown when there is at least one) and <em>“you must choose before continuing”</em> (only when there are two or more memberships and no valid current choice). Only the second fact makes choosing the page's pending task, changes the title to “Choose your organization” or disables Continue to the CLI. After a switch settles, every part of the page that depends on the choice (title, steps, Continue, the selected organization's setup card) MUST reflect the stored state without any user action. With a valid choice, Continue to the CLI MUST work as today and complete the CLI authorization for that organization. Sign-in still auto-selects a sole membership; a read never selects one. One case stays as it is today: a person with exactly one membership whose current choice was cleared later (for example by Better Auth's native refusal of a foreign switch). The card offers them nothing to switch to, and their CLI Continue is refused. Today's page behaves the same way (<code>sign-in-http-handler.ts</code> offers choices only for more than one membership). BG's continuation closes this case by selecting the sole membership first (BG Program Design, <code>select-first</code>). B1-C does not claim it.</p>
+<h3 id="S3">S3 · Better Auth does the switching</h3>
+<p>From U27. Switching MUST use Better Auth's native set-active. Only a real membership can be chosen; signed-out or expired callers can't choose; switching creates no membership, changes no role, and confirms no second factor. Better Auth's own behaviour stays: a foreign choice returns 403 and clears the current choice. After success, refusal, or a request that ends with no reply, the page MUST read the stored state again before showing a current organization. It MUST NOT restore an earlier choice from memory or replay the request. Concurrent switches follow Better Auth's write order; no lock or version is added.</p>
+<h3 id="S4">S4 · Reading and switching need no fresh second factor</h3>
+<p>From U43, R53, your returning-sign-in answer. A valid person with an absent or old confirmation MUST be able to read their organizations, switch, and (as owner) look someone up. None of these confirms or extends a second factor. Enrolment order and the protection on invite, cancel, accept, remove and create are unchanged.</p>
+
+<h2 id="lookup">The owner's lookup</h2>
+<ex-mermaid id="lookup-sequence" label="Permission is checked before and after the read" data-width="canvas"><script type="text/plain">
+sequenceDiagram
+  participant B as Owner's page
+  participant H as Lookup endpoint
+  participant A as Session and live permission
+  participant D as This organization's rows
+  B->>H: organization O1, one person
+  H->>A: session current, current in O1, organization:view now?
+  alt not allowed
+    H-->>B: refused, nothing about the person
+  else allowed
+    H->>D: member or invitations for this person in O1 only
+    D-->>H: facts, or unavailable
+    H->>A: same checks again
+    H-->>B: answer, or refused, or unavailable
+  end
+</script></ex-mermaid>
+<h3 id="S5">S5 · Only the requested organization's owner, checked twice</h3>
+<p>From U21/U46, R13, OD25. The caller MUST hold a current verified session whose current organization is the requested one, and pass a fresh native <code>hasPermission</code> check for <code>organization:view</code> using their current role with caching off. Today only owners hold it. A member, an owner of another organization, a removed owner, an ended or expired session, and any bearer credential (today: agent and Fleet-session tokens; Switchboard has no bot credential, corrected 17 Nov) MUST be refused with no subject data, before any subject read. After the read, the same checks run again against a fresh read of the stored session (never the copy cached at the start of the request); if they fail, the read result is discarded and the answer is refused. Removal that commits after the second check is outside this promise; there is no cross-read transaction.</p>
+<h3 id="S6">S6 · The answer is about this organization only</h3>
+<p>From U9, R14, C4. The answer MUST be exactly one of: <code>member</code> with role owner or member; <code>invited</code>, when a pending invitation for this organization and email has expiry strictly after the injected clock's now; <code>not-member</code>, otherwise. Membership wins over a pending invitation. If there is no membership, every invitation row for that organization and email is read and classified, so an older cancelled row can't hide a newer pending one. Someone who belongs only to another organization and someone with no account MUST get byte-identical bodies. No answer contains another organization's ID, name or existence, a user ID or a count. A malformed stored role, invitation status or expiry among the rows read MUST make the answer unavailable, never not-member. This is equal content, not equal timing.</p>
+<h3 id="S7">S7 · The lookup changes nothing</h3>
+<p>From OD26. The lookup MUST NOT create or change users, memberships, invitations, roles, second-factor confirmations or audit records, and it does not say which earlier change completed. Existing people-change tests stay as they are. No schema change or migration.</p>
+<h3 id="S8">S8 · The owner picks from this organization's people, or types an email (your pick)</h3>
+<p>From U9, U21/U46 and your 15 Nov pick. On the lookup page the owner MUST see this organization's people:</p>
+<ul>
+<li><strong>Members:</strong> name, email and role, 50 per page, in the order Better Auth returns them by join time, with the total number of members.</li>
+<li><strong>Invitations:</strong> email and role for each pending, unexpired invitation (expiry strictly after the injected clock's now) whose email isn't already a member.</li>
+</ul>
+<p>The list is read with the same two checks as S5: before the read, and again on a fresh session read before it is released. Anyone else is refused with nothing listed. A list reply contains no user ID, membership ID, invitation ID, inviter or another organization's anything. A malformed role, status or expiry in the read rows makes the list unavailable, never a shorter list. Picking a row runs the S6 lookup for that email, so every answer shown comes from one checked lookup.</p>
+<p>The email field remains for anyone not listed, for example someone removed or never invited. It takes one email, trimmed and lowercased, plus the organization ID, in a JSON POST body, never a URL. A blank or invalid email is a field error with no read; there is no prefix or wildcard search, and the list has no search. Reading the list or a page changes nothing. A page is a snapshot: a person who joins or leaves between pages may be skipped or shown twice. That is named, not hidden.</p>
+<h3 id="S9">S9 · The lookup's own page, in shadcn like Better Auth UI, and how results behave (your pick)</h3>
+<p>A separate page, linked from organization admin and guarded on its own. It is built from the same shadcn parts Better Auth UI's people tables use, already in <code>tool-access-ui</code>: Card, Table, Badge, InputGroup, Field, Button, Empty and Skeleton. It follows their layout:</p>
+<ul>
+<li>a card titled “People” with the organization's name;</li>
+<li>a members table (name, email, role badge) with previous and next page buttons;</li>
+<li>an invitations table (email, role, “Invited”);</li>
+<li>an email field with a Look up button;</li>
+<li>a result area.</li>
+</ul>
+<p>It is read-only: no invite, remove or role controls (those stay on their existing pages with their step-up). No administration is on the account page.</p>
+<p>A changed input or organization, a new submit, a refusal, a malformed reply or a network failure MUST clear the previous result. A late reply for an older request (list page or lookup) MUST NOT replace the current one. A signed-out visit goes to sign-in, with no email in the URL. Emails and results are kept out of logs and screenshots; browser proof uses test identities.</p>
+<h3 id="S10">S10 · The chooser is today's card, and no native organization read opens (your pick)</h3>
+<p>The chooser is today's Switchboard card, extracted from the owner page and always available as S2 says. It uses only the S1 read and Better Auth's native set-active. Better Auth's native <code>organization/list</code>, <code>get-full-organization</code>, <code>list-members</code> and <code>list-invitations</code> routes stay closed to the browser, as today. The S8 list reads Better Auth's tables directly, through the existing injected Drizzle store, only after the owner check. The card MUST meet S1 to S4.</p>
+
+<h2 id="system">Boundaries and quality</h2>
+<h3 id="S11">S11 · BG gets facts, and still owns getting in</h3>
+<p>B1-C supplies the S1 read, native switching and a reusable choice surface. BG owns which page comes next, invitations and Decline, the account page shell, the return destination, the CLI deadline and the six journeys. B1-C keeps today's CLI continuation working (S2) and adds no setup engine, destination store or account route. BG removes <code>/owner-ready</code> in its own cutover.</p>
+<h3 id="S12">S12 · Both hosts, the design system, and old code removed</h3>
+<p>The new paths MUST work on local workerd with D1 and local Node with better-sqlite3. New screens use Switchboard's shared React and shadcn components, one top heading, labelled keyboard-reachable controls, and a 400 px dark layout. New core code passes B1-A's injected-capability, allowed-globals and UUIDv7 checks; tests use controlled time and event waits; heavy runs go to Sunclaw; no new CI gate. The overloaded <code>organizationChoices</code> field, the hide-after-choice condition and the old inline set-active listener are removed.</p>
+<h3 id="S13">S13 · Closed states, pure transitions, Hegel</h3>
+<p>From your 15 Nov rule (Fleet transcript 142100, 142119). Every state our code moves MUST be a closed union with a pure <code>transition(state, event, context)</code> that returns the next state or a closed refusal, with an inline <code>x satisfies never</code> at each switch over states and events, and its stored inputs parsed strictly at the boundary. That covers three machines: the invitation read view (M1), one checked read on the server, used for both the lookup and a list page (M2), and the page's request lifecycle, one instance for the list and one for the lookup (M3). The session's current organization has no project transition (only Better Auth writes it), so it is read through one pure function, not a machine. Each machine has a Hegel family with an independent reference model, checks after every step, controlled clock moves, retries and paired events, fixed settings, and wrong builds that Hegel must shrink to a named counterexample. Better Auth's writers stay native and unwrapped.</p>
+
+<h2 id="failure">Failure outcomes</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Condition</th><th>What the caller sees</th><th>Effect</th></tr></thead>
+<tbody>
+<tr><td>No session, or session expired</td><td>Self read: 401 signed out. Lookup: 401 refused. Lookup page: redirect to sign-in.</td><td>No subject read. B1-C's code writes nothing; Better Auth itself deletes an expired session and clears its cookie, as it always does.</td></tr>
+<tr><td>Session ends or switches organization while the lookup reads</td><td>Second check: 401 (ended or expired) or 403 (organization changed).</td><td>The read result is discarded.</td></tr>
+<tr><td>Database fails while reading the session</td><td>503 unavailable, on every new read.</td><td>Never treated as signed out.</td></tr>
+<tr><td>Wrong organization, role or permission</td><td>403 refused, no subject fields.</td><td>No subject read at the first check; read result discarded at the second.</td></tr>
+<tr><td>Bad request body or content type</td><td>400 with a generic invalid-request body.</td><td>No subject read; body not logged.</td></tr>
+<tr><td>Database or decoding failure on memberships or invitations, in the lookup or the list; a malformed native list reply</td><td>503 unavailable; the page clears the old result or list.</td><td>No guessed “not a member”, no shortened list, no uncut native body.</td></tr>
+<tr><td>Foreign switch</td><td>403, then the page reads state again and shows no current choice.</td><td>Better Auth clears the choice; memberships unchanged.</td></tr>
+<tr><td>Switch request gets no reply</td><td>No success shown; the page reads state again.</td><td>The write may have landed. Not undone, not replayed.</td></tr>
+<tr><td>Old lookup reply arrives late</td><td>Ignored.</td><td>Only the current request fills the result.</td></tr>
+</tbody></table></div>
+
+<h2 id="trace">Rules to proof</h2>
+<div class="ex-table-scroll" data-width="canvas"><table>
+<thead><tr><th>Rules</th><th>Need</th><th>Decided by</th></tr></thead>
+<tbody>
+<tr><td>S1, S4</td><td>U27, U51, U43</td><td><a href="verification-design.html#V1">V1</a></td></tr>
+<tr><td>S2, S3</td><td>U51, U27</td><td><a href="verification-design.html#V2">V2</a>, <a href="verification-design.html#V6">V6</a></td></tr>
+<tr><td>S5</td><td>U21/U46</td><td><a href="verification-design.html#V4">V4</a></td></tr>
+<tr><td>S6, S7, S8</td><td>U9, OD26</td><td><a href="verification-design.html#V3">V3</a></td></tr>
+<tr><td>S9, S10</td><td>U9, U51, your three answers</td><td><a href="verification-design.html#V5">V5</a>, <a href="verification-design.html#V6">V6</a></td></tr>
+<tr><td>S11, S12</td><td>BG split, B1-A rules</td><td><a href="verification-design.html#V7">V7</a></td></tr>
+<tr><td>S13</td><td>Your 15 Nov rule</td><td><a href="verification-design.html#V8">V8</a></td></tr>
+</tbody></table></div>
+</ex-document>
+</body>
+</html>

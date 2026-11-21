@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>F1 · Fuzz testing · Program Design</title>
+<link rel="stylesheet" href="https://demistify.getagentstudio.dev/v1/theme.css">
+<script type="module" src="https://demistify.getagentstudio.dev/v1/runtime.js"></script>
+</head>
+<body>
+<ex-nav for="doc" src="./navigation.json"></ex-nav>
+<ex-document id="doc">
+<h1>F1 · Fuzz testing for sign-in: Program Design</h1>
+<p>How it's built, revision 2, after design review F1–F10. F1 is test code only: no product file changes and no CI gate changes. Pure tests go in the unit lane. Anything that needs a live Miniflare or Node host (the provider inventory, dual-engine storage, host requests) goes in the existing host e2e lane, which CI already requires (<code>ci.yml:43</code>), per Switchboard's <code>AGENTS.md:35</code>. Bombadil runs through an on-demand driver in <code>scripts/</code>.</p>
+<ex-mermaid id="parts" label="Where the parts sit" data-width="canvas"><script type="text/plain">
+flowchart TB
+  prov["installedProviderEndpointInventory (existing)"] --> covh["fuzz/route-coverage.host.e2e.test.ts<br/>S1, host lane"]
+  handler["real handler source<br/>parsed by handler-route-discovery.unit.test.ts"] --> covh
+  table["fuzz/route-classification.ts<br/>independent table (E2)"] --> covh
+  table --> covu["fuzz/route-classification.unit.test.ts<br/>table shape, pure"]
+  fam["fuzz/request-families/*.ts<br/>query / form / JSON parts (E3)"] --> req["fuzz/route-requests.host.e2e.test.ts<br/>S2 · Hegel testAsync, both hosts"]
+  harness["local-auth-harness auth(pathname, init) (existing)"] --> req
+  model["fuzz/organization-model.ts + model.unit.test.ts<br/>pure"] --> st["fuzz/organization-sequences.host.e2e.test.ts<br/>S3 · Hegel StateMachine, both engines"]
+  harness --> st
+  spec["bombadil/specs/*.ts"] --> drv["scripts/bombadil/run-sign-in-ui-fuzz.mts<br/>run and replay"]
+  harness --> drv
+  class prov,harness slot6
+  class covh,handler,table,covu,fam,req,model,st,spec,drv slot2
+</script></ex-mermaid>
+
+<h2 id="coverage">Coverage (S1)</h2>
+<ul>
+<li><strong>Handler route discovery:</strong> <code>handler-route-discovery.unit.test.ts</code> parses the real <code>sign-in-request-handler.ts</code> and <code>sign-in-http-handler.ts</code> source with the TypeScript compiler API. It collects every route literal the handlers branch on (<code>pathname ===</code>, <code>startsWith</code> prefixes, route tables) and fails when a discovered literal or prefix has no classification row. Adding a real handler branch therefore fails coverage with no test list edited. Comparisons against <em>immutable literal constants</em> (for example the imported <code>organizationAdminPagePath</code>, <code>organization-admin-page.ts:4</code>) are resolved through the TypeScript type checker to their literal value. The test fails on any comparison it can't resolve to a literal (computed or unresolvable), so that case can't pass silently. (Clarified 17 Nov on the Implementer's source read.)</li>
+<li><strong><code>route-classification.ts</code></strong> is the independent table (E2). Each row: method, path, exposure, request parts, documented answers, disclosure rule, permitted refusal effects. It's written from the specs and tests, not computed from the product allowlist.</li>
+<li><strong><code>route-coverage.host.e2e.test.ts</code></strong> builds the live provider inventory, then checks that provider rows plus handler routes equal the classification rows, and that the reachable rows equal the families.</li>
+<li><strong>The pure unit test</strong> checks the table's own consistency: every reachable row has request parts and answers.</li>
+</ul>
+
+<h2 id="requests">Requests (S2)</h2>
+<ul>
+<li><strong>Families:</strong> one module per reachable row, exporting <code>{ route, callers, generate }</code>. <code>generate</code> draws:
+  <ul>
+  <li>the query map for GET routes;</li>
+  <li>the URL-encoded form for the token route;</li>
+  <li>the JSON body for body routes;</li>
+  <li>malformed JSON and the wrong content type where Fetch allows them (no GET body: Fetch rejects it before the host).</li>
+  </ul>
+  Values come from Hegel generators per field: valid, near-valid, boundary.</li>
+<li><strong><code>route-requests.host.e2e.test.ts</code>:</strong> per family, caller and <code>SIGN_IN_TEST_HOST</code>, it runs <code>hegel.testAsync</code> (200 cases default, derandomized in CI).
+  <ul>
+  <li><strong>Each case:</strong> it sets up fresh fixture state for its caller, sends through the harness, then checks the S2 answer, disclosure and effect rules from the row.</li>
+  <li><strong>Disclosure:</strong> it scans body and headers for every credential class (reusing <code>credential-free-refusal.ts</code>) and for identities beyond the caller's entitlement.</li>
+  <li><strong>Effects:</strong> a stored-row snapshot diff before and after, allowing exactly the row's permitted effects.</li>
+  </ul></li>
+</ul>
+
+<h2 id="sequences">Organization sequences (S3)</h2>
+<ul>
+<li><strong><code>organization-model.ts</code> (pure, unit-tested):</strong> people, organizations, memberships with roles, invitations, sessions, and fence pairs keyed on (organization, person) with an active flag. It's written from the domain rules and the fence contract (<code>authorization-fence-mutations.ts:233–354</code>, <code>person-session-store.ts:239</code>).</li>
+<li><strong><code>organization-sequences.host.e2e.test.ts</code>:</strong> a <code>hegel.stateful.StateMachine</code> with <code>runAsync</code>, on each storage engine via the existing dual-storage host.
+  <ul>
+  <li><strong>Each rule</strong> performs its operation through the real entry: the Better Auth organization routes or service operations through the harness, as the right caller. It applies the same operation to the model, then reads stored state back through the existing store readers.</li>
+  <li><strong>Refused operations</strong> must be refused by both.</li>
+  <li><strong>Invariants</strong> are S3's rules plus “model equals stored projection”, all with <code>alwaysCheck: true</code>.</li>
+  <li><strong>Pools</strong> hold people, organizations and sessions. 50 steps per case; 100 cases per engine.</li>
+  </ul></li>
+</ul>
+
+<h2 id="bombadil">Bombadil (S4, S5)</h2>
+<ul>
+<li><strong>Dependency:</strong> <code>@antithesishq/bombadil</code>, an exact-pinned dev dependency. The driver maps the existing <code>CHROME_BIN</code> to Bombadil's <code>CHROME</code> variable.</li>
+<li><strong>Specs:</strong> <code>sign-in-signed-out.ts</code>, <code>owner-pages.ts</code> and <code>member-people-denied.ts</code>. Each:
+  <ul>
+  <li>keeps <code>noUncaughtExceptions</code> and <code>noUnhandledPromiseRejections</code>;</li>
+  <li>replaces <code>noConsoleErrors</code> with an allowlisted version;</li>
+  <li>replaces <code>noHttpErrorCodes</code> with a navigation-status property that accepts only the route's documented refusal (403 plus generic content for the member campaign);</li>
+  <li>adds the S2 disclosure rule over page text and attributes, per campaign;</li>
+  <li>uses action generators that stay inside the page under test.</li>
+  </ul></li>
+<li><strong>Passkey click-only witness, ordered:</strong> the driver launches Chrome itself (<code>CHROME_BIN</code>, headless, remote debugging on 127.0.0.1) and <em>creates the page itself at <code>about:blank</code></em>. On that page, through its own CDP session, it arms both observers <em>before</em> any navigation or application script. Bombadil then attaches to that same existing page with <code>bombadil browser test-external --remote-debugger &lt;url&gt;</code>, <em>without</em> <code>--create-target</code>. Without that option Bombadil doesn't navigate; it captures the current state (<code>browser.rs:410–435</code>). So <strong>the driver navigates</strong>, with <code>Page.navigate</code> to the campaign URL on its own session. It does that only after an <em>event-based readiness barrier</em>: both observers armed, plus Bombadil attached with its first state captured. The Implementer takes Bombadil's exact readiness signal from its source or output stream. If no such signal exists, they report back: no sleep, no timeout guess. So an on-load challenge, and on-load console errors, can't escape either record. The observers:
+  <ul>
+  <li>enables <code>Network</code>, recording <code>requestWillBeSent</code> for the challenge path, which marks a request's <em>initiation</em>, not its response;</li>
+  <li>adds, through <code>Page.addScriptToEvaluateOnNewDocument</code> in an <em>isolated world</em> (test-side observer only, no product change), a capture-phase click listener on the passkey button that reports through a <code>Runtime</code> binding.</li>
+  </ul>
+  Both events arrive on that one connection in order, tagged with the document's loader ID. The property: in each document, every challenge initiation comes after a passkey-button click in that document. Clicks without requests pass.</li>
+<li><strong>Driver, run mode, per host</strong> (Chrome launched by the driver, Bombadil attached with <code>test-external</code>):
+  <ul>
+  <li>start the harness;</li>
+  <li>seed the campaign's people, organization and sessions;</li>
+  <li>launch Chrome, create the <code>about:blank</code> page, and arm both observers;</li>
+  <li>start Bombadil attached to that page, wait on the readiness barrier, then navigate the page to <code>&lt;issuer&gt;/&lt;page&gt;</code> from the driver;</li>
+  <li>the Bombadil command is <code>bombadil browser test-external --remote-debugger &lt;url&gt; --time-limit 5m --exit-on-violation --output-path &lt;private&gt; &lt;issuer&gt; &lt;spec&gt;</code>, with one <code>--cookie</code> per cookie and no <code>--create-target</code>. The issuer origin bounds exploration; the driver supplies the navigation;</li>
+  <li>judge passkey click-only <em>only</em> from the ordered witness, with no counting. Record Bombadil's exit code, the witness verdict and event log, the trace path and campaign settings; tear down.</li>
+  </ul></li>
+<li><strong>Driver, replay mode:</strong> recreate the same host, fixtures, controlled clock and signed-in state, then launch Chrome, create and arm the <code>about:blank</code> page exactly as in run mode, and run <code>bombadil browser test-external --remote-debugger &lt;url&gt; --reproduce &lt;trace&gt;</code> against the new issuer, with the same spec and cookies, without <code>--time-limit</code> or <code>--exit-on-violation</code>, and with no <code>--create-target</code>. As in the run, the driver navigates to the campaign URL after the readiness barrier, before Bombadil replays its recorded actions. The ordered witness decides the replay as it decides the run.</li>
+</ul>
+</ex-document>
+</body>
+</html>
